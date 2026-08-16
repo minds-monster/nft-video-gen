@@ -23,3 +23,10 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Hero-video working files. Reference art downloaded from chain (scripts/prep-refs.mjs)
+# and raw MiniMax renders (scripts/gen-video.mjs). Large, reproducible, and only the
+# encoded result belongs in git — see public/hero/.
+assets/refs/
+assets/renders/
+assets/audio/candidates/

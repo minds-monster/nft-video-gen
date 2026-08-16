@@ -1,26 +1,456 @@
 @import "tailwindcss";
 
 @theme {
-  --animate-slide-left: slideLeft 20s linear infinite;
+  /* ---------------------------------------------------------------- brand palette
+     Sampled from the logo artwork (public/brand/minds-monster-lockup.png):
+       #951EF5  brand purple      oklch(55.5% 0.277 302)
+       #270748  deep violet       oklch(23.3% 0.110 300)  — the solid offset shadow
+       #110817  violet-black      oklch(15.6% 0.034 311)  — the ground
+       #030104  keyline black     oklch(8.2%  0.020 317)  — the outline around everything
 
-  @keyframes slideLeft {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
+     Tailwind's own `purple-600` is already within a rounding error of the brand purple
+     (oklch(55.8% 0.288 302.3) vs 55.5% 0.277 301.9), so the accent needs almost no
+     correction — `purple-500` was simply too light a tint to be carrying the brand. */
+
+  /* --- neutrals -------------------------------------------------------------------
+     Two things happen here at once.
+
+     (1) The ramp is re-hued from Tailwind's blue-tinted slate (hue ~257) to the logo's
+         violet-tinted black (hue ~305). This is what stops the page reading cool under a
+         hot mark, and it re-points all ~110 existing slate-* utilities without touching
+         a class string in any component.
+     (2) The text tiers are brightened. `text-slate-500` (39 uses) sat at 4.2:1 and
+         `text-slate-600` (15 uses) at 2.6:1 — both below AA, and the app's typographic
+         voice is 10-11px labels in exactly those two tiers. Every tier below now clears
+         4.5:1 on the page ground AND on a slate-900 panel.
+
+     The ramp deliberately splits in two at 600/700: tiers 50-600 are text-only in this
+     codebase and tiers 700-950 are surface-only (verified — there is no overlap), so the
+     jump in lightness between 600 and 700 is intentional, not a mistake.
+
+     NOTE FOR FUTURE EDITORS: `text-slate-400` renders violet-grey here, not blue-grey.
+     That is deliberate. Overriding the built-in ramp is what lets the brand reach the
+     whole UI in one change. Read `slate` as "neutral". */
+  --color-slate-50: oklch(96.5% 0.005 305);   /* 15.0:1 */
+  --color-slate-100: oklch(94% 0.007 305);
+  --color-slate-200: oklch(90% 0.010 305);    /* 15.0:1 */
+  --color-slate-300: oklch(86% 0.014 305);    /* 13.2:1  emphasis copy */
+  --color-slate-400: oklch(78% 0.020 305);    /* 10.1:1  body copy */
+  --color-slate-500: oklch(70% 0.024 305);    /*  7.5:1  labels — was 4.2:1 */
+  --color-slate-600: oklch(62% 0.026 305);    /*  5.5:1  faintest tier — was 2.6:1 */
+  --color-slate-700: oklch(32% 0.040 305);    /* surface: panel borders */
+  --color-slate-800: oklch(24% 0.038 306);    /* surface */
+  --color-slate-900: oklch(16.5% 0.034 308);  /* surface: panel ground, ≈ #120a1a */
+  --color-slate-950: oklch(12.5% 0.028 308);  /* surface: page ground,  ≈ #09040f */
+
+  /* Carries the ~20 `bg-black/{20..80}` scrims onto the logo's violet-black. The bare
+     `black` keyword inside mask-image gradients is a CSS keyword, not this token, so
+     .marquee-mask and .hud-grid are unaffected. `--color-white` is deliberately NOT
+     overridden: `text-white` (40 uses) is load-bearing contrast and #F2F2F1 buys nothing. */
+  --color-black: oklch(8.2% 0.020 317);
+
+  /* --- brand purple ---------------------------------------------------------------
+     Tailwind's purple ramp already sits at hue 302-306, and its `purple-600` was already
+     within a rounding error of the sampled brand purple — so the brand lands naturally on
+     600 and the ramp keeps its normal "600 is darker than 500" semantics.
+
+     Measured on the page ground:
+       purple-600  #951ef5   3.65:1  BRAND. Fills, edges, glows, large type. White on it
+                                     is 5.55:1, so purple buttons with white labels pass.
+       purple-500  #a654fd   5.11:1  lighter fill / hover
+       purple-400  #b57cff   7.04:1  the tier for small purple TEXT
+       purple-300  #c9a0ff   9.58:1  purple emphasis text
+     Rule: 500/600 are fills and edges. 300/400 are the only purples allowed on text
+     below 24px. Brand purple must never carry body copy. */
+  --color-purple-300: oklch(78% 0.145 302);
+  --color-purple-400: oklch(70% 0.190 302);
+  --color-purple-500: oklch(62.7% 0.240 302);
+  --color-purple-600: oklch(55.5% 0.277 302);
+  --color-purple-700: oklch(47% 0.240 302);
+
+  /* Semantic aliases. Referenced by the primitives below, so they are not pruned. */
+  --color-brand: var(--color-purple-600);
+  --color-brand-deep: oklch(23.3% 0.110 300);  /* #270748 — the solid offset shadow */
+  --color-keyline: oklch(8.2% 0.020 317);      /* #030104 — the outline around everything */
+
+  /* Two accents feed the prompt canvas's left/right two-tone bloom. accent-2 used to be
+     blue; the brand pack has no blue in it at all, so it is now a magenta-leaning violet.
+     Kept at the same lightness as accent rather than swapped for a dark violet — the
+     bloom uses it at 65-85% strength in an outer glow, and a dark tone there would read
+     as a one-sided glow, i.e. as a bug. */
+  --color-accent: oklch(62% 0.260 302);
+  --color-accent-2: oklch(62% 0.240 330);
+
+  /* --- type ------------------------------------------------------------------------
+     Anton is a single-weight (400) poster grotesque — see the font-synthesis guard in
+     @layer base, which stops the browser smearing a fake bold onto it. */
+  --font-display: "Anton", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", sans-serif;
+
+  /* Hard geometry. The lockup has no soft corners anywhere, so the radius scale is pulled
+     in hard — this re-points all 27 rounded-lg/xl/2xl/3xl sites at once. Not taken all the
+     way to square: these are frames around other brands' artwork, and a 0px corner reads
+     as an unstyled image rather than as a deliberate edge.
+     `rounded-full` (46 uses) is deliberately untouched — status dots, avatars and icon
+     buttons should stay round.
+     NOTE: canvas/PromptCanvas.jsx has its own radius numbers in JS (framer animates them),
+     which these tokens cannot reach — they are kept in sync by hand. */
+  --radius-sm: 3px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
+  --radius-2xl: 10px;
+  --radius-3xl: 14px;
+
+  /* --- devices ---------------------------------------------------------------------
+     The logo's shadow is SOLID and offset, never blurred. These are box-shadows rather
+     than borders on purpose: a 2px border changes an element's box by 4px per axis and
+     reflows every chip on the page, while a shadow ring traces border-radius exactly,
+     costs no layout, and cannot be sliced by an ancestor's `overflow: hidden`.
+
+     A keyline only reads around something LIGHTER than the ground — measured, it is
+     3.7:1 against a purple fill but 1.1:1 against a dark panel. So: keyline the purple
+     fills, badges and imagery; leave dark glass panels on their light hairline. */
+  --shadow-sticker: 0 0 0 2px var(--color-keyline), 4px 4px 0 var(--color-keyline);
+  --shadow-sticker-lg: 0 0 0 2px var(--color-keyline), 7px 7px 0 var(--color-keyline);
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    /* -50% of a track that renders its children twice = a seamless loop at any width. */
+    to { transform: translateX(-50%); }
   }
+
+  @keyframes shimmer {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 0.7; }
+  }
+
+  /* One pass of a scanline down the canvas as it opens. */
+  @keyframes hud-sweep {
+    from { transform: translateY(-100%); opacity: 0; }
+    12%  { opacity: 1; }
+    to   { transform: translateY(1400%); opacity: 0; }
+  }
+
+  /* Slow breathing on the primary piece's ring, so the arc never looks frozen. */
+  @keyframes hud-pulse {
+    0%, 100% { opacity: 0.45; }
+    50%      { opacity: 0.9; }
+  }
+}
+
+/* Deliberately NOT in @theme. These are read by inline `style` attributes and by JS,
+   which Tailwind's scanner cannot see — a @theme var with no utility and no var() in
+   shipped CSS gets pruned from the bundle, which is exactly how --color-ink and the two
+   --animate-* tokens died. Channel triplets rather than colours so callers can compose
+   their own alpha: rgb(var(--ground-rgb) / 0.42). rgb and not oklch because some of
+   these end up in framer-motion, whose colour parser handles rgb/hex only. */
+:root {
+  --ground-rgb: 9 4 15;
+  --panel-rgb: 18 10 26;
+  --keyline-rgb: 3 1 4;
+  --brand-rgb: 149 30 245;
+  --brand-deep-rgb: 39 7 72;
+
+  /* One irregular tooth tile for .torn: straight top edge, torn bottom, tiled horizontally.
+     Two hard constraints, both easy to get wrong by hand:
+       - the vertex at x=0 and the vertex at x=240 must share a y (both 6 here), or every
+         tile boundary shows as a visible notch;
+       - the vertices must actually span the full 240, or the path closes with a straight
+         run and you get a flat segment once per tile.
+     preserveAspectRatio='none' plus a px mask-size is what keeps the teeth a constant
+     physical size instead of stretching them as the viewport grows. */
+  --torn-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='14' viewBox='0 0 240 14' preserveAspectRatio='none'%3E%3Cpath fill='%23000' d='M0 0H240V5L240 5L225 6L217 6L201 4L186 11L175 11L166 6L149 4L142 13L129 3L118 12L99 4L92 4L74 10L68 3L60 5L44 4L34 5L21 4L0 5Z'/%3E%3C/svg%3E");
 }
 
 @layer base {
   body {
     @apply bg-slate-950 text-slate-50 antialiased min-h-screen overflow-x-hidden;
   }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    /* Anton ships one weight. Without this, any `font-bold`/`font-extrabold` on a heading
+       makes the browser synthesise a fake bold — it smears the stems and destroys the
+       condensed proportions that make the face read as the wordmark. Belt and braces:
+       the weight utilities are also removed from the headings themselves. */
+    font-synthesis-weight: none;
+    font-weight: 400;
+    @apply tracking-tight;
+  }
+
+  /* Keeps anchor-scrolling clear of the sticky header. */
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 7rem;
+    /* Reserve the scrollbar's width permanently. Locking body scroll for an overlay
+       removes the scrollbar, and without a stable gutter the whole page reflows ~15px at
+       that moment — which would jump the composer's anchor mid-morph. */
+    scrollbar-gutter: stable;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-purple-400;
+  }
+}
+
+/* ---------------------------------------------------------------------- primitives
+   Declared with @utility rather than inside @layer utilities so they get variant
+   support (hover:, md:) and sit in Tailwind's own sort order.
+
+   Caveat worth knowing: tailwind-merge (src/lib/cn.js) has no class group for these
+   names, so `cn('chip', 'rounded-full')` keeps BOTH and source order decides. These
+   primitives therefore stay clear of properties callers commonly override — if you need
+   a different radius or background, don't use the primitive. */
+
+/* The logo's hard outline. Only use it around something lighter than the ground
+   (a purple fill, a badge, imagery) — see the note in @theme. */
+@utility keyline {
+  box-shadow: 0 0 0 2px var(--color-keyline);
+}
+
+/* Cut-out sticker: hard outline plus a solid, unblurred offset shadow. */
+@utility sticker {
+  box-shadow: var(--shadow-sticker);
+  transition: box-shadow 220ms cubic-bezier(0.2, 0.9, 0.1, 1),
+    transform 220ms cubic-bezier(0.2, 0.9, 0.1, 1);
+}
+@utility sticker-hover {
+  &:hover {
+    box-shadow: var(--shadow-sticker-lg);
+    transform: translate(-2px, -2px);
+  }
+}
+
+/* The canonical pill's APPEARANCE, factored out of nine near-verbatim copies of
+   "rounded-full border border-white/10 bg-white/5 …".
+
+   Deliberately no padding, font-size or display: those genuinely differ per site (the
+   chain badge is px-2 py-0.5, the suggestion pills are px-3 py-1.5), and since
+   tailwind-merge doesn't know this class name, a padding here would collide with a
+   caller's `px-*` and let source order decide the winner. Appearance is centralised,
+   metrics stay at the call site. */
+@utility chip {
+  border-radius: 9999px;
+  border: 1px solid --alpha(var(--color-white) / 10%);
+  background-color: --alpha(var(--color-white) / 5%);
+  transition: color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+
+/* Dark glass surface. Keeps a light hairline rather than a black keyline: measured, a
+   keyline against a dark panel is 1.1:1 and simply does not read. */
+@utility panel {
+  background-color: --alpha(var(--color-slate-900) / 55%);
+  backdrop-filter: blur(20px);
+  border: 1px solid --alpha(var(--color-white) / 10%);
+  box-shadow: 0 14px 40px -12px rgb(var(--keyline-rgb) / 0.8);
+}
+
+/* --- headline treatment -----------------------------------------------------------
+   The lockup's slant is a hard oblique — the roman letterforms sheared, not a true
+   italic — so shear them. skewX lives on this class and never on an element framer-motion
+   animates, because framer writes `transform` wholesale and would overwrite it. */
+@utility headline-monster {
+  font-family: var(--font-display);
+  font-weight: 400; /* Anton has one weight; see the font-synthesis guard in @layer base */
+  text-transform: uppercase;
+  letter-spacing: 0.005em;
+  transform: skewX(-7deg);
+  transform-origin: 0 100%;
+}
+
+/* The keyline on live text is progressive enhancement only. Without paint-order the
+   stroke paints centred on the glyph and eats the counters of a heavy face, so it is
+   gated on support rather than shipped blind. */
+@supports (paint-order: stroke) {
+  .headline-keyline {
+    paint-order: stroke fill;
+    -webkit-text-stroke: 0.06em var(--color-keyline);
+  }
+}
+
+/* Solid offset shadow for type, mirroring the wordmark's own. */
+@utility shadow-type {
+  text-shadow: 4px 4px 0 var(--color-brand-deep);
+}
+
+/* --- torn edge --------------------------------------------------------------------
+   The logo's letters have torn bottoms; this is that device as a section seam.
+
+   Rejected alternatives: `clip-path: polygon()` clips the section's own content, kills
+   box-shadow, and — because its vertices are percentages — stretches each tooth as the
+   viewport grows, which reads as a scaling artefact rather than a tear. `border-image`
+   needs real border-width to paint into and is awkward on a single side.
+
+   This is a standalone element instead: it paints a colour and is masked into teeth, so
+   nothing in either section can ever be clipped, and `mask-size` in px keeps every tooth
+   the same physical size at any width — the viewport just gets more of them.
+   `filter: drop-shadow` follows the mask's alpha channel, so the keyline traces the tear
+   itself; a box-shadow would trace the rectangle and show as a straight line. */
+@utility torn {
+  height: 14px;
+  background-color: var(--color-slate-950);
+  mask-image: var(--torn-tile);
+  mask-size: 240px 100%;
+  mask-repeat: repeat-x;
+}
+@utility torn-brand {
+  background-color: var(--color-brand);
 }
 
 @layer utilities {
+  /* Kept as an alias so the three existing .glass-panel call sites keep working while
+     the primitive above becomes the real definition. */
   .glass-panel {
-    @apply bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 shadow-2xl;
+    @apply panel;
   }
-  
-  .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-indigo-400;
+
+  /* Fades a horizontally scrolling track into the page edges. */
+  .marquee-mask {
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      black 6rem,
+      black calc(100% - 6rem),
+      transparent
+    );
+  }
+
+  /* Thin, dark scrollbar for panels that must stay scrollable (the chat thread). */
+  .scrollbar-subtle {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(255 255 255 / 0.15) transparent;
+  }
+  .scrollbar-subtle::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-subtle::-webkit-scrollbar-thumb {
+    background: rgb(255 255 255 / 0.15);
+    border-radius: 9999px;
+  }
+  .scrollbar-subtle::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  /* Hide scrollbars on the brand/collection rails without losing wheel scroll. */
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* ------------------------------------------------------------------ HUD canvas
+     The prompt canvas is the one sci-fi surface in an otherwise cinematic-glass UI.
+     It reads from --color-accent / --color-accent-2 so the palette declared in @theme
+     is actually referenced — Tailwind v4 drops unreferenced theme vars from the bundle,
+     which is why those tokens compiled to nothing before this existed. */
+
+  /* Faint lattice. Two repeating gradients rather than an image: no request, and it
+     scales with the panel instead of tiling at a fixed pixel size. */
+  .hud-grid {
+    background-image:
+      repeating-linear-gradient(
+        to right,
+        color-mix(in oklch, var(--color-accent) 12%, transparent) 0 1px,
+        transparent 1px 64px
+      ),
+      repeating-linear-gradient(
+        to bottom,
+        color-mix(in oklch, var(--color-accent-2) 10%, transparent) 0 1px,
+        transparent 1px 64px
+      );
+    mask-image: radial-gradient(90% 70% at 50% 40%, black 30%, transparent 100%);
+  }
+
+  /* A 1px accent line just inside the panel edge, following the whole perimeter.
+     This replaces the corner brackets that used to live here. Two problems killed them:
+     `border-top: 1px solid` with no colour resets border-top-color to currentColor
+     (near-white body text, not the accent), and an 8px bracket radius inside a 24px
+     panel radius puts the bracket's arc outside the panel's rounded clip, so
+     `overflow: hidden` sliced it into stubs. An inset ring is generated from the
+     element's own border-radius, so it traces the corner exactly and can't be clipped —
+     and unlike corner marks it never collides with the label, the close button or the
+     contract dock.
+
+     It rides on .composer-bloom rather than a class of its own: box-shadow is a single
+     property, so a second rule would replace the bloom instead of adding to it. */
+
+  .hud-sweep {
+    animation: hud-sweep 1.5s ease-out 1 both;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      color-mix(in oklch, var(--color-accent) 22%, transparent),
+      transparent
+    );
+  }
+
+  .hud-pulse {
+    animation: hud-pulse 2.8s ease-in-out infinite;
+  }
+
+  /* The canvas's outer glow — the expanded prompt bar's halo.
+     A box-shadow, not a blurred gradient rectangle behind the panel. A shadow is
+     generated from the element's own border-radius, so it traces the corner exactly.
+     A sibling div cannot: it's a second, larger rectangle, and the area the panel's
+     radius carves out of its own corner leaves that rectangle visible through the gap —
+     a bright wedge at each corner however carefully the radii are matched.
+     Two tones of violet, left and right, mirroring the collapsed bar's gradient. (This
+     pair used to be blue-left/violet-right; the brand pack has no blue, so accent-2 is
+     now a magenta-leaning violet at the same lightness — see @theme.) */
+  /* Collapsed: a tight glow reading the same as the hero bar's halo. */
+  .composer-bloom {
+    box-shadow:
+      -10px 0 26px -14px color-mix(in oklch, var(--color-accent-2) 70%, transparent),
+      10px 0 26px -14px color-mix(in oklch, var(--color-accent) 70%, transparent);
+    transition: box-shadow 600ms ease;
+  }
+
+  /* Expanded: the wide bloom, plus the 1px accent line just inside the edge. */
+  .composer-bloom[data-expanded='true'] {
+    box-shadow:
+      -28px 0 80px -28px color-mix(in oklch, var(--color-accent-2) 65%, transparent),
+      28px 0 80px -28px color-mix(in oklch, var(--color-accent) 65%, transparent),
+      inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 16%, transparent);
+  }
+
+  .composer-bloom:focus-within {
+    box-shadow:
+      -14px 0 34px -12px color-mix(in oklch, var(--color-accent-2) 85%, transparent),
+      14px 0 34px -12px color-mix(in oklch, var(--color-accent) 85%, transparent);
+  }
+  .composer-bloom[data-expanded='true']:focus-within {
+    box-shadow:
+      -28px 0 100px -22px color-mix(in oklch, var(--color-accent-2) 80%, transparent),
+      28px 0 100px -22px color-mix(in oklch, var(--color-accent) 80%, transparent),
+      inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 26%, transparent);
+  }
+
+  /* Keeps a scrolled panel from chaining its overscroll to the locked page — on iOS
+     that rubber-bands the whole overlay and reads as a broken modal. */
+  .overscroll-contain-y {
+    overscroll-behavior-y: contain;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+
+  /* framer-motion marquees read this flag and render a static track instead. */
+  .marquee-track {
+    transform: none !important;
   }
 }

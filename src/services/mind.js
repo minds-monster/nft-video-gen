@@ -3,8 +3,22 @@ import { createMindsClient } from "@animocabrands/minds-client-lib";
 
 const MIND_API_KEY = import.meta.env.VITE_MIND_API_KEY;
 
+// Which mind answers. Without this we fall back to the first mind on the account,
+// which is arbitrary — and the arbitrary one may not have a video skill.
+const CONFIGURED_MIND_ID = import.meta.env.VITE_MIND_ID?.trim() || null;
+
+// A conversation alias is bound to a mind when it's first created, and
+// `ensureConversation` is a no-op on an alias that already exists — so reusing a
+// shared alias like "main" would keep routing to whichever mind claimed it first.
+// Deriving the alias from the mind id means switching VITE_MIND_ID always lands on a
+// conversation bound to the right mind. Override with VITE_MIND_ALIAS if you need a
+// specific thread.
+export const conversationAlias =
+  import.meta.env.VITE_MIND_ALIAS?.trim() ||
+  (CONFIGURED_MIND_ID ? `studio-${CONFIGURED_MIND_ID.slice(0, 8)}` : "main");
+
 let clientInstance = null;
-let defaultMindId = null;
+let defaultMindId = CONFIGURED_MIND_ID;
 
 export const getMindsClient = () => {
   if (!MIND_API_KEY) {
@@ -18,11 +32,13 @@ export const getMindsClient = () => {
   return clientInstance;
 };
 
-export const initializeChat = async (alias = "main") => {
+export const initializeChat = async (alias = conversationAlias) => {
   const client = getMindsClient();
   if (!client) return { error: "No API Key configured" };
 
   try {
+    // With VITE_MIND_ID set we already know the target, so skip listMinds — it was
+    // costing ~2s of startup before the first paint of the conversation.
     if (!defaultMindId) {
       let humanId = null;
       try {
@@ -53,7 +69,7 @@ export const initializeChat = async (alias = "main") => {
   }
 };
 
-export const sendChatMessage = async (messageText, alias = "main") => {
+export const sendChatMessage = async (messageText, alias = conversationAlias) => {
   const client = getMindsClient();
   if (!client) return null;
   
