@@ -8,6 +8,11 @@ import { cn } from '../../lib/cn';
 
 const CARD_W = 148;
 const CARD_H = 186;
+// The arc has two jobs. While the Casting Director is reading it is the centrepiece — full size, on
+// the curve. Once a treatment is on screen it demotes to a legend: the strip of thumbnails
+// the <Subject N> chips in the prose refer back to. Same component, smaller cards, no curve.
+const COMPACT_W = 84;
+const COMPACT_H = 106;
 const ARC_DEPTH = 52; // how far the ends of the arc dip
 const TILT = 26; // degrees each end turns to face the centre
 
@@ -35,7 +40,7 @@ const arcLayout = (count, width) => {
   });
 };
 
-const AddNode = ({ onClick, disabled }) => (
+const AddNode = ({ onClick, disabled, width = CARD_W, height = CARD_H }) => (
   <button
     type="button"
     onClick={onClick}
@@ -47,7 +52,7 @@ const AddNode = ({ onClick, disabled }) => (
         ? 'cursor-not-allowed opacity-40'
         : 'hover:border-purple-400/60 hover:bg-purple-500/5 hover:text-purple-300',
     )}
-    style={{ width: CARD_W, height: CARD_H }}
+    style={{ width, height }}
   >
     <Plus className="h-5 w-5" />
     <span className="font-mono text-[9px] uppercase tracking-widest">Add piece</span>
@@ -76,6 +81,11 @@ const HoloArc = ({
   onAdd,
   loading,
   full,
+  // key -> { status, dossier?, cached?, error? }, from useScreenwriter. Absent in the
+  // compose stage, which is why every card reads it as optional.
+  analysis,
+  readOnly = false,
+  compact = false,
 }) => {
   const [container, setContainer] = useState(null);
   const { width } = useElementSize(container);
@@ -96,7 +106,10 @@ const HoloArc = ({
   const nodeCount = cast.length + 1;
   const layout = useMemo(() => arcLayout(nodeCount, width), [nodeCount, width]);
 
-  const flat = !isWide || reduceMotion;
+  const [cardW, cardH] = compact ? [COMPACT_W, COMPACT_H] : [CARD_W, CARD_H];
+  // Compact always uses the rail: a legend wants to be scannable in one line, not arranged
+  // on a curve.
+  const flat = compact || !isWide || reduceMotion;
 
   if (loading) {
     return (
@@ -110,7 +123,12 @@ const HoloArc = ({
 
   if (flat) {
     return (
-      <div className="no-scrollbar overscroll-contain-y -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 py-4">
+      <div
+        className={cn(
+          'no-scrollbar overscroll-contain-y -mx-4 flex snap-x overflow-x-auto px-4',
+          compact ? 'justify-center gap-2 py-2' : 'snap-mandatory gap-3 py-4',
+        )}
+      >
         {cast.map((entry) => (
           <div key={entry.key} className="snap-center">
             <HoloAssetCard
@@ -119,14 +137,19 @@ const HoloArc = ({
               onPromote={onPromote}
               onRemove={onRemove}
               onSwap={onSwap}
-              width={CARD_W}
-              height={CARD_H}
+              width={cardW}
+              height={cardH}
+              analysis={analysis?.[entry.key]}
+              readOnly={readOnly}
+              compact={compact}
             />
           </div>
         ))}
-        <div className="snap-center">
-          <AddNode onClick={() => onAdd?.()} disabled={full} />
-        </div>
+        {!readOnly && (
+          <div className="snap-center">
+            <AddNode onClick={() => onAdd?.()} disabled={full} width={cardW} height={cardH} />
+          </div>
+        )}
       </div>
     );
   }
@@ -185,11 +208,14 @@ const HoloArc = ({
                   onSwap={onSwap}
                   width={CARD_W}
                   height={CARD_H}
+                  analysis={analysis?.[entry.key]}
+                  readOnly={readOnly}
                 />
               </motion.div>
             );
           })}
 
+          {!readOnly && (
           <motion.div
             key="add-node"
             className="absolute left-1/2 top-0"
@@ -212,6 +238,7 @@ const HoloArc = ({
           >
             <AddNode onClick={() => onAdd?.()} disabled={full} />
           </motion.div>
+          )}
         </AnimatePresence>
       </div>
     </div>

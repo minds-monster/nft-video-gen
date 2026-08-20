@@ -138,6 +138,13 @@
     0%, 100% { opacity: 0.45; }
     50%      { opacity: 0.9; }
   }
+
+  /* The caret at the end of text that is still arriving. */
+  @keyframes reveal-caret {
+    0%, 45%   { opacity: 1; }
+    50%, 95%  { opacity: 0.15; }
+    100%      { opacity: 1; }
+  }
 }
 
 /* Deliberately NOT in @theme. These are read by inline `style` attributes and by JS,
@@ -390,6 +397,20 @@
 
   .hud-pulse {
     animation: hud-pulse 2.8s ease-in-out infinite;
+  }
+
+  /* ------------------------------------------------------------------ arriving text
+     Text that is still being written — streamed from a model, or newly settled. The only
+     decoration is a faint brand-purple bloom on the characters that have not resolved yet,
+     so a paragraph mid-arrival reads as *becoming* rather than as a different kind of
+     content. Deliberately no panel, no border and no ground of its own: this treatment is
+     applied to ordinary prose in place, and the canvas is already the surface. */
+  .reveal-glow {
+    text-shadow: 0 0 10px rgb(var(--brand-rgb) / 0.45);
+  }
+
+  .reveal-caret {
+    animation: reveal-caret 1s steps(1, end) infinite;
   }
 
   /* The canvas's outer glow — the expanded prompt bar's halo.

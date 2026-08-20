@@ -142,6 +142,67 @@ Sound: a low synth pad.`,
 
 Sound: rain on metal, an idling engine.`,
   },
+
+  // ------------------------------------------------------------------ P8
+  // The one unknown blocking the Screenwriter's output contract (worker/rulebook.js).
+  //
+  // MiniMax shipped an official prompt format with the H3 open weights — a three-field
+  // script, with characters bound to their references as <Subject N> / <Picture N>. That
+  // is NOT what this repo currently writes: hero-prompts.mjs and launch-prompts.mjs both
+  // assemble one prose blob with a trailing `Sound:` clause. Which is right for the HOSTED
+  // /v2 API is undocumented, and the third-party integrations disagree — Runware's guide
+  // says to address references as "Image 1", not "<Picture 1>".
+  //
+  // Writing an agent that emits a format the API silently ignores would degrade every
+  // render from here on, so it is worth $0.32 to find out.
+  //
+  // The discriminator is ORDER, not fidelity. Both these references are known-good — they
+  // rendered correctly in launch-1 — so "did they appear" tells us nothing new. What is
+  // being measured is whether <Picture 1> and <Picture 2> actually INDEX the reference
+  // array: the text binds Picture 1 to the left of frame and Picture 2 to the right, so if
+  // indexing works the woman stands left and the ape stands right. If they come back
+  // swapped or blended, the tags are decoration and the Screenwriter must bind subjects by
+  // description alone.
+  //
+  // ── RESULT (probe-p8.mp4, 133s, $0.32) ──────────────────────────────────────────────
+  //
+  // 1. THE FORMAT IS SAFE. The three-field script was accepted and rendered coherently,
+  //    and none of the scaffolding leaked into the picture — no "integrated_multimodal_
+  //    description", no "<Subject 1>", no field labels burned into frame. Given rule 8
+  //    (this model prints text it is shown) that was the real risk, and it did not happen.
+  //    worker/rulebook.js can emit this format.
+  //
+  // 2. ORDERING HELD. <Picture 1> (the woman) rendered on the left and <Picture 2> (the
+  //    ape) on the right, as instructed, and held those sides for all 4 seconds. n=1 on a
+  //    binary outcome, so this is evidence rather than proof — but combined with the
+  //    attributes landing on the correct figure it is worth building on.
+  //
+  // 3. WARDROBE IS NEARLY PERFECT, FACES ARE NOT. Both outfits transferred exactly — white
+  //    crop tee and white trainers left, black print hoodie and black trainers right, lime
+  //    trackpants on both. But the ape LOST ITS MUZZLE and rendered as a human face under
+  //    the orange beanie, even though the prose said "stylised brown ape character" and it
+  //    had a reference slot to itself.
+  //
+  //    The cause is framing, not slots: gmoney.png is a full-body figure at 465x1024, so
+  //    the head is a few percent of the reference. prep-cast.mjs already knew this — the
+  //    ape it ships to real renders is assets/refs/frames/ape-head.png, a CROP — and this
+  //    probe is what that crop is defending against. Faces need their own tight reference.
+  //
+  //    This is why the Casting Director emits `framing` and `cropAdvice` as first-class fields
+  //    (worker/casting-director.js) rather than as prose asides: a full-bleed full-body token is a
+  //    measurable fidelity hazard, and something downstream has to act on it.
+  p8: {
+    question: 'Does the hosted /v2 API honour the official <Subject N>/<Picture N> binding?',
+    referenceImages: ['assets/refs/cast/courtney.png', 'assets/refs/cast/gmoney.png'],
+    text: `<Subject 1> is the stylised bald young woman in <Picture 1>, with green diamond-shaped paint around both eyes, dark plum lipstick and a studded black choker.
+<Subject 2> is the stylised brown ape character in <Picture 2>, with wide pale eyes and a knitted orange beanie.
+
+integrated_multimodal_description: Live-action, cinematic. A medium-wide shot frames two figures standing side by side and facing the lens on a wet black asphalt starting grid at night, heavy rain falling through the beams of overhead floodlights and steam drifting low across the ground. <Subject 1> stands on the LEFT side of the frame and <Subject 2> stands on the RIGHT side of the frame. They hold those two positions for the whole shot and never swap sides, never cross and never merge. Both are living figures with ordinary skin, not mannequins and not chrome statues. <Subject 1> turns her face to the lens and closes one eye in a slow deliberate wink. <Subject 2> lifts his chin and grins. The camera pushes in with small amplitude at slow speed. Photoreal cinematic render, anamorphic lens, shallow depth of field, high-contrast night grade, volumetric rain and light shafts, teal shadows against warm highlights. No captions, subtitles, watermarks or added signage.
+
+overall_soundscape: Heavy rain drumming on wet asphalt and metal, a low wind across the open grid, and the distant idle of engines behind the floodlights.
+
+non_diegetic_music: A slow, low synth pulse holding a single chord, tension without release.`,
+  },
 };
 
 const CONFIG = { model: 'MiniMax-H3', resolution: '768P', duration: 4, ratio: '16:9' };

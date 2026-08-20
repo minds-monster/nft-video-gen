@@ -24,6 +24,10 @@ dist-ssr
 *.sw?
 .env
 
+# Worker secrets for `wrangler dev`. The deployed equivalent is `wrangler secret put`.
+.dev.vars
+.wrangler
+
 # Hero-video working files. Reference art downloaded from chain (scripts/prep-refs.mjs)
 # and raw MiniMax renders (scripts/gen-video.mjs). Large, reproducible, and only the
 # encoded result belongs in git — see public/hero/.

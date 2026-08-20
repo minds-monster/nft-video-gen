@@ -1,0 +1,43 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "nft-video-gen",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-08-01",
+
+  // One deploy serves both halves: `dist/` (the Vite build) as static assets, and the
+  // Worker for /api/*. `run_worker_first` is what keeps them from fighting — without it
+  // the asset router answers /api/* with the SPA's index.html and the fetch handler is
+  // never reached.
+  //
+  // `single-page-application` matters for the hash routes in useStudioSelection.js: a
+  // deep link must return index.html rather than a 404.
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+
+  // The Casting Director's dossier cache. A dossier describes artwork that can never change, so
+  // entries are written without a TTL — this is a permanent store keyed by
+  // assetKey(chain, address, tokenId), not an expiring cache.
+  //
+  // No `id` on purpose: Wrangler provisions the namespace on first deploy and writes the
+  // id back here. `wrangler dev` simulates it locally under .wrangler/state regardless.
+  "kv_namespaces": [{ "binding": "DOSSIERS" }],
+
+  "observability": { "enabled": true },
+
+  // Pin the local dev port so Vite's /api proxy has a stable target. 8787 is Wrangler's
+  // default and is often still held by a stale workerd from a previous session; picking an
+  // explicit non-default port avoids the silent fallback that breaks the proxy.
+  "dev": { "port": 8789 },
+
+  "vars": {
+    // Overridable per-environment so the whole stack can be pointed at OpenRouter (which
+    // serves the same weights) when NVIDIA's evaluation-only trial tier stops being
+    // appropriate. See the free-tier note in the plan.
+    "NVIDIA_BASE_URL": "https://integrate.api.nvidia.com/v1",
+    "CASTING_MODEL": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+    "SCREENWRITER_MODEL": "nvidia/nemotron-3-super-120b-a12b"
+  }
+}

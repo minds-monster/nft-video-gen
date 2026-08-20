@@ -10,6 +10,7 @@ import PromptCanvas from './components/canvas/PromptCanvas';
 import MindChatProvider from './context/MindChatContext';
 import { useStudioSelection } from './hooks/useStudioSelection';
 import { useCanvasComposer } from './hooks/useCanvasComposer';
+import { useScreenwriter } from './hooks/useScreenwriter';
 import { BRANDS, LIVE_COLLECTIONS, SECTORS, hasLiveCollection, searchBrands } from './data/brands';
 import { LICENSE } from './config/licensing';
 
@@ -38,6 +39,9 @@ const AppShell = () => {
   const [custom, setCustom] = useState(null);
 
   const composer = useCanvasComposer();
+  // The other half of the canvas. useCanvasComposer owns the prompt and the cast and says
+  // outright that it owns no submit behaviour; this is what that seam was left for.
+  const screenwriter = useScreenwriter();
 
   // The Studio is the deeper surface. The only way to reach it while the canvas is up is
   // the browser restoring an old #/studio hash, and when that happens the canvas yields.
@@ -224,7 +228,11 @@ const AppShell = () => {
 
       {/* Both overlays sit at z-50. They're never both open in practice, and rendering
           the canvas first means the Studio wins any overlap during exit animations. */}
-      <PromptCanvas composer={composer} />
+      <PromptCanvas
+        composer={composer}
+        screenwriter={screenwriter}
+        onLaunch={screenwriter.launch}
+      />
 
       <StudioOverlay
         selection={selection}

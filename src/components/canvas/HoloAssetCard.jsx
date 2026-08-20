@@ -26,7 +26,30 @@ const FALLBACK_ACCENT = '#951EF5';
  * Only the primary piece plays its film. Autoplaying every card would pull several
  * IPFS videos at once for artwork the user is still choosing between.
  */
-const HoloAssetCard = ({ entry, isPrimary, onPromote, onRemove, onSwap, width, height }) => {
+// What the Casting Director is doing to this piece, as a chip on the card. `cached` deliberately
+// gets its own label rather than collapsing into `done`: a warm dossier returns in one
+// round trip, and saying so is what makes the KV cache legible instead of looking like the
+// analysis was skipped.
+const CASTING_CHIP = {
+  queued: { label: 'Queued', className: 'bg-black/70 text-slate-400' },
+  watching: { label: 'Reading', className: 'bg-purple-500/25 text-purple-200' },
+  done: { label: 'Read', className: 'bg-emerald-400/20 text-emerald-200' },
+  cached: { label: 'Known', className: 'bg-emerald-400/15 text-emerald-300/90' },
+  failed: { label: 'Unread', className: 'bg-red-500/25 text-red-200' },
+};
+
+const HoloAssetCard = ({
+  entry,
+  isPrimary,
+  onPromote,
+  onRemove,
+  onSwap,
+  width,
+  height,
+  analysis,
+  readOnly = false,
+  compact = false,
+}) => {
   const [imageFailed, setImageFailed] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -56,8 +79,10 @@ const HoloAssetCard = ({ entry, isPrimary, onPromote, onRemove, onSwap, width, h
 
   return (
     <div
+      title={compact ? name : undefined}
       className={cn(
-        'group relative overflow-hidden rounded-xl border bg-slate-900/60 transition-colors',
+        'group relative overflow-hidden border bg-slate-900/60 transition-colors',
+        compact ? 'rounded-lg' : 'rounded-xl',
         isPrimary ? 'border-white/25' : 'border-white/10 hover:border-white/20',
       )}
       style={{ width, height }}
@@ -160,7 +185,15 @@ const HoloAssetCard = ({ entry, isPrimary, onPromote, onRemove, onSwap, width, h
         className="absolute inset-0 z-10 cursor-pointer rounded-xl"
       />
 
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 p-2.5">
+      <div
+        className={cn(
+          'pointer-events-none absolute inset-x-0 bottom-0 z-20 p-2.5',
+          // As a legend the card is 84x106 and this caption is three lines at 10px — it
+          // would cover the artwork it exists to label. The name lives in the `title`
+          // attribute below instead, and in the <Subject N> chips the legend serves.
+          compact && 'hidden',
+        )}
+      >
         {brand && (
           <p
             className="truncate text-[10px] font-semibold uppercase tracking-widest"
@@ -190,7 +223,15 @@ const HoloAssetCard = ({ entry, isPrimary, onPromote, onRemove, onSwap, width, h
           button is still tappable — so a stray tap near the corner would silently drop a
           piece. Show them outright there instead.
       */}
-      <div className="absolute inset-x-0 top-0 z-20 flex items-start justify-between p-1.5">
+      <div
+        className={cn(
+          'absolute inset-x-0 top-0 z-20 flex items-start justify-between p-1.5',
+          // Once the Screenwriter is running the cast is locked — editing it underneath a
+          // treatment that was written for a different set of pieces is worse than not
+          // being able to edit at all.
+          readOnly && 'hidden',
+        )}
+      >
         <button
           type="button"
           onClick={() => onSwap?.(entry.key)}
@@ -209,6 +250,40 @@ const HoloAssetCard = ({ entry, isPrimary, onPromote, onRemove, onSwap, width, h
           <X className="h-3.5 w-3.5" />
         </button>
       </div>
+
+      {/* A scan line over artwork being read. `.hud-sweep` already exists in index.css for
+          exactly this HUD register — it is what HudFrame uses when the canvas opens — and
+          reusing it means the Casting Director's work looks native to the surface rather than bolted
+          on. Cast into the same `key` so it restarts if a card is re-read. */}
+      {analysis?.status === 'watching' && (
+        <span
+          key="sweep"
+          aria-hidden="true"
+          className="hud-sweep pointer-events-none absolute inset-x-0 top-0 z-20 h-10"
+        />
+      )}
+
+      {analysis && (
+        <div className="pointer-events-none absolute inset-x-1.5 top-1.5 z-20 flex justify-end">
+          {(() => {
+            const state =
+              analysis.status === 'done' && analysis.cached ? 'cached' : analysis.status;
+            const chip = CASTING_CHIP[state] ?? CASTING_CHIP.queued;
+            return (
+              <span
+                title={analysis.error ?? undefined}
+                className={cn(
+                  'rounded-full px-1.5 py-0.5 font-mono text-[8px] font-bold uppercase tracking-widest',
+                  chip.className,
+                  analysis.status === 'watching' && 'animate-pulse',
+                )}
+              >
+                {chip.label}
+              </span>
+            );
+          })()}
+        </div>
+      )}
 
       {(isMock || isPrimary || entry.origin === 'pasted') && (
         <div className="pointer-events-none absolute left-1.5 top-1.5 z-10 flex gap-1">

@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { Loader2, Send, Sparkles, X } from 'lucide-react';
+import { AlertTriangle, Loader2, PenLine, Send, Sparkles, X } from 'lucide-react';
 import HudFrame from './HudFrame';
 import HoloArc from './HoloArc';
 import ContractDock from './ContractDock';
 import AssetPicker from './AssetPicker';
+import TreatmentPanel from './TreatmentPanel';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { resolveNftName } from '../../services/alchemy';
+import { checkHealth } from '../../services/swarm';
 import { PROMPT_IDEAS } from '../../data/prompts';
+import { STAGE } from '../../hooks/useScreenwriter';
 import { cn } from '../../lib/cn';
 
 const MAX_CAST = 7;
@@ -44,7 +47,7 @@ const SOLID = 'rgb(9, 4, 15)'; // slate-950
  * same size and this tracks it — positioned `absolute` in *document* space, which means
  * it scrolls with the page natively while collapsed instead of chasing scroll events.
  */
-const PromptCanvas = ({ composer, onLaunch }) => {
+const PromptCanvas = ({ composer, onLaunch, screenwriter }) => {
   const {
     open,
     openCanvas,
@@ -82,6 +85,20 @@ const PromptCanvas = ({ composer, onLaunch }) => {
   const reduceMotion = useReducedMotion();
   const wide = useMediaQuery('(min-width: 768px)');
 
+  // Select 4 random prompts from the pool when the neural canvas first loads up or opens blank
+  const [suggestedPrompts, setSuggestedPrompts] = useState(() => {
+    const shuffled = [...PROMPT_IDEAS].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, 4);
+  });
+
+  useEffect(() => {
+    if (open && !prompt.trim()) {
+      const shuffled = [...PROMPT_IDEAS].sort(() => 0.5 - Math.random());
+      setSuggestedPrompts(shuffled.slice(0, 4));
+    }
+  }, [open]);
+
+
   // Body scroll is locked while open, so the scroll offset the expanded rect is measured
   // against can't drift underneath us. Captured at the moment of opening.
   const openScrollY = useRef(0);
@@ -114,6 +131,25 @@ const PromptCanvas = ({ composer, onLaunch }) => {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
+  // Worker reachability. In dev the agent Worker runs separately (`npm run dev:worker`);
+  // if it is not reachable every cast will fail with a generic model error. Checking once
+  // when the canvas opens lets us surface the real cause immediately.
+  const [workerOk, setWorkerOk] = useState(true);
+  useEffect(() => {
+    if (!open) return undefined;
+    let cancelled = false;
+    checkHealth()
+      .then(() => {
+        if (!cancelled) setWorkerOk(true);
+      })
+      .catch(() => {
+        if (!cancelled) setWorkerOk(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+
   const inset = wide ? EXPANDED_INSET : 0;
   const target = open
     ? {
@@ -140,6 +176,11 @@ const PromptCanvas = ({ composer, onLaunch }) => {
     const onKeyDown = (event) => {
       if (event.key !== 'Escape') return;
       if (picker) closePicker();
+      // The treatment is a layer above the composer rather than a separate overlay, so it
+      // takes its own turn in the ladder: Escape steps back to the canvas, and only an
+      // Escape from the canvas itself closes the whole thing. The run keeps going either
+      // way, and the "treatment ready" chip below leads back to it.
+      else if (screenwriter && screenwriter.stage !== STAGE.COMPOSE) screenwriter.backToCompose();
       else {
         // Blur first: leaving focus in the textarea would re-fire onFocus on the next
         // click and reopen the canvas the user just dismissed.
@@ -149,7 +190,7 @@ const PromptCanvas = ({ composer, onLaunch }) => {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [open, picker, closePicker, closeCanvas]);
+  }, [open, picker, closePicker, closeCanvas, screenwriter]);
 
   const grow = useCallback(
     (element) => {
@@ -184,13 +225,22 @@ const PromptCanvas = ({ composer, onLaunch }) => {
     closeCanvas();
   };
 
+  // Which half of the canvas is on screen. Everything downstream reads this rather than
+  // `screenwriter.stage` directly, so the component still works standalone (Storybook, a
+  // test, the collapsed bar before App has a swarm to give it) with no screenwriter prop.
+  const stage = screenwriter?.stage ?? STAGE.COMPOSE;
+  const composing = stage === STAGE.COMPOSE;
+
   const launch = () => {
     const text = prompt.trim();
     if (!text || !primary) return;
+    // A second send while the Casting Director is still reading would abort a run the user is
+    // already watching, and bill the swarm twice for it.
+    if (!composing) return;
     onLaunch?.({ prompt: text, primary, cast });
   };
 
-  const ready = Boolean(prompt.trim()) && Boolean(primary);
+  const ready = Boolean(prompt.trim()) && Boolean(primary) && composing && workerOk;
 
   // Until the anchor has been measured there's nowhere to put the collapsed bar.
   if (!target) return null;
@@ -260,7 +310,17 @@ const PromptCanvas = ({ composer, onLaunch }) => {
       >
         {open && <HudFrame sweep={!reduceMotion} />}
 
-        <div className="relative flex h-full flex-col">
+        {/* HUD corner brackets — only visible expanded, faint enough to read as texture. */}
+        {open && (
+          <>
+            <span className="pointer-events-none absolute left-3 top-12 z-0 h-6 w-6 border-l border-t border-purple-500/15 md:left-5 md:top-14" />
+            <span className="pointer-events-none absolute right-3 top-12 z-0 h-6 w-6 border-r border-t border-purple-500/15 md:right-5 md:top-14" />
+            <span className="pointer-events-none absolute bottom-3 left-3 z-0 h-6 w-6 border-b border-l border-purple-500/15 md:bottom-5 md:left-5" />
+            <span className="pointer-events-none absolute bottom-3 right-3 z-0 h-6 w-6 border-b border-r border-purple-500/15 md:bottom-5 md:right-5" />
+          </>
+        )}
+
+        <div className={cn('relative flex h-full flex-col transition-opacity duration-500', !composing && 'opacity-80')}>
           {/* ---------------------------------------------- expanded-only top chrome */}
           <AnimatePresence>
             {open && (
@@ -270,9 +330,19 @@ const PromptCanvas = ({ composer, onLaunch }) => {
                 animate={{ opacity: 1, transition: { duration: 0.25, delay: 0.15 } }}
                 exit={{ opacity: 0, transition: { duration: 0.12 } }}
               >
-                <p className="pointer-events-none absolute left-5 top-4 z-10 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.25em] text-slate-600 md:left-8 md:top-6">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  Neural canvas
+                <p className="pointer-events-none absolute left-5 top-4 z-10 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.25em] md:left-8 md:top-6">
+                  <span
+                    className={cn(
+                      'h-1.5 w-1.5 rounded-full',
+                      composing ? 'bg-emerald-400' : 'animate-pulse bg-purple-400',
+                    )}
+                  />
+                  <span className={cn(composing ? 'text-slate-600' : 'text-purple-300/80')}>
+                    Neural canvas
+                  </span>
+                  {!composing && (
+                    <span className="text-slate-700">· telemetry live</span>
+                  )}
                 </p>
 
                 <button
@@ -336,6 +406,7 @@ const PromptCanvas = ({ composer, onLaunch }) => {
                         launch();
                       }
                     }}
+                    readOnly={!composing}
                     placeholder="Describe your film…"
                     aria-label="Describe your film"
                     className={cn(
@@ -365,7 +436,27 @@ const PromptCanvas = ({ composer, onLaunch }) => {
                 </div>
 
                 <AnimatePresence>
-                  {open && (
+                  {open && !workerOk && (
+                    <motion.div
+                      key="worker-down"
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0, transition: { duration: 0.2 } }}
+                      exit={{ opacity: 0, transition: { duration: 0.12 } }}
+                      className="mt-3 ml-9 flex items-start gap-2 rounded-xl border border-amber-400/20 bg-amber-400/10 p-3 md:ml-11"
+                    >
+                      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
+                      <div className="text-xs leading-relaxed text-amber-200">
+                        <p className="font-semibold">Agent worker is not running.</p>
+                        <p className="text-amber-200/70">
+                          In dev, run <code className="rounded bg-amber-400/10 px-1 py-0.5 font-mono">npm run dev:worker</code> in another terminal, then try again.
+                        </p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <AnimatePresence>
+                  {open && composing && (
                     <motion.div
                       key="suggestions"
                       initial={{ opacity: 0 }}
@@ -379,7 +470,7 @@ const PromptCanvas = ({ composer, onLaunch }) => {
                         <span className="mr-1 font-mono text-[10px] uppercase tracking-widest text-slate-600">
                           Try
                         </span>
-                        {PROMPT_IDEAS.map((idea) => (
+                        {suggestedPrompts.map((idea) => (
                           <button
                             key={idea}
                             type="button"
@@ -425,6 +516,9 @@ const PromptCanvas = ({ composer, onLaunch }) => {
                       onAdd={() => openPicker(null)}
                       loading={poolLoading && cast.length === 0}
                       full={cast.length >= MAX_CAST}
+                      analysis={composing ? undefined : screenwriter?.analysis}
+                      readOnly={!composing}
+                      compact={stage === STAGE.TREATMENT}
                     />
 
                     <p
@@ -437,7 +531,33 @@ const PromptCanvas = ({ composer, onLaunch }) => {
                           ? `${resolveNftName(primary.nft)} leads · ${cast.length} ${cast.length === 1 ? 'piece' : 'pieces'}`
                           : `${cast.length} pieces`}
                     </p>
+
+                    {/* Escape out of a treatment and it is still there — this is the way
+                        back. Only shown in the compose stage, and only once one exists. */}
+                    {composing && screenwriter?.spec && (
+                      <div className="mt-3 flex justify-center">
+                        <button
+                          type="button"
+                          onClick={screenwriter.showTreatment}
+                          className="chip flex items-center gap-2 px-3 py-1.5 text-[10px] uppercase tracking-widest text-purple-300 hover:text-white"
+                        >
+                          <PenLine className="h-3 w-3" />
+                          Back to the treatment
+                        </button>
+                      </div>
+                    )}
                   </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* ---------------------------------------------------- screenwriter */}
+              <AnimatePresence>
+                {open && !composing && (
+                  <TreatmentPanel
+                    screenwriter={screenwriter}
+                    cast={cast}
+                    onRetry={() => onLaunch?.({ prompt: prompt.trim(), primary, cast })}
+                  />
                 )}
               </AnimatePresence>
             </div>
@@ -445,7 +565,7 @@ const PromptCanvas = ({ composer, onLaunch }) => {
 
           {/* ------------------------------------------------------------- contract */}
           <AnimatePresence>
-            {open && (
+            {open && composing && (
               <motion.footer
                 key="dock"
                 initial={{ opacity: 0 }}
