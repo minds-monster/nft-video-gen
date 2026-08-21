@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { ArrowDown } from 'lucide-react';
 import HeroBackdrop from './HeroBackdrop';
 import { COLLAPSED_HEIGHT } from './canvas/PromptCanvas';
+import PromptSuggestions from './canvas/panels/PromptSuggestions';
 import { BRANDS, LIVE_BRANDS } from '../data/brands';
 import { LICENSE } from '../config/licensing';
 
@@ -16,7 +17,7 @@ const WORDMARKS = [
   ...BRANDS.filter((brand) => !LIVE_BRANDS.includes(brand)),
 ];
 
-const HeroSection = ({ setAnchor, backdropPaused = false }) => (
+const HeroSection = ({ setAnchor, backdropPaused = false, onPromptSelect }) => (
   <section id="top" className="relative isolate px-6 pt-16 pb-12 md:pt-24 md:pb-16">
     <HeroBackdrop className="-z-10" paused={backdropPaused} />
 
@@ -56,8 +57,8 @@ const HeroSection = ({ setAnchor, backdropPaused = false }) => (
           className="mx-auto mt-6 max-w-2xl text-lg text-slate-400 md:text-xl"
           style={{ textShadow: '0 1px 12px rgb(var(--ground-rgb) / 0.7)' }}
         >
-          Every frame licensed, permissionlessly, from the brands that own it. Pick a piece, describe
-          the film, and the rights are handled as it&apos;s made.
+          Every frame automatically attributed, from the brands that own it. Choose a hero, describe
+          the film, and bring your imagination to life.
         </p>
       </motion.div>
 
@@ -76,14 +77,20 @@ const HeroSection = ({ setAnchor, backdropPaused = false }) => (
           style={{ height: COLLAPSED_HEIGHT }}
         />
 
-        <motion.p
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.25 }}
-          className="mt-4 text-xs text-slate-500"
+          className="mt-4"
         >
-          Describe the shot and pick your cast — or browse the work below.
-        </motion.p>
+          <PromptSuggestions
+            onSelect={onPromptSelect}
+            count={4}
+            showRefresh
+            className="justify-center"
+            label="Try"
+          />
+        </motion.div>
       </div>
     </div>
 

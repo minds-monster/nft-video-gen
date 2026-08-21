@@ -1,51 +1,43 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { AlertTriangle, Loader2, PenLine, Send, Sparkles, X } from 'lucide-react';
+import { Loader2, Send, Sparkles, X } from 'lucide-react';
+import { Group, Panel, Separator } from 'react-resizable-panels';
 import HudFrame from './HudFrame';
-import HoloArc from './HoloArc';
 import ContractDock from './ContractDock';
 import AssetPicker from './AssetPicker';
-import TreatmentPanel from './TreatmentPanel';
+import PromptPanel from './panels/PromptPanel';
+import AssetsPanel from './panels/AssetsPanel';
+import CastPanel from './panels/CastPanel';
+import MovieRenderPanel from './panels/MovieRenderPanel';
+import StoryboardPanel from './panels/StoryboardPanel';
+import CastingDirectorPanel from './panels/CastingDirectorPanel';
+import ScreenwriterPanel from './panels/ScreenwriterPanel';
+import ScreenplayPanel from './panels/ScreenplayPanel';
+import StoryboarderPanel from './panels/StoryboarderPanel';
+import ProducerPanel from './panels/ProducerPanel';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
-import { resolveNftName } from '../../services/alchemy';
 import { checkHealth } from '../../services/swarm';
-import { PROMPT_IDEAS } from '../../data/prompts';
 import { STAGE } from '../../hooks/useScreenwriter';
 import { cn } from '../../lib/cn';
-
-const MAX_CAST = 7;
-const TEXTAREA_MAX = 260;
 
 /** Height of the collapsed bar. The hero reserves exactly this much for the anchor. */
 export const COLLAPSED_HEIGHT = 68;
 
-const EXPANDED_INSET = 24; // matches the old md:inset-6
-// framer animates these, so they are plain numbers and the --radius-* tokens cannot reach
-// them. They must be kept in sync with index.css by hand, or the morphing panel ends up a
-// visibly different shape from the rounded-2xl/3xl panels sitting next to it.
+const EXPANDED_INSET = 24;
 const COLLAPSED_RADIUS = 10; // = --radius-2xl
 const EXPANDED_RADIUS = 14; // = --radius-3xl
-
-// Literals, not var(): framer-motion interpolates these two and its colour parser handles
-// rgb/hex only — hand it a var() or an oklch() and the bar→fullscreen morph dies silently
-// at runtime, with no build error. Mirrors --panel-rgb at 55% and --ground-rgb in
-// index.css; keep in sync.
-const GLASS = 'rgba(18, 10, 26, 0.55)'; // slate-900/55
-const SOLID = 'rgb(9, 4, 15)'; // slate-950
+const GLASS = 'rgba(18, 10, 26, 0.55)';
+const SOLID = 'rgb(9, 4, 15)';
 
 /**
  * The prompt composer — the hero's text box and the neural canvas, as a single element.
  *
- * There is one node. Focusing it grows it from bar-size to screen-size; nothing unmounts
- * and nothing new mounts, so the box genuinely expands rather than being swapped for an
- * overlay that resembles it.
+ * Focusing it grows it from bar-size to screen-size; nothing unmounts and nothing new mounts,
+ * so the box genuinely expands rather than being swapped for an overlay.
  *
- * It has to be rendered at root level, as a sibling of <main>: `main` is `relative z-10`
- * and the hero <section> is `isolate`, and either stacking context would pin a descendant
- * below the z-40 header at any z-index. So the hero reserves an invisible anchor of the
- * same size and this tracks it — positioned `absolute` in *document* space, which means
- * it scrolls with the page natively while collapsed instead of chasing scroll events.
+ * The expanded interior is organised like Final Cut Pro: three resizable, collapsible zones
+ * (browser left, viewer/timeline centre, inspector right), each containing the relevant panel.
  */
 const PromptCanvas = ({ composer, onLaunch, screenwriter }) => {
   const {
@@ -59,6 +51,7 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter }) => {
     primary,
     primaryKey,
     setPrimary,
+    addAsset,
     removeAsset,
     reshuffle,
     pool,
@@ -78,62 +71,21 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter }) => {
     loadIntoPicker,
     shufflePickerView,
     clearPickerView,
+    preview,
+    previewLoading,
+    previewNfts,
+    setPreviewCandidate,
+    browseCollection,
+    browseNext,
+    browsePrev,
+    addPreviewToCast,
+    clearPreview,
   } = composer;
 
   const shellRef = useRef(null);
-  const textareaRef = useRef(null);
   const reduceMotion = useReducedMotion();
   const wide = useMediaQuery('(min-width: 768px)');
 
-  // Select 4 random prompts from the pool when the neural canvas first loads up or opens blank
-  const [suggestedPrompts, setSuggestedPrompts] = useState(() => {
-    const shuffled = [...PROMPT_IDEAS].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, 4);
-  });
-
-  useEffect(() => {
-    if (open && !prompt.trim()) {
-      const shuffled = [...PROMPT_IDEAS].sort(() => 0.5 - Math.random());
-      setSuggestedPrompts(shuffled.slice(0, 4));
-    }
-  }, [open]);
-
-
-  // Body scroll is locked while open, so the scroll offset the expanded rect is measured
-  // against can't drift underneath us. Captured at the moment of opening.
-  const openScrollY = useRef(0);
-  if (!open) openScrollY.current = window.scrollY;
-
-  // `morphing` lags the open/closed flip until the animation settles. Two things depend
-  // on it, and both would misbehave if they switched instantly — see `zIndex` and
-  // `blurred` below.
-  const [morphing, setMorphing] = useState(false);
-  const mounted = useRef(false);
-  useEffect(() => {
-    // Skip the mount run: nothing is morphing yet, and flagging it would park the
-    // collapsed bar at z-50 (over the header) until the first animation settled.
-    if (!mounted.current) {
-      mounted.current = true;
-      return;
-    }
-    setMorphing(true);
-  }, [open]);
-
-  // The expanded rect is derived from the viewport, so it has to re-render on resize.
-  // (`anchorRect` handles the collapsed side through its own observers.)
-  const [viewport, setViewport] = useState(() => ({
-    width: window.innerWidth,
-    height: window.innerHeight,
-  }));
-  useEffect(() => {
-    const onResize = () => setViewport({ width: window.innerWidth, height: window.innerHeight });
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-
-  // Worker reachability. In dev the agent Worker runs separately (`npm run dev:worker`);
-  // if it is not reachable every cast will fail with a generic model error. Checking once
-  // when the canvas opens lets us surface the real cause immediately.
   const [workerOk, setWorkerOk] = useState(true);
   useEffect(() => {
     if (!open) return undefined;
@@ -150,6 +102,29 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter }) => {
     };
   }, [open]);
 
+  const openScrollY = useRef(0);
+  if (!open) openScrollY.current = window.scrollY;
+
+  const [morphing, setMorphing] = useState(false);
+  const mounted = useRef(false);
+  useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
+    setMorphing(true);
+  }, [open]);
+
+  const [viewport, setViewport] = useState(() => ({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  }));
+  useEffect(() => {
+    const onResize = () => setViewport({ width: window.innerWidth, height: window.innerHeight });
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
   const inset = wide ? EXPANDED_INSET : 0;
   const target = open
     ? {
@@ -160,13 +135,7 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter }) => {
       }
     : anchorRect;
 
-  // Collapsed, the bar must pass *under* the sticky header when the hero scrolls past it,
-  // so it can't just live at z-50. It also can't drop back to z-30 the instant it starts
-  // shrinking, or it ducks beneath the header mid-flight.
   const zIndex = open || morphing ? 50 : 30;
-  // backdrop-filter is invisible behind an opaque surface but still costs a full-screen
-  // recomposite every frame. Keep it for the glass state and the morph, drop it once the
-  // surface has finished going solid.
   const blurred = !(open && !morphing);
 
   useFocusTrap(shellRef, open, { restoreFocus: false });
@@ -176,79 +145,30 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter }) => {
     const onKeyDown = (event) => {
       if (event.key !== 'Escape') return;
       if (picker) closePicker();
-      // The treatment is a layer above the composer rather than a separate overlay, so it
-      // takes its own turn in the ladder: Escape steps back to the canvas, and only an
-      // Escape from the canvas itself closes the whole thing. The run keeps going either
-      // way, and the "treatment ready" chip below leads back to it.
-      else if (screenwriter && screenwriter.stage !== STAGE.COMPOSE) screenwriter.backToCompose();
       else {
-        // Blur first: leaving focus in the textarea would re-fire onFocus on the next
-        // click and reopen the canvas the user just dismissed.
-        textareaRef.current?.blur();
         closeCanvas();
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [open, picker, closePicker, closeCanvas, screenwriter]);
+  }, [open, picker, closePicker, closeCanvas]);
 
-  const grow = useCallback(
-    (element) => {
-      if (!element) return;
-      element.style.height = 'auto';
-      element.style.height = `${Math.min(element.scrollHeight, open ? TEXTAREA_MAX : 32)}px`;
-    },
-    [open],
-  );
-
-  // Resize after the value has landed in the DOM — measuring inside onChange reads the
-  // previous value, so a long suggestion wouldn't expand the field.
-  useEffect(() => {
-    grow(textareaRef.current);
-  }, [prompt, grow, open]);
-
-  // The type size is CSS-transitioned between the two states, so the measurement above
-  // runs against a half-interpolated font and comes out short. Re-measure once the
-  // transition lands. (`min-h` on the field covers the intervening frames.)
-  useEffect(() => {
-    const element = textareaRef.current;
-    if (!element) return undefined;
-    const onEnd = (event) => {
-      if (event.propertyName === 'font-size') grow(element);
-    };
-    element.addEventListener('transitionend', onEnd);
-    return () => element.removeEventListener('transitionend', onEnd);
-  }, [grow]);
-
-  const dismiss = () => {
-    textareaRef.current?.blur();
-    closeCanvas();
-  };
-
-  // Which half of the canvas is on screen. Everything downstream reads this rather than
-  // `screenwriter.stage` directly, so the component still works standalone (Storybook, a
-  // test, the collapsed bar before App has a swarm to give it) with no screenwriter prop.
   const stage = screenwriter?.stage ?? STAGE.COMPOSE;
   const composing = stage === STAGE.COMPOSE;
 
-  const launch = () => {
+  const launch = useCallback(() => {
     const text = prompt.trim();
-    if (!text || !primary) return;
-    // A second send while the Casting Director is still reading would abort a run the user is
-    // already watching, and bill the swarm twice for it.
-    if (!composing) return;
+    if (!text || !primary || !composing) return;
     onLaunch?.({ prompt: text, primary, cast });
-  };
+  }, [prompt, primary, cast, composing, onLaunch]);
 
   const ready = Boolean(prompt.trim()) && Boolean(primary) && composing && workerOk;
 
-  // Until the anchor has been measured there's nowhere to put the collapsed bar.
+  // Panel refs + collapsed state for the three outer zones.
   if (!target) return null;
 
   return (
     <>
-      {/* Backdrop. Not the box — just the dimmer that hides the page behind it, including
-          the gutter the inset leaves at md. */}
       <AnimatePresence>
         {open && (
           <motion.div
@@ -256,7 +176,7 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter }) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
-            onClick={dismiss}
+            onClick={closeCanvas}
             className="fixed inset-0 z-[45] bg-slate-950/92"
           />
         )}
@@ -269,8 +189,6 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter }) => {
         aria-modal={open ? 'true' : undefined}
         aria-label={open ? 'Compose your film' : undefined}
         data-expanded={open}
-        // Mount at the collapsed rect so the first frame isn't animated in from nothing;
-        // only opacity fades, timed with the hero's own entrance.
         initial={{
           opacity: 0,
           top: target.top,
@@ -280,7 +198,6 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter }) => {
           borderRadius: COLLAPSED_RADIUS,
           backgroundColor: GLASS,
         }}
-        // One element, two rects. Everything else about it is continuous.
         animate={{
           opacity: 1,
           top: target.top,
@@ -310,270 +227,105 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter }) => {
       >
         {open && <HudFrame sweep={!reduceMotion} />}
 
-        {/* HUD corner brackets — only visible expanded, faint enough to read as texture. */}
         {open && (
           <>
-            <span className="pointer-events-none absolute left-3 top-12 z-0 h-6 w-6 border-l border-t border-purple-500/15 md:left-5 md:top-14" />
-            <span className="pointer-events-none absolute right-3 top-12 z-0 h-6 w-6 border-r border-t border-purple-500/15 md:right-5 md:top-14" />
-            <span className="pointer-events-none absolute bottom-3 left-3 z-0 h-6 w-6 border-b border-l border-purple-500/15 md:bottom-5 md:left-5" />
-            <span className="pointer-events-none absolute bottom-3 right-3 z-0 h-6 w-6 border-b border-r border-purple-500/15 md:bottom-5 md:right-5" />
+            <p className="pointer-events-none absolute left-5 top-4 z-10 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.25em] md:left-8 md:top-6">
+              <span
+                className={cn(
+                  'h-1.5 w-1.5 rounded-full',
+                  composing ? 'bg-emerald-400' : 'animate-pulse bg-purple-400',
+                )}
+              />
+              <span className={cn(composing ? 'text-slate-600' : 'text-purple-300/80')}>
+                Neural canvas
+              </span>
+              {!composing && <span className="text-slate-700">· telemetry live</span>}
+            </p>
+
+            <button
+              type="button"
+              onClick={closeCanvas}
+              aria-label="Close the composer"
+              className="absolute right-4 top-4 z-10 flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-slate-500 transition-colors hover:bg-white/10 hover:text-white md:right-6 md:top-6"
+            >
+              <span className="font-mono text-[10px] uppercase tracking-widest">Esc</span>
+              <X className="h-3.5 w-3.5" />
+            </button>
           </>
         )}
 
-        <div className={cn('relative flex h-full flex-col transition-opacity duration-500', !composing && 'opacity-80')}>
-          {/* ---------------------------------------------- expanded-only top chrome */}
-          <AnimatePresence>
-            {open && (
-              <motion.div
-                key="chrome"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1, transition: { duration: 0.25, delay: 0.15 } }}
-                exit={{ opacity: 0, transition: { duration: 0.12 } }}
+        {!open ? (
+          <div className="flex h-full items-center justify-center px-4">
+            <div className="flex w-full max-w-3xl items-center gap-5">
+              <Sparkles className="h-6 w-6 shrink-0 text-purple-400" />
+              <textarea
+                rows={1}
+                value={prompt}
+                onChange={(event) => setPrompt(event.target.value)}
+                onFocus={openCanvas}
+                readOnly={!composing}
+                placeholder="Describe your film…"
+                aria-label="Describe your film"
+                className="min-w-0 flex-1 resize-none bg-transparent text-lg leading-snug text-white outline-none placeholder:text-slate-500"
+              />
+              <button
+                type="button"
+                onClick={launch}
+                disabled={!ready}
+                aria-label="Generate"
+                className={cn(
+                  'flex shrink-0 items-center justify-center rounded-xl p-3 text-white shadow-lg transition-colors',
+                  'bg-purple-600 hover:bg-purple-500',
+                  'disabled:bg-purple-600/40 disabled:text-white/50',
+                )}
               >
-                <p className="pointer-events-none absolute left-5 top-4 z-10 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.25em] md:left-8 md:top-6">
-                  <span
-                    className={cn(
-                      'h-1.5 w-1.5 rounded-full',
-                      composing ? 'bg-emerald-400' : 'animate-pulse bg-purple-400',
-                    )}
-                  />
-                  <span className={cn(composing ? 'text-slate-600' : 'text-purple-300/80')}>
-                    Neural canvas
-                  </span>
-                  {!composing && (
-                    <span className="text-slate-700">· telemetry live</span>
-                  )}
-                </p>
-
-                <button
-                  type="button"
-                  onClick={dismiss}
-                  aria-label="Close the composer"
-                  className="absolute right-4 top-4 z-10 flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-slate-500 transition-colors hover:bg-white/10 hover:text-white md:right-6 md:top-6"
-                >
-                  <span className="font-mono text-[10px] uppercase tracking-widest">Esc</span>
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* `justify-center` on a scroll container makes overflow above the centre point
-              unreachable; centring an inner `min-h-full` block keeps it scrollable. */}
-          <div
-            className={cn(
-              'min-h-0 flex-1',
-              open
-                ? 'scrollbar-subtle overscroll-contain-y overflow-y-auto px-5 pb-2 pt-14 md:px-10 md:pt-16'
-                : 'overflow-hidden p-2',
-            )}
-          >
-            <div
-              className={cn(
-                'mx-auto flex flex-col',
-                open ? 'min-h-full max-w-6xl justify-center gap-10 py-2' : 'h-full justify-center',
-              )}
-            >
-              {/* ------------------------------------------------------------- prompt
-                  The one row that exists in both states. Same icon, same input, same
-                  send button — only the type size and the column width transition. */}
-              <div className={cn('mx-auto w-full shrink-0', open && 'max-w-3xl')}>
-                <div
-                  className={cn(
-                    'flex w-full transition-all duration-500',
-                    // Collapsed gap matches the old bar's icon padding + input padding
-                    // (12px + 8px), so the icon sits exactly where it always has.
-                    open ? 'items-start gap-3 md:gap-4' : 'items-center gap-5',
-                  )}
-                >
-                  <Sparkles
-                    className={cn(
-                      'h-6 w-6 shrink-0 text-purple-400 transition-all duration-500',
-                      open ? 'mt-1.5' : 'ml-3',
-                    )}
-                  />
-
-                  <textarea
-                    ref={textareaRef}
-                    rows={1}
-                    value={prompt}
-                    onChange={(event) => setPrompt(event.target.value)}
-                    onFocus={openCanvas}
-                    onKeyDown={(event) => {
-                      // Enter sends, Shift+Enter is a newline.
-                      if (event.key === 'Enter' && !event.shiftKey) {
-                        event.preventDefault();
-                        launch();
-                      }
-                    }}
-                    readOnly={!composing}
-                    placeholder="Describe your film…"
-                    aria-label="Describe your film"
-                    className={cn(
-                      'scrollbar-subtle min-w-0 flex-1 resize-none bg-transparent leading-snug',
-                      'text-white outline-none transition-all duration-500 placeholder:text-slate-500',
-                      open ? 'min-h-10 py-1 text-2xl md:text-3xl' : 'text-lg',
-                    )}
-                  />
-
-                  <button
-                    type="button"
-                    onClick={launch}
-                    disabled={!ready}
-                    aria-label="Generate"
-                    className={cn(
-                      'flex shrink-0 items-center justify-center rounded-xl p-3 text-white shadow-lg transition-colors',
-                      'bg-purple-600 hover:bg-purple-500',
-                      'disabled:bg-purple-600/40 disabled:text-white/50',
-                    )}
-                  >
-                    {resolving ? (
-                      <Loader2 className="h-6 w-6 animate-spin" />
-                    ) : (
-                      <Send className="h-6 w-6" />
-                    )}
-                  </button>
-                </div>
-
-                <AnimatePresence>
-                  {open && !workerOk && (
-                    <motion.div
-                      key="worker-down"
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0, transition: { duration: 0.2 } }}
-                      exit={{ opacity: 0, transition: { duration: 0.12 } }}
-                      className="mt-3 ml-9 flex items-start gap-2 rounded-xl border border-amber-400/20 bg-amber-400/10 p-3 md:ml-11"
-                    >
-                      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
-                      <div className="text-xs leading-relaxed text-amber-200">
-                        <p className="font-semibold">Agent worker is not running.</p>
-                        <p className="text-amber-200/70">
-                          In dev, run <code className="rounded bg-amber-400/10 px-1 py-0.5 font-mono">npm run dev:worker</code> in another terminal, then try again.
-                        </p>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                <AnimatePresence>
-                  {open && composing && (
-                    <motion.div
-                      key="suggestions"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1, transition: { duration: 0.25, delay: 0.15 } }}
-                      exit={{ opacity: 0, transition: { duration: 0.12 } }}
-                    >
-                      {/* The only rule that marks the writing area, in place of a box. */}
-                      <div className="mt-3 ml-9 h-px bg-gradient-to-r from-white/15 via-white/5 to-transparent md:ml-11" />
-
-                      <div className="mt-3 ml-9 flex flex-wrap items-center gap-2 md:ml-11">
-                        <span className="mr-1 font-mono text-[10px] uppercase tracking-widest text-slate-600">
-                          Try
-                        </span>
-                        {suggestedPrompts.map((idea) => (
-                          <button
-                            key={idea}
-                            type="button"
-                            onClick={() => {
-                              setPrompt(idea);
-                              textareaRef.current?.focus();
-                            }}
-                            className="chip px-3 py-1.5 text-xs text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
-                          >
-                            {idea}
-                          </button>
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* --------------------------------------------------------------- cast */}
-              <AnimatePresence>
-                {open && (
-                  <motion.div
-                    key="cast"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1, transition: { duration: 0.25, delay: 0.15 } }}
-                    exit={{ opacity: 0, transition: { duration: 0.12 } }}
-                    className="w-full shrink-0"
-                  >
-                    <div className="mb-1 flex items-center justify-center gap-3">
-                      <span className="h-px w-8 bg-white/10" />
-                      <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-slate-500">
-                        Cast
-                      </p>
-                      <span className="h-px w-8 bg-white/10" />
-                    </div>
-
-                    <HoloArc
-                      cast={cast}
-                      primaryKey={primaryKey}
-                      onPromote={setPrimary}
-                      onRemove={removeAsset}
-                      onSwap={(key) => openPicker(key)}
-                      onAdd={() => openPicker(null)}
-                      loading={poolLoading && cast.length === 0}
-                      full={cast.length >= MAX_CAST}
-                      analysis={composing ? undefined : screenwriter?.analysis}
-                      readOnly={!composing}
-                      compact={stage === STAGE.TREATMENT}
-                    />
-
-                    <p
-                      aria-live="polite"
-                      className="mt-1 text-center font-mono text-[10px] uppercase tracking-widest text-slate-600"
-                    >
-                      {cast.length === 0
-                        ? 'Add a piece to begin'
-                        : primary
-                          ? `${resolveNftName(primary.nft)} leads · ${cast.length} ${cast.length === 1 ? 'piece' : 'pieces'}`
-                          : `${cast.length} pieces`}
-                    </p>
-
-                    {/* Escape out of a treatment and it is still there — this is the way
-                        back. Only shown in the compose stage, and only once one exists. */}
-                    {composing && screenwriter?.spec && (
-                      <div className="mt-3 flex justify-center">
-                        <button
-                          type="button"
-                          onClick={screenwriter.showTreatment}
-                          className="chip flex items-center gap-2 px-3 py-1.5 text-[10px] uppercase tracking-widest text-purple-300 hover:text-white"
-                        >
-                          <PenLine className="h-3 w-3" />
-                          Back to the treatment
-                        </button>
-                      </div>
-                    )}
-                  </motion.div>
+                {resolving ? (
+                  <Loader2 className="h-6 w-6 animate-spin" />
+                ) : (
+                  <Send className="h-6 w-6" />
                 )}
-              </AnimatePresence>
-
-              {/* ---------------------------------------------------- screenwriter */}
-              <AnimatePresence>
-                {open && !composing && (
-                  <TreatmentPanel
-                    screenwriter={screenwriter}
-                    cast={cast}
-                    onRetry={() => onLaunch?.({ prompt: prompt.trim(), primary, cast })}
-                  />
-                )}
-              </AnimatePresence>
+              </button>
             </div>
           </div>
-
-          {/* ------------------------------------------------------------- contract */}
-          <AnimatePresence>
-            {open && composing && (
-              <motion.footer
-                key="dock"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1, transition: { duration: 0.25, delay: 0.15 } }}
-                exit={{ opacity: 0, transition: { duration: 0.12 } }}
-                className="shrink-0 px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 md:px-10 md:pb-6"
+        ) : (
+          <div className="relative flex h-full flex-col pt-14 md:pt-16">
+            <Group orientation="horizontal" className="flex-1">
+              {/* Left zone: Assets + Cast */}
+              <Panel
+                defaultSize="18"
+                minSize="8"
+                maxSize="35"
+                collapsible
+                className="flex flex-col"
               >
-                <div className="mx-auto max-w-3xl">
+                <Group orientation="vertical" className="flex-1">
+                  <Panel defaultSize="55" minSize="15" className="flex flex-col">
+                    <AssetsPanel
+                      pool={pool}
+                      castKeys={castKeys}
+                      isMock={isMock}
+                      onAdd={addAsset}
+                      onPreview={setPreviewCandidate}
+                      onBrowseCollection={browseCollection}
+                    />
+                  </Panel>
+                  <Separator className="canvas-resize-handle" />
+                  <Panel defaultSize="45" minSize="15" className="flex flex-col">
+                    <CastPanel
+                      cast={cast}
+                      primaryKey={primaryKey}
+                      setPrimary={setPrimary}
+                      removeAsset={removeAsset}
+                      openPicker={openPicker}
+                      loading={poolLoading && cast.length === 0}
+                      full={cast.length >= 7}
+                      analysis={screenwriter?.analysis}
+                      readOnly={!composing}
+                    />
+                  </Panel>
+                </Group>
+
+                <div className="shrink-0 border-t border-white/10 px-3 py-2">
                   <ContractDock
                     onResolve={resolveContract}
                     resolving={resolving}
@@ -581,29 +333,124 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter }) => {
                     onReshuffle={reshuffle}
                   />
                 </div>
-              </motion.footer>
-            )}
-          </AnimatePresence>
-        </div>
+              </Panel>
 
-        <AnimatePresence>
-          {open && picker && (
-            <AssetPicker
-              pool={pool}
-              castKeys={castKeys}
-              isMock={isMock}
-              mode={picker.replaceKey ? 'swap' : 'add'}
-              onChoose={chooseFromPicker}
-              onClose={closePicker}
-              pastedView={pickerView}
-              onLoadContract={loadIntoPicker}
-              onShufflePasted={shufflePickerView}
-              onClearPasted={clearPickerView}
-              resolving={pickerResolving}
-              error={pickerError}
-            />
-          )}
-        </AnimatePresence>
+              <Separator className="canvas-resize-handle" />
+
+              {/* Center zone: Prompt + Movie render + Storyboard */}
+              <Panel
+                defaultSize="55"
+                minSize="30"
+                className="flex flex-col"
+              >
+                <Group orientation="vertical" className="flex-1">
+                  <Panel defaultSize="14" minSize="10" maxSize="25" className="flex flex-col">
+                    <PromptPanel
+                      prompt={prompt}
+                      setPrompt={setPrompt}
+                      onLaunch={launch}
+                      ready={ready}
+                      busy={resolving || screenwriter?.isWriting}
+                      workerOk={workerOk}
+                      readOnly={!composing}
+                      headerAction={
+                        !composing ? (
+                          <button
+                            type="button"
+                            onClick={screenwriter?.backToCompose}
+                            className="font-mono text-[9px] uppercase tracking-widest text-purple-300 transition-colors hover:text-white"
+                          >
+                            Back to compose
+                          </button>
+                        ) : undefined
+                      }
+                    />
+                  </Panel>
+                  <Separator className="canvas-resize-handle" />
+                  <Panel defaultSize="58" minSize="25" className="flex flex-col">
+                    <MovieRenderPanel
+                      primary={primary}
+                      preview={preview}
+                      previewLoading={previewLoading}
+                      previewNfts={previewNfts}
+                      onAdd={addPreviewToCast}
+                      onNext={browseNext}
+                      onPrev={browsePrev}
+                      onClear={clearPreview}
+                    />
+                  </Panel>
+                  <Separator className="canvas-resize-handle" />
+                  <Panel defaultSize="28" minSize="15" className="flex flex-col">
+                    <StoryboardPanel />
+                  </Panel>
+                </Group>
+              </Panel>
+
+              <Separator className="canvas-resize-handle" />
+
+              {/* Right zone: agent inspector panels */}
+              <Panel
+                defaultSize="27"
+                minSize="10"
+                maxSize="45"
+                collapsible
+                className="flex flex-col"
+              >
+                <Group orientation="vertical" className="flex-1">
+                  <Panel defaultSize="22" minSize="10" className="flex flex-col">
+                    <CastingDirectorPanel
+                      cast={cast}
+                      analysis={screenwriter?.analysis}
+                      streams={screenwriter?.streams}
+                      thoughts={screenwriter?.thoughts}
+                    />
+                  </Panel>
+                  <Separator className="canvas-resize-handle" />
+                  <Panel defaultSize="18" minSize="10" className="flex flex-col">
+                    <ScreenwriterPanel live={screenwriter?.live ?? []} thoughts={screenwriter?.thoughts ?? {}} />
+                  </Panel>
+                  <Separator className="canvas-resize-handle" />
+                  <Panel defaultSize="30" minSize="10" className="flex flex-col">
+                    <ScreenplayPanel
+                      spec={screenwriter?.spec}
+                      cast={cast}
+                      analysis={screenwriter?.analysis}
+                      rewriting={screenwriter?.rewriting}
+                      live={screenwriter?.live ?? []}
+                    />
+                  </Panel>
+                  <Separator className="canvas-resize-handle" />
+                  <Panel defaultSize="12" minSize="8" className="flex flex-col">
+                    <StoryboarderPanel />
+                  </Panel>
+                  <Separator className="canvas-resize-handle" />
+                  <Panel defaultSize="18" minSize="10" className="flex flex-col">
+                    <ProducerPanel />
+                  </Panel>
+                </Group>
+              </Panel>
+            </Group>
+
+            <AnimatePresence>
+              {picker && (
+                <AssetPicker
+                  pool={pool}
+                  castKeys={castKeys}
+                  isMock={isMock}
+                  mode={picker.replaceKey ? 'swap' : 'add'}
+                  onChoose={chooseFromPicker}
+                  onClose={closePicker}
+                  pastedView={pickerView}
+                  onLoadContract={loadIntoPicker}
+                  onShufflePasted={shufflePickerView}
+                  onClearPasted={clearPickerView}
+                  resolving={pickerResolving}
+                  error={pickerError}
+                />
+              )}
+            </AnimatePresence>
+          </div>
+        )}
       </motion.div>
     </>
   );

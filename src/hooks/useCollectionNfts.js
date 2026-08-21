@@ -53,7 +53,7 @@ export const useCollectionNfts = ({ chain, address, limit = 24, enabled = true }
     }
 
     let active = true;
-    setState((prev) => ({ ...prev, status: 'loading', error: null }));
+    setState({ nfts: [], isMock: false, status: 'loading', error: null });
 
     loadCollection(chain, address, limit).then((result) => {
       if (!active) return;

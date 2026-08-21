@@ -455,6 +455,24 @@
   .overscroll-contain-y {
     overscroll-behavior-y: contain;
   }
+
+  /* ---------------------------------------------------------------- resizable panels
+     react-resizable-panels drag handles. The handle is invisible until hovered or
+     dragged, then it glows brand purple. `flex: 0 0 4px` sets the size along the
+     flex container's main axis, so it works for both horizontal and vertical groups. */
+  .canvas-resize-handle {
+    flex: 0 0 4px;
+    background: transparent;
+    outline: none;
+    transition: background 150ms ease;
+  }
+  .canvas-resize-handle:hover,
+  .canvas-resize-handle[data-separator="hover"] {
+    background: rgb(var(--brand-rgb) / 0.35);
+  }
+  .canvas-resize-handle[data-separator="drag"] {
+    background: rgb(var(--brand-rgb) / 0.55);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

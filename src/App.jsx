@@ -45,10 +45,15 @@ const AppShell = () => {
 
   // The Studio is the deeper surface. The only way to reach it while the canvas is up is
   // the browser restoring an old #/studio hash, and when that happens the canvas yields.
-  const { closeCanvas, setAnchor, open: canvasOpen } = composer;
+  const { closeCanvas, setAnchor, openCanvas, setPrompt, open: canvasOpen } = composer;
   useEffect(() => {
     if (selection) closeCanvas();
   }, [selection, closeCanvas]);
+
+  const selectPrompt = (idea) => {
+    setPrompt(idea);
+    openCanvas();
+  };
 
   const openContract = ({ chain, address, name }) => {
     setCustom({
@@ -127,7 +132,11 @@ const AppShell = () => {
       </header>
 
       <main inert={canvasOpen} className="relative z-10 flex-1">
-        <HeroSection setAnchor={setAnchor} backdropPaused={canvasOpen || Boolean(selection)} />
+        <HeroSection
+          setAnchor={setAnchor}
+          backdropPaused={canvasOpen || Boolean(selection)}
+          onPromptSelect={selectPrompt}
+        />
 
         <FeaturedMarquee onOpen={open} />
 

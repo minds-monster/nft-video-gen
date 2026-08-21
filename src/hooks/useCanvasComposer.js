@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFeaturedNfts } from './useFeaturedNfts';
+import { useCollectionNfts } from './useCollectionNfts';
 import { useBodyScrollLock } from './useBodyScrollLock';
 import { useAnchorRect } from './useAnchorRect';
 import { pickDiverseCast } from '../lib/diversity';
 import { candidateKey } from '../lib/assetKey';
 import { resolveTarget } from '../lib/contractResolve';
 import { drawFromCollection, drawManyFromCollection } from '../lib/collectionRoulette';
-import { fetchNft, hasAlchemyKey } from '../services/alchemy';
+import { fetchNft, hasAlchemyKey, resolveNftMedia } from '../services/alchemy';
 
 // How many pieces the arc opens with, and how many it will hold before the outermost
 // card makes way. Seven is where the arc stops reading as a curve on a laptop.
@@ -24,6 +25,12 @@ const toEntry = (candidate, origin = 'curated', isMock = false) => ({
   origin,
   isMock,
 });
+
+const hasMedia = (nft) => {
+  if (!nft) return false;
+  const { image, video } = resolveNftMedia(nft);
+  return Boolean(image || video);
+};
 
 /**
  * State for the prompt canvas: the prompt itself, the cast of pieces on the holo arc,
@@ -55,6 +62,10 @@ export const useCanvasComposer = () => {
   const [pickerResolving, setPickerResolving] = useState(false);
   const [pickerError, setPickerError] = useState(null);
 
+  // Preview / asset browser state. When set, the movie render panel shows this candidate
+  // and allows the user to add it to the cast or step through its collection.
+  const [preview, setPreview] = useState(null);
+
   const seeded = useRef(false);
 
   // Shares the module-level collection cache with the featured marquee, so opening the
@@ -78,6 +89,18 @@ export const useCanvasComposer = () => {
   }, [rawPool, isMock]);
 
   useBodyScrollLock(open);
+
+  // Load the collection currently being previewed so the render panel can step prev/next.
+  const previewCollection = preview?.collection;
+  const {
+    nfts: previewNfts,
+    loading: previewLoading,
+    isMock: previewIsMock,
+  } = useCollectionNfts({
+    chain: previewCollection?.chain,
+    address: previewCollection?.address,
+    limit: 50,
+  });
 
   const castKeys = useMemo(() => new Set(cast.map((item) => item.key)), [cast]);
 
@@ -103,6 +126,32 @@ export const useCanvasComposer = () => {
     seedCast(pickDiverseCast(pool, CAST_SIZE));
   }, [pool, poolLoading, seedCast]);
 
+  // When the user browses a collection (preview set without a specific NFT), land on the
+  // first piece with resolvable media once the collection loads.
+  useEffect(() => {
+    if (!preview || preview.nft || !previewNfts.length) return;
+    const nft = previewNfts.find(hasMedia) ?? previewNfts[0];
+    setPreview({ nft, collection: preview.collection });
+  }, [preview, previewNfts]);
+
+  // If the user picked a specific NFT from the pool/directory, replace it with the loaded
+  // version from the collection once that arrives (better metadata, consistent navigation).
+  // Only replace when the fetched version actually has media, so a working pool candidate
+  // is never swapped for a dead collection copy.
+  useEffect(() => {
+    if (!preview?.nft || !previewNfts.length) return;
+    const match = previewNfts.find(
+      (nft) => String(nft.tokenId) === String(preview.nft.tokenId),
+    );
+    if (match && match !== preview.nft && hasMedia(match)) {
+      setPreview((current) =>
+        current && String(current.nft.tokenId) === String(match.tokenId)
+          ? { ...current, nft: match }
+          : current,
+      );
+    }
+  }, [previewNfts, preview?.nft]);
+
   const openCanvas = useCallback(() => setOpen(true), []);
 
   const closeCanvas = useCallback(() => {
@@ -127,6 +176,39 @@ export const useCanvasComposer = () => {
     setPrimaryKey(entry.key);
     return entry.key;
   }, []);
+
+  const setPreviewCandidate = useCallback((candidate) => {
+    setPreview(candidate);
+  }, []);
+
+  const browseCollection = useCallback((collection) => {
+    setPreview({ nft: null, collection });
+  }, []);
+
+  const browseNext = useCallback(() => {
+    if (!preview?.nft || !previewNfts.length) return;
+    const idx = previewNfts.findIndex(
+      (nft) => String(nft.tokenId) === String(preview.nft.tokenId),
+    );
+    const next = previewNfts[Math.min(idx + 1, previewNfts.length - 1)];
+    setPreview({ nft: next, collection: preview.collection });
+  }, [preview, previewNfts]);
+
+  const browsePrev = useCallback(() => {
+    if (!preview?.nft || !previewNfts.length) return;
+    const idx = previewNfts.findIndex(
+      (nft) => String(nft.tokenId) === String(preview.nft.tokenId),
+    );
+    const prev = previewNfts[Math.max(idx - 1, 0)];
+    setPreview({ nft: prev, collection: preview.collection });
+  }, [preview, previewNfts]);
+
+  const addPreviewToCast = useCallback(() => {
+    if (!preview?.nft) return;
+    addAsset(preview, 'curated', previewIsMock);
+  }, [preview, previewIsMock, addAsset]);
+
+  const clearPreview = useCallback(() => setPreview(null), []);
 
   const removeAsset = useCallback((key) => {
     setCast((current) => current.filter((item) => item.key !== key));
@@ -357,5 +439,14 @@ export const useCanvasComposer = () => {
     loadIntoPicker,
     shufflePickerView,
     clearPickerView,
+    preview,
+    previewLoading,
+    previewNfts,
+    setPreviewCandidate,
+    browseCollection,
+    browseNext,
+    browsePrev,
+    addPreviewToCast,
+    clearPreview,
   };
 };
