@@ -10,6 +10,8 @@
 
 import { castPiece } from './casting-director.js';
 import { screenwrite } from './screenwriter.js';
+import { handleConnectInit, handleConnectStatus } from './connect.js';
+import { mindChatInit, mindChatSend, mindChatPoll } from './mind-chat.js';
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), {
@@ -27,6 +29,11 @@ const failure = (error) => {
 const ROUTES = {
   'POST /api/casting': castPiece,
   'POST /api/screenwriter': screenwrite,
+  'POST /api/connect/init': handleConnectInit,
+  'GET /api/connect/status': handleConnectStatus,
+  'POST /api/mind/init': mindChatInit,
+  'POST /api/mind/send': mindChatSend,
+  'GET /api/mind/poll': mindChatPoll,
 };
 
 export default {
@@ -39,7 +46,10 @@ export default {
       return json({
         ok: true,
         hasNvidiaKey: Boolean(env.NVIDIA_API_KEY),
+        hasMindsBuilderKey: Boolean(env.MINDS_BUILDER_API_KEY),
+        hasSessionSecret: Boolean(env.SESSION_SIGNING_SECRET),
         hasDossierStore: Boolean(env.DOSSIERS),
+        hasConnectionsStore: Boolean(env.MIND_CONNECTIONS),
         castingModel: env.CASTING_MODEL,
         screenwriterModel: env.SCREENWRITER_MODEL,
       });

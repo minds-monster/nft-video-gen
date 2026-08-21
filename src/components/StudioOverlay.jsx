@@ -50,7 +50,7 @@ const StudioBody = ({ selection, onSelect, initialPrompt }) => {
   const [imageFailed, setImageFailed] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
 
-  const { messages, isSending, isInitializing, error, send } = useMindChatContext();
+  const { session, openModal, messages, isSending, isInitializing, error, send } = useMindChatContext();
 
   // Sibling tokens power prev/next; served from the same cache the grid filled.
   const { nfts: allSiblings, isMock } = useCollectionNfts({ chain, address, limit: 24 });
@@ -261,13 +261,23 @@ const StudioBody = ({ selection, onSelect, initialPrompt }) => {
           </p>
         </div>
 
+        {!session && (
+          <button
+            type="button"
+            onClick={openModal}
+            className="chip w-fit px-4 py-2 text-xs font-semibold text-purple-300 hover:text-purple-200"
+          >
+            Connect Mind to direct the film
+          </button>
+        )}
+
         <PromptBar
           value={prompt}
           onValueChange={setPrompt}
           onSubmit={submit}
           suggestions={PROMPT_IDEAS}
           busy={isSending}
-          disabled={isInitializing || Boolean(error)}
+          disabled={!session || isInitializing || Boolean(error)}
           autoFocus
           size="md"
           placeholder="A slow dolly, neon rain…"

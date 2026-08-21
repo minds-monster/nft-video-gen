@@ -1,4 +1,3 @@
-import './services/mindsProxy'  // must run before any Minds API call; see file header
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 // Self-hosted webfonts. These are imported here rather than @import-ed from index.css so

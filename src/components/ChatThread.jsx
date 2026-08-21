@@ -85,7 +85,7 @@ const ChatThread = ({ messages, isSending, isInitializing, error, className, emp
         <AlertCircle className="w-9 h-9 text-amber-400" />
         <p className="text-amber-200 text-sm font-medium">{error}</p>
         <p className="text-slate-500 text-xs max-w-sm">
-          Browsing and licensing still work — add a VITE_MIND_API_KEY to generate video.
+          Browsing and licensing still work — connect your Mind to generate video.
         </p>
       </div>
     );

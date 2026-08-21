@@ -7,7 +7,9 @@ import BrandRail, { SECTOR_ALL } from './components/BrandRail';
 import CollectionGrid from './components/CollectionGrid';
 import StudioOverlay from './components/StudioOverlay';
 import PromptCanvas from './components/canvas/PromptCanvas';
+import ConnectMindModal from './components/ConnectMindModal';
 import MindChatProvider from './context/MindChatContext';
+import { useMindChatContext } from './context/mindChat';
 import { useStudioSelection } from './hooks/useStudioSelection';
 import { useCanvasComposer } from './hooks/useCanvasComposer';
 import { useScreenwriter } from './hooks/useScreenwriter';
@@ -33,6 +35,7 @@ const STEPS = [
 ];
 
 const AppShell = () => {
+  const { session, disconnect, openModal } = useMindChatContext();
   const { selection, open, close, pendingPrompt } = useStudioSelection();
   const [sector, setSector] = useState(SECTOR_ALL);
   const [query, setQuery] = useState('');
@@ -122,11 +125,15 @@ const AppShell = () => {
 
           <button
             type="button"
-            disabled
-            title="Wallet connection isn't wired up yet"
-            className="chip cursor-not-allowed px-5 py-2 text-sm font-semibold text-slate-400"
+            onClick={() => (session ? disconnect() : openModal())}
+            title={session ? `Connected · ${session.mindId}` : 'Bring your own Mind in as the Producer'}
+            className={
+              session
+                ? 'chip px-5 py-2 text-sm font-semibold text-emerald-300 hover:text-emerald-200'
+                : 'chip px-5 py-2 text-sm font-semibold text-slate-200 hover:text-white'
+            }
           >
-            Connect Mind
+            {session ? `Connected · ${session.mindId.slice(0, 8)}…` : 'Connect Mind'}
           </button>
         </div>
       </header>
@@ -249,6 +256,8 @@ const AppShell = () => {
         onClose={close}
         initialPrompt={pendingPrompt}
       />
+
+      <ConnectMindModal />
     </div>
   );
 };

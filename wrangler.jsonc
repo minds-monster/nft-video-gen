@@ -23,7 +23,11 @@
   //
   // No `id` on purpose: Wrangler provisions the namespace on first deploy and writes the
   // id back here. `wrangler dev` simulates it locally under .wrangler/state regardless.
-  "kv_namespaces": [{ "binding": "DOSSIERS" }],
+  //
+  // MIND_CONNECTIONS holds pending Connect Mind handshakes only (worker/connect.js) — a
+  // short expirationTtl per entry does the cleanup, no session data lives here (sessions
+  // are self-verifying HMAC tokens, see worker/session.js).
+  "kv_namespaces": [{ "binding": "DOSSIERS" }, { "binding": "MIND_CONNECTIONS" }],
 
   "observability": { "enabled": true },
 

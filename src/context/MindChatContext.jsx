@@ -1,12 +1,13 @@
+import { useMindConnect } from '../hooks/useMindConnect';
 import { useMindChat } from '../hooks/useMindChat';
 import { MindChatContext } from './mindChat';
 
-// One conversation, shared by the hero prompt bar and the Studio. mind.js keeps a
-// single conversation alias, so the UI should mirror that rather than pretending
-// each surface has its own thread.
+// One connection, one conversation, shared by the header button, the Producer panel,
+// and the Studio overlay — connecting once switches all three to the visitor's own Mind.
 const MindChatProvider = ({ children }) => {
-  const chat = useMindChat();
-  return <MindChatContext.Provider value={chat}>{children}</MindChatContext.Provider>;
+  const connect = useMindConnect();
+  const chat = useMindChat(connect.session);
+  return <MindChatContext.Provider value={{ ...connect, ...chat }}>{children}</MindChatContext.Provider>;
 };
 
 export default MindChatProvider;
