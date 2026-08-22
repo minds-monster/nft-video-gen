@@ -95,8 +95,8 @@ const Dashboard = ({ session, disconnect, messages, isSending, isInitializing, e
         isInitializing={isInitializing}
         error={error}
         emptyHint="Ask your Mind something only it would know, to confirm it's really yours."
-        elapsedLabel="Waiting for Mind reply (~1 min typical)…"
-        elapsedLongWaitHint="some Minds take a few minutes — still normal"
+        elapsedLabel="Waiting for Mind reply…"
+        elapsedLongWaitHint="replies often take several minutes — leave it open"
         mindName={session.mindName}
         className="min-h-0 max-h-64 rounded-2xl border border-white/10 bg-black/20 p-3"
       />

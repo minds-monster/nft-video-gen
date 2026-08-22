@@ -24,6 +24,8 @@ export async function mindChatInit(request, env) {
   if (!client) return json({ error: 'not_configured' }, 500);
 
   const alias = chatAlias(session.mindId);
+  console.log('[chat] init', { mindId: session.mindId, alias, connectionId: session.connectionId });
+
   await client.ensureConversation(alias, session.mindId);
   let history = await client.getHistory(alias, { limit: 50 });
 
@@ -35,13 +37,32 @@ export async function mindChatInit(request, env) {
   // blocking the briefing for it. The flag has no TTL: this is a permanent "have we
   // ever briefed this Mind" record, not an expiring one.
   const briefedKey = `briefed:${session.mindId}`;
-  const alreadyBriefed = await env.MIND_CONNECTIONS.get(briefedKey);
-  if (!alreadyBriefed) {
-    await client.sendMessage({ alias, messageText: PRODUCER_BRIEFING });
+  let alreadyBriefed = await env.MIND_CONNECTIONS.get(briefedKey);
+  // The KV flag can be slow to replicate; the conversation history is authoritative.
+  // If a previous briefing is already in the thread, treat this Mind as briefed and
+  // repair the flag so the next init doesn't re-send.
+  const briefingInHistory = history.some(
+    (row) => row.senderType === 1 && row.messageText?.includes('Producer briefing'),
+  );
+  if (!alreadyBriefed && briefingInHistory) {
+    alreadyBriefed = '1';
     await env.MIND_CONNECTIONS.put(briefedKey, '1');
-    history = await client.getHistory(alias, { limit: 50 });
+  }
+  console.log('[chat] briefed check', { mindId: session.mindId, alreadyBriefed: Boolean(alreadyBriefed), historyRows: history.length, briefingInHistory });
+
+  if (!alreadyBriefed) {
+    try {
+      await client.sendMessage({ alias, messageText: PRODUCER_BRIEFING });
+      await env.MIND_CONNECTIONS.put(briefedKey, '1');
+      console.log('[chat] briefing sent', { mindId: session.mindId, alias, briefingLength: PRODUCER_BRIEFING.length });
+      history = await client.getHistory(alias, { limit: 50 });
+    } catch (err) {
+      console.error('[chat] briefing send failed', { mindId: session.mindId, alias, error: err?.message, status: err?.status, code: err?.code });
+      return json({ error: 'briefing_failed', detail: err?.message }, 500);
+    }
   }
 
+  console.log('[chat] init done', { mindId: session.mindId, historyRows: history.length });
   return json({ history });
 }
 
@@ -72,7 +93,13 @@ export async function mindChatSend(request, env) {
   // message's fingerprint still returned the entire conversation from the start). Filtering
   // by createdAt ourselves, in mindChatPoll below, is what actually works.
   const before = Date.now();
-  await client.sendMessage({ alias, messageText });
+  try {
+    await client.sendMessage({ alias, messageText });
+    console.log('[chat] send', { mindId: session.mindId, alias, before });
+  } catch (err) {
+    console.error('[chat] send failed', { mindId: session.mindId, alias, error: err?.message, status: err?.status, code: err?.code });
+    throw err;
+  }
   lastSendAt.set(session.connectionId, now);
 
   return json({ before });

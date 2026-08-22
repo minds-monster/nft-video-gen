@@ -38,7 +38,7 @@ const ProducerPanel = () => {
       {!isInitializing && messages.length === 0 && (
         <p className="text-xs text-slate-500">
           Connected to <span className="text-slate-300">{session.mindName || 'your Mind'}</span> ·
-          typical reply ~1 min
+          replies can take several minutes
         </p>
       )}
       <PromptBar
@@ -54,8 +54,8 @@ const ProducerPanel = () => {
         isInitializing={isInitializing}
         error={error}
         emptyHint="Send a direction and the film appears here."
-        elapsedLabel="Waiting for Mind reply (~1 min typical)…"
-        elapsedLongWaitHint="some Minds take a few minutes — still normal"
+        elapsedLabel="Waiting for Mind reply…"
+        elapsedLongWaitHint="replies often take several minutes — leave it open"
         mindName={session.mindName}
         className="min-h-0 flex-1 rounded-2xl border border-white/10 bg-black/20 p-3"
       />

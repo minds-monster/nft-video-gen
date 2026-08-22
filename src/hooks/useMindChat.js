@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { mindChatInit, mindChatSend, mindChatPoll } from '../services/mindConnect';
 
 // /histories returns newest-first, but a chat thread reads oldest-first — without
@@ -6,7 +6,13 @@ import { mindChatInit, mindChatSend, mindChatPoll } from '../services/mindConnec
 const chronological = (history) =>
   [...(history ?? [])].sort((a, b) => new Date(a.createdAt ?? 0) - new Date(b.createdAt ?? 0));
 
-async function pollForReply(token, after, timeoutMs = 120_000) {
+// Minds can be very slow to reply, especially when a human steward has to notice and
+// act. The UI waits this long before showing its own timeout message; the chat keeps
+// polling in the background, so a reply that lands later still appears.
+const REPLY_TIMEOUT_MS = 15 * 60 * 1000;
+const BACKGROUND_POLL_MS = 5 * 1000;
+
+async function pollForReply(token, after, timeoutMs = REPLY_TIMEOUT_MS) {
   const startedAt = Date.now();
   while (Date.now() - startedAt < timeoutMs) {
     await new Promise((resolve) => setTimeout(resolve, 2_000));
@@ -25,6 +31,10 @@ export const useMindChat = (session) => {
   const [isSending, setIsSending] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
   const [error, setError] = useState(null);
+  const messagesRef = useRef(messages);
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   useEffect(() => {
     if (!session) {
@@ -46,7 +56,41 @@ export const useMindChat = (session) => {
     return () => {
       active = false;
     };
-  }, [session?.token]);
+  }, [session]);
+
+  // Background poll so a Mind reply that lands after the initial wait window still
+  // appears without the visitor having to send another message. Deduplicates by
+  // fingerprint so it never doubles up with the send-time poll.
+  useEffect(() => {
+    if (!session || isInitializing) return;
+    let active = true;
+    const knownFingerprints = new Set(messagesRef.current.map((m) => m.fingerprint).filter(Boolean));
+
+    const tick = async () => {
+      if (!active) return;
+      try {
+        const current = messagesRef.current;
+        const after = current.length ? new Date(current[current.length - 1].createdAt).getTime() : 0;
+        const { history } = await mindChatPoll(session.token, after);
+        const newRows = (history ?? []).filter(
+          (row) => row.senderType !== 1 && row.fingerprint && !knownFingerprints.has(row.fingerprint),
+        );
+        if (newRows.length > 0) {
+          newRows.forEach((row) => knownFingerprints.add(row.fingerprint));
+          setMessages((prev) => chronological([...prev, ...newRows]));
+        }
+      } catch {
+        // Ignore background poll errors; the next tick will retry.
+      }
+    };
+
+    const id = setInterval(tick, BACKGROUND_POLL_MS);
+    tick();
+    return () => {
+      active = false;
+      clearInterval(id);
+    };
+  }, [session, isInitializing]);
 
   const send = useCallback(
     async (text) => {

@@ -57,7 +57,7 @@ const HeroSection = ({ setAnchor, backdropPaused = false, onPromptSelect }) => (
           className="mx-auto mt-6 max-w-2xl text-lg text-slate-400 md:text-xl"
           style={{ textShadow: '0 1px 12px rgb(var(--ground-rgb) / 0.7)' }}
         >
-          Every frame automatically attributed, from the brands that own it. Choose a hero, describe
+          Every frame automatically attributed, from the creators that made it. Choose a hero, describe
           the film, and bring your imagination to life.
         </p>
       </motion.div>

@@ -1,6 +1,14 @@
 // The Connect Mind handshake: a visitor supplies a mindId, the site messages that
 // Mind asking it to approve, and polling for the reply mints a session once approved.
 // See /Users/adamplace/.claude/plans/we-ve-been-blocked-in-binary-whale.md.
+//
+// IMPORTANT: we do NOT store pending handshake state in KV. Cloudflare KV is
+// eventually consistent, and in production a write is not guaranteed to be visible
+// to the next read — which caused /api/connect/status to immediately return
+// "expired" even though the handshake was still live. The handshake state is
+// instead reconstructed from the conversation alias, which is the authoritative
+// record: a fresh `connect-<connectionId>` alias is created on init, and status
+// polls the history of that same alias.
 
 import { mindsClient, connectionAlias, parseApprovalDecision } from './minds.js';
 import { signSession } from './session.js';
@@ -12,7 +20,7 @@ const json = (data, status = 200) =>
 // get oriented, and reply — this session's own testing has seen that take well over
 // five minutes more than once. Rate limiting (below) is what actually guards against
 // abuse, so there's no real cost to giving a real first-time connection room to land.
-const INIT_TTL_SECONDS = 30 * 60;
+const INIT_TTL_MS = 30 * 60 * 1000;
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const RATE_LIMIT = { count: 5, windowMs: 60_000 };
 
@@ -38,6 +46,10 @@ function isValidMindId(mindId) {
   return typeof mindId === 'string' && mindId.length > 0 && mindId.length <= 128 && !/[\r\n]/.test(mindId);
 }
 
+function isValidConnectionId(id) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+}
+
 export async function handleConnectInit(request, env) {
   const ip = request.headers.get('CF-Connecting-IP') ?? 'unknown';
   if (isRateLimited(ip)) return json({ error: 'rate_limited' }, 429);
@@ -53,71 +65,93 @@ export async function handleConnectInit(request, env) {
   const alias = connectionAlias(connectionId);
   const message = connectMessage(connectionId);
 
-  // Best-effort — a display name is a nicety, never a reason to fail the connect attempt.
-  const mindName = await client.getMind(mindId).then((m) => m.name ?? null).catch(() => null);
-
   // Exactly one message per connection attempt — never retried automatically. A visitor
   // who wants to try again gets a fresh connectionId, not a resend into the same alias.
   //
-  // sentAtMs, not a fingerprint: getHistory's `after` fingerprint filter turned out to be
-  // silently ignored by the platform — confirmed empirically, it returns full history
-  // regardless of what's passed. Filtering by createdAt ourselves, client-side, is what
-  // actually works; see the matching note in mind-chat.js.
-  await client.ensureConversation(alias, mindId);
-  const sentAtMs = Date.now();
+  // The conversation itself is the source of truth for the handshake; see the file header.
+  const conversation = await client.ensureConversation(alias, mindId);
+  const mindParticipant = conversation.participants?.find((p) => p.partyType === 0);
+  // Best-effort — a display name is a nicety, never a reason to fail the connect attempt.
+  const mindName = mindParticipant?.name ?? await client.getMind(mindId).then((m) => m.name ?? null).catch(() => null);
   await client.sendMessage({ alias, messageText: message });
 
-  await env.MIND_CONNECTIONS.put(
-    connectionId,
-    JSON.stringify({ mindId, mindName, alias, sentAtMs, status: 'pending' }),
-    { expirationTtl: INIT_TTL_SECONDS },
-  );
+  console.log('[connect] init', { connectionId, mindId, alias, mindName });
 
-  return json({ connectionId, expiresInMs: INIT_TTL_SECONDS * 1000, message, mindName });
+  return json({ connectionId, expiresInMs: INIT_TTL_MS, message, mindName });
 }
 
 export async function handleConnectStatus(request, env) {
   const { searchParams } = new URL(request.url);
   const connectionId = searchParams.get('connectionId');
-  if (!connectionId) return json({ error: 'connectionId required' }, 400);
+  if (!connectionId || !isValidConnectionId(connectionId)) return json({ error: 'connectionId required' }, 400);
 
   const client = mindsClient(env);
   if (!client) return json({ error: 'not_configured' }, 500);
 
-  const raw = await env.MIND_CONNECTIONS.get(connectionId);
-  if (!raw) return json({ status: 'expired' });
-  const record = JSON.parse(raw);
+  const alias = connectionAlias(connectionId);
 
-  if (record.status !== 'pending') {
-    return json({ status: record.status });
+  // Reconstruct the handshake from the conversation alias. If the alias does not exist
+  // yet, the init write may still be replicating or the request is ahead of the init;
+  // treat it as pending rather than expired.
+  let conversation;
+  try {
+    conversation = await client.getConversation(alias);
+  } catch (err) {
+    if (err?.status === 404) {
+      console.log('[connect] status alias not found', { connectionId, alias });
+      return json({ status: 'pending' });
+    }
+    throw err;
+  }
+
+  const mindParticipant = conversation.participants?.find((p) => p.partyType === 0);
+  const mindId = mindParticipant?.partyId;
+  if (!mindId) {
+    console.log('[connect] status no mind participant', { connectionId, alias, participants: conversation.participants });
+    return json({ status: 'pending' });
+  }
+
+  const createdAtMs = conversation.createdAt ? new Date(conversation.createdAt).getTime() : 0;
+  if (createdAtMs && Date.now() - createdAtMs > INIT_TTL_MS) {
+    console.log('[connect] status expired by ttl', { connectionId, createdAtMs });
+    return json({ status: 'expired' });
   }
 
   // A server-side read of the conversation's history — this never reaches the Mind as
   // a new message, so it doesn't count against its own per-connection cognition budget.
-  // Filtered by createdAt ourselves (see handleConnectInit's note) rather than trusting
-  // the API's `after` param, which doesn't actually filter. Small buffer for clock skew.
-  const cutoffMs = (record.sentAtMs ?? 0) - 2000;
-  const history = await client.getHistory(record.alias, { limit: 20 });
+  // We locate our own connect message to establish the cutoff, rather than relying on
+  // a worker-side timestamp that may drift from the platform's clock.
+  const history = await client.getHistory(alias, { limit: 20 });
+  const sentMessage = history.find((row) => row.senderType === 1 && row.messageText?.includes(connectionId));
+  if (!sentMessage) {
+    console.log('[connect] status sent message not visible yet', { connectionId, historyRows: history.length });
+    return json({ status: 'pending' });
+  }
+
+  const cutoffMs = new Date(sentMessage.createdAt).getTime() - 2000;
   const reply = history.find((row) => row.senderType !== 1 && new Date(row.createdAt).getTime() > cutoffMs);
+
+  console.log('[connect] status', {
+    connectionId,
+    mindId,
+    alias,
+    cutoffMs,
+    historyRows: history.length,
+    candidate: reply ? { senderType: reply.senderType, createdAt: reply.createdAt, text: reply.messageText?.slice(0, 120) } : null,
+  });
+
   if (!reply) return json({ status: 'pending' });
 
   const decision = parseApprovalDecision(reply.messageText);
+  console.log('[connect] decision', { connectionId, decision, text: reply.messageText?.slice(0, 120) });
+
   if (decision === 'approved') {
     const expiresAt = Date.now() + SESSION_TTL_MS;
-    const token = await signSession(env, { mindId: record.mindId, connectionId, iat: Date.now(), exp: expiresAt });
-    await env.MIND_CONNECTIONS.put(
-      connectionId,
-      JSON.stringify({ ...record, status: 'approved' }),
-      { expirationTtl: INIT_TTL_SECONDS },
-    );
-    return json({ status: 'approved', sessionToken: token, mindId: record.mindId, mindName: record.mindName ?? null, expiresAt });
+    const token = await signSession(env, { mindId, connectionId, iat: Date.now(), exp: expiresAt });
+    const mindName = mindParticipant?.name ?? await client.getMind(mindId).then((m) => m.name ?? null).catch(() => null);
+    return json({ status: 'approved', sessionToken: token, mindId, mindName, expiresAt });
   }
   if (decision === 'denied') {
-    await env.MIND_CONNECTIONS.put(
-      connectionId,
-      JSON.stringify({ ...record, status: 'denied' }),
-      { expirationTtl: INIT_TTL_SECONDS },
-    );
     return json({ status: 'denied' });
   }
   return json({ status: 'pending' });
