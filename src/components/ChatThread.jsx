@@ -9,7 +9,11 @@ import { cn } from '../lib/cn';
 // as broken, so we count the wait out loud. `label`/`longWaitHint` are per-surface —
 // what's true while Studio renders a film ("Generating your film…") is nonsense in the
 // Producer panel, where nothing is being generated, just replied to.
-const ElapsedNotice = ({ label = 'Generating your film…', longWaitHint = 'this can take up to two minutes' }) => {
+const ElapsedNotice = ({
+  label = 'Generating your film…',
+  longWaitHint = 'this can take up to two minutes',
+  mindName,
+}) => {
   const [seconds, setSeconds] = useState(0);
 
   useEffect(() => {
@@ -21,7 +25,7 @@ const ElapsedNotice = ({ label = 'Generating your film…', longWaitHint = 'this
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-start">
       <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-        The mind
+        {mindName || 'The mind'}
       </span>
       <div className="bg-white/5 border border-white/10 text-slate-200 rounded-2xl rounded-tl-sm px-5 py-4 flex items-center gap-3">
         <div className="flex space-x-1">
@@ -69,6 +73,7 @@ const ChatThread = ({
   emptyHint,
   elapsedLabel,
   elapsedLongWaitHint,
+  mindName,
 }) => {
   const endRef = useRef(null);
 
@@ -125,7 +130,7 @@ const ChatThread = ({
               className={cn('flex flex-col', isHuman ? 'items-end' : 'items-start')}
             >
               <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">
-                {isHuman ? 'You' : 'The mind'}
+                {isHuman ? 'You' : mindName || 'The mind'}
               </span>
               <div
                 className={cn(
@@ -151,6 +156,7 @@ const ChatThread = ({
         <ElapsedNotice
           {...(elapsedLabel !== undefined ? { label: elapsedLabel } : {})}
           {...(elapsedLongWaitHint !== undefined ? { longWaitHint: elapsedLongWaitHint } : {})}
+          mindName={mindName}
         />
       )}
       <div ref={endRef} />

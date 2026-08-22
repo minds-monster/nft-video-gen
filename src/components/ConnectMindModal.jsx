@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Check, ChevronDown, Copy, Loader2, Sparkles, X } from 'lucide-react';
+import { Check, ChevronDown, Copy, Loader2, LogOut, Sparkles, X } from 'lucide-react';
 import { useMindChatContext } from '../context/mindChat';
+import ChatThread from './ChatThread';
+import PromptBar from './PromptBar';
 
 // Adam's own words, from actually living on the receiving end of a cold connect request —
 // see /Users/adamplace/.claude/plans/we-ve-been-blocked-in-binary-whale.md ("Result:
@@ -70,8 +72,61 @@ const ElapsedSeconds = () => {
   return seconds;
 };
 
+// The connected-state "dashboard": the same persistent conversation the Producer panel
+// uses, reached from a second entry point. Two surfaces onto one conversation, not two
+// conversations — reuses ChatThread/PromptBar/context as-is.
+const Dashboard = ({ session, disconnect, messages, isSending, isInitializing, error, send }) => {
+  return (
+    <div className="mt-6 flex flex-col gap-4">
+      <div className="flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+        <span>Connected · {session.mindName || `${session.mindId.slice(0, 8)}…`}</span>
+        <button
+          type="button"
+          onClick={disconnect}
+          className="flex items-center gap-1.5 text-xs font-semibold text-emerald-300/70 transition-colors hover:text-red-300"
+        >
+          <LogOut className="h-3.5 w-3.5" /> Disconnect
+        </button>
+      </div>
+
+      <ChatThread
+        messages={messages}
+        isSending={isSending}
+        isInitializing={isInitializing}
+        error={error}
+        emptyHint="Ask your Mind something only it would know, to confirm it's really yours."
+        elapsedLabel="Waiting for Mind reply (~1 min typical)…"
+        elapsedLongWaitHint="some Minds take a few minutes — still normal"
+        mindName={session.mindName}
+        className="min-h-0 max-h-64 rounded-2xl border border-white/10 bg-black/20 p-3"
+      />
+      <PromptBar
+        onSubmit={send}
+        busy={isSending}
+        disabled={isInitializing || Boolean(error)}
+        size="sm"
+        placeholder="Ask your Mind…"
+      />
+    </div>
+  );
+};
+
 const ConnectMindModal = () => {
-  const { isModalOpen, closeModal, connect, state, error, session, pending } = useMindChatContext();
+  const {
+    isModalOpen,
+    closeModal,
+    connect,
+    disconnect,
+    state,
+    connectError,
+    session,
+    pending,
+    messages,
+    isSending,
+    isInitializing,
+    error,
+    send,
+  } = useMindChatContext();
   const [mindId, setMindId] = useState('');
   const [copiedKey, setCopiedKey] = useState(null);
   const seconds = ElapsedSeconds();
@@ -138,16 +193,23 @@ const ConnectMindModal = () => {
             </p>
 
             {session && state !== 'pending' ? (
-              <div className="mt-6 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-200">
-                Connected · {session.mindName || `${session.mindId.slice(0, 8)}…`}
-              </div>
+              <Dashboard
+                session={session}
+                disconnect={disconnect}
+                messages={messages}
+                isSending={isSending}
+                isInitializing={isInitializing}
+                error={error}
+                send={send}
+              />
             ) : state === 'pending' ? (
               <div className="mt-6 space-y-4">
                 <div className="flex flex-col items-center gap-2 rounded-xl border border-white/10 bg-black/20 p-5 text-center">
                   <Loader2 className="h-5 w-5 animate-spin text-purple-400" />
                   <p className="text-sm font-medium text-white">Waiting for your Mind to reply</p>
                   <p className="text-xs text-slate-500">
-                    {seconds}s elapsed · typical reply ~1 min, some take longer
+                    {seconds}s elapsed — a first-time connection can take a few minutes,
+                    especially while a human gets oriented on the other end
                   </p>
                 </div>
 
@@ -223,8 +285,8 @@ const ConnectMindModal = () => {
                 {statusInfo?.body && (
                   <p className="text-xs text-amber-300/90">{statusInfo.body}</p>
                 )}
-                {state === 'error' && error && (
-                  <p className="text-xs text-red-300/90">{error}</p>
+                {state === 'error' && connectError && (
+                  <p className="text-xs text-red-300/90">{connectError}</p>
                 )}
                 <button
                   type="submit"

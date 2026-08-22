@@ -56,6 +56,7 @@ const ProducerPanel = () => {
         emptyHint="Send a direction and the film appears here."
         elapsedLabel="Waiting for Mind reply (~1 min typical)…"
         elapsedLongWaitHint="some Minds take a few minutes — still normal"
+        mindName={session.mindName}
         className="min-h-0 flex-1 rounded-2xl border border-white/10 bg-black/20 p-3"
       />
     </CanvasPanel>

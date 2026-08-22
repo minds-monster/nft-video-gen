@@ -4,6 +4,7 @@
 
 import { mindsClient, chatAlias } from './minds.js';
 import { verifySession } from './session.js';
+import { PRODUCER_BRIEFING } from './producer-briefing.js';
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8' } });
@@ -24,7 +25,23 @@ export async function mindChatInit(request, env) {
 
   const alias = chatAlias(session.mindId);
   await client.ensureConversation(alias, session.mindId);
-  const history = await client.getHistory(alias, { limit: 50 });
+  let history = await client.getHistory(alias, { limit: 50 });
+
+  // First time this Mind has ever connected as a Producer — brief it automatically so
+  // every connected Mind gets real context, not just ones sophisticated enough to have
+  // equipped a Skill. Tracked via a dedicated per-Mind flag, not "is history empty" —
+  // that heuristic silently breaks the moment a Mind has *any* prior contact on this
+  // alias for any reason (every Mind used for dev/testing already does), permanently
+  // blocking the briefing for it. The flag has no TTL: this is a permanent "have we
+  // ever briefed this Mind" record, not an expiring one.
+  const briefedKey = `briefed:${session.mindId}`;
+  const alreadyBriefed = await env.MIND_CONNECTIONS.get(briefedKey);
+  if (!alreadyBriefed) {
+    await client.sendMessage({ alias, messageText: PRODUCER_BRIEFING });
+    await env.MIND_CONNECTIONS.put(briefedKey, '1');
+    history = await client.getHistory(alias, { limit: 50 });
+  }
+
   return json({ history });
 }
 
@@ -50,11 +67,15 @@ export async function mindChatSend(request, env) {
 
   const alias = chatAlias(session.mindId);
   await client.ensureConversation(alias, session.mindId);
-  const before = await client.getLatestHistoryFingerprint(alias);
+  // A timestamp, not a fingerprint: getHistory's `after` fingerprint filter is silently
+  // ignored by the platform — confirmed empirically (a call with `after` set to a recent
+  // message's fingerprint still returned the entire conversation from the start). Filtering
+  // by createdAt ourselves, in mindChatPoll below, is what actually works.
+  const before = Date.now();
   await client.sendMessage({ alias, messageText });
   lastSendAt.set(session.connectionId, now);
 
-  return json({ before: before ?? null });
+  return json({ before });
 }
 
 export async function mindChatPoll(request, env) {
@@ -62,12 +83,15 @@ export async function mindChatPoll(request, env) {
   if (!session) return json({ error: 'unauthorized' }, 401);
 
   const { searchParams } = new URL(request.url);
-  const after = searchParams.get('after') ?? undefined;
+  const afterMs = Number(searchParams.get('after')) || 0;
 
   const client = mindsClient(env);
   if (!client) return json({ error: 'not_configured' }, 500);
 
   const alias = chatAlias(session.mindId);
-  const history = await client.getHistory(alias, { after, limit: 50 });
+  const raw = await client.getHistory(alias, { limit: 50 });
+  // Small buffer for clock skew between this Worker and the platform's own timestamps.
+  const cutoffMs = afterMs - 2000;
+  const history = raw.filter((row) => new Date(row.createdAt).getTime() > cutoffMs);
   return json({ history });
 }

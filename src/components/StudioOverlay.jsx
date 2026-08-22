@@ -308,6 +308,7 @@ const StudioBody = ({ selection, onSelect, initialPrompt }) => {
             isInitializing={isInitializing}
             error={error}
             emptyHint="Send your first direction and the film appears here."
+            mindName={session?.mindName}
             className="min-h-0 flex-1 rounded-2xl border border-white/10 bg-black/20 p-4 lg:max-h-none"
           />
         )}

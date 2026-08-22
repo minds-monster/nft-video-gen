@@ -35,7 +35,7 @@ const STEPS = [
 ];
 
 const AppShell = () => {
-  const { session, disconnect, openModal } = useMindChatContext();
+  const { session, openModal } = useMindChatContext();
   const { selection, open, close, pendingPrompt } = useStudioSelection();
   const [sector, setSector] = useState(SECTOR_ALL);
   const [query, setQuery] = useState('');
@@ -125,15 +125,15 @@ const AppShell = () => {
 
           <button
             type="button"
-            onClick={() => (session ? disconnect() : openModal())}
-            title={session ? `Connected · ${session.mindId}` : 'Bring your own Mind in as the Producer'}
+            onClick={openModal}
+            title={session ? `Connected · ${session.mindName || session.mindId}` : 'Bring your own Mind in as the Producer'}
             className={
               session
                 ? 'chip px-5 py-2 text-sm font-semibold text-emerald-300 hover:text-emerald-200'
                 : 'chip px-5 py-2 text-sm font-semibold text-slate-200 hover:text-white'
             }
           >
-            {session ? `Connected · ${session.mindId.slice(0, 8)}…` : 'Connect Mind'}
+            {session ? `Connected · ${session.mindName || session.mindId.slice(0, 8) + '…'}` : 'Connect Mind'}
           </button>
         </div>
       </header>

@@ -7,7 +7,15 @@ import { MindChatContext } from './mindChat';
 const MindChatProvider = ({ children }) => {
   const connect = useMindConnect();
   const chat = useMindChat(connect.session);
-  return <MindChatContext.Provider value={{ ...connect, ...chat }}>{children}</MindChatContext.Provider>;
+  // Both hooks return a field called `error` for two different things (why the connect
+  // attempt failed vs. why the last chat send failed) — spreading both flat would let
+  // chat's silently win. `error` stays chat's, matching its existing use in
+  // ProducerPanel/StudioOverlay; connect's gets its own name so nothing is lost.
+  return (
+    <MindChatContext.Provider value={{ ...connect, ...chat, connectError: connect.error }}>
+      {children}
+    </MindChatContext.Provider>
+  );
 };
 
 export default MindChatProvider;

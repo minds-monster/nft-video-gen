@@ -8,7 +8,11 @@ import {
 } from '../services/mindConnect';
 
 const POLL_INTERVAL_MS = 2_000;
-const POLL_TIMEOUT_MS = 5 * 60 * 1000;
+// Matches worker/connect.js's INIT_TTL_SECONDS — a brand-new Mind's first-ever connect
+// needs a human to notice, get oriented, and reply, which this session has repeatedly
+// seen take well over five minutes. No point polling past the point the backend record
+// itself expires, so these two numbers have to move together.
+const POLL_TIMEOUT_MS = 30 * 60 * 1000;
 
 // Connect-flow state, kept separate from the chat itself (useMindChat) — this owns
 // "do we have a session," the chat hook owns "what does that session let us say."

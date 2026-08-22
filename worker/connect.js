@@ -8,7 +8,11 @@ import { signSession } from './session.js';
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8' } });
 
-const INIT_TTL_SECONDS = 5 * 60;
+// A brand-new Mind's first-ever connect needs a human to actually notice the message,
+// get oriented, and reply — this session's own testing has seen that take well over
+// five minutes more than once. Rate limiting (below) is what actually guards against
+// abuse, so there's no real cost to giving a real first-time connection room to land.
+const INIT_TTL_SECONDS = 30 * 60;
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const RATE_LIMIT = { count: 5, windowMs: 60_000 };
 
@@ -54,13 +58,18 @@ export async function handleConnectInit(request, env) {
 
   // Exactly one message per connection attempt — never retried automatically. A visitor
   // who wants to try again gets a fresh connectionId, not a resend into the same alias.
+  //
+  // sentAtMs, not a fingerprint: getHistory's `after` fingerprint filter turned out to be
+  // silently ignored by the platform — confirmed empirically, it returns full history
+  // regardless of what's passed. Filtering by createdAt ourselves, client-side, is what
+  // actually works; see the matching note in mind-chat.js.
   await client.ensureConversation(alias, mindId);
-  const before = await client.getLatestHistoryFingerprint(alias);
+  const sentAtMs = Date.now();
   await client.sendMessage({ alias, messageText: message });
 
   await env.MIND_CONNECTIONS.put(
     connectionId,
-    JSON.stringify({ mindId, mindName, alias, lastFingerprint: before ?? null, status: 'pending' }),
+    JSON.stringify({ mindId, mindName, alias, sentAtMs, status: 'pending' }),
     { expirationTtl: INIT_TTL_SECONDS },
   );
 
@@ -85,8 +94,11 @@ export async function handleConnectStatus(request, env) {
 
   // A server-side read of the conversation's history — this never reaches the Mind as
   // a new message, so it doesn't count against its own per-connection cognition budget.
-  const history = await client.getHistory(record.alias, { after: record.lastFingerprint ?? undefined, limit: 20 });
-  const reply = history.find((row) => row.senderType !== 1);
+  // Filtered by createdAt ourselves (see handleConnectInit's note) rather than trusting
+  // the API's `after` param, which doesn't actually filter. Small buffer for clock skew.
+  const cutoffMs = (record.sentAtMs ?? 0) - 2000;
+  const history = await client.getHistory(record.alias, { limit: 20 });
+  const reply = history.find((row) => row.senderType !== 1 && new Date(row.createdAt).getTime() > cutoffMs);
   if (!reply) return json({ status: 'pending' });
 
   const decision = parseApprovalDecision(reply.messageText);
