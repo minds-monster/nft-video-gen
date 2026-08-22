@@ -271,6 +271,13 @@ const StudioBody = ({ selection, onSelect, initialPrompt }) => {
           </button>
         )}
 
+        {session && !isInitializing && messages.length === 0 && (
+          <p className="text-xs text-slate-500">
+            Connected to <span className="text-slate-300">{session.mindName || 'your Mind'}</span> ·
+            typical reply ~1 min
+          </p>
+        )}
+
         <PromptBar
           value={prompt}
           onValueChange={setPrompt}

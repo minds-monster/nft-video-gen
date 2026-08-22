@@ -3,7 +3,6 @@ import CanvasPanel from './CanvasPanel';
 import PromptBar from '../../PromptBar';
 import ChatThread from '../../ChatThread';
 import { useMindChatContext } from '../../../context/mindChat';
-import { PROMPT_IDEAS } from '../../../data/prompts';
 
 /**
  * The Producer: a persistent chat with the mind.
@@ -33,9 +32,17 @@ const ProducerPanel = () => {
 
   return (
     <CanvasPanel title="Producer" icon={MessageSquare} bodyClassName="flex flex-col gap-3">
+      {/* Front-loads the "someone else has to reply" expectation before the visitor ever
+          sends anything — Adam's own diagnosis of why a slow-but-working reply reads as
+          broken: the waiting state alone never explained who it was waiting on. */}
+      {!isInitializing && messages.length === 0 && (
+        <p className="text-xs text-slate-500">
+          Connected to <span className="text-slate-300">{session.mindName || 'your Mind'}</span> ·
+          typical reply ~1 min
+        </p>
+      )}
       <PromptBar
         onSubmit={send}
-        suggestions={PROMPT_IDEAS}
         busy={isSending}
         disabled={isInitializing || Boolean(error)}
         size="sm"
@@ -47,6 +54,8 @@ const ProducerPanel = () => {
         isInitializing={isInitializing}
         error={error}
         emptyHint="Send a direction and the film appears here."
+        elapsedLabel="Waiting for Mind reply (~1 min typical)…"
+        elapsedLongWaitHint="some Minds take a few minutes — still normal"
         className="min-h-0 flex-1 rounded-2xl border border-white/10 bg-black/20 p-3"
       />
     </CanvasPanel>

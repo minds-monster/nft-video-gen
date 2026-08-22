@@ -6,8 +6,10 @@ import { messageToText } from '../lib/text';
 import { cn } from '../lib/cn';
 
 // mind.js waits up to 120s for a reply. Silent bouncing dots for two minutes reads
-// as broken, so we count the wait out loud.
-const ElapsedNotice = () => {
+// as broken, so we count the wait out loud. `label`/`longWaitHint` are per-surface —
+// what's true while Studio renders a film ("Generating your film…") is nonsense in the
+// Producer panel, where nothing is being generated, just replied to.
+const ElapsedNotice = ({ label = 'Generating your film…', longWaitHint = 'this can take up to two minutes' }) => {
   const [seconds, setSeconds] = useState(0);
 
   useEffect(() => {
@@ -28,8 +30,8 @@ const ElapsedNotice = () => {
           <span className="w-2 h-2 rounded-full bg-purple-500 animate-bounce [animation-delay:300ms]" />
         </div>
         <span className="text-sm text-slate-400">
-          Generating your film… {seconds}s
-          {seconds > 45 && <span className="text-slate-500"> · this can take up to two minutes</span>}
+          {label} {seconds}s
+          {seconds > 45 && longWaitHint && <span className="text-slate-500"> · {longWaitHint}</span>}
         </span>
       </div>
     </motion.div>
@@ -58,7 +60,16 @@ const MediaBlock = ({ media }) => (
  * The conversation with the mind. Message state is owned by MindChatProvider —
  * this component only renders it.
  */
-const ChatThread = ({ messages, isSending, isInitializing, error, className, emptyHint }) => {
+const ChatThread = ({
+  messages,
+  isSending,
+  isInitializing,
+  error,
+  className,
+  emptyHint,
+  elapsedLabel,
+  elapsedLongWaitHint,
+}) => {
   const endRef = useRef(null);
 
   useEffect(() => {
@@ -136,7 +147,12 @@ const ChatThread = ({ messages, isSending, isInitializing, error, className, emp
         })
       )}
 
-      {isSending && <ElapsedNotice />}
+      {isSending && (
+        <ElapsedNotice
+          {...(elapsedLabel !== undefined ? { label: elapsedLabel } : {})}
+          {...(elapsedLongWaitHint !== undefined ? { longWaitHint: elapsedLongWaitHint } : {})}
+        />
+      )}
       <div ref={endRef} />
     </div>
   );

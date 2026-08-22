@@ -7,8 +7,8 @@ import CanvasPanel from './CanvasPanel';
  *
  * Live cards stream; settled cards fold but stay in the log so the user can scroll back.
  */
-const CastingDirectorPanel = ({ cast, analysis, streams, thoughts }) => (
-  <CanvasPanel title="Casting Director" icon={Eye}>
+const CastingDirectorPanel = ({ cast, analysis, streams, thoughts, collapsed, onCollapse, onExpand }) => (
+  <CanvasPanel title="Casting Director" icon={Eye} collapsed={collapsed} onCollapse={onCollapse} onExpand={onExpand}>
     <CastingLog cast={cast} analysis={analysis} streams={streams} thoughts={thoughts} />
     {cast.length === 0 && (
       <p className="py-6 text-center text-xs text-slate-500">

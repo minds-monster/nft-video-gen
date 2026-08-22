@@ -70,10 +70,10 @@ const H3Request = ({ spec }) => {
 /**
  * The settled screenplay: title, logline, beats, and technical fields.
  */
-const ScreenplayPanel = ({ spec, cast, analysis, rewriting, live }) => {
+const ScreenplayPanel = ({ spec, cast, analysis, rewriting, live, collapsed, onCollapse, onExpand }) => {
   if (!spec) {
     return (
-      <CanvasPanel title="Screenplay" icon={PenLine}>
+      <CanvasPanel title="Screenplay" icon={PenLine} collapsed={collapsed} onCollapse={onCollapse} onExpand={onExpand}>
         <p className="py-6 text-center text-xs text-slate-500">
           The screenplay appears here once the Screenwriter finishes drafting.
         </p>
@@ -99,7 +99,7 @@ const ScreenplayPanel = ({ spec, cast, analysis, rewriting, live }) => {
   const writerStream = live.find((stream) => stream.owner === SCREENWRITER);
 
   return (
-    <CanvasPanel title="Screenplay" icon={PenLine}>
+    <CanvasPanel title="Screenplay" icon={PenLine} collapsed={collapsed} onCollapse={onCollapse} onExpand={onExpand}>
       <div className={cn('space-y-4', rewriting && 'opacity-60')}>
         {/* User intent */}
         <HudCard

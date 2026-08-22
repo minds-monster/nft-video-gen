@@ -19,11 +19,7 @@ const CanvasPanel = ({
   headerAction,
 }) => (
   <div
-    className={cn(
-      'flex h-full flex-col overflow-hidden bg-slate-950/40',
-      collapsed && 'items-center justify-center',
-      className,
-    )}
+    className={cn('flex h-full flex-col overflow-hidden bg-slate-950/40', className)}
   >
     {!collapsed && (
       <>
@@ -53,18 +49,19 @@ const CanvasPanel = ({
         </div>
       </>
     )}
+    {/* A collapsed panel here is a short, full-width strip (stacked vertically with its
+        siblings), not a narrow sidebar — so the expand affordance is a single horizontal
+        row matching the expanded header's own layout, not rotated sidebar-style text. */}
     {collapsed && onExpand && (
       <button
         type="button"
         onClick={onExpand}
         aria-label={`Expand ${title}`}
-        className="flex h-full w-full flex-col items-center justify-center gap-2 text-slate-600 transition-colors hover:bg-white/5 hover:text-white"
+        className="flex h-full w-full shrink-0 items-center gap-2 px-3 text-slate-600 transition-colors hover:bg-white/5 hover:text-white"
       >
-        {Icon && <Icon className="h-4 w-4 text-purple-400" />}
-        <span className="rotate-180 whitespace-nowrap font-mono text-[9px] uppercase tracking-[0.2em] [writing-mode:vertical-rl]">
-          {title}
-        </span>
-        <ChevronRight className="h-3.5 w-3.5" />
+        {Icon && <Icon className="h-3 w-3 shrink-0 text-purple-400" />}
+        <span className="truncate font-mono text-[10px] uppercase tracking-[0.25em]">{title}</span>
+        <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0" />
       </button>
     )}
   </div>

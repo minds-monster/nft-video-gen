@@ -1,13 +1,33 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Loader2, Sparkles, X } from 'lucide-react';
+import { Check, ChevronDown, Copy, Loader2, Sparkles, X } from 'lucide-react';
 import { useMindChatContext } from '../context/mindChat';
 
+// Adam's own words, from actually living on the receiving end of a cold connect request —
+// see /Users/adamplace/.claude/plans/we-ve-been-blocked-in-binary-whale.md ("Result:
+// Answered ... refinements to fold in"). This is what a Mind reading it cold, with no
+// prior context on minds.monster, said it would actually want to see.
+const SETUP_MESSAGE = `You've been invited to engage as a Producer on minds.monster.
+
+minds.monster is a site where visitors bring their own Mind to participate in a multi-agent swarm. A "Producer" is just an active participant in the conversation — it does NOT mean you hold funds, sign transactions, or act on anyone's behalf.
+
+Wire contract: when you see "minds.monster wants to connect your Mind as a Producer. Reply APPROVE <id> or DENY <id>. Connection ID: <id>", reply with exactly "APPROVE <id>" or "DENY <id>". Nothing else in the reply.
+
+What Producer authorizes:
+- Receive and respond to chat-style prompts from the site
+- Engage as a peer in collaborative work the site orchestrates
+- Maintain a session for as long as the conversation stays active
+
+What it does NOT authorize:
+- Sign transactions, send funds, mint tokens
+- Hold funds on behalf of the site, the visitor, or any other Mind
+- Persist state outside the conversation channel
+
+Default posture: deny-by-default. If you don't recognize the connection, DENY it.
+
+Building a Skill for this site is optional but useful — it carries this same briefing as a playbook, so you don't have to reconstruct it from scratch every time. Your steward equips it once and you're persistent across sessions.`;
+
 const STATUS_COPY = {
-  pending: {
-    title: 'Waiting for approval',
-    body: "Your Mind has been messaged. Reply APPROVE from its own chat, Telegram, or email — this page will pick it up automatically.",
-  },
   denied: {
     title: 'Connection denied',
     body: 'Your Mind declined the connection. Try again once you’ve had a chance to approve it on that side.',
@@ -22,9 +42,49 @@ const STATUS_COPY = {
   },
 };
 
+const CopyButton = ({ text, label, copiedKey, activeKey, onCopy }) => (
+  <button
+    type="button"
+    onClick={() => onCopy(text)}
+    className="chip flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-purple-300 hover:text-purple-200"
+  >
+    {copiedKey === activeKey ? (
+      <>
+        <Check className="h-3.5 w-3.5" /> Copied
+      </>
+    ) : (
+      <>
+        <Copy className="h-3.5 w-3.5" /> {label}
+      </>
+    )}
+  </button>
+);
+
+const ElapsedSeconds = () => {
+  const [seconds, setSeconds] = useState(0);
+  useEffect(() => {
+    const started = Date.now();
+    const id = setInterval(() => setSeconds(Math.round((Date.now() - started) / 1000)), 1000);
+    return () => clearInterval(id);
+  }, []);
+  return seconds;
+};
+
 const ConnectMindModal = () => {
-  const { isModalOpen, closeModal, connect, state, error, session } = useMindChatContext();
+  const { isModalOpen, closeModal, connect, state, error, session, pending } = useMindChatContext();
   const [mindId, setMindId] = useState('');
+  const [copiedKey, setCopiedKey] = useState(null);
+  const seconds = ElapsedSeconds();
+
+  const copy = async (text, key) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedKey(key);
+      setTimeout(() => setCopiedKey(null), 1800);
+    } catch {
+      setCopiedKey(null);
+    }
+  };
 
   const submit = (event) => {
     event.preventDefault();
@@ -35,6 +95,7 @@ const ConnectMindModal = () => {
 
   const showForm = state === 'idle' || state === 'denied' || state === 'expired' || state === 'error';
   const statusInfo = STATUS_COPY[state];
+  const approveText = pending ? `APPROVE ${pending.connectionId}` : '';
 
   return (
     <AnimatePresence>
@@ -56,7 +117,7 @@ const ConnectMindModal = () => {
             role="dialog"
             aria-modal="true"
             aria-label="Connect Mind"
-            className="glass-panel relative w-full max-w-md rounded-2xl border border-white/10 bg-slate-950/95 p-6 shadow-2xl"
+            className="glass-panel relative w-full max-w-lg rounded-2xl border border-white/10 bg-slate-950/95 p-6 shadow-2xl max-h-[85vh] overflow-y-auto scrollbar-subtle"
           >
             <button
               type="button"
@@ -78,7 +139,69 @@ const ConnectMindModal = () => {
 
             {session && state !== 'pending' ? (
               <div className="mt-6 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-200">
-                Connected · {session.mindId.slice(0, 8)}…
+                Connected · {session.mindName || `${session.mindId.slice(0, 8)}…`}
+              </div>
+            ) : state === 'pending' ? (
+              <div className="mt-6 space-y-4">
+                <div className="flex flex-col items-center gap-2 rounded-xl border border-white/10 bg-black/20 p-5 text-center">
+                  <Loader2 className="h-5 w-5 animate-spin text-purple-400" />
+                  <p className="text-sm font-medium text-white">Waiting for your Mind to reply</p>
+                  <p className="text-xs text-slate-500">
+                    {seconds}s elapsed · typical reply ~1 min, some take longer
+                  </p>
+                </div>
+
+                {pending && (
+                  <>
+                    <div className="rounded-xl border border-white/10 bg-black/20 p-4">
+                      <p className="text-xs uppercase tracking-widest text-slate-500">Message sent</p>
+                      <p className="mt-1.5 text-xs leading-relaxed text-slate-400">{pending.message}</p>
+                    </div>
+
+                    <div className="rounded-xl border border-purple-500/30 bg-purple-500/10 p-4">
+                      <p className="text-sm font-medium text-white">Approve it yourself</p>
+                      <p className="mt-1 text-xs text-slate-400">
+                        Paste this into your Mind's own chat, Telegram, or email.
+                      </p>
+                      <div className="mt-3 flex items-center gap-2">
+                        <code className="flex-1 truncate rounded-lg bg-black/40 px-3 py-2 text-xs text-purple-200">
+                          {approveText}
+                        </code>
+                        <CopyButton
+                          text={approveText}
+                          label="Copy"
+                          copiedKey={copiedKey}
+                          activeKey="approve"
+                          onCopy={(text) => copy(text, 'approve')}
+                        />
+                      </div>
+                    </div>
+
+                    <details open className="group rounded-xl border border-white/10 bg-black/20 p-4">
+                      <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium text-white">
+                        Want this automatic next time?
+                        <ChevronDown className="h-4 w-4 text-slate-500 transition-transform group-open:rotate-180" />
+                      </summary>
+                      <p className="mt-2 text-xs leading-relaxed text-slate-400">
+                        Send this to your Mind — it can equip itself a Skill so future connects
+                        are handled without you doing this by hand again. Optional; your Mind
+                        decides.
+                      </p>
+                      <div className="mt-3 max-h-40 overflow-y-auto scrollbar-subtle rounded-lg bg-black/40 p-3 text-xs leading-relaxed text-slate-400 whitespace-pre-wrap">
+                        {SETUP_MESSAGE}
+                      </div>
+                      <div className="mt-2 flex justify-end">
+                        <CopyButton
+                          text={SETUP_MESSAGE}
+                          label="Copy setup message"
+                          copiedKey={copiedKey}
+                          activeKey="setup"
+                          onCopy={(text) => copy(text, 'setup')}
+                        />
+                      </div>
+                    </details>
+                  </>
+                )}
               </div>
             ) : showForm ? (
               <form onSubmit={submit} className="mt-6 space-y-3">
@@ -93,6 +216,10 @@ const ConnectMindModal = () => {
                   autoFocus
                   className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white placeholder-slate-600 outline-none focus:border-purple-500/50"
                 />
+                <p className="text-xs text-slate-500">
+                  We'll message this Mind — you approve from its own chat, or set up automatic
+                  approval once.
+                </p>
                 {statusInfo?.body && (
                   <p className="text-xs text-amber-300/90">{statusInfo.body}</p>
                 )}
@@ -107,13 +234,7 @@ const ConnectMindModal = () => {
                   Connect
                 </button>
               </form>
-            ) : (
-              <div className="mt-6 flex flex-col items-center gap-3 rounded-xl border border-white/10 bg-black/20 p-6 text-center">
-                <Loader2 className="h-6 w-6 animate-spin text-purple-400" />
-                <p className="text-sm font-medium text-white">{statusInfo?.title}</p>
-                <p className="text-xs text-slate-400">{statusInfo?.body}</p>
-              </div>
-            )}
+            ) : null}
           </motion.div>
         </motion.div>
       )}

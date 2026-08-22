@@ -17,6 +17,9 @@ export const useMindConnect = () => {
   const [state, setState] = useState('idle'); // idle | pending | denied | expired | error
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  // Populated once connect() has a response — connectionId/message/mindName let the
+  // modal show a concrete "copy approval reply" action instead of just a spinner.
+  const [pending, setPending] = useState(null);
   const timeoutRef = useRef(null);
 
   useEffect(() => () => clearTimeout(timeoutRef.current), []);
@@ -25,9 +28,11 @@ export const useMindConnect = () => {
     clearTimeout(timeoutRef.current);
     setState('pending');
     setError(null);
+    setPending(null);
 
     try {
-      const { connectionId } = await connectInit(mindId);
+      const { connectionId, message, mindName } = await connectInit(mindId);
+      setPending({ connectionId, message, mindName });
       const startedAt = Date.now();
 
       const poll = async () => {
@@ -38,7 +43,12 @@ export const useMindConnect = () => {
         try {
           const result = await connectStatus(connectionId);
           if (result.status === 'approved') {
-            const newSession = { token: result.sessionToken, mindId: result.mindId, expiresAt: result.expiresAt };
+            const newSession = {
+              token: result.sessionToken,
+              mindId: result.mindId,
+              mindName: result.mindName ?? mindName ?? null,
+              expiresAt: result.expiresAt,
+            };
             storeSession(newSession);
             setSession(newSession);
             setState('approved');
@@ -73,6 +83,7 @@ export const useMindConnect = () => {
     setSession(null);
     setState('idle');
     setError(null);
+    setPending(null);
   }, []);
 
   const openModal = useCallback(() => setIsModalOpen(true), []);
@@ -82,5 +93,5 @@ export const useMindConnect = () => {
     setState('idle');
   }, [state]);
 
-  return { session, state, error, connect, disconnect, isModalOpen, openModal, closeModal };
+  return { session, state, error, pending, connect, disconnect, isModalOpen, openModal, closeModal };
 };

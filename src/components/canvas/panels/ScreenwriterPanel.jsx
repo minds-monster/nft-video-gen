@@ -9,12 +9,12 @@ import { SCREENWRITER } from '../../../hooks/useScreenwriter';
  * During a run this shows the reasoning as it arrives; once settled it shows the draft
  * reasoning behind the screenplay.
  */
-const ScreenwriterPanel = ({ live, thoughts }) => {
+const ScreenwriterPanel = ({ live, thoughts, collapsed, onCollapse, onExpand }) => {
   const writerStream = live.find((stream) => stream.owner === SCREENWRITER);
   const writerThought = thoughts[SCREENWRITER];
 
   return (
-    <CanvasPanel title="Screenwriter" icon={PenLine}>
+    <CanvasPanel title="Screenwriter" icon={PenLine} collapsed={collapsed} onCollapse={onCollapse} onExpand={onExpand}>
       <div className="space-y-3">
         {writerStream && (
           <AgentThought

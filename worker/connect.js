@@ -47,20 +47,24 @@ export async function handleConnectInit(request, env) {
 
   const connectionId = crypto.randomUUID();
   const alias = connectionAlias(connectionId);
+  const message = connectMessage(connectionId);
+
+  // Best-effort — a display name is a nicety, never a reason to fail the connect attempt.
+  const mindName = await client.getMind(mindId).then((m) => m.name ?? null).catch(() => null);
 
   // Exactly one message per connection attempt — never retried automatically. A visitor
   // who wants to try again gets a fresh connectionId, not a resend into the same alias.
   await client.ensureConversation(alias, mindId);
   const before = await client.getLatestHistoryFingerprint(alias);
-  await client.sendMessage({ alias, messageText: connectMessage(connectionId) });
+  await client.sendMessage({ alias, messageText: message });
 
   await env.MIND_CONNECTIONS.put(
     connectionId,
-    JSON.stringify({ mindId, alias, lastFingerprint: before ?? null, status: 'pending' }),
+    JSON.stringify({ mindId, mindName, alias, lastFingerprint: before ?? null, status: 'pending' }),
     { expirationTtl: INIT_TTL_SECONDS },
   );
 
-  return json({ connectionId, expiresInMs: INIT_TTL_SECONDS * 1000 });
+  return json({ connectionId, expiresInMs: INIT_TTL_SECONDS * 1000, message, mindName });
 }
 
 export async function handleConnectStatus(request, env) {
@@ -94,7 +98,7 @@ export async function handleConnectStatus(request, env) {
       JSON.stringify({ ...record, status: 'approved' }),
       { expirationTtl: INIT_TTL_SECONDS },
     );
-    return json({ status: 'approved', sessionToken: token, mindId: record.mindId, expiresAt });
+    return json({ status: 'approved', sessionToken: token, mindId: record.mindId, mindName: record.mindName ?? null, expiresAt });
   }
   if (decision === 'denied') {
     await env.MIND_CONNECTIONS.put(
