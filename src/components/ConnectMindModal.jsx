@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, ChevronDown, Copy, Loader2, LogOut, Sparkles, X } from 'lucide-react';
 import { useMindChatContext } from '../context/mindChat';
-import ChatThread from './ChatThread';
-import PromptBar from './PromptBar';
+import AssistantChat from './AssistantChat';
 
 // Adam's own words, from actually living on the receiving end of a cold connect request —
 // see /Users/adamplace/.claude/plans/we-ve-been-blocked-in-binary-whale.md ("Result:
@@ -72,61 +71,25 @@ const ElapsedSeconds = () => {
   return seconds;
 };
 
-// The connected-state "dashboard": the same persistent conversation the Producer panel
-// uses, reached from a second entry point. Two surfaces onto one conversation, not two
-// conversations — reuses ChatThread/PromptBar/context as-is.
-const Dashboard = ({ session, disconnect, messages, isSending, isInitializing, error, send }) => {
-  return (
-    <div className="mt-6 flex flex-col gap-4">
-      <div className="flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
-        <span>Connected · {session.mindName || `${session.mindId.slice(0, 8)}…`}</span>
-        <button
-          type="button"
-          onClick={disconnect}
-          className="flex items-center gap-1.5 text-xs font-semibold text-emerald-300/70 transition-colors hover:text-red-300"
-        >
-          <LogOut className="h-3.5 w-3.5" /> Disconnect
-        </button>
-      </div>
-
-      <ChatThread
-        messages={messages}
-        isSending={isSending}
-        isInitializing={isInitializing}
-        error={error}
-        emptyHint="Ask your Mind something only it would know, to confirm it's really yours."
-        elapsedLabel="Waiting for Mind reply…"
-        elapsedLongWaitHint="replies often take several minutes — leave it open"
-        mindName={session.mindName}
-        className="min-h-0 max-h-64 rounded-2xl border border-white/10 bg-black/20 p-3"
-      />
-      <PromptBar
-        onSubmit={send}
-        busy={isSending}
-        disabled={isInitializing || Boolean(error)}
-        size="sm"
-        placeholder="Ask your Mind…"
-      />
-    </div>
-  );
-};
+// The connected-state banner. The actual conversation is always AssistantChat now —
+// see the render logic below, which shows it in every connection state, not just this
+// one — so this only needs to surface the connected identity and a way to disconnect.
+const ConnectedBanner = ({ session, disconnect }) => (
+  <div className="flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+    <span>Connected · {session.mindName || `${session.mindId.slice(0, 8)}…`}</span>
+    <button
+      type="button"
+      onClick={disconnect}
+      className="flex items-center gap-1.5 text-xs font-semibold text-emerald-300/70 transition-colors hover:text-red-300"
+    >
+      <LogOut className="h-3.5 w-3.5" /> Disconnect
+    </button>
+  </div>
+);
 
 const ConnectMindModal = () => {
-  const {
-    isModalOpen,
-    closeModal,
-    connect,
-    disconnect,
-    state,
-    connectError,
-    session,
-    pending,
-    messages,
-    isSending,
-    isInitializing,
-    error,
-    send,
-  } = useMindChatContext();
+  const { isModalOpen, closeModal, connect, disconnect, state, connectError, session, pending } =
+    useMindChatContext();
   const [mindId, setMindId] = useState('');
   const [copiedKey, setCopiedKey] = useState(null);
   const seconds = ElapsedSeconds();
@@ -172,7 +135,7 @@ const ConnectMindModal = () => {
             role="dialog"
             aria-modal="true"
             aria-label="Connect Mind"
-            className="glass-panel relative w-full max-w-lg rounded-2xl border border-white/10 bg-slate-950/95 p-6 shadow-2xl max-h-[85vh] overflow-y-auto scrollbar-subtle"
+            className="glass-panel relative flex h-[88vh] max-h-[920px] w-full max-w-5xl flex-col rounded-2xl border border-white/10 bg-slate-950/95 p-6 shadow-2xl"
           >
             <button
               type="button"
@@ -183,120 +146,123 @@ const ConnectMindModal = () => {
               <X className="h-4 w-4" />
             </button>
 
-            <div className="flex items-center gap-2 text-purple-400">
+            <div className="flex shrink-0 items-center gap-2 text-purple-400">
               <Sparkles className="h-5 w-5" />
               <h2 className="text-lg font-semibold text-white">Connect Mind</h2>
             </div>
-            <p className="mt-2 text-sm text-slate-400">
+            <p className="mt-2 shrink-0 text-sm text-slate-400">
               Bring your own Hello Minds Mind in as the Producer — it becomes the one you're
               talking to across the site, from here on.
             </p>
 
-            {session && state !== 'pending' ? (
-              <Dashboard
-                session={session}
-                disconnect={disconnect}
-                messages={messages}
-                isSending={isSending}
-                isInitializing={isInitializing}
-                error={error}
-                send={send}
-              />
-            ) : state === 'pending' ? (
-              <div className="mt-6 space-y-4">
-                <div className="flex flex-col items-center gap-2 rounded-xl border border-white/10 bg-black/20 p-5 text-center">
-                  <Loader2 className="h-5 w-5 animate-spin text-purple-400" />
-                  <p className="text-sm font-medium text-white">Waiting for your Mind to reply</p>
-                  <p className="text-xs text-slate-500">
-                    {seconds}s elapsed — a first-time connection can take a few minutes,
-                    especially while a human gets oriented on the other end
-                  </p>
+            <div className="mt-6 flex min-h-0 flex-1 flex-col gap-4">
+              {session && state !== 'pending' ? (
+                <ConnectedBanner session={session} disconnect={disconnect} />
+              ) : state === 'pending' ? (
+                <div className="space-y-4">
+                  <div className="flex flex-col items-center gap-2 rounded-xl border border-white/10 bg-black/20 p-5 text-center">
+                    <Loader2 className="h-5 w-5 animate-spin text-purple-400" />
+                    <p className="text-sm font-medium text-white">Waiting for your Mind to reply</p>
+                    <p className="text-xs text-slate-500">
+                      {seconds}s elapsed — a first-time connection can take a few minutes,
+                      especially while a human gets oriented on the other end
+                    </p>
+                  </div>
+
+                  {pending && (
+                    <>
+                      <div className="rounded-xl border border-white/10 bg-black/20 p-4">
+                        <p className="text-xs uppercase tracking-widest text-slate-500">Message sent</p>
+                        <p className="mt-1.5 text-xs leading-relaxed text-slate-400">{pending.message}</p>
+                      </div>
+
+                      <div className="rounded-xl border border-purple-500/30 bg-purple-500/10 p-4">
+                        <p className="text-sm font-medium text-white">Approve it yourself</p>
+                        <p className="mt-1 text-xs text-slate-400">
+                          Paste this into your Mind's own chat, Telegram, or email.
+                        </p>
+                        <div className="mt-3 flex items-center gap-2">
+                          <code className="flex-1 truncate rounded-lg bg-black/40 px-3 py-2 text-xs text-purple-200">
+                            {approveText}
+                          </code>
+                          <CopyButton
+                            text={approveText}
+                            label="Copy"
+                            copiedKey={copiedKey}
+                            activeKey="approve"
+                            onCopy={(text) => copy(text, 'approve')}
+                          />
+                        </div>
+                      </div>
+
+                      <details className="group rounded-xl border border-white/10 bg-black/20 p-4">
+                        <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium text-white">
+                          Want this automatic next time?
+                          <ChevronDown className="h-4 w-4 text-slate-500 transition-transform group-open:rotate-180" />
+                        </summary>
+                        <p className="mt-2 text-xs leading-relaxed text-slate-400">
+                          Send this to your Mind — it can equip itself a Skill so future connects
+                          are handled without you doing this by hand again. Optional; your Mind
+                          decides.
+                        </p>
+                        <div className="mt-3 max-h-40 overflow-y-auto scrollbar-subtle rounded-lg bg-black/40 p-3 text-xs leading-relaxed text-slate-400 whitespace-pre-wrap">
+                          {SETUP_MESSAGE}
+                        </div>
+                        <div className="mt-2 flex justify-end">
+                          <CopyButton
+                            text={SETUP_MESSAGE}
+                            label="Copy setup message"
+                            copiedKey={copiedKey}
+                            activeKey="setup"
+                            onCopy={(text) => copy(text, 'setup')}
+                          />
+                        </div>
+                      </details>
+                    </>
+                  )}
                 </div>
+              ) : showForm ? (
+                <form onSubmit={submit} className="space-y-3">
+                  <label className="block text-xs uppercase tracking-widest text-slate-500">
+                    Your Mind ID
+                  </label>
+                  <input
+                    type="text"
+                    value={mindId}
+                    onChange={(event) => setMindId(event.target.value)}
+                    placeholder="e.g. 240b453e-f36b-1410-8466-00039ce7df11"
+                    autoFocus
+                    className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white placeholder-slate-600 outline-none focus:border-purple-500/50"
+                  />
+                  <p className="text-xs text-slate-500">
+                    We'll message this Mind — you approve from its own chat, or set up automatic
+                    approval once.
+                  </p>
+                  {statusInfo?.body && (
+                    <p className="text-xs text-amber-300/90">{statusInfo.body}</p>
+                  )}
+                  {state === 'error' && connectError && (
+                    <p className="text-xs text-red-300/90">{connectError}</p>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={!mindId.trim()}
+                    className="sticker sticker-hover w-full rounded-xl bg-purple-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-purple-500 disabled:cursor-not-allowed disabled:bg-purple-600/40 disabled:text-white/50"
+                  >
+                    Connect
+                  </button>
+                </form>
+              ) : null}
 
-                {pending && (
-                  <>
-                    <div className="rounded-xl border border-white/10 bg-black/20 p-4">
-                      <p className="text-xs uppercase tracking-widest text-slate-500">Message sent</p>
-                      <p className="mt-1.5 text-xs leading-relaxed text-slate-400">{pending.message}</p>
-                    </div>
-
-                    <div className="rounded-xl border border-purple-500/30 bg-purple-500/10 p-4">
-                      <p className="text-sm font-medium text-white">Approve it yourself</p>
-                      <p className="mt-1 text-xs text-slate-400">
-                        Paste this into your Mind's own chat, Telegram, or email.
-                      </p>
-                      <div className="mt-3 flex items-center gap-2">
-                        <code className="flex-1 truncate rounded-lg bg-black/40 px-3 py-2 text-xs text-purple-200">
-                          {approveText}
-                        </code>
-                        <CopyButton
-                          text={approveText}
-                          label="Copy"
-                          copiedKey={copiedKey}
-                          activeKey="approve"
-                          onCopy={(text) => copy(text, 'approve')}
-                        />
-                      </div>
-                    </div>
-
-                    <details open className="group rounded-xl border border-white/10 bg-black/20 p-4">
-                      <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-medium text-white">
-                        Want this automatic next time?
-                        <ChevronDown className="h-4 w-4 text-slate-500 transition-transform group-open:rotate-180" />
-                      </summary>
-                      <p className="mt-2 text-xs leading-relaxed text-slate-400">
-                        Send this to your Mind — it can equip itself a Skill so future connects
-                        are handled without you doing this by hand again. Optional; your Mind
-                        decides.
-                      </p>
-                      <div className="mt-3 max-h-40 overflow-y-auto scrollbar-subtle rounded-lg bg-black/40 p-3 text-xs leading-relaxed text-slate-400 whitespace-pre-wrap">
-                        {SETUP_MESSAGE}
-                      </div>
-                      <div className="mt-2 flex justify-end">
-                        <CopyButton
-                          text={SETUP_MESSAGE}
-                          label="Copy setup message"
-                          copiedKey={copiedKey}
-                          activeKey="setup"
-                          onCopy={(text) => copy(text, 'setup')}
-                        />
-                      </div>
-                    </details>
-                  </>
-                )}
-              </div>
-            ) : showForm ? (
-              <form onSubmit={submit} className="mt-6 space-y-3">
-                <label className="block text-xs uppercase tracking-widest text-slate-500">
-                  Your Mind ID
-                </label>
-                <input
-                  type="text"
-                  value={mindId}
-                  onChange={(event) => setMindId(event.target.value)}
-                  placeholder="e.g. 240b453e-f36b-1410-8466-00039ce7df11"
-                  autoFocus
-                  className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white placeholder-slate-600 outline-none focus:border-purple-500/50"
-                />
-                <p className="text-xs text-slate-500">
-                  We'll message this Mind — you approve from its own chat, or set up automatic
-                  approval once.
-                </p>
-                {statusInfo?.body && (
-                  <p className="text-xs text-amber-300/90">{statusInfo.body}</p>
-                )}
-                {state === 'error' && connectError && (
-                  <p className="text-xs text-red-300/90">{connectError}</p>
-                )}
-                <button
-                  type="submit"
-                  disabled={!mindId.trim()}
-                  className="sticker sticker-hover w-full rounded-xl bg-purple-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-purple-500 disabled:cursor-not-allowed disabled:bg-purple-600/40 disabled:text-white/50"
-                >
-                  Connect
-                </button>
-              </form>
-            ) : null}
+              {/* The assistant is the actual chat surface in every one of the states
+                  above — idle, pending, or connected — not just once a session exists.
+                  No height cap: it fills whatever room the modal has left. */}
+              <AssistantChat
+                connectionId={pending?.connectionId}
+                token={session?.token}
+                mindName={session?.mindName ?? pending?.mindName}
+              />
+            </div>
           </motion.div>
         </motion.div>
       )}

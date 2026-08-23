@@ -24,9 +24,15 @@
   // No `id` on purpose: Wrangler provisions the namespace on first deploy and writes the
   // id back here. `wrangler dev` simulates it locally under .wrangler/state regardless.
   //
-  // MIND_CONNECTIONS holds pending Connect Mind handshakes only (worker/connect.js) — a
-  // short expirationTtl per entry does the cleanup, no session data lives here (sessions
-  // are self-verifying HMAC tokens, see worker/session.js).
+  // MIND_CONNECTIONS holds two unrelated things, both worker/mind-chat.js and
+  // worker/assistant.js — never pending handshakes, which are reconstructed from
+  // conversation history instead (see the header comment in worker/connect.js):
+  //   - `briefed:<mindId>` — permanent, no TTL, "has this Mind ever gotten the
+  //     Producer briefing" flag.
+  //   - `assistant:<threadId>` — a visitor's assistant transcript, 24h expirationTtl,
+  //     scoped to that one thread only (see worker/assistant.js's privacy note).
+  // No session data lives here either way — sessions are self-verifying HMAC tokens,
+  // see worker/session.js.
   "kv_namespaces": [{ "binding": "DOSSIERS" }, { "binding": "MIND_CONNECTIONS" }],
 
   "observability": { "enabled": true },
@@ -42,6 +48,17 @@
     // appropriate. See the free-tier note in the plan.
     "NVIDIA_BASE_URL": "https://integrate.api.nvidia.com/v1",
     "CASTING_MODEL": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
-    "SCREENWRITER_MODEL": "nvidia/nemotron-3-super-120b-a12b"
+    "SCREENWRITER_MODEL": "nvidia/nemotron-3-super-120b-a12b",
+    // Intended to be DeepSeek — the user's own choice — but every DeepSeek model
+    // actually reachable from the account's main NVIDIA key was unusable when tried
+    // directly: deepseek-v3.1-terminus isn't in the catalog at all, deepseek-coder-6.7b
+    // 404s as "not found for account", and deepseek-v4-flash-0731 hung with zero
+    // response even after 170s using its own dedicated key and its own sample request
+    // shape. minimax-m3 is what the user pointed at next, on yet another dedicated key
+    // (ASSISTANT_API_KEY, in .dev.vars / `wrangler secret put`, deliberately separate
+    // from NVIDIA_API_KEY — see worker/nvidia.js's `apiKey` override) — confirmed
+    // empirically to respond in a few seconds and to discriminate correctly on a
+    // forced tool_choice call. Revisit if a DeepSeek id is ever confirmed working.
+    "ASSISTANT_MODEL": "minimaxai/minimax-m3"
   }
 }

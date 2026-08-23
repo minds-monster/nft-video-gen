@@ -14,12 +14,17 @@
  *
  * `onEvent(type, data)` fires for every event. Resolves with the payload of the terminal
  * `result` event, or throws whatever the terminal `error` event carried.
+ *
+ * Exported (not just used internally): worker/assistant.js's chat turn is the same
+ * transport with a different owner, and reimplementing this byte-parsing loop a second
+ * time to send an extra header would be pure duplication for no reason — see
+ * src/services/assistantChat.js.
  */
-const stream = async (path, body, { signal, onEvent } = {}) => {
+export const stream = async (path, body, { signal, onEvent, headers } = {}) => {
   const response = await fetch(path, {
     method: 'POST',
     signal,
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...headers },
     body: JSON.stringify(body),
   });
 

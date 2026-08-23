@@ -74,6 +74,11 @@ const ChatThread = ({
   elapsedLabel,
   elapsedLongWaitHint,
   mindName,
+  // Optional override for how a message's text renders, e.g. a streaming decode effect
+  // for the assistant's live reply. Called for every message, including ones with no
+  // text yet — the callback itself decides what (if anything) to show. Falls back to a
+  // plain paragraph when omitted, so every other ChatThread consumer is unaffected.
+  renderMessageText,
 }) => {
   const endRef = useRef(null);
 
@@ -142,9 +147,9 @@ const ChatThread = ({
                 )}
               >
                 {/* break-words: contract addresses in the prompt are long unbroken strings. */}
-                {text && (
-                  <p className="whitespace-pre-wrap break-words leading-relaxed">{text}</p>
-                )}
+                {renderMessageText
+                  ? renderMessageText(msg, text)
+                  : text && <p className="whitespace-pre-wrap break-words leading-relaxed">{text}</p>}
                 {media && <MediaBlock media={media} />}
               </div>
             </motion.div>

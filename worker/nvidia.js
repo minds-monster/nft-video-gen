@@ -35,8 +35,12 @@ const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
  */
 const jitter = (ms) => ms + Math.floor(Math.random() * Math.min(ms, 2000));
 
-export const chat = async (env, { model, signal, retries = 5, ...body }) => {
-  const key = env.NVIDIA_API_KEY;
+export const chat = async (env, { model, signal, retries = 5, apiKey, ...body }) => {
+  // Overridable per call: most callers share env.NVIDIA_API_KEY, but a model can live
+  // on a different key within the same NIM account (see worker/assistant.js, whose
+  // model was only ever reachable on a separately-issued key — confirmed empirically,
+  // not assumed) without this file needing to know why.
+  const key = apiKey ?? env.NVIDIA_API_KEY;
   if (!key) {
     throw new Error(
       'NVIDIA_API_KEY is not set. Locally it goes in .dev.vars; in production use ' +
@@ -89,8 +93,8 @@ export const chat = async (env, { model, signal, retries = 5, ...body }) => {
  *
  * Deliberately not retried. A retry would replay text the user has already watched appear.
  */
-export const streamChat = async (env, { model, signal, ...body }, onDelta) => {
-  const key = env.NVIDIA_API_KEY;
+export const streamChat = async (env, { model, signal, apiKey, ...body }, onDelta) => {
+  const key = apiKey ?? env.NVIDIA_API_KEY;
   if (!key) throw new Error('NVIDIA_API_KEY is not set.');
 
   const response = await fetch(`${env.NVIDIA_BASE_URL}/chat/completions`, {

@@ -5,28 +5,30 @@
 import { mindsClient, chatAlias } from './minds.js';
 import { verifySession } from './session.js';
 import { PRODUCER_BRIEFING } from './producer-briefing.js';
+import { messageToText } from '../src/lib/text.js';
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8' } });
 
-async function requireSession(request, env) {
+export async function requireSession(request, env) {
   const auth = request.headers.get('authorization');
   const token = auth?.startsWith('Bearer ') ? auth.slice(7) : null;
   if (!token) return null;
   return verifySession(env, token);
 }
 
-export async function mindChatInit(request, env) {
-  const session = await requireSession(request, env);
-  if (!session) return json({ error: 'unauthorized' }, 401);
-
+/**
+ * Ensure a Mind's persistent Producer conversation exists and has been briefed, and
+ * return its current history. Exported so `worker/assistant.js` can get the same
+ * "is this Mind actually onboarded" guarantee without duplicating the briefed-flag
+ * dance below.
+ */
+export async function ensureProducerReady(env, mindId) {
   const client = mindsClient(env);
-  if (!client) return json({ error: 'not_configured' }, 500);
+  if (!client) throw new Error('not_configured');
 
-  const alias = chatAlias(session.mindId);
-  console.log('[chat] init', { mindId: session.mindId, alias, connectionId: session.connectionId });
-
-  await client.ensureConversation(alias, session.mindId);
+  const alias = chatAlias(mindId);
+  await client.ensureConversation(alias, mindId);
   let history = await client.getHistory(alias, { limit: 50 });
 
   // First time this Mind has ever connected as a Producer — brief it automatically so
@@ -36,7 +38,7 @@ export async function mindChatInit(request, env) {
   // alias for any reason (every Mind used for dev/testing already does), permanently
   // blocking the briefing for it. The flag has no TTL: this is a permanent "have we
   // ever briefed this Mind" record, not an expiring one.
-  const briefedKey = `briefed:${session.mindId}`;
+  const briefedKey = `briefed:${mindId}`;
   let alreadyBriefed = await env.MIND_CONNECTIONS.get(briefedKey);
   // The KV flag can be slow to replicate; the conversation history is authoritative.
   // If a previous briefing is already in the thread, treat this Mind as briefed and
@@ -48,22 +50,129 @@ export async function mindChatInit(request, env) {
     alreadyBriefed = '1';
     await env.MIND_CONNECTIONS.put(briefedKey, '1');
   }
-  console.log('[chat] briefed check', { mindId: session.mindId, alreadyBriefed: Boolean(alreadyBriefed), historyRows: history.length, briefingInHistory });
 
   if (!alreadyBriefed) {
     try {
       await client.sendMessage({ alias, messageText: PRODUCER_BRIEFING });
       await env.MIND_CONNECTIONS.put(briefedKey, '1');
-      console.log('[chat] briefing sent', { mindId: session.mindId, alias, briefingLength: PRODUCER_BRIEFING.length });
       history = await client.getHistory(alias, { limit: 50 });
     } catch (err) {
-      console.error('[chat] briefing send failed', { mindId: session.mindId, alias, error: err?.message, status: err?.status, code: err?.code });
-      return json({ error: 'briefing_failed', detail: err?.message }, 500);
+      const wrapped = new Error(err?.message);
+      wrapped.briefingFailed = true;
+      throw wrapped;
     }
   }
 
-  console.log('[chat] init done', { mindId: session.mindId, historyRows: history.length });
-  return json({ history });
+  return { alias, history };
+}
+
+/**
+ * Recent history on a Mind's Producer conversation, filtered to rows created after
+ * `afterMs`. Exported so `worker/assistant.js` can pull the same "what's actually
+ * happened with this Mind" context it needs for oversight/status, via the same
+ * timestamp-based filtering `mindChatPoll` already relies on below.
+ */
+export async function fetchMindActivity(env, mindId, { limit = 50, afterMs = 0 } = {}) {
+  const client = mindsClient(env);
+  if (!client) throw new Error('not_configured');
+
+  const alias = chatAlias(mindId);
+  const raw = await client.getHistory(alias, { limit });
+  // Small buffer for clock skew between this Worker and the platform's own timestamps.
+  const cutoffMs = afterMs - 2000;
+  return raw.filter((row) => new Date(row.createdAt).getTime() > cutoffMs);
+}
+
+/**
+ * Send a message into a Mind's Producer conversation. No rate limiting here — callers
+ * (mindChatSend below, and the assistant's send_to_mind tool) each own their own limit,
+ * since they have different rate budgets.
+ */
+export async function relayToMind(env, mindId, messageText) {
+  const client = mindsClient(env);
+  if (!client) throw new Error('not_configured');
+
+  const alias = chatAlias(mindId);
+  await client.ensureConversation(alias, mindId);
+  // A timestamp, not a fingerprint: getHistory's `after` fingerprint filter is silently
+  // ignored by the platform — confirmed empirically (a call with `after` set to a recent
+  // message's fingerprint still returned the entire conversation from the start). Filtering
+  // by createdAt ourselves, in fetchMindActivity above, is what actually works.
+  const before = Date.now();
+  await client.sendMessage({ alias, messageText });
+  return { before };
+}
+
+// Hello Minds exposes no read-receipt concept. Adam's own proposal (see the brainstorm
+// thread linked from the assistant plan) is a behavior commitment rather than new
+// infrastructure: a connected Mind's first action on a new visitor message is to send a
+// one-line `[seen <ISO timestamp>] ...` acknowledgment before it starts actual work.
+// This is intentionally Mind-agnostic — any connected Mind that adopts the same
+// one-line convention gets the same "seen" signal, not just Adam's.
+//
+// Tested against messageToText(row.messageText), never the raw field — Hello Minds
+// wraps replies in HTML (`<p>[seen ...] On it.</p>`), which would otherwise defeat a
+// prefix anchored at the start of the string.
+const SEEN_ACK_PREFIX = /^\s*\[seen\b/i;
+
+/**
+ * Pure: given a Mind's Producer history, say whether it has ever been messaged, has
+ * acknowledged seeing the visitor's last message, or has actually replied. Three
+ * signals, matching the states a `[seen ...]` ack makes possible — see SEEN_ACK_PREFIX.
+ */
+export function deriveMindStatus(history) {
+  const sorted = [...(history ?? [])].sort(
+    (a, b) => new Date(a.createdAt ?? 0) - new Date(b.createdAt ?? 0),
+  );
+  if (!sorted.length) return { mindStatus: 'no_activity_yet', lastActivityAgeMs: null };
+
+  const lastVisitorIndex = sorted.map((row) => row.senderType).lastIndexOf(1);
+  const mindRowsSince = (lastVisitorIndex === -1 ? sorted : sorted.slice(lastVisitorIndex + 1)).filter(
+    (row) => row.senderType !== 1,
+  );
+
+  const substantiveReply = mindRowsSince.find(
+    (row) => !SEEN_ACK_PREFIX.test(messageToText(row.messageText)),
+  );
+  if (substantiveReply) {
+    return {
+      mindStatus: 'mind_replied',
+      lastActivityAgeMs: Date.now() - new Date(substantiveReply.createdAt).getTime(),
+    };
+  }
+
+  const seenAck = mindRowsSince.find((row) => SEEN_ACK_PREFIX.test(messageToText(row.messageText)));
+  if (seenAck) {
+    return { mindStatus: 'mind_seen', lastActivityAgeMs: Date.now() - new Date(seenAck.createdAt).getTime() };
+  }
+
+  if (lastVisitorIndex === -1) {
+    // No visitor message at all yet on this alias — fall back to "who spoke last."
+    const last = sorted[sorted.length - 1];
+    return {
+      mindStatus: last.senderType === 1 ? 'waiting_on_mind' : 'mind_replied',
+      lastActivityAgeMs: Date.now() - new Date(last.createdAt).getTime(),
+    };
+  }
+
+  return {
+    mindStatus: 'waiting_on_mind',
+    lastActivityAgeMs: Date.now() - new Date(sorted[lastVisitorIndex].createdAt).getTime(),
+  };
+}
+
+export async function mindChatInit(request, env) {
+  const session = await requireSession(request, env);
+  if (!session) return json({ error: 'unauthorized' }, 401);
+
+  try {
+    const { history } = await ensureProducerReady(env, session.mindId);
+    return json({ history });
+  } catch (err) {
+    if (err.message === 'not_configured') return json({ error: 'not_configured' }, 500);
+    if (err.briefingFailed) return json({ error: 'briefing_failed', detail: err.message }, 500);
+    throw err;
+  }
 }
 
 // A visitor's own send rate, separate from the connect-time rate limit — protects the
@@ -83,26 +192,16 @@ export async function mindChatSend(request, env) {
   const messageText = typeof body.messageText === 'string' ? body.messageText.trim() : '';
   if (!messageText) return json({ error: 'messageText required' }, 400);
 
-  const client = mindsClient(env);
-  if (!client) return json({ error: 'not_configured' }, 500);
-
-  const alias = chatAlias(session.mindId);
-  await client.ensureConversation(alias, session.mindId);
-  // A timestamp, not a fingerprint: getHistory's `after` fingerprint filter is silently
-  // ignored by the platform — confirmed empirically (a call with `after` set to a recent
-  // message's fingerprint still returned the entire conversation from the start). Filtering
-  // by createdAt ourselves, in mindChatPoll below, is what actually works.
-  const before = Date.now();
+  let result;
   try {
-    await client.sendMessage({ alias, messageText });
-    console.log('[chat] send', { mindId: session.mindId, alias, before });
+    result = await relayToMind(env, session.mindId, messageText);
   } catch (err) {
-    console.error('[chat] send failed', { mindId: session.mindId, alias, error: err?.message, status: err?.status, code: err?.code });
+    if (err.message === 'not_configured') return json({ error: 'not_configured' }, 500);
     throw err;
   }
   lastSendAt.set(session.connectionId, now);
 
-  return json({ before });
+  return json({ before: result.before });
 }
 
 export async function mindChatPoll(request, env) {
@@ -112,13 +211,12 @@ export async function mindChatPoll(request, env) {
   const { searchParams } = new URL(request.url);
   const afterMs = Number(searchParams.get('after')) || 0;
 
-  const client = mindsClient(env);
-  if (!client) return json({ error: 'not_configured' }, 500);
-
-  const alias = chatAlias(session.mindId);
-  const raw = await client.getHistory(alias, { limit: 50 });
-  // Small buffer for clock skew between this Worker and the platform's own timestamps.
-  const cutoffMs = afterMs - 2000;
-  const history = raw.filter((row) => new Date(row.createdAt).getTime() > cutoffMs);
+  let history;
+  try {
+    history = await fetchMindActivity(env, session.mindId, { limit: 50, afterMs });
+  } catch (err) {
+    if (err.message === 'not_configured') return json({ error: 'not_configured' }, 500);
+    throw err;
+  }
   return json({ history });
 }

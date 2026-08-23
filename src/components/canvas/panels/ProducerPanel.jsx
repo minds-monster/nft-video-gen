@@ -1,63 +1,40 @@
 import { MessageSquare } from 'lucide-react';
 import CanvasPanel from './CanvasPanel';
-import PromptBar from '../../PromptBar';
-import ChatThread from '../../ChatThread';
+import AssistantChat from '../../AssistantChat';
 import { useMindChatContext } from '../../../context/mindChat';
 
 /**
- * The Producer: a persistent chat with the mind.
- *
- * This is the same conversation that powers the Studio overlay, surfaced as a canvas panel.
+ * The Producer: the site assistant, mediating whatever state the Mind connection is
+ * currently in — idle, pending, or approved. It never shows the Mind's raw
+ * conversation directly; see /Users/adamplace/.claude/plans/a-third-party-mind-agent-floating-seal.md.
  */
 const ProducerPanel = () => {
-  const { session, openModal, messages, isSending, isInitializing, error, send } = useMindChatContext();
+  const { session, pending, openModal } = useMindChatContext();
 
-  if (!session) {
-    return (
-      <CanvasPanel title="Producer" icon={MessageSquare} bodyClassName="flex flex-col gap-3">
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 bg-black/20 p-6 text-center">
-          <MessageSquare className="h-8 w-8 text-slate-600" />
-          <p className="text-sm text-slate-400">Connect your Mind to direct the film here.</p>
+  return (
+    <CanvasPanel title="Producer" icon={MessageSquare} bodyClassName="flex flex-1 min-h-0 flex-col gap-3">
+      {session ? (
+        <p className="text-xs text-slate-500">
+          Connected to <span className="text-slate-300">{session.mindName || 'your Mind'}</span>
+        </p>
+      ) : (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/20 px-3 py-2">
+          <p className="text-xs text-slate-400">Connect your Mind to direct the film.</p>
           <button
             type="button"
             onClick={openModal}
-            className="chip px-4 py-2 text-xs font-semibold text-purple-300 hover:text-purple-200"
+            className="chip shrink-0 px-3 py-1.5 text-xs font-semibold text-purple-300 hover:text-purple-200"
           >
             Connect Mind
           </button>
         </div>
-      </CanvasPanel>
-    );
-  }
-
-  return (
-    <CanvasPanel title="Producer" icon={MessageSquare} bodyClassName="flex flex-col gap-3">
-      {/* Front-loads the "someone else has to reply" expectation before the visitor ever
-          sends anything — Adam's own diagnosis of why a slow-but-working reply reads as
-          broken: the waiting state alone never explained who it was waiting on. */}
-      {!isInitializing && messages.length === 0 && (
-        <p className="text-xs text-slate-500">
-          Connected to <span className="text-slate-300">{session.mindName || 'your Mind'}</span> ·
-          replies can take several minutes
-        </p>
       )}
-      <PromptBar
-        onSubmit={send}
-        busy={isSending}
-        disabled={isInitializing || Boolean(error)}
-        size="sm"
+
+      <AssistantChat
+        connectionId={pending?.connectionId}
+        token={session?.token}
+        mindName={session?.mindName ?? pending?.mindName}
         placeholder="Direct the film…"
-      />
-      <ChatThread
-        messages={messages}
-        isSending={isSending}
-        isInitializing={isInitializing}
-        error={error}
-        emptyHint="Send a direction and the film appears here."
-        elapsedLabel="Waiting for Mind reply…"
-        elapsedLongWaitHint="replies often take several minutes — leave it open"
-        mindName={session.mindName}
-        className="min-h-0 flex-1 rounded-2xl border border-white/10 bg-black/20 p-3"
       />
     </CanvasPanel>
   );

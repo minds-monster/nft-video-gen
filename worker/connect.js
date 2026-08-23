@@ -46,7 +46,7 @@ function isValidMindId(mindId) {
   return typeof mindId === 'string' && mindId.length > 0 && mindId.length <= 128 && !/[\r\n]/.test(mindId);
 }
 
-function isValidConnectionId(id) {
+export function isValidConnectionId(id) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 }
 
@@ -75,47 +75,43 @@ export async function handleConnectInit(request, env) {
   const mindName = mindParticipant?.name ?? await client.getMind(mindId).then((m) => m.name ?? null).catch(() => null);
   await client.sendMessage({ alias, messageText: message });
 
-  console.log('[connect] init', { connectionId, mindId, alias, mindName });
-
   return json({ connectionId, expiresInMs: INIT_TTL_MS, message, mindName });
 }
 
-export async function handleConnectStatus(request, env) {
-  const { searchParams } = new URL(request.url);
-  const connectionId = searchParams.get('connectionId');
-  if (!connectionId || !isValidConnectionId(connectionId)) return json({ error: 'connectionId required' }, 400);
-
+/**
+ * Reconstruct the state of a connect handshake purely from the conversation alias,
+ * without minting a session. Exported so `worker/assistant.js` can answer "are we
+ * connected yet?" using exactly this logic, rather than re-implementing the
+ * KV-eventual-consistency workaround described at the top of this file.
+ *
+ * Returns `{ status: 'pending' | 'approved' | 'denied' | 'expired', mindId?, mindName? }`.
+ * Throws (rather than returning an error shape) on real failures — `not_configured` for a
+ * missing Builder key, or whatever the underlying client call raises — so every caller
+ * gets the same failure behavior as the rest of this file: let it bubble to the
+ * route-level catch-all.
+ */
+export async function reconstructConnectStatus(env, connectionId) {
   const client = mindsClient(env);
-  if (!client) return json({ error: 'not_configured' }, 500);
+  if (!client) throw new Error('not_configured');
 
   const alias = connectionAlias(connectionId);
 
-  // Reconstruct the handshake from the conversation alias. If the alias does not exist
-  // yet, the init write may still be replicating or the request is ahead of the init;
-  // treat it as pending rather than expired.
+  // If the alias does not exist yet, the init write may still be replicating or the
+  // request is ahead of the init; treat it as pending rather than expired.
   let conversation;
   try {
     conversation = await client.getConversation(alias);
   } catch (err) {
-    if (err?.status === 404) {
-      console.log('[connect] status alias not found', { connectionId, alias });
-      return json({ status: 'pending' });
-    }
+    if (err?.status === 404) return { status: 'pending' };
     throw err;
   }
 
   const mindParticipant = conversation.participants?.find((p) => p.partyType === 0);
   const mindId = mindParticipant?.partyId;
-  if (!mindId) {
-    console.log('[connect] status no mind participant', { connectionId, alias, participants: conversation.participants });
-    return json({ status: 'pending' });
-  }
+  if (!mindId) return { status: 'pending' };
 
   const createdAtMs = conversation.createdAt ? new Date(conversation.createdAt).getTime() : 0;
-  if (createdAtMs && Date.now() - createdAtMs > INIT_TTL_MS) {
-    console.log('[connect] status expired by ttl', { connectionId, createdAtMs });
-    return json({ status: 'expired' });
-  }
+  if (createdAtMs && Date.now() - createdAtMs > INIT_TTL_MS) return { status: 'expired' };
 
   // A server-side read of the conversation's history — this never reaches the Mind as
   // a new message, so it doesn't count against its own per-connection cognition budget.
@@ -123,36 +119,38 @@ export async function handleConnectStatus(request, env) {
   // a worker-side timestamp that may drift from the platform's clock.
   const history = await client.getHistory(alias, { limit: 20 });
   const sentMessage = history.find((row) => row.senderType === 1 && row.messageText?.includes(connectionId));
-  if (!sentMessage) {
-    console.log('[connect] status sent message not visible yet', { connectionId, historyRows: history.length });
-    return json({ status: 'pending' });
-  }
+  if (!sentMessage) return { status: 'pending' };
 
   const cutoffMs = new Date(sentMessage.createdAt).getTime() - 2000;
   const reply = history.find((row) => row.senderType !== 1 && new Date(row.createdAt).getTime() > cutoffMs);
-
-  console.log('[connect] status', {
-    connectionId,
-    mindId,
-    alias,
-    cutoffMs,
-    historyRows: history.length,
-    candidate: reply ? { senderType: reply.senderType, createdAt: reply.createdAt, text: reply.messageText?.slice(0, 120) } : null,
-  });
-
-  if (!reply) return json({ status: 'pending' });
+  if (!reply) return { status: 'pending' };
 
   const decision = parseApprovalDecision(reply.messageText);
-  console.log('[connect] decision', { connectionId, decision, text: reply.messageText?.slice(0, 120) });
-
   if (decision === 'approved') {
-    const expiresAt = Date.now() + SESSION_TTL_MS;
-    const token = await signSession(env, { mindId, connectionId, iat: Date.now(), exp: expiresAt });
     const mindName = mindParticipant?.name ?? await client.getMind(mindId).then((m) => m.name ?? null).catch(() => null);
-    return json({ status: 'approved', sessionToken: token, mindId, mindName, expiresAt });
+    return { status: 'approved', mindId, mindName };
   }
-  if (decision === 'denied') {
-    return json({ status: 'denied' });
+  if (decision === 'denied') return { status: 'denied', mindId };
+  return { status: 'pending', mindId };
+}
+
+export async function handleConnectStatus(request, env) {
+  const { searchParams } = new URL(request.url);
+  const connectionId = searchParams.get('connectionId');
+  if (!connectionId || !isValidConnectionId(connectionId)) return json({ error: 'connectionId required' }, 400);
+
+  let result;
+  try {
+    result = await reconstructConnectStatus(env, connectionId);
+  } catch (err) {
+    if (err.message === 'not_configured') return json({ error: 'not_configured' }, 500);
+    throw err;
   }
-  return json({ status: 'pending' });
+
+  if (result.status === 'approved') {
+    const expiresAt = Date.now() + SESSION_TTL_MS;
+    const token = await signSession(env, { mindId: result.mindId, connectionId, iat: Date.now(), exp: expiresAt });
+    return json({ status: 'approved', sessionToken: token, mindId: result.mindId, mindName: result.mindName, expiresAt });
+  }
+  return json({ status: result.status });
 }
