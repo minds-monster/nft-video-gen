@@ -99,6 +99,19 @@ re-cast is still the same film. `storyboards:<mindId>` indexes the last 20 so ea
 reachable, `GET /api/storyboard?film=<id>` is scoped, and `?films=1` returns the list alone.
 Verified: film B did not show film A, and film A survived film B being generated.
 
+**The first version of this fix re-created the bug one layer down**, and the lesson is worth more
+than the fix. `loadStoryboard` kept a "generous" fallback: if the scoped key missed and the old
+single-slot record carried no film of its own, return that rather than nothing — meant kindly, so
+nobody's existing storyboard would vanish. But EVERY new film misses, so every new film was served
+the same stale storyboard. The visitor reported it as *"it keeps delivering the same one that it
+already did"*, which is the same sentence as the original bug.
+
+🔑 **Generosity about identity is indistinguishable from getting identity wrong.** A record that
+cannot be shown to belong to the film being asked for must never be returned for that film. The old
+record is now reachable only BY NAME (`?film=legacy`), offered as an explicit entry in the films
+index — listed rather than served, so the visitor decides it is the one they want. `loadStoryboard`
+has no fallback at all now, and an unscoped read returns nothing rather than something.
+
 **The trade-off that came with it**, and the reason the index exists: a storyboard now loads only
 for the film the tab is actually about, so a reload with no spec yet shows an empty timeline. The
 empty state lists past films by logline, one click to open. Without that, correctness would have

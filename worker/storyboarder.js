@@ -77,18 +77,51 @@ const makeFrameId = (beatIndex) => `beat-${beatIndex}-${crypto.randomUUID().slic
 
 const emptyStoryboard = () => ({ frames: [], createdAt: Date.now() });
 
+/** The id under which a pre-film-identity storyboard is reachable. Explicit, so the visitor can
+ * open it deliberately — and so nothing can serve it by accident. */
+export const LEGACY_FILM_ID = 'legacy';
+
+/**
+ * One film's storyboard. NEVER a different film's.
+ *
+ * THERE IS NO FALLBACK, and that is the entire point. The first version of this keying kept a
+ * "generous" one — if the scoped key missed and the old single-slot record carried no film of its
+ * own, hand that back rather than nothing — and it recreated the exact bug the keying existed to
+ * fix, one layer down: every new film misses, so every new film was served the same stale
+ * storyboard. Reported by the visitor as "it keeps delivering the same one it already did".
+ *
+ * A record with no film identity cannot be shown to belong to the film being asked for. So it is
+ * reachable only by asking for it BY NAME (`LEGACY_FILM_ID`), which the films index offers as an
+ * explicit entry. Generosity about identity is indistinguishable from getting identity wrong.
+ */
 async function loadStoryboard(env, mindId, filmId) {
-  if (filmId) {
-    const scoped = await env.MIND_CONNECTIONS.get(storyboardKey(mindId, filmId), 'json');
-    if (scoped) return scoped;
-    // A record written before films had identities. Claim it only if it carries no film of its
-    // own — never hand back a storyboard that is known to belong to a DIFFERENT film, which is
-    // the whole bug this keying exists to end.
-    const legacy = await env.MIND_CONNECTIONS.get(legacyStoryboardKey(mindId), 'json');
-    if (legacy && !legacy.filmId) return legacy;
-    return emptyStoryboard();
+  if (filmId === LEGACY_FILM_ID) {
+    return (await env.MIND_CONNECTIONS.get(legacyStoryboardKey(mindId), 'json')) ?? emptyStoryboard();
   }
-  return (await env.MIND_CONNECTIONS.get(legacyStoryboardKey(mindId), 'json')) ?? emptyStoryboard();
+  if (filmId) {
+    return (await env.MIND_CONNECTIONS.get(storyboardKey(mindId, filmId), 'json')) ?? emptyStoryboard();
+  }
+  // No film asked for, so no film answered. An unscoped read is what let one storyboard stand in
+  // for all of them; callers that do not know which film they mean get nothing.
+  return emptyStoryboard();
+}
+
+/** The films index, plus the old single-slot record as an explicit, openable entry when it holds
+ * anything worth opening. Listed rather than served: the visitor decides it is the one they want. */
+async function listFilms(env, mindId) {
+  const films = (await env.MIND_CONNECTIONS.get(filmIndexKey(mindId), 'json')) ?? [];
+  const legacy = await env.MIND_CONNECTIONS.get(legacyStoryboardKey(mindId), 'json');
+  if (!legacy?.frames?.length || legacy.filmId) return films;
+  return [
+    ...films,
+    {
+      filmId: LEGACY_FILM_ID,
+      logline: legacy.logline ?? 'Earlier storyboard (made before films were kept separately)',
+      frames: legacy.frames.length,
+      tier: legacy.tier ?? null,
+      updatedAt: legacy.updatedAt ?? legacy.createdAt ?? null,
+    },
+  ];
 }
 
 /** A short list of this Mind's films, so past work stays reachable rather than merely stored.
@@ -922,7 +955,7 @@ export async function handleStoryboardGet(request, env) {
   const params = new URL(request.url).searchParams;
   const filmId = params.get('film');
   const spend = await getSpend(env, session.mindId);
-  const films = (await env.MIND_CONNECTIONS.get(filmIndexKey(session.mindId), 'json')) ?? [];
+  const films = await listFilms(env, session.mindId);
 
   // `?films=1` asks for the LIST only. An explicit mode rather than "no film id means give me
   // whatever you have": the whole point of this keying is that an unscoped read can hand back a
