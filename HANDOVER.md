@@ -1,5 +1,9 @@
 # Connect Mind / Producer — Handover
 
+> **Next round is scoped in `HANDOVER-ROUND9.md`** — making the cast real in the previz
+> (proportioned primitives vs billboard impostors vs image-to-3D meshes), with the measured
+> resource inventory behind it. This document covers rounds 1-8, which are built and live.
+
 ## Start here — ROUND 8 IS BUILT (2026-08-25)
 
 Both storyboard tiers are live locally, generating world-space scene graphs and rendering each
