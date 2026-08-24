@@ -40,6 +40,7 @@ import { getBudget, getSpend, recordSpend, markThresholdRelayed } from './budget
 import { editImage, estimateCostUsd, respond, jsonFromResponse } from './openai.js';
 import { filmCall, FREE_MAX_BEATS } from './openrouter.js';
 import { resolveTier, LATENCY_SECONDS, TIER_LABEL } from './tier.js';
+import { filmIdFor } from './film-id.js';
 import {
   SCENE_SCHEMA,
   COORDINATE_CONTRACT_V2,
@@ -64,17 +65,54 @@ const IMAGE_LINK_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const IMAGE_SIZE = '1024x1024';
 const IMAGE_QUALITY = 'low';
 
-const storyboardKey = (mindId) => `storyboard:${mindId}`;
+// ONE STORYBOARD PER FILM, not one per Mind. The old `storyboard:<mindId>` shape gave every Mind
+// a single slot, which meant a visitor's second film overwrote their first without telling them —
+// see worker/film-id.js for the incident. The legacy key is still read as a fallback so nobody's
+// existing storyboard vanishes, but nothing writes to it any more.
+const storyboardKey = (mindId, filmId) => `storyboard:${mindId}:${filmId}`;
+const legacyStoryboardKey = (mindId) => `storyboard:${mindId}`;
+const filmIndexKey = (mindId) => `storyboards:${mindId}`;
 const r2Key = (mindId, aFrameId, version) => `storyboard/${mindId}/${aFrameId}/${version}.png`;
 const makeFrameId = (beatIndex) => `beat-${beatIndex}-${crypto.randomUUID().slice(0, 8)}`;
 
-async function loadStoryboard(env, mindId) {
-  return (await env.MIND_CONNECTIONS.get(storyboardKey(mindId), 'json')) ?? { frames: [], createdAt: Date.now() };
+const emptyStoryboard = () => ({ frames: [], createdAt: Date.now() });
+
+async function loadStoryboard(env, mindId, filmId) {
+  if (filmId) {
+    const scoped = await env.MIND_CONNECTIONS.get(storyboardKey(mindId, filmId), 'json');
+    if (scoped) return scoped;
+    // A record written before films had identities. Claim it only if it carries no film of its
+    // own — never hand back a storyboard that is known to belong to a DIFFERENT film, which is
+    // the whole bug this keying exists to end.
+    const legacy = await env.MIND_CONNECTIONS.get(legacyStoryboardKey(mindId), 'json');
+    if (legacy && !legacy.filmId) return legacy;
+    return emptyStoryboard();
+  }
+  return (await env.MIND_CONNECTIONS.get(legacyStoryboardKey(mindId), 'json')) ?? emptyStoryboard();
+}
+
+/** A short list of this Mind's films, so past work stays reachable rather than merely stored.
+ * Kept small and denormalised: enough to show a visitor "you also have these", nothing more. */
+const MAX_INDEXED_FILMS = 20;
+
+async function indexFilm(env, mindId, record) {
+  const existing = (await env.MIND_CONNECTIONS.get(filmIndexKey(mindId), 'json')) ?? [];
+  const entry = {
+    filmId: record.filmId,
+    logline: record.logline ?? null,
+    frames: record.frames?.length ?? 0,
+    tier: record.tier ?? null,
+    updatedAt: record.updatedAt,
+  };
+  const next = [entry, ...existing.filter((f) => f.filmId !== record.filmId)].slice(0, MAX_INDEXED_FILMS);
+  await env.MIND_CONNECTIONS.put(filmIndexKey(mindId), JSON.stringify(next));
 }
 
 async function saveStoryboard(env, mindId, record) {
+  if (!record.filmId) throw new Error('A storyboard cannot be saved without a filmId.');
   record.updatedAt = Date.now();
-  await env.MIND_CONNECTIONS.put(storyboardKey(mindId), JSON.stringify(record));
+  await env.MIND_CONNECTIONS.put(storyboardKey(mindId, record.filmId), JSON.stringify(record));
+  await indexFilm(env, mindId, record);
 }
 
 const TRANSITION_PREFIX = /^\s*\[(CUT TO BLACK|TRANSITION|FADE)\]\s*/i;
@@ -401,6 +439,9 @@ export async function handleStoryboard(request, env, ctx) {
       // what a person should ever be shown. Keeping the mapping on the record means a returning
       // visitor sees "the ape" without needing the original cast in hand.
       subjectNames: subjectNamesFrom(spec, castByKey),
+      // Which film this is. Without it a second film silently overwrites the first.
+      filmId: filmIdFor(spec),
+      logline: spec.logline ?? null,
       createdAt: Date.now(),
     };
     let repairsUsed = 0;
@@ -548,7 +589,7 @@ export async function handleStoryboardBeatRegenerate(request, env) {
 
   const mindId = session.mindId;
   const castByKey = new Map(cast.map((c) => [c.key, c]));
-  const record = await loadStoryboard(env, mindId);
+  const record = await loadStoryboard(env, mindId, filmIdFor(spec));
   const frame = record.frames.find((f) => f.frameId === targetId);
   if (!frame) return json({ error: 'frame_not_found' }, 404);
   if (frame.transition) return json({ error: 'A transition has no geometry to regenerate.' }, 400);
@@ -633,7 +674,7 @@ export async function handleStoryboardBeatOverride(request, env) {
   const targetId = body.frameId;
   if (!targetId) return json({ error: 'Body needs { frameId }' }, 400);
 
-  const record = await loadStoryboard(env, session.mindId);
+  const record = await loadStoryboard(env, session.mindId, body.filmId ?? filmIdFor(body.spec));
   const frame = record.frames.find((f) => f.frameId === targetId);
   if (!frame) return json({ error: 'frame_not_found' }, 404);
 
@@ -771,7 +812,7 @@ export async function handleStoryboardSketch(request, env) {
   const castByKey = new Map(cast.map((c) => [c.key, c]));
 
   return sseResponse(async (emit) => {
-    const storyboardRecord = await loadStoryboard(env, mindId);
+    const storyboardRecord = await loadStoryboard(env, mindId, filmIdFor(spec));
     const frame = storyboardRecord.frames.find((f) => f.frameId === targetId);
     if (!frame) throw new Error('frame_not_found');
     if (frame.transition) throw new Error('This beat is a transition — there is no frame to sketch.');
@@ -867,12 +908,29 @@ export async function handleStoryboardSketch(request, env) {
   });
 }
 
+/**
+ * One film's storyboard, plus a short list of the visitor's other films.
+ *
+ * `?film=<id>` is what scopes it. Asking without one used to be harmless and is now the bug: it
+ * returns whatever this Mind produced last, which is how a tab working on film B ended up showing
+ * film A's storyboard the moment a Mind connected. Callers that know which film they are looking
+ * at must say so; the unscoped read is kept only for the legacy record.
+ */
 export async function handleStoryboardGet(request, env) {
   const session = await requireSession(request, env);
   if (!session) return json({ error: 'unauthorized' }, 401);
-  const storyboardRecord = await loadStoryboard(env, session.mindId);
+  const params = new URL(request.url).searchParams;
+  const filmId = params.get('film');
   const spend = await getSpend(env, session.mindId);
-  return json({ ...storyboardRecord, spend });
+  const films = (await env.MIND_CONNECTIONS.get(filmIndexKey(session.mindId), 'json')) ?? [];
+
+  // `?films=1` asks for the LIST only. An explicit mode rather than "no film id means give me
+  // whatever you have": the whole point of this keying is that an unscoped read can hand back a
+  // film the caller was not asking about, so the index has to be requestable without one.
+  if (params.has('films') && !filmId) return json({ frames: [], films, spend });
+
+  const storyboardRecord = await loadStoryboard(env, session.mindId, filmId);
+  return json({ ...storyboardRecord, spend, films });
 }
 
 /**

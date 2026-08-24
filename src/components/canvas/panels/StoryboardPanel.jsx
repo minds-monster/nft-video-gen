@@ -449,6 +449,8 @@ const StoryboardPanel = ({ storyboarder }) => {
     plan,
     spend,
     subjectNames,
+    films,
+    openFilm,
     running,
     stageLabel,
     elapsedSeconds,
@@ -480,6 +482,33 @@ const StoryboardPanel = ({ storyboarder }) => {
           </div>
           {plan?.overCapCopy && (
             <p className="mx-auto max-w-sm text-xs leading-relaxed text-amber-300/90">{plan.overCapCopy}</p>
+          )}
+
+          {/* Past films. A storyboard belongs to ONE film now, so this is what stops earlier work
+              becoming unreachable after a reload — the tab has no spec until the Screenwriter runs
+              again, and a visitor should not have to regenerate a film to see it. */}
+          {films?.length > 0 && token && (
+            <div className="mx-auto w-full max-w-sm text-left">
+              <p className="mb-2 text-center text-[10px] uppercase tracking-widest text-slate-600">
+                Your earlier films
+              </p>
+              <ul className="space-y-1">
+                {films.map((film) => (
+                  <li key={film.filmId}>
+                    <button
+                      type="button"
+                      onClick={() => openFilm(token, film.filmId)}
+                      className="flex w-full items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-left text-xs text-slate-300 transition-colors hover:border-purple-500/40 hover:bg-purple-500/5"
+                    >
+                      <span className="min-w-0 flex-1 truncate">{film.logline ?? 'Untitled film'}</span>
+                      <span className="shrink-0 text-[10px] uppercase tracking-wider text-slate-600">
+                        {film.frames} {film.frames === 1 ? 'beat' : 'beats'}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
       </CanvasPanel>

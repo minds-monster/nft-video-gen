@@ -273,21 +273,37 @@ export const regenerateStoryboardBeat = async ({ frameId, spec, cast }, token) =
 
 /** "I want this beat anyway." The way out of the validator for a visitor who disagrees with it —
  * the violations stay on the record, because accepting one is a decision, not an erasure. */
-export const overrideStoryboardBeat = async ({ frameId }, token) => {
+export const overrideStoryboardBeat = async ({ frameId, filmId }, token) => {
   const response = await fetch('/api/storyboard/beat/override', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ frameId }),
+    body: JSON.stringify({ frameId, filmId }),
   });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(payload.error ?? `Override failed: ${response.status}`);
   return payload;
 };
 
-/** The current storyboard for the session's Mind, for resuming after a reload. */
-export const getStoryboard = async (token) => {
-  const response = await fetch('/api/storyboard', { headers: { Authorization: `Bearer ${token}` } });
+/**
+ * One film's storyboard, for resuming after a reload — plus a short list of the visitor's other
+ * films, so earlier work stays reachable.
+ *
+ * `filmId` is not optional in practice. Fetching without it returns whatever this Mind produced
+ * last, which is exactly how a tab working on one film ended up displaying another's storyboard
+ * the moment a Mind connected.
+ */
+export const getStoryboard = async (token, filmId) => {
+  const url = filmId ? `/api/storyboard?film=${encodeURIComponent(filmId)}` : '/api/storyboard';
+  const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
   if (!response.ok) throw new Error(`Storyboard fetch failed: ${response.status}`);
+  return response.json();
+};
+
+/** Just the list of this Mind's films — no storyboard. What the timeline offers a returning
+ * visitor when the tab has no spec yet, so earlier work is one click away instead of unreachable. */
+export const getStoryboardFilms = async (token) => {
+  const response = await fetch('/api/storyboard?films=1', { headers: { Authorization: `Bearer ${token}` } });
+  if (!response.ok) throw new Error(`Storyboard films fetch failed: ${response.status}`);
   return response.json();
 };
 

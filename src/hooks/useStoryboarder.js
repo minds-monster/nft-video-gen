@@ -1,9 +1,11 @@
 import { useCallback, useRef, useState } from 'react';
+import { filmIdFor } from '../../worker/film-id';
 import {
   storyboard,
   sketchStoryboardFrame,
   getStoryboard,
   getStoryboardPlan,
+  getStoryboardFilms,
   regenerateStoryboardBeat,
   overrideStoryboardBeat,
 } from '../services/swarm';
@@ -41,6 +43,8 @@ export const useStoryboarder = () => {
   const [plan, setPlan] = useState(null);
   // tag -> the cast member's real name, from the worker. "<Subject 1>" is machinery, not language.
   const [subjectNames, setSubjectNames] = useState({});
+  // The visitor's other films, so earlier work is reachable rather than merely stored.
+  const [films, setFilms] = useState([]);
   // Seconds the current model call has been in flight, straight from the worker's own heartbeat
   // rather than a client-side timer — so it reports the real call, not the time since the button
   // was clicked.
@@ -137,7 +141,7 @@ export const useStoryboarder = () => {
     const context = contextRef.current;
     if (!context) return;
     try {
-      const result = await overrideStoryboardBeat({ frameId }, context.token);
+      const result = await overrideStoryboardBeat({ frameId, filmId: filmIdFor(context.spec) }, context.token);
       setFrames((current) => current.map((f) => (f.frameId === frameId ? result.frame : f)));
     } catch (failure) {
       setError(failure.message);
@@ -163,17 +167,52 @@ export const useStoryboarder = () => {
     }
   }, []);
 
-  /** Resume a storyboard already generated in an earlier session, on mount. */
+  /** The visitor's other films. Cheap, needs no spec, and is what keeps earlier work reachable
+   * now that a storyboard is only loaded for the film the tab is actually about. */
+  const loadFilms = useCallback(async (token) => {
+    try {
+      const result = await getStoryboardFilms(token);
+      setFilms(result.films ?? []);
+      if (result.spend) setSpend(result.spend);
+    } catch {
+      // A visitor with no films yet, or an unreachable worker. The empty state is correct either way.
+    }
+  }, []);
+
+  /** Open a past film from the index, by id rather than by spec — the visitor picking one from a
+   * list has no spec in hand, which is the whole situation this exists for. */
+  const openFilm = useCallback(async (token, filmId) => {
+    try {
+      const result = await getStoryboard(token, filmId);
+      setFrames(result.frames ?? []);
+      setSubjectNames(result.subjectNames ?? {});
+      if (result.films) setFilms(result.films);
+      if (result.spend) setSpend(result.spend);
+      if (result.tier) setPlan({ tier: result.tier, model: result.model, label: result.tierLabel });
+    } catch (failure) {
+      setError(failure.message);
+    }
+  }, []);
+
+  /**
+   * Resume THIS film's storyboard, on mount.
+   *
+   * Scoped to the spec's own film id, and a no-op without a spec. Hydrating on the session token
+   * alone is what put one film's storyboard into a tab working on another: connect a Mind, and
+   * whatever that Mind last produced appeared, regardless of what this tab was about.
+   */
   const hydrate = useCallback(async ({ spec, cast, token }) => {
     contextRef.current = { spec, cast, token };
+    if (!spec) return;
     try {
-      const result = await getStoryboard(token);
+      const result = await getStoryboard(token, filmIdFor(spec));
       if (result?.frames?.length) setFrames(result.frames);
       if (result?.subjectNames) setSubjectNames(result.subjectNames);
       if (result?.spend) setSpend(result.spend);
       // Enough of a plan to keep the tier badge honest on a reload — which tier and which model
       // actually made these frames. A fresh plan (with cost and time estimates) replaces it as
       // soon as there is a spec to price.
+      if (result?.films) setFilms(result.films);
       if (result?.tier) {
         setPlan((current) => current ?? { tier: result.tier, model: result.model, label: result.tierLabel });
       }
@@ -193,10 +232,13 @@ export const useStoryboarder = () => {
     spend,
     plan,
     subjectNames,
+    films,
     sketching,
     regenerating,
     run,
     loadPlan,
+    loadFilms,
+    openFilm,
     regenerateBeat,
     overrideBeat,
     generateSketch,

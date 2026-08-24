@@ -69,10 +69,40 @@ going to a closed socket.
 **The transferable rule:** the persistence step must never sit downstream of an I/O call to the
 client. Any handler that spends money or time and then reports it needs the same audit.
 
-**Still open**: a visitor who reopens the page *while* a run is in flight sees an empty timeline
-with no indication anything is happening. The film lands in KV when it finishes and appears on the
-next load, but there is no "still working" state for a reconnecting visitor. Worth a resume
-affordance in the editing round.
+**The ordering fix is NOT sufficient on its own, and this was verified rather than assumed.** A
+disconnect test lost the run after 601s locally AND after 611s on production. The runtime log says
+why: *"the Workers runtime canceled this request because it detected that your Worker's code had
+hung and would never generate a response."* Abandoning the response stream kills the whole
+invocation, `waitUntil` included, so there is nothing left to save.
+
+**The durable fix is the job + polling shape this round's plan named as its contingency and
+skipped**: `POST` returns a job id and a completed response immediately (so the hang detector never
+fires), generation continues under `waitUntil`, progress is written to KV, and the client polls —
+the same idiom `useMindConnect` already uses. Not built; it is a real change to the run path and
+the hook, and it also fixes the related gap where reopening mid-run shows an empty timeline with no
+sign anything is happening.
+
+### ⚠️ One storyboard slot per MIND, not per film (2026-08-25) — fixed
+
+Reported by a visitor: working on a second film in a second tab, connecting their Mind pulled the
+FIRST film's storyboard into the tab they were looking at. Two compounding causes:
+
+1. **Storage was `storyboard:<mindId>`** — one slot per Mind, for every film that Mind ever made.
+   Harmless while nothing read it back; the moment hydration existed it leaked. And the quieter
+   half: generating a storyboard for film B **overwrote film A's permanently**, silently.
+2. **Hydration keyed on the session token alone.** Connect a Mind, get whatever it last produced,
+   regardless of what the tab was about.
+
+Now: `storyboard:<mindId>:<filmId>`, where `filmId` is a stable FNV-1a hash of the film's logline
+and beats (`worker/film-id.js`) — no client bookkeeping, survives reloads and new tabs, and a
+re-cast is still the same film. `storyboards:<mindId>` indexes the last 20 so earlier work stays
+reachable, `GET /api/storyboard?film=<id>` is scoped, and `?films=1` returns the list alone.
+Verified: film B did not show film A, and film A survived film B being generated.
+
+**The trade-off that came with it**, and the reason the index exists: a storyboard now loads only
+for the film the tab is actually about, so a reload with no spec yet shows an empty timeline. The
+empty state lists past films by logline, one click to open. Without that, correctness would have
+made earlier work unreachable rather than merely un-leaked.
 
 ### Three bugs this round found, all of the same family
 

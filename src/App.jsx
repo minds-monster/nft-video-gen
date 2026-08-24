@@ -51,16 +51,27 @@ const AppShell = () => {
   // lifecycle — see src/hooks/useStoryboarder.js.
   const storyboarder = useStoryboarder();
 
-  // Restore a storyboard generated in an earlier visit, as soon as there is a session to fetch it
-  // with. The frames have always been safe server-side (MIND_CONNECTIONS, `storyboard:<mindId>`,
-  // no TTL) — nothing was ever asking for them back, so a reload looked like data loss when it
-  // was only a missing read. Keyed on the token alone, not on the spec: a returning visitor
-  // should see their storyboard before they have re-run anything.
-  const { hydrate: hydrateStoryboard } = storyboarder;
+  // Restore THIS film's storyboard once there is both a session to fetch it with and a spec
+  // saying which film we are looking at.
+  //
+  // Both conditions matter. The frames have always been safe server-side, and nothing was asking
+  // for them back, so a reload looked like data loss when it was only a missing read — but the
+  // first version of this asked on the token alone, which pulled whatever the Mind produced LAST
+  // into whatever tab happened to connect. A visitor mid-way through a second film saw the first
+  // film's storyboard appear the moment they connected.
+  const { hydrate: hydrateStoryboard, loadFilms } = storyboarder;
   useEffect(() => {
-    if (!session?.token) return;
+    if (!session?.token || !screenwriter.spec) return;
     hydrateStoryboard({ token: session.token, spec: screenwriter.spec, cast: composer.cast });
   }, [session?.token, screenwriter.spec, composer.cast, hydrateStoryboard]);
+
+  // The list of past films needs no spec, and is what a returning visitor lands on after a reload
+  // — without it, scoping the storyboard to the current film would make earlier work unreachable
+  // rather than merely un-leaked.
+  useEffect(() => {
+    if (!session?.token) return;
+    loadFilms(session.token);
+  }, [session?.token, loadFilms]);
 
   // The Studio is the deeper surface. The only way to reach it while the canvas is up is
   // the browser restoring an old #/studio hash, and when that happens the canvas yields.
