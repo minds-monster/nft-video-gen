@@ -38,7 +38,8 @@ import { sseResponse } from './sse.js';
 import { requireSession, relayToMind } from './mind-chat.js';
 import { getBudget, getSpend, recordSpend, markThresholdRelayed } from './budget.js';
 import { editImage, estimateCostUsd, respond, jsonFromResponse } from './openai.js';
-import { filmCall, FREE_MAX_BEATS } from './openrouter.js';
+import { filmCall, streamFilmCall, FREE_MAX_BEATS } from './openrouter.js';
+import { parseReasoningGeometry } from './reasoning-geometry.js';
 import { resolveTier, LATENCY_SECONDS, TIER_LABEL } from './tier.js';
 import { filmIdFor } from './film-id.js';
 import {
@@ -240,9 +241,13 @@ const withHeartbeat = async (emit, phase, work) => {
   }
 };
 
-/** One whole film, from whichever model this tier resolved to. Both transports return the same
- * `{ data, usage, model }` shape so nothing downstream has to know which one ran. */
-async function generateFilm(env, plan, { system, user, signal }) {
+/** One whole film, from whichever model this tier resolved to. Every transport returns the same
+ * `{ data, usage, model }` shape so nothing downstream has to know which one ran.
+ *
+ * `onReasoning` is honoured only where a raw reasoning channel exists — the free path. OpenAI
+ * bills reasoning tokens but does not return the text, so the paid path stays silent until it
+ * answers. If a future paid model exposes summaries, this is the one place that needs to change. */
+async function generateFilm(env, plan, { system, user, signal, onReasoning }) {
   if (plan.tier === 'paid') {
     const result = await respond(env, {
       model: plan.model,
@@ -257,9 +262,54 @@ async function generateFilm(env, plan, { system, user, signal }) {
   // NVIDIA has no strict-schema mode; the forced tool call carries the structure, and the range
   // keywords are stripped because nothing enforces them there and an unrecognised keyword is a
   // needless 400 risk on an endpoint that has already rejected `guided_json`.
-  const result = await filmCall(env, { system, user, schema: toStrictSchema(SCENE_SCHEMA), signal });
-  return { data: result.data, usage: result.usage, model: result.model };
+  const schema = toStrictSchema(SCENE_SCHEMA);
+  if (!onReasoning) {
+    return filmCall(env, { system, user, schema, signal });
+  }
+  return streamFilmCall(env, { system, user, schema, signal, onReasoning });
 }
+
+/**
+ * The wait, made watchable.
+ *
+ * Three to five minutes is the highest-stakes surface in this build, and until now it was a
+ * spinner. It does not have to be: the model narrates the entire time. This forwards its thinking
+ * as it arrives, and — every `GHOST_INTERVAL_MS` — re-reads the whole trace for geometry it has
+ * talked itself into, so the frames visibly assemble and correct themselves while it works.
+ *
+ * Re-reading the whole trace rather than appending is deliberate: the model revises, and a later
+ * statement must be able to overrule an earlier one on screen. See worker/reasoning-geometry.js.
+ */
+const GHOST_INTERVAL_MS = 2500;
+
+const reasoningRelay = (emit, { names, maxBeats }) => {
+  let lastGhostAt = 0;
+  let lastSignature = '';
+  // Which beat the model is talking about RIGHT NOW, tracked as cheaply as it can be: it announces
+  // its own moves ("Beat 2: close on the ape"), so the last announcement wins until the next one.
+  // This is what lets the thinking appear over the frame it is about, rather than in one column
+  // beside them — the model walks the beats in order, repeatedly, and the text follows it.
+  let currentBeat = 0;
+  return async (delta, full) => {
+    const mentioned = [...String(delta).matchAll(/beat\s*(\d+)/gi)].pop();
+    if (mentioned) {
+      const index = Number(mentioned[1]) - 1;
+      if (index >= 0 && index < maxBeats) currentBeat = index;
+    }
+    await emit('reasoning', { delta, beatIndex: currentBeat });
+    const now = Date.now();
+    if (now - lastGhostAt < GHOST_INTERVAL_MS) return;
+    lastGhostAt = now;
+    const { beats, hasGeometry } = parseReasoningGeometry(full, { names, maxBeats });
+    if (!hasGeometry) return;
+    // Only speak when something actually changed — a ghost that re-renders identically every few
+    // seconds is just a flicker.
+    const signature = JSON.stringify(beats);
+    if (signature === lastSignature) return;
+    lastSignature = signature;
+    await emit('ghost', { beats });
+  };
+};
 
 /** Plain English for a violation a visitor has to make sense of without knowing what a frustum
  * is. Adam's failure-surface rule: refuse the beat, say what happened, offer a way forward — the
@@ -403,8 +453,13 @@ export async function handleStoryboard(request, env, ctx) {
     let model;
     let activePlan = plan;
     try {
+      const relay = activePlan.tier === 'free'
+        ? reasoningRelay(emit, { names: subjectNamesFrom(spec, castByKey), maxBeats: beats.length })
+        : undefined;
       const result = await withHeartbeat(emit, 'drafting', () => {
-        return emit('phase', { phase: 'drafting' }).then(() => generateFilm(env, activePlan, { system, user }));
+        return emit('phase', { phase: 'drafting' }).then(() =>
+          generateFilm(env, activePlan, { system, user, onReasoning: relay }),
+        );
       });
       film = result.data;
       usage = result.usage;
@@ -440,7 +495,14 @@ export async function handleStoryboard(request, env, ctx) {
       await emit('plan', activePlan);
       try {
         const result = await withHeartbeat(emit, 'drafting', () =>
-          generateFilm(env, activePlan, { system, user: buildFilmUserMessage({ ...cappedSpec, beats: beats.slice(0, FREE_MAX_BEATS) }, cast) }),
+          generateFilm(env, activePlan, {
+            system,
+            user: buildFilmUserMessage({ ...cappedSpec, beats: beats.slice(0, FREE_MAX_BEATS) }, cast),
+            onReasoning: reasoningRelay(emit, {
+              names: subjectNamesFrom(spec, castByKey),
+              maxBeats: Math.min(beats.length, FREE_MAX_BEATS),
+            }),
+          }),
         );
         film = result.data;
         usage = result.usage;

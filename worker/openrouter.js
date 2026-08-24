@@ -134,6 +134,124 @@ export const filmCall = async (env, {
   };
 };
 
+/**
+ * The same call, streamed — so a visitor can watch the model think instead of watching a spinner.
+ *
+ * MEASURED SHAPE, and it decides the whole UI (2026-08-25, one 3-beat film):
+ *   - reasoning starts at 4.4s and runs continuously: 937 deltas, 8,121 characters
+ *   - the structured answer does NOT stream. The tool-call arguments arrive as ONE 6,358-character
+ *     delta at 347.3s, atomically, at the very end
+ *
+ * So there is no partial JSON to watch assemble, and anything that claims otherwise is animating a
+ * fiction. What there is instead is the model narrating its geometry in prose as it decides it —
+ * see worker/reasoning-geometry.js, which turns that narration into provisional shapes.
+ *
+ * `onReasoning` is called with each delta as it lands. It must never throw: a display problem must
+ * not be able to kill a generation that is minutes deep and already paid for.
+ */
+export const streamFilmCall = async (env, {
+  system,
+  user,
+  schema,
+  toolName = 'emit_film',
+  model = env.FREE_STORYBOARD_MODEL ?? FREE_FILM_MODEL,
+  temperature = 0.3,
+  maxTokens = 32768,
+  onReasoning,
+  signal,
+}) => {
+  const startedAt = Date.now();
+  const response = await fetch(`${env.OPENROUTER_BASE_URL ?? 'https://openrouter.ai/api/v1'}/chat/completions`, {
+    method: 'POST',
+    signal,
+    headers: {
+      Authorization: `Bearer ${requireKey(env)}`,
+      'Content-Type': 'application/json',
+      Accept: 'text/event-stream',
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: user },
+      ],
+      tools: [
+        { type: 'function', function: { name: toolName, description: 'Return the blocking spec.', parameters: schema } },
+      ],
+      tool_choice: { type: 'function', function: { name: toolName } },
+      temperature,
+      max_tokens: maxTokens,
+      chat_template_kwargs: { enable_thinking: true },
+      stream: true,
+    }),
+  });
+
+  if (!response.ok) throw new NvidiaError(response.status, await response.text());
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let reasoning = '';
+  let args = '';
+  let content = '';
+  let usage = { promptTokens: 0, completionTokens: 0, reasoningTokens: 0 };
+  let finishReason = null;
+
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() ?? '';
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      const payload = line.slice(6).trim();
+      if (!payload || payload === '[DONE]') continue;
+      let event;
+      try {
+        event = JSON.parse(payload);
+      } catch {
+        continue;
+      }
+      // A 200 carrying an error object, same as the non-streamed path — see worker/nvidia.js.
+      if (event.error) throw new NvidiaError(event.error.code ?? 502, event.error.message ?? 'upstream error');
+      if (event.usage) usage = usageOf(event);
+      const choice = event.choices?.[0];
+      if (!choice) continue;
+      if (choice.finish_reason) finishReason = choice.finish_reason;
+      const delta = choice.delta ?? {};
+      const thought = delta.reasoning ?? delta.reasoning_content;
+      if (thought) {
+        reasoning += thought;
+        try {
+          await onReasoning?.(thought, reasoning);
+        } catch {
+          // Showing the work must never be able to break the work.
+        }
+      }
+      if (delta.content) content += delta.content;
+      const toolArgs = delta.tool_calls?.[0]?.function?.arguments;
+      if (toolArgs) args += toolArgs;
+    }
+  }
+
+  if (finishReason === 'length') {
+    throw new OpenRouterTruncatedError(`finish_reason=length after ${usage.completionTokens} tokens (max_tokens ${maxTokens})`);
+  }
+  if (finishReason === 'error') {
+    throw new NvidiaError(504, `OpenRouter returned finish_reason=error after ${usage.completionTokens} tokens`);
+  }
+
+  return {
+    data: parseFilm({ message: { tool_calls: args ? [{ function: { arguments: args } }] : undefined, content } }),
+    reasoning,
+    usage,
+    model,
+    costUsd: 0,
+    latencyMs: Date.now() - startedAt,
+  };
+};
+
 /** Prefer the tool call; fall back to the content channel. The fallback is not defensive
  * programming for its own sake — this provider does occasionally answer in prose despite a forced
  * call, and worker/nvidia.js's own jsonFrom has done the same two-step since round 1. */

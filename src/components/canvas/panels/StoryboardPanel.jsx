@@ -33,6 +33,7 @@ import {
 const SceneViewport = lazy(() => import('../scene3d/BeatView'));
 const ViewCanvas = lazy(() => import('../scene3d/ViewCanvas'));
 const ModalViewport = lazy(() => import('../scene3d/FrameViewport'));
+const GhostViewport = lazy(() => import('../scene3d/GhostView'));
 
 /** Shot size, angle and camera move, computed here rather than trusted. */
 const derivedFacts = (scene, aspect = 16 / 9) => {
@@ -407,29 +408,83 @@ const TierBadge = ({ plan, spend }) => {
   );
 };
 
+/** The live tail of the model thinking out loud.
+ *
+ * Not the whole trace — 8,000 characters of deliberation is a wall, not a window. The last few
+ * lines, scrolling, is what reads as *someone working*. The full reasoning is still streamed and
+ * could be opened in full later; this is the ambient version.
+ */
+const ThinkingStream = ({ reasoning }) => {
+  const tail = useMemo(() => {
+    const lines = (reasoning ?? '').split('\n').filter((line) => line.trim());
+    return lines.slice(-4).join('\n');
+  }, [reasoning]);
+  if (!tail) return null;
+  return (
+    <p className="scrollbar-subtle max-h-20 overflow-hidden whitespace-pre-wrap font-mono text-[10px] leading-relaxed text-sky-300/70">
+      {tail}
+    </p>
+  );
+};
+
+/**
+ * A beat while it is still being thought about.
+ *
+ * The whole film arrives at once at the very end — measured: the structured answer does not stream
+ * — so nothing here is a partial result. It is the model's own narration, parsed for the geometry
+ * it has talked itself into, drawn as wireframe and corrected in place as it changes its mind.
+ * That is honest about what is happening, which a progress bar never is.
+ */
+const GhostCard = ({ beatIndex, beatText, ghost, reasoning, aspect, active }) => (
+  <div className="rounded-2xl border border-sky-500/20 bg-sky-500/[0.03]">
+    <div className="space-y-2 p-3">
+      <div className="flex items-center justify-between gap-2">
+        <span className="rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-sky-300">
+          Beat {beatIndex + 1}
+        </span>
+      </div>
+
+      {beatText && (
+        <p className="line-clamp-2 text-[11px] leading-relaxed text-slate-400">{beatText}</p>
+      )}
+
+      <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-sky-500/20 bg-black/40">
+        <Suspense fallback={null}>
+          <GhostViewport beat={ghost} aspect={aspect} active={active} />
+        </Suspense>
+        {!ghost && (
+          <span className="absolute inset-0 flex items-center justify-center text-[10px] uppercase tracking-widest text-slate-700">
+            not yet blocked
+          </span>
+        )}
+      </div>
+
+      <ThinkingStream reasoning={reasoning} />
+    </div>
+  </div>
+);
+
 /** The wait.
  *
  * One whole-film call takes three to five minutes, and this is the surface Adam called the
  * highest-stakes in the build: "a visitor who waits 4 minutes for a working product is patient; a
- * visitor who waits 4 minutes wondering if it's broken is not." So: an upfront estimate that is a
- * real range, the stage it is actually in, and a count that only moves because the worker's own
- * heartbeat says it should. */
-const WaitPanel = ({ stageLabel, elapsedSeconds, plan }) => {
+ * visitor who waits 4 minutes wondering if it's broken is not." Where a reasoning channel exists,
+ * the honest answer is not a better spinner — it is to show the work. */
+const WaitHeader = ({ stageLabel, elapsedSeconds, plan, thinking }) => {
   const estimate = plan?.estimateSeconds ?? 240;
   const low = Math.round(estimate / 60);
   return (
-    <div className="col-span-full flex flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 bg-black/20 py-10 text-center">
-      <Loader2 className="h-6 w-6 animate-spin text-purple-400" />
-      <div>
-        <p className="text-sm font-semibold text-white">{stageLabel ?? 'Working'}</p>
-        <p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-slate-500">
-          The whole film is written in one pass, so it arrives all at once. This usually takes{' '}
-          {low}–{low + 2} minutes.
-        </p>
-      </div>
+    <div className="col-span-full flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/20 px-3 py-2">
+      <p className="flex items-center gap-2 text-xs text-slate-300">
+        <Loader2 className="h-3.5 w-3.5 animate-spin text-purple-400" />
+        <span className="font-semibold text-white">{stageLabel ?? 'Working'}</span>
+        <span className="text-slate-500">
+          {thinking ? 'thinking out loud below' : `the whole film arrives at once — usually ${low}\u2013${low + 2} minutes`}
+        </span>
+      </p>
       <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-slate-600">
         <Clock className="h-3 w-3" />
-        {elapsedSeconds > 0 ? `${elapsedSeconds}s elapsed · still working` : 'starting'}
+        {elapsedSeconds > 0 ? `${elapsedSeconds}s elapsed` : 'starting'}
       </p>
     </div>
   );
@@ -454,6 +509,10 @@ const StoryboardPanel = ({ storyboarder }) => {
     running,
     stageLabel,
     elapsedSeconds,
+    reasoning,
+    reasoningByBeat,
+    ghostBeats,
+    beatTexts,
   } = storyboarder ?? {};
   const [expandedFrame, setExpandedFrame] = useState(null);
   const rootRef = useRef(null);
@@ -524,7 +583,7 @@ const StoryboardPanel = ({ storyboarder }) => {
           title="Storyboard"
           icon={Film}
           headerAction={header}
-          bodyClassName="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3"
+          bodyClassName="grid grid-cols-1 content-start gap-3 md:grid-cols-2 xl:grid-cols-3"
         >
           {plan?.downgraded && (
             <p className="col-span-full rounded-lg border border-sky-500/20 bg-sky-500/5 px-3 py-2 text-[11px] leading-relaxed text-sky-200">
@@ -537,7 +596,27 @@ const StoryboardPanel = ({ storyboarder }) => {
             </p>
           )}
           {running && !ordered.length ? (
-            <WaitPanel stageLabel={stageLabel} elapsedSeconds={elapsedSeconds} plan={plan} />
+            <>
+              <WaitHeader
+                stageLabel={stageLabel}
+                elapsedSeconds={elapsedSeconds}
+                plan={plan}
+                thinking={Boolean(reasoning)}
+              />
+              {/* One card per beat from the moment the run starts, so the film has a shape before
+                  it has any content, and each frame fills in as the model reasons its way there. */}
+              {(beatTexts ?? []).map((text, index) => (
+                <GhostCard
+                  key={index}
+                  beatIndex={index}
+                  beatText={text}
+                  ghost={(ghostBeats ?? []).find((b) => b.beatIndex === index)}
+                  reasoning={reasoningByBeat?.[index]}
+                  aspect={aspect}
+                  active
+                />
+              ))}
+            </>
           ) : (
             ordered.map((frame) =>
               frame.transition ? (
@@ -564,7 +643,7 @@ const StoryboardPanel = ({ storyboarder }) => {
       </div>
       {/* One shared WebGL context for every tile above. Mounted only when there is geometry to
           draw, so a visitor who never generates a storyboard never pays for a renderer. */}
-      {ordered.some((frame) => frame.scene) && (
+      {(ordered.some((frame) => frame.scene) || (running && ghostBeats?.length > 0)) && (
         <Suspense fallback={null}>
           <ViewCanvas eventSource={rootRef} />
         </Suspense>

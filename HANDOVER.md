@@ -11,6 +11,40 @@ Editing starts as soon as this lands.)
 Plan doc: `/Users/adamplace/.claude/plans/we-are-ready-to-sharded-pony.md`. Adam's full round-8
 reply is in `connect-mind-brainstorm`, sent 2026-08-24T15:08Z, replied 15:12Z.
 
+### The wait is now watchable — the model thinks out loud, and the frames form as it does
+
+The three-to-five minute silence is gone. What replaced it, and the measurements behind it:
+
+- **Reasoning streams from 1.8s and never stops** — a real run relayed 2,777 events / 26,384
+  characters over the whole call, and 21 ghost updates. You can watch beat 1 revise itself
+  WS → EWS → CU and subjects appear one at a time.
+- 🔑 **STREAMING NO LONGER COSTS THE SCHEMA.** Round 7 concluded this endpoint refuses to stream
+  under a forced `tool_choice`, so liveness and structure were mutually exclusive — **that was
+  measured against NVIDIA's own NIM, not OpenRouter.** Re-measured 2026-08-25: OpenRouter streams
+  the reasoning channel AND the tool-call arguments with the schema intact. The origin change made
+  for licensing and throughput dissolved the trade-off too. The same "model X FROM ORIGIN Y"
+  lesson, this time in our favour. **Re-test provider constraints after an origin change; they may
+  not be the model's constraints at all.**
+- **The structured answer does NOT stream**, and this is the fact that shaped the whole design: the
+  tool-call arguments arrive as ONE 6,358-character delta at the very end, atomically. There is no
+  partial JSON to watch assemble, and anything animating one would be animating a fiction.
+- **So the ghosts come from the PROSE.** `worker/reasoning-geometry.js` parses the model's own
+  narration — one measured trace held 41 coordinates, 7 dimensions, 6 lens lengths, 21 shot-size
+  calls, containment decisions and five self-corrections, walking the beats in order six times.
+  Those become wireframes that appear and correct themselves while it works.
+- Everything provisional is drawn as unmistakably provisional: wireframe only, no surfaces, dashed
+  camera, a "Thinking" pulse. It is never validated, stored, compiled to H3, or shown as the frame.
+- **The paid path stays silent.** OpenAI bills reasoning tokens but does not return the text.
+  `generateFilm` is the one place to change if a future paid model exposes summaries.
+
+Three parser lessons, all learned from the real trace and all locked into tests:
+1. **The model coins its own shorthand** — it writes "Car", while the dossier says "sedan". Aliases
+   are learned from the trace itself; without that, the sedan's width landed on the ape.
+2. **A line naming two bands is a deliberation, not a decision.** "hFrac = 0.0267 -> EWS (0-0.25)"
+   made the ghost flip between sizes it was only comparing.
+3. **Dimensions propagate but never create.** The model muses "Car appears there" while planning a
+   beat it later moves the car out of, and "car seat height ~0.5m?" is a fact about upholstery.
+
 ### The tier contract — three INDEPENDENT inputs, and never collapse them
 
 | input | controls | where |

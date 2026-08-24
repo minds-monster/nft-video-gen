@@ -45,6 +45,18 @@ export const useStoryboarder = () => {
   const [subjectNames, setSubjectNames] = useState({});
   // The visitor's other films, so earlier work is reachable rather than merely stored.
   const [films, setFilms] = useState([]);
+  // The model thinking out loud, and the provisional geometry it has talked itself into. Both are
+  // live-only: they are the WAIT made watchable, and they are replaced wholesale by the real
+  // frames the moment those arrive. Nothing here is ever stored or treated as an answer.
+  const [reasoning, setReasoning] = useState('');
+  // The same stream, split by which beat the model was discussing when it said it — so the
+  // thinking appears over the frame it is about.
+  const [reasoningByBeat, setReasoningByBeat] = useState({});
+  const [ghostBeats, setGhostBeats] = useState([]);
+  // The beats being worked on, known the instant the run starts. The film gets its shape — one
+  // card per beat — before it has any content, so the wait is spent watching those fill in rather
+  // than watching an empty panel.
+  const [beatTexts, setBeatTexts] = useState([]);
   // Seconds the current model call has been in flight, straight from the worker's own heartbeat
   // rather than a client-side timer — so it reports the real call, not the time since the button
   // was clicked.
@@ -79,6 +91,10 @@ export const useStoryboarder = () => {
     setRunning(true);
     setError(null);
     setFrames([]);
+    setReasoning('');
+    setReasoningByBeat({});
+    setGhostBeats([]);
+    setBeatTexts(spec?.beats ?? []);
     setElapsedSeconds(0);
     setPhase('planning');
 
@@ -91,9 +107,27 @@ export const useStoryboarder = () => {
           onEvent: (type, data) => {
             // `plan` can arrive twice: once up front, and again if the paid model turns out to
             // be unavailable and the run falls back to free. The second one carries the reason.
-            if (type === 'plan') setPlan(data);
+            if (type === 'plan') {
+              setPlan(data);
+              // The tier's beat cap is applied at the open, so the card count matches what will
+              // actually be generated rather than what was asked for.
+              if (data?.maxBeats) setBeatTexts((current) => current.slice(0, data.maxBeats));
+            }
             if (type === 'phase') setPhase(data.phase);
             if (type === 'heartbeat') setElapsedSeconds(data.elapsedSeconds ?? 0);
+            // Appended rather than replaced: the delta is a fragment of a sentence, and the UI
+            // shows the live tail of the whole trace.
+            if (type === 'reasoning') {
+              setReasoning((current) => current + data.delta);
+              setReasoningByBeat((current) => {
+                const index = data.beatIndex ?? 0;
+                return { ...current, [index]: (current[index] ?? '') + data.delta };
+              });
+            }
+            // Replaced wholesale, because the parser re-reads the entire trace each time — that
+            // is how the model changing its mind becomes a correction on screen rather than a
+            // second contradictory ghost beside the first.
+            if (type === 'ghost') setGhostBeats(data.beats ?? []);
             if (type === 'frame' && !data.error) {
               setFrames((current) => [...current, data]);
             }
@@ -233,6 +267,10 @@ export const useStoryboarder = () => {
     plan,
     subjectNames,
     films,
+    reasoning,
+    reasoningByBeat,
+    ghostBeats,
+    beatTexts,
     sketching,
     regenerating,
     run,
