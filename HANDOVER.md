@@ -29,18 +29,18 @@ chose paid", and says which in plain English.
 
 ### What was measured this round, with numbers
 
-- **A Cloudflare Worker CAN hold a ~390s outbound fetch.** This was the single biggest unknown in
-  the build and the reason a KV-job + polling fallback was specced. It is not needed: `wrangler
-  dev` held the whole call with SSE heartbeats flowing every 15s. **Still unverified on the
-  deployed Worker** — check this before trusting production.
+- **A Cloudflare Worker CAN hold a long outbound fetch — confirmed on the deployed edge, not just
+  locally.** This was the single biggest unknown in the build and the reason a KV-job + polling
+  fallback was specced. It is not needed: `wrangler dev` held a 390s call, and **production held a
+  208s call end to end** (2026-08-25), SSE heartbeats flowing every 15s throughout.
 - **Free tier, run end to end: 4 distinct shot sizes across 4 shots** (EWS/CU/WS/MCU), zero floor
   violations, zero refusals, $0, 403s. The `c0` baseline this had to beat was 2.4 bands / 0.45 MWS
   share. The MWS bug is fixed in production, not just in a probe.
 - **The repair path fired for real** on a later run: beat 5 breached the floor, one targeted repair
   ran, and the repaired emission re-passed the same check. Two-stage check confirmed working.
-- **`OPENROUTER_API_KEY` is in `.env` and now `.dev.vars`. It is NOT yet a production secret** —
-  `wrangler secret put OPENROUTER_API_KEY` before deploying, or the free tier is dead in prod,
-  which for a visitor with no budget is the whole site being broken.
+- **`OPENROUTER_API_KEY` is set in `.env`, `.dev.vars`, and production** (pushed 2026-08-25;
+  `/api/health` reports `hasOpenRouterKey: true`). Without it the free tier is dead in prod, which
+  for a visitor with no budget is the whole site being broken.
 - ⚠️ **The OpenAI account has no credits** (`insufficient_quota` / `credit_balance_exhausted`), so
   the paid path could not be verified end to end. Everything up to the API call is exercised; the
   generation itself is unproven since round 7's probe.
@@ -82,6 +82,16 @@ chose paid", and says which in plain English.
 - **A grader test suite BEFORE promoting the grader** — `npm run test:scene`, 23 tests. Round 7
   found five grader bugs against one model bug; this round it immediately found a sixth.
 
+### Live in production
+
+Deployed 2026-08-25, version `4c092310-d721-430c-9bc1-6c6984521190`:
+https://nft-video-gen.still-snowflake-5e6a.workers.dev
+
+Verified against the deployed Worker, not just locally: `/api/health` green with
+`hasOpenRouterKey: true`, a real six-beat spec capped to five and generated in 208s for $0, and
+the 3D frames rendering from the deployed bundle (the `three` chunk lazy-loads, one shared WebGL
+context, no console errors).
+
 ### Where things now live
 
 - `worker/scene.js` — the schema, the coordinate contract (**V2 only, never v1**), the geometry,
@@ -107,8 +117,9 @@ chose paid", and says which in plain English.
 - **Editing** — the next pass. `validateScene` already runs server-side on every beat (the same
   gate an edit must pass) and every UI label is derived from geometry (so a moved subject
   re-derives), which is the groundwork that pass needs.
-- **Production deploy** — not pushed. Needs `wrangler secret put OPENROUTER_API_KEY`, then a
-  re-check that the long fetch survives the real edge.
+- **A paid run in production** — the free path is verified live end to end (5 frames, 3 distinct
+  bands, zero refusals, 208s, $0). The paid path cannot be exercised until the OpenAI account has
+  credit; until then a paid selection auto-downgrades to free with an explicit notice.
 - **The wrong-hero (Courtney vs the named ape) diagnostic** — still outstanding from round 7.
 - **`wornBy`** — still conflated with `containerId` in the schema. Adam's shape is specced in the
   round-7 plan doc; nothing in round 8 touched it.

@@ -389,6 +389,10 @@ export async function handleStoryboard(request, env) {
       model,
       aspect: film.aspect ?? 16 / 9,
       sceneScaleNote: film.sceneScaleNote ?? null,
+      // Stored so a RETURNING visitor still sees which tier made this storyboard. The badge
+      // otherwise exists only while a plan is in hand, which means the one surface Adam asked to
+      // be visible at all times quietly disappears on a reload.
+      tierLabel: activePlan.label,
       // Stored with the storyboard, not derived on the client: "<Subject 1>" is how the machinery
       // matches a subject across the schema, the references and the render prompt — it is not
       // what a person should ever be shown. Keeping the mapping on the record means a returning

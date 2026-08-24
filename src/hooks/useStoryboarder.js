@@ -171,6 +171,12 @@ export const useStoryboarder = () => {
       if (result?.frames?.length) setFrames(result.frames);
       if (result?.subjectNames) setSubjectNames(result.subjectNames);
       if (result?.spend) setSpend(result.spend);
+      // Enough of a plan to keep the tier badge honest on a reload — which tier and which model
+      // actually made these frames. A fresh plan (with cost and time estimates) replaces it as
+      // soon as there is a spec to price.
+      if (result?.tier) {
+        setPlan((current) => current ?? { tier: result.tier, model: result.model, label: result.tierLabel });
+      }
     } catch {
       // No prior storyboard for this Mind yet, or not reachable — a normal first visit.
     }
