@@ -296,7 +296,7 @@ const transitionFrame = (beatIndex, beatText) => ({
  * (`phase` / `frame` / `result`), and adds `plan` (the tier decision, before anything runs) and
  * `heartbeat` (proof of life during the long call).
  */
-export async function handleStoryboard(request, env) {
+export async function handleStoryboard(request, env, ctx) {
   const session = await requireSession(request, env);
   if (!session) return json({ error: 'unauthorized' }, 401);
 
@@ -309,6 +309,9 @@ export async function handleStoryboard(request, env) {
   const mindId = session.mindId;
   const castByKey = new Map(cast.map((c) => [c.key, c]));
 
+  // `ctx` matters here specifically: this handler holds a three-to-five-minute model call and
+  // then writes the only durable copy of the result. A visitor who closes the tab mid-run must
+  // still end up with their storyboard. See worker/sse.js's header for the incident.
   return sseResponse(async (emit) => {
     const plan = await resolveTier(env, mindId, spec.beats.length);
     // The cap is applied HERE, before a single token is spent — a visitor is never allowed to
@@ -410,9 +413,7 @@ export async function handleStoryboard(request, env) {
       if (isTransitionBeat(beatText)) {
         // Decided in code, not taken on trust: the marker is in the beat text, so a model that
         // returns a shot for it is simply wrong and there is nothing to verify.
-        const frame = transitionFrame(beatIndex, beatText);
-        storyboard.frames.push(frame);
-        await emit('frame', frame);
+        storyboard.frames.push(transitionFrame(beatIndex, beatText));
         continue;
       }
 
@@ -476,11 +477,21 @@ export async function handleStoryboard(request, env) {
         createdAt: Date.now(),
       };
       storyboard.frames.push(frame);
-      await emit('frame', frame);
     }
 
     await emit('phase', { phase: 'finalising' });
+
+    // SAVE FIRST, THEN TELL THE BROWSER. The whole film arrives from one call, so there is no
+    // streaming value in emitting frames as they are validated — they are all ready within a
+    // second of each other. Persisting before emitting means the durable copy never depends on
+    // anyone still being on the page, which is the exact ordering that lost a finished film on
+    // 2026-08-25: spend recorded, frames built, first write to a closed tab threw, and the KV
+    // write two lines below it never happened.
     await saveStoryboard(env, mindId, storyboard);
+
+    for (const frame of storyboard.frames) {
+      await emit('frame', frame);
+    }
 
     const budget = await getBudget(env, mindId);
     const shots = storyboard.frames.filter((f) => !f.transition).length;
@@ -506,7 +517,7 @@ export async function handleStoryboard(request, env) {
       refused,
       subjectNames: storyboard.subjectNames,
     });
-  });
+  }, ctx);
 }
 
 /** What the visitor is told BEFORE they click generate: which tier, which model, what it costs,

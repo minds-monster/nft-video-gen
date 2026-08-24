@@ -45,6 +45,35 @@ chose paid", and says which in plain English.
   the paid path could not be verified end to end. Everything up to the API call is exercised; the
   generation itself is unproven since round 7's probe.
 
+### ⚠️ A finished film was destroyed by a closed tab (2026-08-25) — fixed, worth understanding
+
+A visitor closed the page mid-generation and lost a completed storyboard. The spend ledger proved
+what happened: an `llm` event at 01:44:24 recording 15,208 completion tokens, `failed: false` — the
+model finished the film, and then it was thrown away.
+
+**The cause was ordering.** `handleStoryboard` recorded spend, emitted frames to the browser, and
+saved to KV *last*. Writing to a hung-up client rejects; that rejection propagated out of the
+handler and skipped everything after it — the KV write and the Producer digest both. The worst
+possible shape: generated, accounted for, and discarded, with the only copy in a response body
+going to a closed socket.
+
+**Three changes, all in the "never depend on the client" direction:**
+1. `emit` never throws (`worker/sse.js`). A dead client is a no-op, so the handler always runs to
+   completion. It returns `false` when nobody is listening, for callers that care.
+2. `sseResponse(run, ctx)` takes `ctx` and `waitUntil`s the work, so the runtime cannot cancel a
+   four-minute call the moment the response stream is abandoned.
+3. **The storyboard is saved BEFORE frames are emitted.** With a whole-film call there is no
+   streaming value in emitting during validation — every frame is ready within a second of the
+   others — so the durable write goes first and the browser is told afterwards.
+
+**The transferable rule:** the persistence step must never sit downstream of an I/O call to the
+client. Any handler that spends money or time and then reports it needs the same audit.
+
+**Still open**: a visitor who reopens the page *while* a run is in flight sees an empty timeline
+with no indication anything is happening. The film lands in KV when it finishes and appears on the
+next load, but there is no "still working" state for a reconnecting visitor. Worth a resume
+affordance in the editing round.
+
 ### Three bugs this round found, all of the same family
 
 1. **`classifyCameraMove` reported every pan BACKWARDS.** Caught by the new grader test suite
