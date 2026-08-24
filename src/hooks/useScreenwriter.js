@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { castPiece, forCastingWire, screenwrite } from '../services/swarm';
+import { castPiece, forCastingWire, previsDossierReview, screenwrite } from '../services/swarm';
 import { resolveNftName } from '../lib/nftMedia';
 
 // Where the canvas is in the pipeline. Kept as one value rather than a set of booleans so
@@ -247,6 +247,45 @@ export const useScreenwriter = () => {
             `None of the selected pieces could be read.${detail} Try different artwork or wait a moment and retry.`,
           );
         }
+
+        // Previs Supervisor: one cheap, text-only review before any writing begins — the
+        // class of bug no producer agent has reason to catch in itself (e.g. a dossier that
+        // only captured one of several characters in a video-backed piece). Bounded to one
+        // retry per flagged cast member, per its own authority floor — never a loop.
+        // Advisory throughout: a failed review must never block the run it's meant to guard.
+        try {
+          const firstReview = await previsDossierReview({ prompt, cast: usable }, { signal });
+          if (firstReview.issues?.length && !signal.aborted) {
+            const retried = [];
+            for (const issue of firstReview.issues) {
+              const entry = usable.find((u) => u.key === issue.key);
+              if (!entry || signal.aborted) continue;
+              try {
+                const revisedDossier = await castPiece(
+                  { key: entry.key, nft: entry.nft, refresh: true, previsNote: issue.detail },
+                  { signal },
+                );
+                entry.dossier = revisedDossier;
+                patch(entry.key, { dossier: revisedDossier });
+              } catch {
+                // Revision call itself failed (network, rate limit) — original dossier
+                // stands, and the re-check below will flag the same issue again.
+              }
+              retried.push(entry);
+            }
+            if (retried.length && !signal.aborted) {
+              const recheck = await previsDossierReview({ prompt, cast: retried }, { signal });
+              const stillFlagged = new Map((recheck.issues ?? []).map((issue) => [issue.key, issue]));
+              for (const entry of retried) {
+                const issue = stillFlagged.get(entry.key);
+                if (issue) patch(entry.key, { previsFlagged: true, previsIssue: issue.detail });
+              }
+            }
+          }
+        } catch (error) {
+          if (!signal.aborted) console.warn('Previs Supervisor review failed:', error.message);
+        }
+        if (signal.aborted) return;
 
         castRef.current = usable;
         setWrittenCast(usable);

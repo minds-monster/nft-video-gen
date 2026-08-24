@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { assistantStatus } from '../services/assistantChat';
+import { assistantStatus, getOrCreateThreadId } from '../services/assistantChat';
 
 // Drives the small "waiting / seen / replied" pill without ever calling the LLM route —
 // GET /api/assistant/status is a pure read of connection + Mind activity. Only polls
@@ -17,7 +17,10 @@ export const useMindStatusBadge = ({ connectionId, token, active }) => {
 
     const tick = async () => {
       try {
-        const result = await assistantStatus({ connectionId, token });
+        // Same threadId the assistant chat uses (one per browser session, see
+        // getOrCreateThreadId) — this is what lets a status poll double as the
+        // idle-relay check, since this hook is what's actually running every 6s.
+        const result = await assistantStatus({ connectionId, token, threadId: getOrCreateThreadId() });
         if (!cancelled) setStatus(result);
       } catch {
         // Ignore; the next tick retries.

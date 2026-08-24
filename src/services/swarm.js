@@ -20,70 +20,90 @@
  * time to send an extra header would be pure duplication for no reason — see
  * src/services/assistantChat.js.
  */
-export const stream = async (path, body, { signal, onEvent, headers } = {}) => {
-  const response = await fetch(path, {
-    method: 'POST',
-    signal,
-    headers: { 'content-type': 'application/json', ...headers },
-    body: JSON.stringify(body),
-  });
+const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
+const jitter = (ms) => ms + Math.floor(Math.random() * Math.min(ms, 1000));
 
-  if (!response.ok || !response.body) {
-    // A failure before the stream opens is still plain JSON — a 400 from the guard clauses,
-    // or the Worker itself falling over.
-    const payload = await response.json().catch(() => null);
-    const error = new Error(payload?.error ?? `${path} → ${response.status}`);
-    error.status = response.status;
-    throw error;
-  }
+export const stream = async (path, body, { signal, onEvent, headers, retries = 0 } = {}) => {
+  const isRetryable = (err) =>
+    err instanceof TypeError || (typeof err.status === 'number' && err.status >= 502 && err.status <= 504);
 
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
-  let result = null;
-  let failure = null;
+  const attempt = async () => {
+    const response = await fetch(path, {
+      method: 'POST',
+      signal,
+      headers: { 'content-type': 'application/json', ...headers },
+      body: JSON.stringify(body),
+    });
 
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
+    if (!response.ok || !response.body) {
+      // A failure before the stream opens is still plain JSON — a 400 from the guard clauses,
+      // or the Worker itself falling over.
+      const payload = await response.json().catch(() => null);
+      const error = new Error(payload?.error ?? `${path} → ${response.status}`);
+      error.status = response.status;
+      throw error;
+    }
 
-    // Events are separated by a blank line; a read can split one in half, so the trailing
-    // partial waits for the next chunk.
-    const frames = buffer.split('\n\n');
-    buffer = frames.pop() ?? '';
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let result = null;
+    let failure = null;
 
-    for (const frame of frames) {
-      let type = 'message';
-      let raw = '';
-      for (const line of frame.split('\n')) {
-        if (line.startsWith('event:')) type = line.slice(6).trim();
-        else if (line.startsWith('data:')) raw += line.slice(5).trim();
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      // Events are separated by a blank line; a read can split one in half, so the trailing
+      // partial waits for the next chunk.
+      const frames = buffer.split('\n\n');
+      buffer = frames.pop() ?? '';
+
+      for (const frame of frames) {
+        let type = 'message';
+        let raw = '';
+        for (const line of frame.split('\n')) {
+          if (line.startsWith('event:')) type = line.slice(6).trim();
+          else if (line.startsWith('data:')) raw += line.slice(5).trim();
+        }
+        if (!raw) continue;
+
+        let data;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          continue;
+        }
+
+        if (type === 'result') result = data;
+        else if (type === 'error') failure = data;
+        else onEvent?.(type, data);
       }
-      if (!raw) continue;
+    }
 
-      let data;
-      try {
-        data = JSON.parse(raw);
-      } catch {
-        continue;
-      }
+    if (failure) {
+      const error = new Error(failure.error);
+      // The free NVIDIA tier is rate-limited at roughly 40 requests/min, so a cold cast can
+      // legitimately hit 429. The UI says "busy, retrying" rather than "failed" for these.
+      error.retryable = Boolean(failure.retryable);
+      throw error;
+    }
+    if (!result) throw new Error(`${path} ended without a result`);
+    return result;
+  };
 
-      if (type === 'result') result = data;
-      else if (type === 'error') failure = data;
-      else onEvent?.(type, data);
+  let lastErr;
+  for (let i = 0; i <= retries; i += 1) {
+    try {
+      return await attempt();
+    } catch (err) {
+      lastErr = err;
+      if (!isRetryable(err) || i === retries) throw err;
+      await sleep(jitter(500 * 2 ** i));
     }
   }
-
-  if (failure) {
-    const error = new Error(failure.error);
-    // The free NVIDIA tier is rate-limited at roughly 40 requests/min, so a cold cast can
-    // legitimately hit 429. The UI says "busy, retrying" rather than "failed" for these.
-    error.retryable = Boolean(failure.retryable);
-    throw error;
-  }
-  if (!result) throw new Error(`${path} ended without a result`);
-  return result;
+  throw lastErr;
 };
 
 /**
@@ -140,8 +160,13 @@ export const forCastingWire = ({ key, nft }) => {
   };
 };
 
-export const castPiece = ({ key, nft }, options) =>
-  stream('/api/casting', forCastingWire({ key, nft }), options);
+/**
+ * `refresh` skips the dossier cache; `previsNote` is an external complaint from the Previs
+ * Supervisor's dossier review (see previsDossierReview below) — both optional, both empty by
+ * default so the plain re-cast path this always was is unaffected.
+ */
+export const castPiece = ({ key, nft, refresh, previsNote }, options) =>
+  stream('/api/casting', { ...forCastingWire({ key, nft }), refresh, previsNote }, options);
 
 /**
  * Quick reachability check for the agent Worker.
@@ -164,3 +189,109 @@ export const checkHealth = async () => {
  */
 export const screenwrite = ({ prompt, cast, primaryKey, note }, options) =>
   stream('/api/screenwriter', { prompt, cast, primaryKey, note }, options);
+
+/** Cast wire shape for the Previs Supervisor — dossier plus the same stripped `nft` shape
+ * forCastingWire already produces (not the full raw object): the review never looks at
+ * pixels, but it does need enough of the NFT metadata to tell whether the piece is
+ * video-backed at all. */
+const forPrevisWire = ({ key, dossier, name, nft }) => ({
+  key,
+  dossier,
+  name,
+  nft: forCastingWire({ key, nft }).nft,
+});
+
+/**
+ * The Previs Supervisor's dossier-review layer — runs between casting and screenwriting,
+ * checking the assembled cast against what the visitor actually asked for before any writing
+ * begins. Advisory only — see worker/previs-supervisor.js's own header for why a failed
+ * review must never block the run.
+ */
+export const previsDossierReview = ({ prompt, cast }, options) =>
+  stream('/api/previs/dossier', { prompt, cast: cast.map(forPrevisWire) }, options);
+
+/**
+ * Cast wire shape for the Storyboarder — the Screenwriter's own fields plus the raw NFT
+ * metadata (stripped via forCastingWire), because the Storyboarder fetches original pixels
+ * itself rather than trusting the dossier's prose. See worker/storyboarder.js's header.
+ */
+export const forStoryboardWire = ({ key, dossier, name, collectionName, nft }) => ({
+  key,
+  dossier,
+  name,
+  collectionName,
+  nft: forCastingWire({ key, nft }).nft,
+});
+
+/** Generates a technical blocking spec per beat — text only, no image, no spend. `token` is
+ * the visitor's Producer session. */
+export const storyboard = ({ spec, cast }, token, options) =>
+  stream(
+    '/api/storyboard',
+    { spec, cast: cast.map(forStoryboardWire) },
+    { ...options, headers: { ...options?.headers, Authorization: `Bearer ${token}` } },
+  );
+
+/** Generates (or regenerates) one frame's opt-in sketch preview, optionally with a
+ * visitor-edited prompt — the only call in this file that spends real money. Never call this
+ * in a loop across beats; see worker/storyboarder.js's own header on why that's a hard floor. */
+export const sketchStoryboardFrame = ({ frameId, promptText, spec, cast }, token, options) =>
+  stream(
+    '/api/storyboard/sketch',
+    { frameId, promptText, spec, cast: cast.map(forStoryboardWire) },
+    { ...options, headers: { ...options?.headers, Authorization: `Bearer ${token}` } },
+  );
+
+/**
+ * What the visitor is told BEFORE they click generate: tier, model, cost estimate, time
+ * estimate, and whether their story runs longer than this tier covers.
+ *
+ * Cheap by design — a KV read and arithmetic, no model call — because the cap has to be decided
+ * at the open rather than after a four-minute wait. A visitor is never allowed to start a render
+ * they cannot finish.
+ */
+export const getStoryboardPlan = async (token, beatCount = 0) => {
+  const response = await fetch(`/api/storyboard/plan?beats=${beatCount}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error(`Storyboard plan failed: ${response.status}`);
+  return response.json();
+};
+
+/** One beat, regenerated on the visitor's explicit click after it failed validation. A button,
+ * never automatic — the visitor decides whether to spend another attempt on it. */
+export const regenerateStoryboardBeat = async ({ frameId, spec, cast }, token) => {
+  const response = await fetch('/api/storyboard/beat/regenerate', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ frameId, spec, cast: cast.map(forStoryboardWire) }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.error ?? `Regenerate failed: ${response.status}`);
+  return payload;
+};
+
+/** "I want this beat anyway." The way out of the validator for a visitor who disagrees with it —
+ * the violations stay on the record, because accepting one is a decision, not an erasure. */
+export const overrideStoryboardBeat = async ({ frameId }, token) => {
+  const response = await fetch('/api/storyboard/beat/override', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ frameId }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.error ?? `Override failed: ${response.status}`);
+  return payload;
+};
+
+/** The current storyboard for the session's Mind, for resuming after a reload. */
+export const getStoryboard = async (token) => {
+  const response = await fetch('/api/storyboard', { headers: { Authorization: `Bearer ${token}` } });
+  if (!response.ok) throw new Error(`Storyboard fetch failed: ${response.status}`);
+  return response.json();
+};
+
+/** A frame's image, servable directly from an `<img src>` — see handleStoryboardImage's
+ * own note on why auth here is a query param instead of a header. */
+export const storyboardImageUrl = (token, key) =>
+  `/api/storyboard/image?key=${encodeURIComponent(key)}&token=${encodeURIComponent(token)}`;

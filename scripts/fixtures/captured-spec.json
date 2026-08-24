@@ -1,0 +1,248 @@
+{
+  "capturedAt": "2026-08-24T05:10:13.761Z",
+  "prompt": "A short film on a wet night starting grid: the hero ape puts on the velvet jacket, gets into the camouflaged supercar, and launches past a rival who is watching from the barrier. One continuous take, no cuts.",
+  "model": "nvidia/nemotron-3-super-120b-a12b",
+  "spec": {
+    "intent": "A short film on a wet night starting grid: the hero ape puts on the velvet jacket, gets into the camouflaged supercar, and launches past a rival who is watching from the barrier. One continuous take, no cuts.",
+    "note": null,
+    "draft": "The single image is a wet‑night pit‑lane tableau: a lone Bored Ape in a neon‑yellow tracksuit, red heart‑shaped sunglasses, yellow hat and white‑striped sneakers stands beside a glossy iridescent mannequin displaying a deep‑red velvet bomber jacket with silver filigree. The Ape slips the jacket on, then strides to a camouflage‑wrapped supercar with bright yellow wheels and black tinted windows, opens the door, slides in, and roars away as a pink‑haired rival watches from the concrete barrier, the rain‑slick asphalt reflecting neon lights and the car’s headlights cutting through the mist.\n\nThe camera begins low and wide, tracking left‑to‑right along the wet grid as the Ape approaches the jacket‑mannequin, then pushes in slowly to capture the jacket being donned, continues with a smooth tracking shot that follows the Ape’s steps to the car, executes a slight arc around the vehicle as the door opens and the Ape settles into the driver’s seat, and finally pulls back with a gentle push‑out while the car accelerates past the barrier, keeping the rival in frame throughout. The Ape (bound to reference 1) is the moving protagonist that carries the action; the velvet jacket (reference 2) is the prop he puts on, the camouflaged supercar (reference 3) is the vehicle he enters and drives, and the pink‑haired antagonist (reference 4) remains stationary on the barrier, observing the launch. All four pieces stay in their established positions relative to each other, ensuring a single continuous take without cuts.",
+    "title": "Grid Launch",
+    "logline": "On a wet night grid, a hero ape dons a velvet jacket, enters a camouflaged supercar, and speeds past a watching rival in one continuous take.",
+    "world": "Wet-night pit lane under harsh neon signs and floodlights; rain-slick asphalt reflects multicoloured glows, mist hangs in the air, and distant thunder rumbles.",
+    "grade": "Anamorphic lenses, teal-and-orange colour grade with deep blacks and crisp highlights, no added type or graphics.",
+    "guard": "Every character has ordinary living skin and is a flesh-and-blood figure, not a mannequin or statue; the velvet jacket is always shown being worn by the ape, never as an independent form.",
+    "staging": "<Subject 1> is the Bored Ape character in <Picture 1>, wearing a neon-yellow tracksuit, red heart-shaped sunglasses, yellow hat, and white sneakers with blue stripes; <Subject 2> is the deep-red velvet bomber jacket with silver filigree from <Picture 2>, which <Subject 1> puts on and wears; <Subject 3> is the camouflage-wrapped supercar with bright yellow wheels and black tinted windows from <Picture 3>, which <Subject 1> enters and drives; <Subject 4> is the pink-haired figure in orange translucent glasses, green patent leather moto jacket, red shirt, black slacks with buckles, and black combat boots from <Picture 4>, who remains standing on the concrete barrier observing the scene. All four subjects stay in their established positions: the jacket-mannequin stands beside the ape at the start, the car is parked ahead, and the rival watches from the barrier to the side.",
+    "continuity": "The shot is one unbroken take with no cuts; the camera moves fluidly through the action without jumping or editing.",
+    "camera": "The camera begins low and wide, tracking left-to-right along the wet grid as the ape approaches the jacket-mannequin, then pushes in slowly to capture the jacket being donned, continues with a smooth tracking shot that follows the ape’s steps to the car, executes a slight arc around the vehicle as the door opens and the ape settles into the driver’s seat, and finally pulls back with a gentle push-out while the car accelerates past the barrier, keeping the rival in frame throughout.",
+    "beats": [
+      "The ape walks toward the jacket-mannequin, rain dripping from the tracksuit, neon reflections shimmering on the wet asphalt.",
+      "The ape slips the deep-red velvet jacket on, adjusting the silver filigree collar as rain streaks the visor of the red heart-shaped sunglasses.",
+      "The ape strides to the camouflaged supercar, pulls the door handle, and slides into the driver’s seat, the interior lights flashing yellow.",
+      "The car’s engine roars, bright yellow wheels spray rain as it accelerates past the barrier where the pink-haired rival watches, headlights cutting through the mist."
+    ],
+    "sound": "Rain patters on metal and fabric, distant thunder rumbles, the car door clicks shut, the engine ignites with a deep growl, tires hiss on wet asphalt, and the rival’s breath is audible in the cool night air.",
+    "music": "A low, pulsing synth bassline builds with the action, layered with subtle electronic arpeggios that rise as the car launches, then fades into the ambient storm.",
+    "referencePlan": [
+      {
+        "key": "eth-mainnet:0x28472a58a490c5e09a238847f66a68a47cc76f0f:1",
+        "role": "character",
+        "crop": ""
+      },
+      {
+        "key": "eth-mainnet:0xd71b53fe1df51075c5a965956cdc87421c2ffed7:1",
+        "role": "prop",
+        "crop": ""
+      },
+      {
+        "key": "eth-mainnet:0xc2ac394984f3850027dac95fe8a62e446c5fb786:1",
+        "role": "vehicle",
+        "crop": ""
+      },
+      {
+        "key": "polygon-mainnet:0xc37d61ad831dbc979469dc48a7f55141e2e27f03:12",
+        "role": "character",
+        "crop": ""
+      }
+    ],
+    "duration": 8,
+    "resolution": "768P",
+    "ratio": "16:9",
+    "intentTrace": [
+      {
+        "beat": 1,
+        "from": "wet night starting grid"
+      },
+      {
+        "beat": 2,
+        "from": "the hero ape puts on the velvet jacket"
+      },
+      {
+        "beat": 3,
+        "from": "gets into the camouflaged supercar"
+      },
+      {
+        "beat": 4,
+        "from": "launches past a rival who is watching from the barrier"
+      }
+    ],
+    "notes": "All four cast members fit within the nine reference slots; each is assigned its own slot to preserve identity. The jacket is treated as a prop worn by the ape to satisfy the guard against mannequin independence. No frame-chaining is used; the continuous move relies on tracking, pushing, and arcing to link the beats. The soundtrack emphasizes diegetic rain and engine sounds with a minimal non-diegetic pulse to underscore tension.",
+    "model": "nvidia/nemotron-3-super-120b-a12b"
+  },
+  "cast": [
+    {
+      "key": "eth-mainnet:0x28472a58a490c5e09a238847f66a68a47cc76f0f:1",
+      "name": "ape",
+      "dossier": {
+        "subject": "A Bored Ape character wearing a neon yellow tracksuit, red heart-shaped sunglasses, yellow hat, and white sneakers.",
+        "identityMarkers": [
+          "neon yellow tracksuit",
+          "red heart-shaped sunglasses",
+          "yellow hat",
+          "white sneakers with blue stripes",
+          "monkey head"
+        ],
+        "palette": [
+          "neon yellow",
+          "purple",
+          "white",
+          "red",
+          "blue"
+        ],
+        "medium": "trading-card",
+        "burnedInText": "PHASE 2 BORED APE YACHT CLUB INDIGO HERZ ∞ ETH 2",
+        "framing": "centred-with-margin",
+        "isMannequin": false,
+        "hazards": [
+          "Adidas logo"
+        ]
+      }
+    },
+    {
+      "key": "eth-mainnet:0xd71b53fe1df51075c5a965956cdc87421c2ffed7:1",
+      "name": "velvetJacket",
+      "dossier": {
+        "subject": "a deep-red velvet bomber jacket with elaborate silver filigree embroidery displayed on a glossy iridescent mannequin",
+        "identityMarkers": [
+          "deep-red velvet fabric",
+          "silver metallic embroidery with floral and vine motifs",
+          "prominent heart-shaped embroidered panel on chest",
+          "glossy iridescent blue-green mannequin torso"
+        ],
+        "palette": [
+          "maroon",
+          "silver",
+          "teal",
+          "black"
+        ],
+        "medium": "3d-render",
+        "burnedInText": "",
+        "framing": "centred-with-margin",
+        "isMannequin": true,
+        "hazards": [
+          "highly reflective mannequin surface",
+          "complex silver embroidery details",
+          "potential glare from glossy background"
+        ]
+      }
+    },
+    {
+      "key": "eth-mainnet:0xc2ac394984f3850027dac95fe8a62e446c5fb786:1",
+      "name": "camoCar",
+      "dossier": {
+        "subject": "a sleek supercar with a camouflage wrap pattern, black tinted windows, and bright yellow wheels",
+        "identityMarkers": [
+          "camouflage wrap pattern",
+          "bright yellow wheels",
+          "black tinted windows",
+          "low aerodynamic silhouette"
+        ],
+        "palette": [
+          "yellow",
+          "black",
+          "white",
+          "grey"
+        ],
+        "medium": "3d-render",
+        "burnedInText": "MSO LAB BY McLAREN MCL_GENESIS HONORARY",
+        "framing": "centred-with-margin",
+        "isMannequin": false,
+        "hazards": [
+          "MSO LAB logo",
+          "McLaren text",
+          "MCL_GENESIS text",
+          "HONORARY text"
+        ]
+      }
+    },
+    {
+      "key": "polygon-mainnet:0xc37d61ad831dbc979469dc48a7f55141e2e27f03:12",
+      "name": "antagonist",
+      "dossier": {
+        "subject": "A pink‑haired figure wearing orange translucent glasses, a green patent leather moto jacket over a red shirt, black cotton‑wool slacks with buckles, and black leather combat boots.",
+        "identityMarkers": [
+          "pink buzz-cut hair",
+          "orange translucent glasses",
+          "green patent leather moto jacket",
+          "red crew-neck shirt",
+          "black cotton-wool slacks with buckles"
+        ],
+        "palette": [
+          "green",
+          "red",
+          "black",
+          "pink",
+          "orange"
+        ],
+        "medium": "3d-render",
+        "burnedInText": "©2021 WBEI",
+        "framing": "full-bleed",
+        "isMannequin": false,
+        "hazards": [
+          "visible copyright text '©2021 WBEI'"
+        ]
+      }
+    }
+  ],
+  "expectations": {
+    "axisTested": false,
+    "perBeat": [
+      {
+        "beat": 0,
+        "mustInclude": [
+          "<Subject 1>",
+          "<Subject 2>"
+        ],
+        "mustExclude": [],
+        "expectFramingBand": null
+      },
+      {
+        "beat": 1,
+        "mustInclude": [
+          "<Subject 1>",
+          "<Subject 2>"
+        ],
+        "mustExclude": [],
+        "expectFramingBand": null
+      },
+      {
+        "beat": 2,
+        "mustInclude": [
+          "<Subject 1>",
+          "<Subject 3>"
+        ],
+        "mustExclude": [],
+        "expectFramingBand": null
+      },
+      {
+        "beat": 3,
+        "mustInclude": [
+          "<Subject 3>",
+          "<Subject 4>"
+        ],
+        "mustExclude": [],
+        "expectFramingBand": null
+      }
+    ],
+    "containment": [
+      {
+        "subject": "<Subject 1>",
+        "container": "<Subject 3>",
+        "beats": [
+          3
+        ]
+      }
+    ],
+    "movement": [
+      {
+        "subject": "<Subject 3>",
+        "beat": 3,
+        "moved": true,
+        "minMetres": 5
+      }
+    ],
+    "transitions": [],
+    "permittedSideSwaps": [],
+    "derivation": "Hand-mapped from spec.staging, not regexed from the beat text. FINDING: the live Screenwriter writes beats in PROSE ('the ape', 'the camouflaged supercar') and defines the <Subject N> tags only in the staging block. Tag-regex derivation therefore yields nothing includable and marks every subject excluded in every beat, which would manufacture false early-reveal violations. Mapping done from staging before any storyboard output for this fixture existed.",
+    "inclusionNote": "mustExclude is empty throughout on purpose. Staging says all four subjects 'stay in their established positions' for a continuous take, so a subject not named in a beat may still legitimately be in frame. Demanding its absence would test the fixture's assumptions rather than the model."
+  }
+}

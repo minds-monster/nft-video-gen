@@ -1,15 +1,15 @@
 import { MessageSquare } from 'lucide-react';
 import CanvasPanel from './CanvasPanel';
-import AssistantChat from '../../AssistantChat';
+import ProducerSurface from '../../ProducerSurface';
 import { useMindChatContext } from '../../../context/mindChat';
 
 /**
- * The Producer: the site assistant, mediating whatever state the Mind connection is
- * currently in — idle, pending, or approved. It never shows the Mind's raw
- * conversation directly; see /Users/adamplace/.claude/plans/a-third-party-mind-agent-floating-seal.md.
+ * Two parallel surfaces (Producer Inbox / Assistant) sharing one narrow panel, via the
+ * same toggle ProducerSurface gives ConnectMindModal — see
+ * /Users/adamplace/.claude/plans/we-ve-made-a-lot-delegated-pizza.md.
  */
 const ProducerPanel = () => {
-  const { session, pending, openModal } = useMindChatContext();
+  const { session, pending, openModal, messages, isInitializing, error, send, isSending } = useMindChatContext();
 
   return (
     <CanvasPanel title="Producer" icon={MessageSquare} bodyClassName="flex flex-1 min-h-0 flex-col gap-3">
@@ -30,11 +30,15 @@ const ProducerPanel = () => {
         </div>
       )}
 
-      <AssistantChat
-        connectionId={pending?.connectionId}
-        token={session?.token}
-        mindName={session?.mindName ?? pending?.mindName}
-        placeholder="Direct the film…"
+      <ProducerSurface
+        session={session}
+        pending={pending}
+        messages={messages}
+        isInitializing={isInitializing}
+        error={error}
+        send={send}
+        isSending={isSending}
+        assistantPlaceholder="Direct the film…"
       />
     </CanvasPanel>
   );

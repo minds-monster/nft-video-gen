@@ -1,0 +1,59 @@
+{
+  "runId": "20260824T072814Z",
+  "gitHead": "bcf96b42688afb6f133dde161aa8fcf450e20fb1",
+  "startedAt": "2026-08-24T07:28:14.302Z",
+  "cells": {
+    "scene-film-v2": {
+      "label": "world-space, whole film, CONTRACT V2 (camera looks -Z so larger x is screen-right)",
+      "kind": "scene",
+      "scope": "film",
+      "transport": "responses",
+      "model": "gpt-5.6-sol",
+      "effort": "high",
+      "contract": "v2"
+    }
+  },
+  "fixtures": [
+    {
+      "id": "captured",
+      "sha": "2b3a0fa3b229",
+      "beats": 4
+    },
+    {
+      "id": "grid-launch",
+      "sha": "b2d6f4830c1e",
+      "beats": 6
+    },
+    {
+      "id": "two-hander-axis",
+      "sha": "a1421fc3a811",
+      "beats": 5
+    },
+    {
+      "id": "cut-to-black",
+      "sha": "0f9426ef9a65",
+      "beats": 5
+    },
+    {
+      "id": "scale-extremes",
+      "sha": "933d72d0e9fb",
+      "beats": 5
+    }
+  ],
+  "repeats": 3,
+  "prices": {
+    "gpt-5.6-sol": {
+      "in": 4,
+      "out": 20
+    },
+    "gpt-5.6-terra": {
+      "in": 2,
+      "out": 12
+    },
+    "gpt-5.6-luna": {
+      "in": 0.2,
+      "out": 1.2
+    }
+  },
+  "maxSpend": 15
+}

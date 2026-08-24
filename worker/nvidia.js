@@ -35,7 +35,7 @@ const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
  */
 const jitter = (ms) => ms + Math.floor(Math.random() * Math.min(ms, 2000));
 
-export const chat = async (env, { model, signal, retries = 5, apiKey, ...body }) => {
+export const chat = async (env, { model, signal, retries = 5, apiKey, baseUrl, ...body }) => {
   // Overridable per call: most callers share env.NVIDIA_API_KEY, but a model can live
   // on a different key within the same NIM account (see worker/assistant.js, whose
   // model was only ever reachable on a separately-issued key — confirmed empirically,
@@ -48,9 +48,16 @@ export const chat = async (env, { model, signal, retries = 5, apiKey, ...body })
     );
   }
 
+  // Overridable per call for the same reason `apiKey` is: worker/openrouter.js serves the SAME
+  // Nemotron weights from a different origin, and round 7 established that origin is the whole
+  // free-tier decision (NVIDIA's trial terms are evaluation-only, and its hosted throughput
+  // degraded under sustained use until film-length requests 504'd). Pointing a call elsewhere is
+  // an argument, not a fork of this client.
+  const url = `${baseUrl ?? env.NVIDIA_BASE_URL}/chat/completions`;
+
   let last;
   for (let attempt = 0; attempt <= retries; attempt += 1) {
-    const response = await fetch(`${env.NVIDIA_BASE_URL}/chat/completions`, {
+    const response = await fetch(url, {
       method: 'POST',
       signal,
       headers: {
@@ -61,7 +68,24 @@ export const chat = async (env, { model, signal, retries = 5, apiKey, ...body })
       body: JSON.stringify({ model, ...body }),
     });
 
-    if (response.ok) return response.json();
+    if (response.ok) {
+      const payload = await response.json();
+      // A 200 IS NOT SUCCESS ON THIS WIRE FORMAT. Measured against OpenRouter, 2026-08-25: an
+      // upstream failure comes back as **HTTP 200** carrying `{ error: { message, code } }` and no
+      // `choices` at all —
+      //     {"error":{"message":"Upstream error from Nvidia: Service temporarily overloaded","code":502}}
+      // Treating the status alone as the verdict means the retry loop never engages for exactly
+      // the transient failures it exists to absorb, and the caller instead throws something
+      // meaningless about a missing tool call. Unwrapping it here, at the layer that owns the
+      // provider's wire format, gives every caller the real code and the normal backoff.
+      if (payload?.error) {
+        last = new NvidiaError(payload.error.code ?? 502, payload.error.message ?? 'upstream error');
+        if (!last.retryable || attempt === retries) throw last;
+        await sleep(jitter(Math.min(15000, 500 * 2 ** attempt)));
+        continue;
+      }
+      return payload;
+    }
 
     const bodyText = await response.text();
     last = new NvidiaError(response.status, bodyText);

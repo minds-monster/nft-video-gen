@@ -10,9 +10,20 @@
 
 import { castPiece } from './casting-director.js';
 import { screenwrite } from './screenwriter.js';
+import { handlePrevisDossierReview } from './previs-supervisor.js';
 import { handleConnectInit, handleConnectStatus } from './connect.js';
 import { mindChatInit, mindChatSend, mindChatPoll } from './mind-chat.js';
 import { handleAssistantMessage, handleAssistantHistory, handleAssistantStatus } from './assistant.js';
+import { handleBudgetSet } from './budget.js';
+import {
+  handleStoryboard,
+  handleStoryboardSketch,
+  handleStoryboardGet,
+  handleStoryboardImage,
+  handleStoryboardPlan,
+  handleStoryboardBeatRegenerate,
+  handleStoryboardBeatOverride,
+} from './storyboarder.js';
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), {
@@ -30,6 +41,7 @@ const failure = (error) => {
 const ROUTES = {
   'POST /api/casting': castPiece,
   'POST /api/screenwriter': screenwrite,
+  'POST /api/previs/dossier': handlePrevisDossierReview,
   'POST /api/connect/init': handleConnectInit,
   'GET /api/connect/status': handleConnectStatus,
   'POST /api/mind/init': mindChatInit,
@@ -38,6 +50,14 @@ const ROUTES = {
   'POST /api/assistant/message': handleAssistantMessage,
   'GET /api/assistant/history': handleAssistantHistory,
   'GET /api/assistant/status': handleAssistantStatus,
+  'POST /api/producer/budget': handleBudgetSet,
+  'GET /api/storyboard/plan': handleStoryboardPlan,
+  'POST /api/storyboard': handleStoryboard,
+  'POST /api/storyboard/beat/regenerate': handleStoryboardBeatRegenerate,
+  'POST /api/storyboard/beat/override': handleStoryboardBeatOverride,
+  'POST /api/storyboard/sketch': handleStoryboardSketch,
+  'GET /api/storyboard': handleStoryboardGet,
+  'GET /api/storyboard/image': handleStoryboardImage,
 };
 
 export default {
@@ -55,8 +75,17 @@ export default {
         hasSessionSecret: Boolean(env.SESSION_SIGNING_SECRET),
         hasDossierStore: Boolean(env.DOSSIERS),
         hasConnectionsStore: Boolean(env.MIND_CONNECTIONS),
+        hasOpenAiKey: Boolean(env.OPENAI_API_KEY),
+        hasStoryboardStore: Boolean(env.STORYBOARD_IMAGES),
+        // The free storyboard tier's key. Distinct from OPENAI_API_KEY on purpose: a visitor
+        // with no budget set still gets a storyboard, and this is the key that pays for it
+        // (with time rather than money). Missing it means the free tier is dead, which is the
+        // failure that looks like "the site is broken" to everyone who has not set a budget.
+        hasOpenRouterKey: Boolean(env.OPENROUTER_API_KEY),
         castingModel: env.CASTING_MODEL,
         screenwriterModel: env.SCREENWRITER_MODEL,
+        storyboarderModel: env.STORYBOARDER_MODEL ?? 'gpt-5.6-sol (default)',
+        freeStoryboardModel: env.FREE_STORYBOARD_MODEL ?? 'nvidia/nemotron-3-ultra-550b-a55b:free (default)',
         hasAssistantModel: Boolean(env.ASSISTANT_MODEL),
       });
     }

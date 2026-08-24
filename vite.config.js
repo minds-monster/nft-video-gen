@@ -17,6 +17,22 @@ const WORKER_ORIGIN = `http://127.0.0.1:${WORKER_PORT}`
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  build: {
+    rollupOptions: {
+      output: {
+        // three.js is ~1MB and only the storyboard's 3D frames need it. Splitting it out means
+        // a visitor who never opens a storyboard never downloads a renderer — the viewport
+        // modules are behind React.lazy for the same reason, and the two work together: lazy
+        // decides WHEN it loads, this decides that it is its own file rather than being inlined
+        // into the main bundle.
+        //
+        // Function form, not the object form: Vite 8 bundles with rolldown, which accepts only a
+        // function here and fails the build outright on the object shorthand.
+        manualChunks: (id) =>
+          /node_modules\/(three|@react-three)/.test(id) ? 'three' : undefined,
+      },
+    },
+  },
   server: {
     proxy: {
       '/api': {

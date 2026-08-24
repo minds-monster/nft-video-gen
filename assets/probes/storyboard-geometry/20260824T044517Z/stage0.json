@@ -1,0 +1,1375 @@
+{
+  "runId": "20260824T044517Z",
+  "gitHead": "bcf96b42688afb6f133dde161aa8fcf450e20fb1",
+  "results": [
+    {
+      "id": "s0-strict-with-ranges",
+      "question": "does strict json_schema accept minimum/maximum keywords?",
+      "ok": true,
+      "usage": {
+        "promptTokens": 3282,
+        "completionTokens": 2769,
+        "reasoningTokens": 870
+      },
+      "costUsd": 0.039792,
+      "latencyMs": 30177,
+      "beats": 5,
+      "sample": {
+        "units": "metres",
+        "aspect": 1.7778,
+        "sceneScaleNote": "The salt-flat set is an uninterrupted 250 m by 250 m white plane under a pale sky dome, with the lone figure staged at the fixed origin in beat 1.",
+        "beats": [
+          {
+            "beatIndex": 0,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 0,
+                  "y": 2,
+                  "z": -100
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1,
+                  "z": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 0,
+                  "y": 2,
+                  "z": -100
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1,
+                  "z": 0
+                }
+              },
+              "focalStartMm": 24,
+              "focalEndMm": 24,
+              "rollDeg": 0,
+              "motion": "Static Shot",
+              "amplitude": "small",
+              "speed": "slow",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": 0,
+                "endX": 0,
+                "endZ": 0,
+                "groundOffsetM": 0,
+                "heightM": 1.8,
+                "widthM": 0.6,
+                "yawDeg": 0,
+                "containerId": null,
+                "action": "She stands alone at the distant end of the salt flat, almost imperceptible beneath the vast noon sky.",
+                "screenPosition": "center",
+                "depth": "background"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "EWS",
+            "changes": [],
+            "containmentNotes": "<Subject 1> stands directly on the salt surface; there are no other figures, objects, or containers anywhere in the world.",
+            "proseNote": "Live-action, cinematic, a static shot with small amplitude at slow speed holds an immense white salt flat and enormous pale sky. <Subject 1>, a living woman with pink buzz-cut hair, orange translucent glasses, a green patent-leather moto jacket, red shirt, black buckled slacks, and black combat boots, is a tiny centered speck at the far horizon."
+          },
+          {
+            "beatIndex": 1,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 0,
+                  "y": 1.8,
+                  "z": -70
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1,
+                  "z": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 0,
+                  "y": 1.8,
+                  "z": -90
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1,
+                  "z": -20
+                }
+              },
+              "focalStartMm": 35,
+              "focalEndMm": 35,
+              "rollDeg": 0,
+              "motion": "Tracking Shot",
+              "amplitude": "medium",
+              "speed": "slow",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": 0,
+                "endX": 0,
+                "endZ": -20,
+                "groundOffsetM": 0,
+                "heightM": 1.8,
+                "widthM": 0.6,
+                "yawDeg": -180,
+                "containerId": null,
+                "action": "She walks steadily toward the camera across the empty salt, her boots making the only marks in the white crust.",
+                "screenPosition": "center",
+                "depth": "background"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "EWS",
+            "changes": [
+              {
+                "subject": "<Subject 1>",
+                "what": "She walks 20 m toward the camera, from z=0 to z=-20.",
+                "justifiedByBeatText": true
+              }
+            ],
+            "containmentNotes": "<Subject 1> remains the sole living figure and walks directly on the salt surface; no other subject enters the frame.",
+            "proseNote": "Live-action, cinematic, a tracking shot with medium amplitude at slow speed retreats straight backward as <Subject 1> walks toward it across the flat. She remains deliberately small and centered against the uninterrupted white ground and pale horizon, her green jacket and pink hair the only color in the emptiness."
+          },
+          {
+            "beatIndex": 2,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 0,
+                  "y": 1.6,
+                  "z": -20.45
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1.6,
+                  "z": -20
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 0,
+                  "y": 1.6,
+                  "z": -20.45
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1.6,
+                  "z": -20
+                }
+              },
+              "focalStartMm": 300,
+              "focalEndMm": 300,
+              "rollDeg": 0,
+              "motion": "Static Shot",
+              "amplitude": "small",
+              "speed": "slow",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": -20,
+                "endX": 0,
+                "endZ": -20,
+                "groundOffsetM": 0,
+                "heightM": 1.8,
+                "widthM": 0.6,
+                "yawDeg": -180,
+                "containerId": null,
+                "action": "She stops close to camera and opens one eye, exposing the colored iris and its tiny flecks.",
+                "screenPosition": "center",
+                "depth": "foreground"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "ECU",
+            "changes": [],
+            "containmentNotes": "<Subject 1> stands on the salt surface. The camera is in front of her face but outside her physical volume; only her open eye and surrounding living skin are visible.",
+            "proseNote": "Live-action, cinematic, a static shot with small amplitude at slow speed isolates <Subject 1>'s open eye in an extreme close-up. Her iris, wet highlights, and irregular flecks fill the entire frame, with a sliver of ordinary living skin and the edge of her orange translucent glasses at the periphery."
+          },
+          {
+            "beatIndex": 3,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 0,
+                  "y": 1.8,
+                  "z": -32
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 0.95,
+                  "z": -20
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 0,
+                  "y": 1.8,
+                  "z": -32
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 0.95,
+                  "z": -20
+                }
+              },
+              "focalStartMm": 35,
+              "focalEndMm": 35,
+              "rollDeg": 0,
+              "motion": "Static Shot",
+              "amplitude": "small",
+              "speed": "slow",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": -20,
+                "endX": 0,
+                "endZ": -20,
+                "groundOffsetM": 0,
+                "heightM": 1.8,
+                "widthM": 0.6,
+                "yawDeg": 0,
+                "containerId": null,
+                "action": "She stands still and looks back toward the long empty route she has crossed.",
+                "screenPosition": "center",
+                "depth": "midground"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "WS",
+            "changes": [],
+            "containmentNotes": "<Subject 1> stands alone on the salt surface, facing +Z toward where she began. The camera remains on the same -Z side of her travel axis and sees her full figure from behind.",
+            "proseNote": "Live-action, cinematic, a static shot with small amplitude at slow speed observes <Subject 1>'s full length from behind as she looks back the way she came. Her pink buzz cut, green moto jacket, black slacks, and combat boots stand centered against the blank salt flat stretching without interruption to the horizon."
+          },
+          {
+            "beatIndex": 4,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 0,
+                  "y": 1.55,
+                  "z": -21.7
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1.55,
+                  "z": -20
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 0,
+                  "y": 1.55,
+                  "z": -21.7
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1.55,
+                  "z": -20
+                }
+              },
+              "focalStartMm": 85,
+              "focalEndMm": 85,
+              "rollDeg": 0,
+              "motion": "Static Shot",
+              "amplitude": "small",
+              "speed": "slow",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": -20,
+                "endX": 0,
+                "endZ": -20,
+                "groundOffsetM": 0,
+                "heightM": 1.8,
+                "widthM": 0.6,
+                "yawDeg": -180,
+                "containerId": null,
+                "action": "She turns her face back toward the camera and says one word clearly.",
+                "screenPosition": "center",
+                "depth": "foreground"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "CU",
+            "changes": [],
+            "containmentNotes": "<Subject 1> remains standing on the salt surface, alone. She faces the camera so her mouth is unobstructed and legible; no container or held object is present.",
+            "proseNote": "Live-action, cinematic, a static shot with small amplitude at slow speed stays close on <Subject 1>'s face as she turns back toward camera and says one word. Her orange translucent glasses, pink buzz cut, and the glossy green collar frame her readable mouth; hard noon light leaves the immense salt world as a pale blur behind her."
+          }
+        ]
+      }
+    },
+    {
+      "id": "s0-strict-ranges-stripped",
+      "question": "does it accept the schema with range keywords stripped?",
+      "ok": true,
+      "usage": {
+        "promptTokens": 3282,
+        "completionTokens": 3241,
+        "reasoningTokens": 1363
+      },
+      "costUsd": 0.045455999999999996,
+      "latencyMs": 34053,
+      "beats": 5,
+      "sample": {
+        "units": "metres",
+        "aspect": 1.7778,
+        "sceneScaleNote": "A completely level white salt-flat set extends at least 400 metres in every horizontal direction, with no objects or terrain above the ground plane; the pale sky is visible to the horizon.",
+        "beats": [
+          {
+            "beatIndex": 0,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 0,
+                  "y": 1.7,
+                  "z": -200
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 0.9,
+                  "z": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 0,
+                  "y": 1.7,
+                  "z": -200
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 0.9,
+                  "z": 0
+                }
+              },
+              "focalStartMm": 24,
+              "focalEndMm": 24,
+              "rollDeg": 0,
+              "motion": "Static Shot",
+              "amplitude": "small",
+              "speed": "slow",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": 0,
+                "endX": 0,
+                "endZ": 0,
+                "groundOffsetM": 0,
+                "heightM": 1.75,
+                "widthM": 0.6,
+                "yawDeg": 180,
+                "containerId": null,
+                "action": "She stands alone at the distant horizon, a living pink-haired figure in orange translucent glasses, green patent-leather moto jacket, red shirt, black buckled slacks, and black combat boots.",
+                "screenPosition": "center",
+                "depth": "background"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "EWS",
+            "changes": [],
+            "containmentNotes": "<Subject 1> stands directly on the salt surface with no container, props, other figures, or background objects present.",
+            "proseNote": "Live-action, cinematic, a static shot with small amplitude at slow speed holds an immense white salt flat beneath a pale noon sky. <Subject 1> is a tiny solitary speck at the central horizon, surrounded by uninterrupted emptiness on every side."
+          },
+          {
+            "beatIndex": 1,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 0,
+                  "y": 1.7,
+                  "z": -100
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 0.9,
+                  "z": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 0,
+                  "y": 1.7,
+                  "z": -80
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 0.9,
+                  "z": -50
+                }
+              },
+              "focalStartMm": 35,
+              "focalEndMm": 35,
+              "rollDeg": 0,
+              "motion": "Tracking Shot",
+              "amplitude": "medium",
+              "speed": "slow",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": 0,
+                "endX": 0,
+                "endZ": -50,
+                "groundOffsetM": 0,
+                "heightM": 1.75,
+                "widthM": 0.6,
+                "yawDeg": 180,
+                "containerId": null,
+                "action": "She walks steadily toward the camera across the hard white salt, her combat boots making a direct path from the far distance.",
+                "screenPosition": "center",
+                "depth": "background"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "EWS",
+            "changes": [
+              {
+                "subject": "<Subject 1>",
+                "what": "Walks 50 metres along -Z, from z=0 to z=-50.",
+                "justifiedByBeatText": true
+              }
+            ],
+            "containmentNotes": "<Subject 1> remains the only figure and walks freely on the salt surface; no tracks, props, vehicles, or containers are introduced.",
+            "proseNote": "Live-action, cinematic, a tracking shot with medium amplitude at slow speed follows <Subject 1> as she walks toward us across the empty flat. She grows perceptibly nearer but remains small against the vast white ground and enormous pale sky."
+          },
+          {
+            "beatIndex": 2,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 0,
+                  "y": 1.62,
+                  "z": -50.75
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1.62,
+                  "z": -50
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 0,
+                  "y": 1.62,
+                  "z": -50.75
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1.62,
+                  "z": -50
+                }
+              },
+              "focalStartMm": 300,
+              "focalEndMm": 300,
+              "rollDeg": 0,
+              "motion": "Static Shot",
+              "amplitude": "small",
+              "speed": "slow",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": -50,
+                "endX": 0,
+                "endZ": -50,
+                "groundOffsetM": 0,
+                "heightM": 1.75,
+                "widthM": 0.6,
+                "yawDeg": 180,
+                "containerId": null,
+                "action": "She stops and opens one eye; the pink buzz-cut edge, orange glasses frame, eyelid, iris, and tiny iris flecks are visible at extreme proximity.",
+                "screenPosition": "center",
+                "depth": "foreground"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "ECU",
+            "changes": [],
+            "containmentNotes": "<Subject 1> stands on the salt surface. The camera is outside her body volume and is aligned with her front-facing eye; the orange translucent glasses sit naturally in front of the eye.",
+            "proseNote": "Live-action, cinematic, a static shot with small amplitude at slow speed isolates <Subject 1>'s eye. Her eyelid opens and the iris, its fine colored flecks, and the edge of her orange translucent glasses fill the entire picture."
+          },
+          {
+            "beatIndex": 3,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 0,
+                  "y": 1.3,
+                  "z": -75
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 0.9,
+                  "z": -50
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 0,
+                  "y": 1.3,
+                  "z": -75
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 0.9,
+                  "z": -50
+                }
+              },
+              "focalStartMm": 80,
+              "focalEndMm": 80,
+              "rollDeg": 0,
+              "motion": "Static Shot",
+              "amplitude": "small",
+              "speed": "slow",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": -50,
+                "endX": 0,
+                "endZ": -50,
+                "groundOffsetM": 0,
+                "heightM": 1.75,
+                "widthM": 0.6,
+                "yawDeg": 0,
+                "containerId": null,
+                "action": "She stands still and looks back toward +Z, the direction from which she has walked, showing the back of her green moto jacket against the salt flat.",
+                "screenPosition": "center",
+                "depth": "midground"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "WS",
+            "changes": [],
+            "containmentNotes": "<Subject 1> remains alone, standing directly on the level salt. Her changed facing direction is a stationary look back, not a ground-position change.",
+            "proseNote": "Live-action, cinematic, a static shot with small amplitude at slow speed frames <Subject 1>'s full length from behind. She looks back across the featureless white distance she has crossed, her solitary body held against the horizon and hard noon light."
+          },
+          {
+            "beatIndex": 4,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 0,
+                  "y": 1.58,
+                  "z": -47
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1.55,
+                  "z": -50
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 0,
+                  "y": 1.58,
+                  "z": -47
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1.55,
+                  "z": -50
+                }
+              },
+              "focalStartMm": 160,
+              "focalEndMm": 160,
+              "rollDeg": 0,
+              "motion": "Static Shot",
+              "amplitude": "small",
+              "speed": "slow",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": -50,
+                "endX": 0,
+                "endZ": -50,
+                "groundOffsetM": 0,
+                "heightM": 1.75,
+                "widthM": 0.6,
+                "yawDeg": 0,
+                "containerId": null,
+                "action": "Still facing back along her route, she speaks one word toward the camera; her mouth and the translucent orange glasses are clearly readable.",
+                "screenPosition": "center",
+                "depth": "foreground"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "CU",
+            "changes": [],
+            "containmentNotes": "<Subject 1> stands freely on the salt surface. The camera is positioned in front of her face, on the side toward which she is looking, and no other subject is present.",
+            "proseNote": "Live-action, cinematic, a static shot with small amplitude at slow speed holds close on <Subject 1>'s living face. Her pink buzz cut, orange translucent glasses, and mouth are sharply readable as she says one word into the vast silence."
+          }
+        ]
+      }
+    },
+    {
+      "id": "s0-temperature-with-reasoning",
+      "question": "can temperature be passed alongside reasoning.effort?",
+      "ok": false,
+      "error": "ProbeApiError: OpenAI 400: {\n  \"error\": {\n    \"message\": \"Unsupported parameter: 'temperature' is not supported with this model.\",\n    \"type\": \"invalid_request_error\",\n    \"param\": \"temperature\",\n    \"code\": null\n  }\n}"
+    },
+    {
+      "id": "s0-chat-forced-tool",
+      "question": "does the scene schema work as a forced tool call at effort none?",
+      "ok": true,
+      "usage": {
+        "promptTokens": 3260,
+        "completionTokens": 2291,
+        "reasoningTokens": 0
+      },
+      "costUsd": 0.034012,
+      "latencyMs": 20968,
+      "beats": 5,
+      "sample": {
+        "units": "metres",
+        "aspect": 1.7778,
+        "sceneScaleNote": "The salt flat is an uninterrupted level plane at least 400 metres across in every direction, with no objects or terrain relief; the horizon sits roughly 200 metres from the staged action and the pale noon sky dominates the upper frame.",
+        "beats": [
+          {
+            "beatIndex": 0,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 0,
+                  "y": 1.7,
+                  "z": -120
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1,
+                  "z": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 0,
+                  "y": 1.7,
+                  "z": -120
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1,
+                  "z": 0
+                }
+              },
+              "focalStartMm": 24,
+              "focalEndMm": 24,
+              "rollDeg": 0,
+              "motion": "Static Shot",
+              "amplitude": "small",
+              "speed": "slow",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": 0,
+                "endX": 0,
+                "endZ": 0,
+                "groundOffsetM": 0,
+                "heightM": 1.75,
+                "widthM": 0.6,
+                "yawDeg": 180,
+                "containerId": null,
+                "action": "She stands alone at the far end of the salt flat, facing toward the camera from an immense distance.",
+                "screenPosition": "center",
+                "depth": "background"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "EWS",
+            "changes": [],
+            "containmentNotes": "<Subject 1> is the only visible figure and stands directly on the salt crust. Her ordinary living skin is visible where uncovered; she has a pink buzz cut, orange translucent glasses, a green patent-leather moto jacket over a red shirt, black buckled slacks, and black combat boots.",
+            "proseNote": "Live-action, cinematic, a static extreme-wide shot frames an enormous pale noon sky over a seamless white salt flat. <Subject 1> is a tiny solitary speck at the centered horizon, her colorful clothing barely legible at this distance; hard overhead sunlight creates only a short, crisp shadow beneath her boots. The camera holds with small amplitude at slow speed, emphasizing the vacant world around her."
+          },
+          {
+            "beatIndex": 1,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 0,
+                  "y": 1.7,
+                  "z": -35
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1,
+                  "z": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 0,
+                  "y": 1.7,
+                  "z": -35
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1,
+                  "z": 0
+                }
+              },
+              "focalStartMm": 24,
+              "focalEndMm": 24,
+              "rollDeg": 0,
+              "motion": "Static Shot",
+              "amplitude": "small",
+              "speed": "slow",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": 0,
+                "endX": 0,
+                "endZ": -8,
+                "groundOffsetM": 0,
+                "heightM": 1.75,
+                "widthM": 0.6,
+                "yawDeg": 180,
+                "containerId": null,
+                "action": "She walks steadily toward the camera across the salt crust, taking several measured steps.",
+                "screenPosition": "center",
+                "depth": "background"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "EWS",
+            "changes": [
+              {
+                "subject": "<Subject 1>",
+                "what": "She walks 8 metres toward the camera, from world z=0 to z=-8.",
+                "justifiedByBeatText": true
+              }
+            ],
+            "containmentNotes": "<Subject 1> remains the only visible figure, walking freely on the salt crust. Her pink buzz cut, orange translucent glasses, green patent-leather moto jacket, red shirt, black buckled slacks, and black combat boots remain unchanged.",
+            "proseNote": "Live-action, cinematic, a static extreme-wide shot keeps the white salt flat and huge pale sky dominant as <Subject 1> walks directly toward us from the center of the distant frame. Her green jacket and pink hair begin to separate from the white expanse but she remains small against it, with each bootstep leaving a faint dry scuff. The camera holds with small amplitude at slow speed and does not retreat from her approach."
+          },
+          {
+            "beatIndex": 2,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 0.03,
+                  "y": 1.62,
+                  "z": -8.28
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1.62,
+                  "z": -8
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 0.03,
+                  "y": 1.62,
+                  "z": -8.28
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1.62,
+                  "z": -8
+                }
+              },
+              "focalStartMm": 100,
+              "focalEndMm": 100,
+              "rollDeg": 0,
+              "motion": "Static Shot",
+              "amplitude": "small",
+              "speed": "slow",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": -8,
+                "endX": 0,
+                "endZ": -8,
+                "groundOffsetM": 0,
+                "heightM": 1.75,
+                "widthM": 0.6,
+                "yawDeg": 180,
+                "containerId": null,
+                "action": "She holds still as one eye opens fully; the iris, its radial texture, and tiny flecks occupy the image.",
+                "screenPosition": "center",
+                "depth": "foreground"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "ECU",
+            "changes": [],
+            "containmentNotes": "Only <Subject 1> is visible. The camera is positioned just in front of her face but outside her physical volume; her orange translucent glasses are not in front of the eye being photographed, allowing the living eye, iris, and flecks to be unobstructed.",
+            "proseNote": "Live-action, cinematic, an extreme close-up isolates one living eye of <Subject 1> until the iris and its minute flecks fill the entire picture. Her eyelid opens into the hard noon light, revealing moist natural skin texture and a sharp catchlight; no horizon or clothing is visible. The camera holds with small amplitude at slow speed, fixed on the eye without blinking away."
+          },
+          {
+            "beatIndex": 3,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 0,
+                  "y": 1.7,
+                  "z": -20
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 0.9,
+                  "z": -8
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 0,
+                  "y": 1.7,
+                  "z": -20
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 0.9,
+                  "z": -8
+                }
+              },
+              "focalStartMm": 35,
+              "focalEndMm": 35,
+              "rollDeg": 0,
+              "motion": "Static Shot",
+              "amplitude": "small",
+              "speed": "slow",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": -8,
+                "endX": 0,
+                "endZ": -8,
+                "groundOffsetM": 0,
+                "heightM": 1.75,
+                "widthM": 0.6,
+                "yawDeg": 0,
+                "containerId": null,
+                "action": "She stands still with her back to the camera and looks back across the salt flat in the direction she came from.",
+                "screenPosition": "center",
+                "depth": "midground"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "WS",
+            "changes": [
+              {
+                "subject": "<Subject 1>",
+                "what": "She turns in place from facing the camera to facing back across the route she walked.",
+                "justifiedByBeatText": true
+              }
+            ],
+            "containmentNotes": "<Subject 1> is the only visible figure, standing freely on the salt crust. Her full outfit is visible from behind: green patent-leather moto jacket, black buckled slacks, and black leather combat boots; her pink buzz cut is visible above the jacket collar.",
+            "proseNote": "Live-action, cinematic, a static wide shot frames the full length of <Subject 1> from behind against the empty white flat. She has stopped at the center of the frame and looks back the way she came, toward the blank horizon beyond her; her short noon shadow anchors her boots to the salt. The camera holds with small amplitude at slow speed, leaving broad negative space around her and above her."
+          },
+          {
+            "beatIndex": 4,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 0,
+                  "y": 1.58,
+                  "z": -10.2
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1.55,
+                  "z": -8
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 0,
+                  "y": 1.58,
+                  "z": -10.2
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1.55,
+                  "z": -8
+                }
+              },
+              "focalStartMm": 85,
+              "focalEndMm": 85,
+              "rollDeg": 0,
+              "motion": "Static Shot",
+              "amplitude": "small",
+              "speed": "slow",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": -8,
+                "endX": 0,
+                "endZ": -8,
+                "groundOffsetM": 0,
+                "heightM": 1.75,
+                "widthM": 0.6,
+                "yawDeg": 180,
+                "containerId": null,
+                "action": "She turns back toward the camera, forms one clearly readable word with her mouth, and says it once.",
+                "screenPosition": "center",
+                "depth": "foreground"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "CU",
+            "changes": [
+              {
+                "subject": "<Subject 1>",
+                "what": "She turns in place to face the camera before speaking.",
+                "justifiedByBeatText": true
+              }
+            ],
+            "containmentNotes": "Only <Subject 1> is visible, standing freely on the salt crust. Her ordinary living face is unobstructed enough to read her mouth; orange translucent glasses, pink buzz cut, and the upper edge of her green patent-leather jacket remain visible.",
+            "proseNote": "Live-action, cinematic, a level close-up centers <Subject 1>'s face and shoulders against a softly blurred band of white salt and pale sky. She turns toward us, her orange translucent glasses catching the noon glare, then says one word once with deliberate, clearly readable mouth movement. The camera holds with small amplitude at slow speed so the spoken word and her living expression carry the final moment."
+          }
+        ],
+        "overall_soundscape": "A dry, nearly windless salt flat holds a vast open hush under hard noon light. In beat 2, her combat boots make faint granular scuffs on the crust; in beat 5, her single spoken word is clean and close, followed by the returning silence.",
+        "non_diegetic_music": "A sparse, nearly inaudible sustained tone begins beneath the opening emptiness and subtly tightens through the eye close-up. It drops away just before her spoken word, leaving the voice unscored."
+      }
+    },
+    {
+      "id": "s0-sol-high",
+      "question": "does sol at high effort return a whole film inside 24k output tokens?",
+      "ok": true,
+      "usage": {
+        "promptTokens": 3282,
+        "completionTokens": 7288,
+        "reasoningTokens": 5178
+      },
+      "costUsd": 0.534968,
+      "latencyMs": 122088,
+      "beats": 5,
+      "sample": {
+        "units": "metres",
+        "aspect": 1.7778,
+        "sceneScaleNote": "The unobstructed salt-flat set spans at least 300 metres by 300 metres, supporting a 60-metre establishing view with a flat horizon in every direction.",
+        "beats": [
+          {
+            "beatIndex": 0,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 0,
+                  "y": 1.6,
+                  "z": -60
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 14,
+                  "z": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 0,
+                  "y": 1.6,
+                  "z": -60
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 14,
+                  "z": 0
+                }
+              },
+              "focalStartMm": 24,
+              "focalEndMm": 24,
+              "rollDeg": 0,
+              "motion": "Static Shot",
+              "amplitude": "small",
+              "speed": "slow",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": 0,
+                "endX": 0,
+                "endZ": 0,
+                "groundOffsetM": 0,
+                "heightM": 1.72,
+                "widthM": 0.62,
+                "yawDeg": 180,
+                "containerId": null,
+                "action": "Stands alive and motionless as a nearly indistinguishable distant speck, facing toward the camera across the salt.",
+                "screenPosition": "center",
+                "depth": "background"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "EWS",
+            "changes": [],
+            "containmentNotes": "No containment or held objects; both combat boots rest directly on the salt crust.",
+            "proseNote": "Live-action, cinematic, an extreme-wide shot frames an immense pale sky and a featureless white salt flat under hard noon light. <Subject 1> is the only living figure anywhere, a minute centered speck near the far horizon. The camera holds a Static Shot with small amplitude at slow speed; the elevated aim places the low horizon and tiny figure beneath a dominant expanse of sky. Faint dry wind crosses the otherwise silent flat."
+          },
+          {
+            "beatIndex": 1,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 0,
+                  "y": 1.6,
+                  "z": -40
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 8,
+                  "z": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 0,
+                  "y": 1.6,
+                  "z": -40
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 8,
+                  "z": 0
+                }
+              },
+              "focalStartMm": 35,
+              "focalEndMm": 35,
+              "rollDeg": 0,
+              "motion": "Static Shot",
+              "amplitude": "small",
+              "speed": "slow",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": 0,
+                "endX": 0,
+                "endZ": -10,
+                "groundOffsetM": 0,
+                "heightM": 1.72,
+                "widthM": 0.62,
+                "yawDeg": 180,
+                "containerId": null,
+                "action": "Walks directly toward the camera across the brittle salt, remaining small against the enormous empty landscape.",
+                "screenPosition": "center",
+                "depth": "background"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "EWS",
+            "changes": [
+              {
+                "subject": "<Subject 1>",
+                "what": "Walks from world position (0, 0) to (0, -10) during the beat.",
+                "justifiedByBeatText": true
+              }
+            ],
+            "containmentNotes": "No containment or held objects; the black combat boots alternately contact and lift from the salt crust while the clothing moves naturally on a living body.",
+            "proseNote": "Live-action, cinematic, an extreme-wide shot holds <Subject 1> in the center as she walks toward us, her pink buzz-cut hair, orange translucent glasses, green patent leather moto jacket, red shirt, black buckled slacks, and combat boots becoming only slightly more legible. She remains overwhelmed by the blank white ground and enormous pale sky. The camera holds a Static Shot with small amplitude at slow speed while her footsteps advance through the frame. Each bootfall produces a dry granular crunch beneath the thin wind."
+          },
+          {
+            "beatIndex": 2,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 0.08,
+                  "y": 1.61,
+                  "z": -10.55
+                },
+                "lookAt": {
+                  "x": 0.08,
+                  "y": 1.61,
+                  "z": -10.17
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 0.08,
+                  "y": 1.61,
+                  "z": -10.55
+                },
+                "lookAt": {
+                  "x": 0.08,
+                  "y": 1.61,
+                  "z": -10.17
+                }
+              },
+              "focalStartMm": 100,
+              "focalEndMm": 120,
+              "rollDeg": 0,
+              "motion": "Zoom In",
+              "amplitude": "small",
+              "speed": "slow",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": -10,
+                "endX": 0,
+                "endZ": -10,
+                "groundOffsetM": 0,
+                "heightM": 1.72,
+                "widthM": 0.62,
+                "yawDeg": 180,
+                "containerId": null,
+                "action": "Remains stationary as one eyelid opens, revealing a living, moist eye whose iris texture and tiny flecks fill the image.",
+                "screenPosition": "center",
+                "depth": "foreground"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "ECU",
+            "changes": [],
+            "containmentNotes": "No containment; the macro view is aligned with one eye behind the orange translucent glasses, with the camera remaining outside the subject's physical volume.",
+            "proseNote": "Live-action, cinematic, an extreme close-up isolates one ordinary living eye behind the warm tint of the orange translucent glasses. Her eyelid opens and the wet iris, radial fibers, and minute colored flecks expand until they occupy the whole picture. The camera performs a Zoom In with small amplitude at slow speed without changing its macro position. A soft eyelid movement and restrained breath are audible under the distant wind."
+          },
+          {
+            "beatIndex": 3,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 4.2,
+                  "y": 1.5,
+                  "z": -15
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 0.9,
+                  "z": -10
+                }
+              },
+              "end": {
+                "position": {
+                  "x": -4.2,
+                  "y": 1.5,
+                  "z": -15
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 0.9,
+                  "z": -10
+                }
+              },
+              "focalStartMm": 50,
+              "focalEndMm": 50,
+              "rollDeg": 0,
+              "motion": "Arc Shot",
+              "amplitude": "medium",
+              "speed": "slow",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": -10,
+                "endX": 0,
+                "endZ": -10,
+                "groundOffsetM": 0,
+                "heightM": 1.72,
+                "widthM": 0.62,
+                "yawDeg": 0,
+                "containerId": null,
+                "action": "Stands still after turning around and looks toward the distant horizon from which she walked.",
+                "screenPosition": "center",
+                "depth": "midground"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "WS",
+            "changes": [
+              {
+                "subject": "<Subject 1>",
+                "what": "Her facing changes from yaw 180 to yaw 0 as she turns to look back; her ground position remains fixed.",
+                "justifiedByBeatText": true
+              }
+            ],
+            "containmentNotes": "No containment or held objects; the full figure stands with both boots planted on the ground, and the jacket and slacks retain natural fabric and patent-leather behavior.",
+            "proseNote": "Live-action, cinematic, a wide full-body shot shows <Subject 1> standing alone at the place where she stopped, now facing the horizon she came from. Her complete silhouette reads against the white flat while the green patent leather jacket catches hard noon highlights without making her skin appear metallic or artificial. The camera performs an Arc Shot with medium amplitude at slow speed around her rear side, moving from one three-quarter view to the other while keeping her centered. Wind brushes her clothing, and the salt gives a faint scrape as she settles her stance."
+          },
+          {
+            "beatIndex": 4,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 0,
+                  "y": 1.52,
+                  "z": -8.2
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1.43,
+                  "z": -9.85
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 0,
+                  "y": 1.52,
+                  "z": -8.5
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1.43,
+                  "z": -9.85
+                }
+              },
+              "focalStartMm": 85,
+              "focalEndMm": 85,
+              "rollDeg": 0,
+              "motion": "Push In",
+              "amplitude": "small",
+              "speed": "slow",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": -10,
+                "endX": 0,
+                "endZ": -10,
+                "groundOffsetM": 0,
+                "heightM": 1.72,
+                "widthM": 0.62,
+                "yawDeg": 0,
+                "containerId": null,
+                "action": "Keeps looking back, draws a small breath, and clearly articulates one unspecified word with her mouth.",
+                "screenPosition": "center",
+                "depth": "foreground"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "CU",
+            "changes": [],
+            "containmentNotes": "No containment or held objects; the camera is on the front side of her face, and her mouth remains unobstructed and readable beneath the orange glasses.",
+            "proseNote": "Live-action, cinematic, a close-up faces <Subject 1> from the direction of the path behind her, close enough to read the precise movement of her living mouth. Hard noon light defines her ordinary skin, pink buzz cut, orange translucent glasses, and the green jacket collar. After a small breath, she says one clear word, with the word itself left unspecified. The camera performs a Push In with small amplitude at slow speed toward her mouth as her voice briefly breaks the salt flat's emptiness, followed by the returning wind."
+          }
+        ]
+      }
+    },
+    {
+      "id": "s0-legacy-control",
+      "question": "does today's production request still run unchanged?",
+      "ok": true,
+      "usage": {
+        "promptTokens": 1396,
+        "completionTokens": 331,
+        "reasoningTokens": 0
+      },
+      "costUsd": 0.006764,
+      "latencyMs": 5099,
+      "beats": 0,
+      "sample": {
+        "framing": "EWS",
+        "cameraAngle": "eye-level",
+        "cameraMovement": "Static Shot with no amplitude at slow speed.",
+        "subjectsInFrame": [
+          {
+            "subject": "<Subject 1>",
+            "screenPosition": "center",
+            "depth": "background",
+            "action": "A lone living figure stands as a tiny, nearly silhouetted speck at the far horizon of the salt flat, motionless beneath the immense sky."
+          }
+        ],
+        "subjectsExcluded": [],
+        "screenDirection": [
+          {
+            "subject": "<Subject 1>",
+            "movement": "static"
+          }
+        ],
+        "continuityCheck": {
+          "consistent": true,
+          "changes": []
+        },
+        "containmentNotes": "<Subject 1> is the only figure in the world and stands directly on the exposed white salt crust, with no vehicles, structures, props, or other people anywhere in frame. Keep the figure extremely distant and physically grounded on the flat horizon; ordinary living skin is present but too far away for facial detail.",
+        "visualPrompt": "Live-action, cinematic, an extreme-wide eye-level shot frames an empty white salt flat stretching perfectly flat to the horizon in every direction beneath an enormous pale noon sky. Hard overhead sunlight creates minimal, crisp grounding shadow on the salt. <Subject 1> is the sole living figure, a tiny centered speck at the far horizon, standing still; the distant figure wears a green patent leather moto jacket over a red shirt, black buckled slacks, and black combat boots, with pink buzz-cut hair and orange translucent glasses implied at this distance. No other figures, vehicles, buildings, or objects. The camera remains completely still, emphasizing vast isolation and scale."
+      }
+    }
+  ]
+}

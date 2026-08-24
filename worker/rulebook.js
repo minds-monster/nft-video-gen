@@ -7,6 +7,37 @@
 // too — this is the same knowledge, aimed at a model instead of a reader.
 
 /**
+ * H3's own motion vocabulary, as data rather than only as prose.
+ *
+ * worker/scene.js's SCENE_SCHEMA constrains `camera.motion` to this exact enum, and the
+ * sentence H3 eventually reads is built from the same array below — so the vocabulary the
+ * model is allowed to emit and the vocabulary the renderer is told about cannot drift apart.
+ * Before this was extracted, the list existed only inside the H3_FORMAT string and the enum
+ * was a hand-copied duplicate of it.
+ */
+export const H3_MOTIONS = [
+  'Zoom In',
+  'Zoom Out',
+  'Push In',
+  'Push Out',
+  'Pan Left',
+  'Pan Right',
+  'Truck Left',
+  'Truck Right',
+  'Tilt Up',
+  'Tilt Down',
+  'Pedestal Up',
+  'Pedestal Down',
+  'Arc Shot',
+  'Tracking Shot',
+  'Static Shot',
+  'Shake Slightly',
+  'Shake Strongly',
+  'POV',
+  'Roll',
+];
+
+/**
  * H3's own script format, shipped with the open weights.
  *
  * Worth stating plainly because it contradicts what the repo's scripts currently assemble:
@@ -36,8 +67,7 @@ export const H3_FORMAT = `MiniMax-H3 expects a structured script, not a paragrap
 
 Camera moves are written as natural English actions, never as bracketed labels. The formula
 is motion + amplitude + speed: "the camera pushes in with small amplitude at slow speed".
-Available motions: Zoom In/Out, Push In/Out, Pan Left/Right, Truck Left/Right, Tilt Up/Down,
-Pedestal Up/Down, Arc Shot, Tracking Shot, Static Shot, Shake Slightly/Strongly, POV, Roll.
+Available motions: ${H3_MOTIONS.join(', ')}.
 
 Each text field can run to 7000 characters. Length is not a virtue in itself, but this model
 is directed, not hinted at — be specific and complete rather than terse.`;
@@ -135,9 +165,15 @@ export const SHOT_SPEC_SCHEMA = {
         'Define each subject and bind it to its reference, using the H3 convention: ' +
         '"<Subject 1> is the stylised ape character in <Picture 1>, with ...". N is the ' +
         '1-based position in referencePlan. Then say how many of each exist and where each ' +
-        'one stays. NEVER write a cast key, contract address or chain name — those are ' +
-        'internal identifiers, and this text is sent to a model that renders text it is ' +
-        'shown. Empty string only when there is a single subject.',
+        'one stays — including, for every subject with more than one other subject moving ' +
+        'near it, which SIDE it starts on (left/right). A worn or held reference (role ' +
+        '"garment" or "prop" in referencePlan) is NEVER an independent figure with its own ' +
+        'position — introduce it in the same sentence as the character wearing or holding ' +
+        'it: "<Subject 1> ... wearing <Subject 2>, the deep-red velvet jacket, from ' +
+        '<Picture 2>" — never "<Subject 2> stands beside <Subject 1>". NEVER write a cast ' +
+        'key, contract address or chain name — those are internal identifiers, and this ' +
+        'text is sent to a model that renders text it is shown. Empty string only when ' +
+        'there is a single subject.',
     },
     continuity: {
       type: 'string',
@@ -159,7 +195,14 @@ export const SHOT_SPEC_SCHEMA = {
       description:
         'Ordered beats. They will be numbered on assembly — do not number them here. Refer ' +
         'to cast members as <Subject 1>, <Subject 2> and so on, matching staging, and never ' +
-        'by cast key or contract address.',
+        'by cast key or contract address. If a beat is a hard cut, a transition, or an ' +
+        'end-card rather than a moment with anything to show — "cut to black", "to be ' +
+        'continued", a fade — write it verbatim as "[CUT TO BLACK] <what it means>", never ' +
+        'paraphrased into a normal descriptive sentence. That prefix is a machine-read ' +
+        'marker (same convention as this build\'s "[seen ...]" acknowledgment elsewhere) ' +
+        'that tells the next stage not to render an image for it. A user who asked for ' +
+        'their film to end on a cut or a "to be continued" is not asking for one more ' +
+        'rendered frame; losing that beat here loses it for the whole pipeline downstream.',
     },
     sound: { type: 'string', description: 'Diegetic sound: what the scene itself makes.' },
     music: { type: 'string', description: 'Non-diegetic score, or "N/A".' },
@@ -254,5 +297,17 @@ them into the prose so the model has them in words as well as in pixels. Respect
 flat-2d-vector piece has to be described as a physical object or it renders as a sticker.
 Honour hazards and burnedInText: if artwork carries lettering, keep it out of the composition
 or crop past it. If isMannequin is true anywhere, the guard line is mandatory.
+
+STAGING SUBJECTS, NOT JUST NAMING THEM. Two failures, both measured against a real storyboard
+render, both worth naming so you don't repeat them:
+
+- A garment or prop (role "garment"/"prop" in referencePlan) rendered as its own independent
+  character, standing apart from the person wearing or holding it, once got left ambiguous in
+  staging. It is never independent. Always write it into the same sentence as its wearer/
+  holder: who has it, where on them it is, nothing more.
+- Two subjects "switched sides" between beats because nothing pinned which side either one
+  started on. Once staging establishes a side for a subject that moves relative to others,
+  every later beat either keeps it there implicitly or says explicitly that it moved and why.
+  Silent drift is a rendering bug waiting to happen, not a detail the next stage will infer.
 
 Return the spec by calling the tool. Write no prose outside it.`;

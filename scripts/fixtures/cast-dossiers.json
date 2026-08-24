@@ -1,0 +1,221 @@
+{
+  "ape": {
+    "key": "eth-mainnet:0x28472a58a490c5e09a238847f66a68a47cc76f0f:1",
+    "name": "ape",
+    "dossier": {
+      "subject": "A Bored Ape character wearing a neon yellow tracksuit, red heart-shaped sunglasses, yellow hat, and white sneakers.",
+      "identityMarkers": [
+        "neon yellow tracksuit",
+        "red heart-shaped sunglasses",
+        "yellow hat",
+        "white sneakers with blue stripes",
+        "monkey head"
+      ],
+      "palette": [
+        "neon yellow",
+        "purple",
+        "white",
+        "red",
+        "blue"
+      ],
+      "medium": "trading-card",
+      "burnedInText": "PHASE 2 BORED APE YACHT CLUB INDIGO HERZ ∞ ETH 2",
+      "framing": "centred-with-margin",
+      "isMannequin": false,
+      "hazards": [
+        "Adidas logo"
+      ]
+    }
+  },
+  "antagonist": {
+    "key": "polygon-mainnet:0xc37d61ad831dbc979469dc48a7f55141e2e27f03:12",
+    "name": "antagonist",
+    "dossier": {
+      "subject": "A pink‑haired figure wearing orange translucent glasses, a green patent leather moto jacket over a red shirt, black cotton‑wool slacks with buckles, and black leather combat boots.",
+      "identityMarkers": [
+        "pink buzz-cut hair",
+        "orange translucent glasses",
+        "green patent leather moto jacket",
+        "red crew-neck shirt",
+        "black cotton-wool slacks with buckles"
+      ],
+      "palette": [
+        "green",
+        "red",
+        "black",
+        "pink",
+        "orange"
+      ],
+      "medium": "3d-render",
+      "burnedInText": "©2021 WBEI",
+      "framing": "full-bleed",
+      "isMannequin": false,
+      "hazards": [
+        "visible copyright text '©2021 WBEI'"
+      ]
+    }
+  },
+  "gmoney": {
+    "key": "eth-mainnet:0x78d61c684a992b0289bbfe58aaa2659f667907f8:1",
+    "name": "gmoney",
+    "dossier": {
+      "subject": "a stylized bear-like character wearing a green helmet marked '100' and covered in multicolored floral patterns",
+      "identityMarkers": [
+        "green helmet with white '100' numerals",
+        "white bear-like figure covered in dense multicolored floral motifs",
+        "large stylized flowers and insects surrounding the figure",
+        "interlocking monogram background pattern"
+      ],
+      "palette": [
+        "green",
+        "white",
+        "pink",
+        "blue",
+        "orange"
+      ],
+      "medium": "flat-2d-vector",
+      "burnedInText": "100",
+      "framing": "centred-with-margin",
+      "isMannequin": false,
+      "hazards": [
+        "visible interlocking monogram pattern"
+      ]
+    }
+  },
+  "whiteCar": {
+    "key": "eth-mainnet:0xb763d44326552600c3b83258ad490f68777d4c27:1",
+    "name": "whiteCar",
+    "dossier": {
+      "subject": "a white rounded-silhouette sports car with four round LED headlamps",
+      "identityMarkers": [
+        "four circular LED headlamps",
+        "shield-shaped badge on hood",
+        "black rectangular front bumper with large air intakes",
+        "white side mirrors",
+        "low-profile wheels"
+      ],
+      "palette": [
+        "white",
+        "black",
+        "silver"
+      ],
+      "medium": "3d-render",
+      "burnedInText": "",
+      "framing": "centred-with-margin",
+      "isMannequin": false,
+      "hazards": [
+        "visible shield-shaped badge on hood (brand mark)"
+      ]
+    }
+  },
+  "camoCar": {
+    "key": "eth-mainnet:0xc2ac394984f3850027dac95fe8a62e446c5fb786:1",
+    "name": "camoCar",
+    "dossier": {
+      "subject": "a sleek supercar with a camouflage wrap pattern, black tinted windows, and bright yellow wheels",
+      "identityMarkers": [
+        "camouflage wrap pattern",
+        "bright yellow wheels",
+        "black tinted windows",
+        "low aerodynamic silhouette"
+      ],
+      "palette": [
+        "yellow",
+        "black",
+        "white",
+        "grey"
+      ],
+      "medium": "3d-render",
+      "burnedInText": "MSO LAB BY McLAREN MCL_GENESIS HONORARY",
+      "framing": "centred-with-margin",
+      "isMannequin": false,
+      "hazards": [
+        "MSO LAB logo",
+        "McLaren text",
+        "MCL_GENESIS text",
+        "HONORARY text"
+      ]
+    }
+  },
+  "velvetJacket": {
+    "key": "eth-mainnet:0xd71b53fe1df51075c5a965956cdc87421c2ffed7:1",
+    "name": "velvetJacket",
+    "dossier": {
+      "subject": "a deep-red velvet bomber jacket with elaborate silver filigree embroidery displayed on a glossy iridescent mannequin",
+      "identityMarkers": [
+        "deep-red velvet fabric",
+        "silver metallic embroidery with floral and vine motifs",
+        "prominent heart-shaped embroidered panel on chest",
+        "glossy iridescent blue-green mannequin torso"
+      ],
+      "palette": [
+        "maroon",
+        "silver",
+        "teal",
+        "black"
+      ],
+      "medium": "3d-render",
+      "burnedInText": "",
+      "framing": "centred-with-margin",
+      "isMannequin": true,
+      "hazards": [
+        "highly reflective mannequin surface",
+        "complex silver embroidery details",
+        "potential glare from glossy background"
+      ]
+    }
+  },
+  "tiara": {
+    "key": "eth-mainnet:0xd71b53fe1df51075c5a965956cdc87421c2ffed7:4",
+    "name": "tiara",
+    "dossier": {
+      "subject": "A silver filigree tiara with a large rectangular red central gem, two smaller red side gems, red bead trim along the base, and forked prongs at each side",
+      "identityMarkers": [
+        "silver filigree metal",
+        "large rectangular red central gem",
+        "two smaller red side gems",
+        "row of red bead trim",
+        "forked prongs"
+      ],
+      "palette": [
+        "silver",
+        "red",
+        "black"
+      ],
+      "medium": "3d-render",
+      "burnedInText": "",
+      "framing": "centred-with-margin",
+      "isMannequin": false,
+      "hazards": [
+        "thin prongs may alias",
+        "bright glowing central gem may cause overexposure",
+        "reflective platform could create unwanted reflections",
+        "blurred architectural background may distract"
+      ]
+    }
+  },
+  "tower": {
+    "key": "test:0x0000000000000000000000000000000000000000:1",
+    "name": "tower",
+    "dossier": {
+      "subject": "a massive brutalist concrete tower with stepped balconies and recessed windows",
+      "identityMarkers": [
+        "rough weathered concrete surface",
+        "vertical staining on the upper block",
+        "small rectangular windows",
+        "overhanging concrete balconies"
+      ],
+      "palette": [
+        "teal",
+        "grey",
+        "off-white",
+        "black"
+      ],
+      "medium": "photoreal",
+      "burnedInText": "",
+      "framing": "small-in-frame",
+      "isMannequin": false,
+      "hazards": []
+    }
+  }
+}

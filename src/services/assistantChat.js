@@ -28,7 +28,7 @@ export const assistantMessageStream = ({ threadId, text, connectionId, token }, 
   stream(
     '/api/assistant/message',
     { threadId, text, connectionId },
-    { ...options, headers: token ? { authorization: `Bearer ${token}` } : undefined },
+    { ...options, retries: 2, headers: token ? { authorization: `Bearer ${token}` } : undefined },
   );
 
 export const assistantHistory = async (threadId) => {
@@ -37,10 +37,16 @@ export const assistantHistory = async (threadId) => {
   return res.json();
 };
 
-export const assistantStatus = async ({ connectionId, token }) => {
+// threadId is optional — passing it lets the status poll also flush anything the
+// assistant has been holding past the idle-relay window (see IDLE_RELAY_MS in
+// worker/assistant.js); omit it for a pure read with no side effect.
+export const assistantStatus = async ({ connectionId, token, threadId }) => {
   const headers = {};
   if (token) headers.authorization = `Bearer ${token}`;
-  const query = connectionId ? `?connectionId=${encodeURIComponent(connectionId)}` : '';
+  const params = new URLSearchParams();
+  if (connectionId) params.set('connectionId', connectionId);
+  if (threadId) params.set('threadId', threadId);
+  const query = params.toString() ? `?${params.toString()}` : '';
   const res = await fetch(`/api/assistant/status${query}`, { headers });
   if (!res.ok) throw new Error(`assistant/status failed: ${res.status}`);
   return res.json();

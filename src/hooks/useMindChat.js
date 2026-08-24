@@ -77,7 +77,15 @@ export const useMindChat = (session) => {
         );
         if (newRows.length > 0) {
           newRows.forEach((row) => knownFingerprints.add(row.fingerprint));
-          setMessages((prev) => chronological([...prev, ...newRows]));
+          // Dedupe against the live `prev`, not just this closure's knownFingerprints —
+          // StrictMode's double-effect-invoke (or any overlapping tick) can otherwise
+          // race two ticks into both deciding the same row is new, since each computed
+          // newRows from its own snapshot before either had applied its update.
+          setMessages((prev) => {
+            const prevFingerprints = new Set(prev.map((m) => m.fingerprint).filter(Boolean));
+            const deduped = newRows.filter((row) => !prevFingerprints.has(row.fingerprint));
+            return deduped.length ? chronological([...prev, ...deduped]) : prev;
+          });
         }
       } catch {
         // Ignore background poll errors; the next tick will retry.

@@ -13,6 +13,7 @@ import { useMindChatContext } from './context/mindChat';
 import { useStudioSelection } from './hooks/useStudioSelection';
 import { useCanvasComposer } from './hooks/useCanvasComposer';
 import { useScreenwriter } from './hooks/useScreenwriter';
+import { useStoryboarder } from './hooks/useStoryboarder';
 import { BRANDS, LIVE_COLLECTIONS, SECTORS, hasLiveCollection, searchBrands } from './data/brands';
 import { LICENSE } from './config/licensing';
 
@@ -45,6 +46,21 @@ const AppShell = () => {
   // The other half of the canvas. useCanvasComposer owns the prompt and the cast and says
   // outright that it owns no submit behaviour; this is what that seam was left for.
   const screenwriter = useScreenwriter();
+  // A third, independent hook rather than folded into useScreenwriter: it owns a later,
+  // separate phase (image generation against a real budget) with its own run/regenerate
+  // lifecycle — see src/hooks/useStoryboarder.js.
+  const storyboarder = useStoryboarder();
+
+  // Restore a storyboard generated in an earlier visit, as soon as there is a session to fetch it
+  // with. The frames have always been safe server-side (MIND_CONNECTIONS, `storyboard:<mindId>`,
+  // no TTL) — nothing was ever asking for them back, so a reload looked like data loss when it
+  // was only a missing read. Keyed on the token alone, not on the spec: a returning visitor
+  // should see their storyboard before they have re-run anything.
+  const { hydrate: hydrateStoryboard } = storyboarder;
+  useEffect(() => {
+    if (!session?.token) return;
+    hydrateStoryboard({ token: session.token, spec: screenwriter.spec, cast: composer.cast });
+  }, [session?.token, screenwriter.spec, composer.cast, hydrateStoryboard]);
 
   // The Studio is the deeper surface. The only way to reach it while the canvas is up is
   // the browser restoring an old #/studio hash, and when that happens the canvas yields.
@@ -107,7 +123,7 @@ const AppShell = () => {
           <a href="#top" className="group flex items-center">
             <img
               src="/brand/minds-monster-lockup.png"
-              alt="Minds.MONSTER"
+              alt="minds.MONSTER"
               width={485}
               height={200}
               className="h-11 w-auto drop-shadow-[0_0_18px_rgb(var(--brand-rgb)/0.35)] transition-transform group-hover:scale-[1.03] sm:h-[4.5rem]"
@@ -247,6 +263,7 @@ const AppShell = () => {
       <PromptCanvas
         composer={composer}
         screenwriter={screenwriter}
+        storyboarder={storyboarder}
         onLaunch={screenwriter.launch}
       />
 

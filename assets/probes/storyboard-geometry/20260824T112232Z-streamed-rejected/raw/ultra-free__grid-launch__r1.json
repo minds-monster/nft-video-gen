@@ -1,0 +1,661 @@
+{
+  "cell": "ultra-free",
+  "fixture": "grid-launch",
+  "fixtureSha": "b2d6f4830c1e",
+  "repeat": 1,
+  "film": {
+    "units": "metres",
+    "aspect": 1.7778,
+    "sceneScaleNote": "Starting grid 30m long (Z) by 20m wide (X); two supercars side-by-side at z=0 (Subject 2 at x=0, Subject 4 at x=3.5); grandstands at x=-20 and x=+20; starter at x=1.75, z=-15.",
+    "beats": [
+      {
+        "beatIndex": 0,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": -4,
+              "y": 1.2,
+              "z": 10
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": -2,
+              "y": 1.2,
+              "z": 8
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1,
+              "z": 0
+            }
+          },
+          "focalStartMm": 35,
+          "focalEndMm": 35,
+          "rollDeg": 0,
+          "motion": "Tracking Shot",
+          "amplitude": "medium",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 2>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.3,
+            "widthM": 2,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "idling on grid, front storage compartment open",
+            "screenPosition": "center",
+            "depth": "midground"
+          }
+        ],
+        "principalSubject": "<Subject 2>",
+        "framing": "WS",
+        "changes": [],
+        "containmentNotes": "Subject 2 sits on ground. Front storage compartment open. No occupants visible.",
+        "proseNote": "The camera tracks rightward and pushes in slowly from a high rear-three-quarter position, revealing the camouflage-wrapped supercar alone on the wet grid, its front trunk lid raised, rain streaking the floodlit asphalt."
+      },
+      {
+        "beatIndex": 1,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": -2,
+              "y": 1.2,
+              "z": 8
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": -1.5,
+              "y": 1.2,
+              "z": 4
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1.1,
+              "z": 0
+            }
+          },
+          "focalStartMm": 35,
+          "focalEndMm": 85,
+          "rollDeg": 0,
+          "motion": "Push In",
+          "amplitude": "medium",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0.5,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 0,
+            "containerId": "<Subject 2>",
+            "action": "sitting in driver's seat, both hands on wheel, visible through open side window",
+            "screenPosition": "center",
+            "depth": "foreground"
+          },
+          {
+            "subject": "<Subject 2>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.3,
+            "widthM": 2,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "idling, front storage now closed",
+            "screenPosition": "center",
+            "depth": "foreground"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "MS",
+        "changes": [],
+        "containmentNotes": "Subject 1 seated inside Subject 2, groundOffsetM 0.5m. Left side window open, camera sees in from left side at window height.",
+        "proseNote": "The camera continues its smooth glide, pushing closer to the driver's window and zooming in to frame the neon-yellow-clad ape driver through the glass, hands gripping the wheel, the camouflage bodywork a blur at the edges."
+      },
+      {
+        "beatIndex": 2,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": -1.5,
+              "y": 1.2,
+              "z": 4
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1.1,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": 2.5,
+              "y": 1.2,
+              "z": 4
+            },
+            "lookAt": {
+              "x": 3.5,
+              "y": 1.1,
+              "z": 0
+            }
+          },
+          "focalStartMm": 85,
+          "focalEndMm": 85,
+          "rollDeg": 0,
+          "motion": "Truck Right",
+          "amplitude": "large",
+          "speed": "medium",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 3>",
+            "x": 3.5,
+            "z": 0,
+            "endX": 3.5,
+            "endZ": 0,
+            "groundOffsetM": 0.5,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 330,
+            "containerId": "<Subject 4>",
+            "action": "sitting at wheel, turns head to look directly into camera lens",
+            "screenPosition": "center",
+            "depth": "foreground"
+          },
+          {
+            "subject": "<Subject 4>",
+            "x": 3.5,
+            "z": 0,
+            "endX": 3.5,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.3,
+            "widthM": 2,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "idling on grid",
+            "screenPosition": "center",
+            "depth": "foreground"
+          }
+        ],
+        "principalSubject": "<Subject 3>",
+        "framing": "MS",
+        "changes": [],
+        "containmentNotes": "Subject 3 seated in Subject 4, groundOffsetM 0.5m. Left side window open, camera positioned in gap between cars (x=2.5) looking right.",
+        "proseNote": "The camera trucks right along the grid at window height, crossing the narrow gap between the two supercars to find the pink-haired driver in the white sports car, who snaps her head toward the lens as the trucking motion brings her side window into alignment."
+      },
+      {
+        "beatIndex": 3,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 2.5,
+              "y": 1.2,
+              "z": 4
+            },
+            "lookAt": {
+              "x": 3.5,
+              "y": 1.1,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": 1.75,
+              "y": 1.2,
+              "z": 10
+            },
+            "lookAt": {
+              "x": 1.75,
+              "y": 1.7,
+              "z": -15
+            }
+          },
+          "focalStartMm": 85,
+          "focalEndMm": 135,
+          "rollDeg": 0,
+          "motion": "Tracking Shot",
+          "amplitude": "large",
+          "speed": "medium",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 5>",
+            "x": 1.75,
+            "z": -15,
+            "endX": 1.75,
+            "endZ": -15,
+            "groundOffsetM": 0,
+            "heightM": 2,
+            "widthM": 1,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "standing at front of grid, one arm raised high in start signal",
+            "screenPosition": "center",
+            "depth": "midground"
+          },
+          {
+            "subject": "<Subject 6>",
+            "x": 1.75,
+            "z": -15,
+            "endX": 1.75,
+            "endZ": -15,
+            "groundOffsetM": 0,
+            "heightM": 0.05,
+            "widthM": 1,
+            "yawDeg": 0,
+            "containerId": "<Subject 5>",
+            "action": "worn by Subject 5, velvet bomber jacket catching floodlights",
+            "screenPosition": "center",
+            "depth": "midground"
+          },
+          {
+            "subject": "<Subject 2>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.3,
+            "widthM": 2,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "waiting on grid behind starter",
+            "screenPosition": "left",
+            "depth": "background"
+          },
+          {
+            "subject": "<Subject 4>",
+            "x": 3.5,
+            "z": 0,
+            "endX": 3.5,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.3,
+            "widthM": 2,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "waiting on grid behind starter",
+            "screenPosition": "right",
+            "depth": "background"
+          }
+        ],
+        "principalSubject": "<Subject 5>",
+        "framing": "WS",
+        "changes": [],
+        "containmentNotes": "Subject 6 worn by Subject 5 (containerId). Subject 2 and 4 stationary at grid positions z=0. Subject 1 in Subject 2, Subject 3 in Subject 4 but not resolved at this distance.",
+        "proseNote": "The camera arcs left and back, rising slightly to a centerline position, zooming to frame the floral-covered bear starter at the front of the grid, arm raised, the two supercars small but distinct in the rain-blurred distance behind."
+      },
+      {
+        "beatIndex": 4,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 1.75,
+              "y": 1.2,
+              "z": 10
+            },
+            "lookAt": {
+              "x": 1.75,
+              "y": 1.7,
+              "z": -15
+            }
+          },
+          "end": {
+            "position": {
+              "x": 1.75,
+              "y": 1.2,
+              "z": 10
+            },
+            "lookAt": {
+              "x": 1.75,
+              "y": 1,
+              "z": -10
+            }
+          },
+          "focalStartMm": 135,
+          "focalEndMm": 135,
+          "rollDeg": 0,
+          "motion": "Tilt Down",
+          "amplitude": "small",
+          "speed": "fast",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 2>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": -10,
+            "groundOffsetM": 0,
+            "heightM": 1.3,
+            "widthM": 2,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "launching forward hard, tires spraying water",
+            "screenPosition": "left",
+            "depth": "midground"
+          },
+          {
+            "subject": "<Subject 4>",
+            "x": 3.5,
+            "z": 0,
+            "endX": 3.5,
+            "endZ": -10,
+            "groundOffsetM": 0,
+            "heightM": 1.3,
+            "widthM": 2,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "launching forward hard, tires spraying water",
+            "screenPosition": "right",
+            "depth": "midground"
+          },
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": -10,
+            "groundOffsetM": 0.5,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 0,
+            "containerId": "<Subject 2>",
+            "action": "accelerating with car",
+            "screenPosition": "left",
+            "depth": "midground"
+          },
+          {
+            "subject": "<Subject 3>",
+            "x": 3.5,
+            "z": 0,
+            "endX": 3.5,
+            "endZ": -10,
+            "groundOffsetM": 0.5,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 0,
+            "containerId": "<Subject 4>",
+            "action": "accelerating with car",
+            "screenPosition": "right",
+            "depth": "midground"
+          },
+          {
+            "subject": "<Subject 5>",
+            "x": 1.75,
+            "z": -15,
+            "endX": 1.75,
+            "endZ": -15,
+            "groundOffsetM": 0,
+            "heightM": 2,
+            "widthM": 1,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "arm dropping to signal start",
+            "screenPosition": "center",
+            "depth": "foreground"
+          },
+          {
+            "subject": "<Subject 6>",
+            "x": 1.75,
+            "z": -15,
+            "endX": 1.75,
+            "endZ": -15,
+            "groundOffsetM": 0,
+            "heightM": 0.05,
+            "widthM": 1,
+            "yawDeg": 0,
+            "containerId": "<Subject 5>",
+            "action": "worn by Subject 5",
+            "screenPosition": "center",
+            "depth": "foreground"
+          }
+        ],
+        "principalSubject": "<Subject 2>",
+        "framing": "WS",
+        "changes": [
+          {
+            "subject": "<Subject 2>",
+            "what": "position z 0 to -10",
+            "justifiedByBeatText": true
+          },
+          {
+            "subject": "<Subject 4>",
+            "what": "position z 0 to -10",
+            "justifiedByBeatText": true
+          },
+          {
+            "subject": "<Subject 1>",
+            "what": "position z 0 to -10 (with Subject 2)",
+            "justifiedByBeatText": true
+          },
+          {
+            "subject": "<Subject 3>",
+            "what": "position z 0 to -10 (with Subject 4)",
+            "justifiedByBeatText": true
+          }
+        ],
+        "containmentNotes": "Subjects 1,3 in cars. Subject 6 on Subject 5. Both cars accelerate from z=0 to z=-10 during beat, throwing heavy spray.",
+        "proseNote": "The starter's arm slashes down and the camera tilts sharply to track the simultaneous launch, both cars exploding forward in a symmetrical V of white spray, the neon ape and pink-haired driver pinned back in their seats, the floral bear already lowering its arm."
+      },
+      {
+        "beatIndex": 5,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 1.75,
+              "y": 1.2,
+              "z": 10
+            },
+            "lookAt": {
+              "x": 1.75,
+              "y": 1,
+              "z": -10
+            }
+          },
+          "end": {
+            "position": {
+              "x": 1.75,
+              "y": 20,
+              "z": 30
+            },
+            "lookAt": {
+              "x": 1.75,
+              "y": 0,
+              "z": -30
+            }
+          },
+          "focalStartMm": 135,
+          "focalEndMm": 24,
+          "rollDeg": 0,
+          "motion": "Arc Shot",
+          "amplitude": "large",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 2>",
+            "x": 0,
+            "z": -10,
+            "endX": 0,
+            "endZ": -30,
+            "groundOffsetM": 0,
+            "heightM": 1.3,
+            "widthM": 2,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "disappearing into rain down track",
+            "screenPosition": "left",
+            "depth": "background"
+          },
+          {
+            "subject": "<Subject 4>",
+            "x": 3.5,
+            "z": -10,
+            "endX": 3.5,
+            "endZ": -30,
+            "groundOffsetM": 0,
+            "heightM": 1.3,
+            "widthM": 2,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "disappearing into rain down track",
+            "screenPosition": "right",
+            "depth": "background"
+          },
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": -10,
+            "endX": 0,
+            "endZ": -30,
+            "groundOffsetM": 0.5,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 0,
+            "containerId": "<Subject 2>",
+            "action": "in car",
+            "screenPosition": "left",
+            "depth": "background"
+          },
+          {
+            "subject": "<Subject 3>",
+            "x": 3.5,
+            "z": -10,
+            "endX": 3.5,
+            "endZ": -30,
+            "groundOffsetM": 0.5,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 0,
+            "containerId": "<Subject 4>",
+            "action": "in car",
+            "screenPosition": "right",
+            "depth": "background"
+          },
+          {
+            "subject": "<Subject 5>",
+            "x": 1.75,
+            "z": -15,
+            "endX": 1.75,
+            "endZ": -15,
+            "groundOffsetM": 0,
+            "heightM": 2,
+            "widthM": 1,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "standing, arm lowered",
+            "screenPosition": "center",
+            "depth": "midground"
+          },
+          {
+            "subject": "<Subject 6>",
+            "x": 1.75,
+            "z": -15,
+            "endX": 1.75,
+            "endZ": -15,
+            "groundOffsetM": 0,
+            "heightM": 0.05,
+            "widthM": 1,
+            "yawDeg": 0,
+            "containerId": "<Subject 5>",
+            "action": "worn",
+            "screenPosition": "center",
+            "depth": "midground"
+          }
+        ],
+        "principalSubject": "<Subject 2>",
+        "framing": "EWS",
+        "changes": [
+          {
+            "subject": "<Subject 2>",
+            "what": "position z -10 to -30",
+            "justifiedByBeatText": true
+          },
+          {
+            "subject": "<Subject 4>",
+            "what": "position z -10 to -30",
+            "justifiedByBeatText": true
+          },
+          {
+            "subject": "<Subject 1>",
+            "what": "position z -10 to -30 (with Subject 2)",
+            "justifiedByBeatText": true
+          },
+          {
+            "subject": "<Subject 3>",
+            "what": "position z -10 to -30 (with Subject 4)",
+            "justifiedByBeatText": true
+          }
+        ],
+        "containmentNotes": "Subjects 1,3 in cars. Subject 6 on Subject 5. Cars at z=-30, small in frame. Grandstands visible at x=-20 and x=20, packed with spectators.",
+        "proseNote": "The camera sweeps upward and backward in a grand crane move, widening to 24mm to encompass the entire soaked grid, the tiered grandstands roaring on both flanks, and the two supercars dwindling into the rain-lashed darkness, their yellow wheels and round headlamps the last bright notes."
+      }
+    ]
+  },
+  "calls": [
+    {
+      "usage": {
+        "promptTokens": 3541,
+        "completionTokens": 4194,
+        "reasoningTokens": 15745,
+        "estimated": true
+      },
+      "latencyMs": 1037829,
+      "attempts": 1,
+      "costUsd": 0,
+      "rateLimitHits": 0,
+      "request": {
+        "model": "nvidia/nemotron-3-ultra-550b-a55b",
+        "stream": true,
+        "enable_thinking": true,
+        "max_tokens": 32768
+      }
+    }
+  ],
+  "costUsd": 0
+}

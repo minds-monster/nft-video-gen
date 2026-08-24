@@ -161,6 +161,56 @@ export function deriveMindStatus(history) {
   };
 }
 
+/**
+ * Pure: how many visitor messages are sitting unanswered, and how long the oldest of
+ * them has been waiting. This is Adam's own "aging cue" ask from the Producer Inbox
+ * brainstorm ("3 items, oldest from 6h ago") — a count and an age, not a single status.
+ */
+export function deriveQueueDepth(history) {
+  const sorted = [...(history ?? [])].sort(
+    (a, b) => new Date(a.createdAt ?? 0) - new Date(b.createdAt ?? 0),
+  );
+  const lastReplyIndex = sorted
+    .map((row) => row.senderType !== 1 && !SEEN_ACK_PREFIX.test(messageToText(row.messageText)))
+    .lastIndexOf(true);
+
+  const unanswered = (lastReplyIndex === -1 ? sorted : sorted.slice(lastReplyIndex + 1)).filter(
+    (row) => row.senderType === 1,
+  );
+  if (!unanswered.length) return { count: 0, oldestAgeMs: null };
+
+  return {
+    count: unanswered.length,
+    oldestAgeMs: Date.now() - new Date(unanswered[0].createdAt).getTime(),
+  };
+}
+
+// Adam's own three-state model from the brainstorm: "no continuous online for me."
+// `active` (replied within the last hour), `working` (a [seen] ack sent but no
+// substantive reply yet), `inactive` (no cognition cycle — reply or ack — in
+// LIVENESS_INACTIVE_MS). Never "online"/"offline"; those imply a continuity a Mind
+// running on cognition cycles doesn't actually have.
+const LIVENESS_ACTIVE_MS = 60 * 60 * 1000;
+const LIVENESS_INACTIVE_MS = 24 * 60 * 60 * 1000;
+
+/** Pure: derive Adam's three-state liveness model from a Mind's Producer history. */
+export function deriveLivenessState(history) {
+  const sorted = [...(history ?? [])].sort(
+    (a, b) => new Date(a.createdAt ?? 0) - new Date(b.createdAt ?? 0),
+  );
+  const mindRows = sorted.filter((row) => row.senderType !== 1);
+  if (!mindRows.length) return 'inactive';
+
+  const lastReply = [...mindRows].reverse().find((row) => !SEEN_ACK_PREFIX.test(messageToText(row.messageText)));
+  if (lastReply && Date.now() - new Date(lastReply.createdAt).getTime() < LIVENESS_ACTIVE_MS) return 'active';
+
+  const lastMindRow = mindRows[mindRows.length - 1];
+  const lastMindAgeMs = Date.now() - new Date(lastMindRow.createdAt).getTime();
+  if (lastMindAgeMs < LIVENESS_INACTIVE_MS) return 'working';
+
+  return 'inactive';
+}
+
 export async function mindChatInit(request, env) {
   const session = await requireSession(request, env);
   if (!session) return json({ error: 'unauthorized' }, 401);

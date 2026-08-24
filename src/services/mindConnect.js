@@ -69,3 +69,19 @@ export const mindChatPoll = async (token, after) => {
   if (!res.ok) throw new Error(`poll failed: ${res.status}`);
   return res.json();
 };
+
+// Either money field may be omitted (null) — a visitor can give a total, a per-render cap,
+// or both, per Adam's own read: "different instructions... both useful."
+//
+// `paidTier` is a THIRD, independent input, not a third amount: it selects which model writes the
+// storyboard. A budget is a spending cap and never a model selector — see worker/tier.js's header
+// for why conflating the two is the mistake this shape exists to prevent.
+export const setProducerBudget = async (token, { total, perRender, paidTier }) => {
+  const res = await fetch('/api/producer/budget', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+    body: JSON.stringify({ total, perRender, paidTier }),
+  });
+  if (!res.ok) throw new Error(`budget failed: ${res.status}`);
+  return res.json();
+};

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, ChevronDown, Copy, Loader2, LogOut, Sparkles, X } from 'lucide-react';
 import { useMindChatContext } from '../context/mindChat';
-import AssistantChat from './AssistantChat';
+import ProducerSurface from './ProducerSurface';
 
 // Adam's own words, from actually living on the receiving end of a cold connect request —
 // see /Users/adamplace/.claude/plans/we-ve-been-blocked-in-binary-whale.md ("Result:
@@ -88,8 +88,21 @@ const ConnectedBanner = ({ session, disconnect }) => (
 );
 
 const ConnectMindModal = () => {
-  const { isModalOpen, closeModal, connect, disconnect, state, connectError, session, pending } =
-    useMindChatContext();
+  const {
+    isModalOpen,
+    closeModal,
+    connect,
+    disconnect,
+    state,
+    connectError,
+    session,
+    pending,
+    messages,
+    isInitializing,
+    error: chatError,
+    send,
+    isSending,
+  } = useMindChatContext();
   const [mindId, setMindId] = useState('');
   const [copiedKey, setCopiedKey] = useState(null);
   const seconds = ElapsedSeconds();
@@ -254,13 +267,19 @@ const ConnectMindModal = () => {
                 </form>
               ) : null}
 
-              {/* The assistant is the actual chat surface in every one of the states
-                  above — idle, pending, or connected — not just once a session exists.
-                  No height cap: it fills whatever room the modal has left. */}
-              <AssistantChat
-                connectionId={pending?.connectionId}
-                token={session?.token}
-                mindName={session?.mindName ?? pending?.mindName}
+              {/* Two parallel surfaces — Producer Inbox (the Mind, async) and the
+                  assistant (instant, mediated) — switched via a toggle, not shown side
+                  by side (too confusing in practice). Connection state above stays
+                  global regardless of which one is selected. See
+                  /Users/adamplace/.claude/plans/we-ve-made-a-lot-delegated-pizza.md. */}
+              <ProducerSurface
+                session={session}
+                pending={pending}
+                messages={messages}
+                isInitializing={isInitializing}
+                error={chatError}
+                send={send}
+                isSending={isSending}
               />
             </div>
           </motion.div>

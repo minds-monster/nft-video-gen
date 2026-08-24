@@ -32,6 +32,9 @@ const MovieRenderPanel = ({
   onNext,
   onPrev,
   onClear,
+  collapsed,
+  onCollapse,
+  onExpand,
 }) => {
   const [imageFailed, setImageFailed] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
@@ -78,7 +81,14 @@ const MovieRenderPanel = ({
     : -1;
 
   return (
-    <CanvasPanel title="Movie render" icon={Film} bodyClassName="flex flex-col gap-3">
+    <CanvasPanel
+      title="Movie render"
+      icon={Film}
+      bodyClassName="flex flex-col gap-3"
+      collapsed={collapsed}
+      onCollapse={onCollapse}
+      onExpand={onExpand}
+    >
       {!candidate ? (
         <PreviewEmpty />
       ) : (

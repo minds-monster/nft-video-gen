@@ -165,7 +165,7 @@ Return the dossier by calling the emit_dossier tool. Do not write prose.`;
  * leads because it is a normalised re-encode — some originals are AVIF, which the vision
  * models do not accept.
  */
-const castingStills = (nft) => {
+export const castingStills = (nft) => {
   const rawMetadata = nft?.raw?.metadata ?? nft?.rawMetadata ?? {};
   return [
     nft?.image?.pngUrl,
@@ -235,7 +235,10 @@ const fetchOneImageAsDataUri = async (url) => {
   return `data:${contentType};base64,${bytesToBase64(new Uint8Array(buffer))}`;
 };
 
-const fetchImageAsDataUri = async (urls) => {
+// Exported for worker/storyboarder.js: it independently re-resolves the same raw asset
+// this function fetches for the dossier, rather than trusting the dossier's prose as a
+// substitute for the pixels. See that file's header for why this matters.
+export const fetchImageAsDataUri = async (urls) => {
   const attempts = urls.flatMap(withIpfsFallback);
   const errors = [];
   for (const url of attempts) {
@@ -286,7 +289,7 @@ const buildContent = async (nft) => {
   return parts;
 };
 
-const request = async (env, nft, notes) => ({
+const request = async (env, nft, notes, previsNote) => ({
   model: env.CASTING_MODEL,
   messages: [
     { role: 'system', content: BRIEF },
@@ -294,6 +297,18 @@ const request = async (env, nft, notes) => ({
     // The looking pass's own words, fed back so this call formalises a judgement it has
     // already made rather than forming a fresh one. Omitted if that pass failed.
     ...(notes ? [{ role: 'assistant', content: notes }] : []),
+    // An external complaint from the Previs Supervisor's dossier review (worker/
+    // previs-supervisor.js) — a specific, named reason this dossier didn't match what the
+    // visitor actually asked for, arriving as its own fresh request rather than the
+    // in-request schema-validation retry below. Same idea, different source.
+    ...(previsNote
+      ? [
+          {
+            role: 'user',
+            content: `The Previs Supervisor flagged this dossier before it reached the Screenwriter: ${previsNote}\n\nLook again and revise the dossier to address this specifically.`,
+          },
+        ]
+      : []),
   ],
   tools: [
     {
@@ -439,7 +454,7 @@ const validate = (dossier) => {
 };
 
 export const castPiece = async (httpRequest, env) => {
-  const { key, nft, refresh = false } = await httpRequest.json();
+  const { key, nft, refresh = false, previsNote } = await httpRequest.json();
   if (!key || !nft) {
     return Response.json({ error: 'Body needs { key, nft }' }, { status: 400 });
   }
@@ -498,13 +513,13 @@ export const castPiece = async (httpRequest, env) => {
     // not need reasoning, and it is the one thing a still genuinely cannot answer.
     let dossier;
     try {
-      dossier = validate(jsonFrom(await chat(env, await request(env, nft, notes))));
+      dossier = validate(jsonFrom(await chat(env, await request(env, nft, notes, previsNote))));
     } catch (error) {
       // One repair pass with the complaint fed back. The defects worth repairing here — a
       // brand name in the subject, a missing field — are precisely the ones a model fixes
       // when told what it did, and a failed dossier costs the user their whole cast.
       console.warn(`Casting Director first pass rejected for ${key}:`, error.message);
-      const retry = await request(env, nft, notes);
+      const retry = await request(env, nft, notes, previsNote);
       retry.messages.push({
         role: 'user',
         content: `Your dossier was rejected: ${error.message}\n\nFix exactly that and emit it again.`,

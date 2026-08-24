@@ -39,7 +39,7 @@ const SOLID = 'rgb(9, 4, 15)';
  * The expanded interior is organised like Final Cut Pro: three resizable, collapsible zones
  * (browser left, viewer/timeline centre, inspector right), each containing the relevant panel.
  */
-const PromptCanvas = ({ composer, onLaunch, screenwriter }) => {
+const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder }) => {
   const {
     open,
     openCanvas,
@@ -164,7 +164,8 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter }) => {
 
   const ready = Boolean(prompt.trim()) && Boolean(primary) && composing && workerOk;
 
-  // Collapse state for the four inspector panels that can yield space to Producer.
+  // Collapse state for every panel that can yield space to something else on the canvas —
+  // the four right-rail inspector panels, plus the movie-render viewer in the center zone.
   // `CanvasPanel`'s collapsed/onCollapse/onExpand only toggle content visibility; the
   // panelRef.collapse()/.expand() calls are what actually shrink/restore the outer
   // react-resizable-panels Panel's allocated height. Both must move together, or the
@@ -174,25 +175,30 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter }) => {
   const screenwriterRef = usePanelRef();
   const screenplayRef = usePanelRef();
   const storyboarderRef = usePanelRef();
-  const [inspectorCollapsed, setInspectorCollapsed] = useState({
+  // Center-zone: lets the movie-render viewer yield room to the storyboard timeline once
+  // there's something worth looking at there — see the storyboard fidelity post-mortem.
+  const movieRenderRef = usePanelRef();
+  const [panelCollapsed, setPanelCollapsed] = useState({
     castingDirector: false,
     screenwriter: false,
     screenplay: false,
     storyboarder: false,
+    movieRender: false,
   });
   const panelRefsByKey = {
     castingDirector: castingDirectorRef,
     screenwriter: screenwriterRef,
     screenplay: screenplayRef,
     storyboarder: storyboarderRef,
+    movieRender: movieRenderRef,
   };
-  const collapseInspector = (key) => {
+  const collapsePanel = (key) => {
     panelRefsByKey[key].current?.collapse();
-    setInspectorCollapsed((prev) => ({ ...prev, [key]: true }));
+    setPanelCollapsed((prev) => ({ ...prev, [key]: true }));
   };
-  const expandInspector = (key) => {
+  const expandPanel = (key) => {
     panelRefsByKey[key].current?.expand();
-    setInspectorCollapsed((prev) => ({ ...prev, [key]: false }));
+    setPanelCollapsed((prev) => ({ ...prev, [key]: false }));
   };
 
   if (!target) return null;
@@ -397,7 +403,14 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter }) => {
                     />
                   </Panel>
                   <Separator className="canvas-resize-handle" />
-                  <Panel defaultSize="58" minSize="25" className="flex flex-col">
+                  <Panel
+                    defaultSize="30"
+                    minSize="15"
+                    collapsible
+                    collapsedSize="4"
+                    panelRef={movieRenderRef}
+                    className="flex flex-col"
+                  >
                     <MovieRenderPanel
                       primary={primary}
                       preview={preview}
@@ -407,11 +420,14 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter }) => {
                       onNext={browseNext}
                       onPrev={browsePrev}
                       onClear={clearPreview}
+                      collapsed={panelCollapsed.movieRender}
+                      onCollapse={() => collapsePanel('movieRender')}
+                      onExpand={() => expandPanel('movieRender')}
                     />
                   </Panel>
                   <Separator className="canvas-resize-handle" />
-                  <Panel defaultSize="28" minSize="15" className="flex flex-col">
-                    <StoryboardPanel />
+                  <Panel defaultSize="56" minSize="15" className="flex flex-col">
+                    <StoryboardPanel storyboarder={storyboarder} />
                   </Panel>
                 </Group>
               </Panel>
@@ -440,9 +456,9 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter }) => {
                       analysis={screenwriter?.analysis}
                       streams={screenwriter?.streams}
                       thoughts={screenwriter?.thoughts}
-                      collapsed={inspectorCollapsed.castingDirector}
-                      onCollapse={() => collapseInspector('castingDirector')}
-                      onExpand={() => expandInspector('castingDirector')}
+                      collapsed={panelCollapsed.castingDirector}
+                      onCollapse={() => collapsePanel('castingDirector')}
+                      onExpand={() => expandPanel('castingDirector')}
                     />
                   </Panel>
                   <Separator className="canvas-resize-handle" />
@@ -457,9 +473,9 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter }) => {
                     <ScreenwriterPanel
                       live={screenwriter?.live ?? []}
                       thoughts={screenwriter?.thoughts ?? {}}
-                      collapsed={inspectorCollapsed.screenwriter}
-                      onCollapse={() => collapseInspector('screenwriter')}
-                      onExpand={() => expandInspector('screenwriter')}
+                      collapsed={panelCollapsed.screenwriter}
+                      onCollapse={() => collapsePanel('screenwriter')}
+                      onExpand={() => expandPanel('screenwriter')}
                     />
                   </Panel>
                   <Separator className="canvas-resize-handle" />
@@ -477,9 +493,9 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter }) => {
                       analysis={screenwriter?.analysis}
                       rewriting={screenwriter?.rewriting}
                       live={screenwriter?.live ?? []}
-                      collapsed={inspectorCollapsed.screenplay}
-                      onCollapse={() => collapseInspector('screenplay')}
-                      onExpand={() => expandInspector('screenplay')}
+                      collapsed={panelCollapsed.screenplay}
+                      onCollapse={() => collapsePanel('screenplay')}
+                      onExpand={() => expandPanel('screenplay')}
                     />
                   </Panel>
                   <Separator className="canvas-resize-handle" />
@@ -492,9 +508,12 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter }) => {
                     className="flex flex-col"
                   >
                     <StoryboarderPanel
-                      collapsed={inspectorCollapsed.storyboarder}
-                      onCollapse={() => collapseInspector('storyboarder')}
-                      onExpand={() => expandInspector('storyboarder')}
+                      spec={screenwriter?.spec}
+                      cast={screenwriter?.writtenCast}
+                      storyboarder={storyboarder}
+                      collapsed={panelCollapsed.storyboarder}
+                      onCollapse={() => collapsePanel('storyboarder')}
+                      onExpand={() => expandPanel('storyboarder')}
                     />
                   </Panel>
                   <Separator className="canvas-resize-handle" />

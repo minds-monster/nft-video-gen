@@ -1,64 +1,96 @@
 {
-  "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "nft-video-gen",
-  "main": "worker/index.js",
-  "compatibility_date": "2026-08-01",
-
-  // One deploy serves both halves: `dist/` (the Vite build) as static assets, and the
-  // Worker for /api/*. `run_worker_first` is what keeps them from fighting — without it
-  // the asset router answers /api/* with the SPA's index.html and the fetch handler is
-  // never reached.
-  //
-  // `single-page-application` matters for the hash routes in useStudioSelection.js: a
-  // deep link must return index.html rather than a 404.
-  "assets": {
-    "directory": "./dist",
-    "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*"]
-  },
-
-  // The Casting Director's dossier cache. A dossier describes artwork that can never change, so
-  // entries are written without a TTL — this is a permanent store keyed by
-  // assetKey(chain, address, tokenId), not an expiring cache.
-  //
-  // No `id` on purpose: Wrangler provisions the namespace on first deploy and writes the
-  // id back here. `wrangler dev` simulates it locally under .wrangler/state regardless.
-  //
-  // MIND_CONNECTIONS holds two unrelated things, both worker/mind-chat.js and
-  // worker/assistant.js — never pending handshakes, which are reconstructed from
-  // conversation history instead (see the header comment in worker/connect.js):
-  //   - `briefed:<mindId>` — permanent, no TTL, "has this Mind ever gotten the
-  //     Producer briefing" flag.
-  //   - `assistant:<threadId>` — a visitor's assistant transcript, 24h expirationTtl,
-  //     scoped to that one thread only (see worker/assistant.js's privacy note).
-  // No session data lives here either way — sessions are self-verifying HMAC tokens,
-  // see worker/session.js.
-  "kv_namespaces": [{ "binding": "DOSSIERS" }, { "binding": "MIND_CONNECTIONS" }],
-
-  "observability": { "enabled": true },
-
-  // Pin the local dev port so Vite's /api proxy has a stable target. 8787 is Wrangler's
-  // default and is often still held by a stale workerd from a previous session; picking an
-  // explicit non-default port avoids the silent fallback that breaks the proxy.
-  "dev": { "port": 8789 },
-
-  "vars": {
-    // Overridable per-environment so the whole stack can be pointed at OpenRouter (which
-    // serves the same weights) when NVIDIA's evaluation-only trial tier stops being
-    // appropriate. See the free-tier note in the plan.
-    "NVIDIA_BASE_URL": "https://integrate.api.nvidia.com/v1",
-    "CASTING_MODEL": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
-    "SCREENWRITER_MODEL": "nvidia/nemotron-3-super-120b-a12b",
-    // Intended to be DeepSeek — the user's own choice — but every DeepSeek model
-    // actually reachable from the account's main NVIDIA key was unusable when tried
-    // directly: deepseek-v3.1-terminus isn't in the catalog at all, deepseek-coder-6.7b
-    // 404s as "not found for account", and deepseek-v4-flash-0731 hung with zero
-    // response even after 170s using its own dedicated key and its own sample request
-    // shape. minimax-m3 is what the user pointed at next, on yet another dedicated key
-    // (ASSISTANT_API_KEY, in .dev.vars / `wrangler secret put`, deliberately separate
-    // from NVIDIA_API_KEY — see worker/nvidia.js's `apiKey` override) — confirmed
-    // empirically to respond in a few seconds and to discriminate correctly on a
-    // forced tool_choice call. Revisit if a DeepSeek id is ever confirmed working.
-    "ASSISTANT_MODEL": "minimaxai/minimax-m3"
-  }
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "nft-video-gen",
+	"main": "worker/index.js",
+	"compatibility_date": "2026-08-01",
+	// One deploy serves both halves: `dist/` (the Vite build) as static assets, and the
+	// Worker for /api/*. `run_worker_first` is what keeps them from fighting — without it
+	// the asset router answers /api/* with the SPA's index.html and the fetch handler is
+	// never reached.
+	//
+	// `single-page-application` matters for the hash routes in useStudioSelection.js: a
+	// deep link must return index.html rather than a 404.
+	"assets": {
+		"directory": "./dist",
+		"not_found_handling": "single-page-application",
+		"run_worker_first": [
+			"/api/*"
+		]
+	},
+	// The Casting Director's dossier cache. A dossier describes artwork that can never change, so
+	// entries are written without a TTL — this is a permanent store keyed by
+	// assetKey(chain, address, tokenId), not an expiring cache.
+	//
+	// No `id` on purpose: Wrangler provisions the namespace on first deploy and writes the
+	// id back here. `wrangler dev` simulates it locally under .wrangler/state regardless.
+	//
+	// MIND_CONNECTIONS holds two unrelated things, both worker/mind-chat.js and
+	// worker/assistant.js — never pending handshakes, which are reconstructed from
+	// conversation history instead (see the header comment in worker/connect.js):
+	//   - `briefed:<mindId>` — permanent, no TTL, "has this Mind ever gotten the
+	//     Producer briefing" flag.
+	//   - `assistant:<threadId>` — a visitor's assistant transcript, 24h expirationTtl,
+	//     scoped to that one thread only (see worker/assistant.js's privacy note).
+	// No session data lives here either way — sessions are self-verifying HMAC tokens,
+	// see worker/session.js.
+	"kv_namespaces": [
+		{
+			"binding": "DOSSIERS"
+		},
+		{
+			"binding": "MIND_CONNECTIONS"
+		}
+	],
+	// Storyboard frame images (gpt-image-1 output, worker/storyboarder.js). R2 rather than
+	// KV: these are binary blobs, not JSON, and KV's per-value size/read-speed profile isn't
+	// built for that — the storyboard's own metadata (prompt, cost, regen history) stays in
+	// MIND_CONNECTIONS as JSON, keyed `storyboard:<mindId>`, alongside the R2 object key.
+	"r2_buckets": [
+		{
+			"binding": "STORYBOARD_IMAGES",
+			"bucket_name": "nft-video-gen-storyboards"
+		}
+	],
+	"observability": {
+		"enabled": true
+	},
+	// Pin the local dev port so Vite's /api proxy has a stable target. 8787 is Wrangler's
+	// default and is often still held by a stale workerd from a previous session; picking an
+	// explicit non-default port avoids the silent fallback that breaks the proxy.
+	"dev": {
+		"port": 8789
+	},
+	"vars": {
+		// Overridable per-environment so the whole stack can be pointed at OpenRouter (which
+		// serves the same weights) when NVIDIA's evaluation-only trial tier stops being
+		// appropriate. See the free-tier note in the plan.
+		"NVIDIA_BASE_URL": "https://integrate.api.nvidia.com/v1",
+		"CASTING_MODEL": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+		"SCREENWRITER_MODEL": "nvidia/nemotron-3-super-120b-a12b",
+		// Intended to be DeepSeek — the user's own choice — but every DeepSeek model
+		// actually reachable from the account's main NVIDIA key was unusable when tried
+		// directly: deepseek-v3.1-terminus isn't in the catalog at all, deepseek-coder-6.7b
+		// 404s as "not found for account", and deepseek-v4-flash-0731 hung with zero
+		// response even after 170s using its own dedicated key and its own sample request
+		// shape. minimax-m3 is what the user pointed at next, on yet another dedicated key
+		// (ASSISTANT_API_KEY, in .dev.vars / `wrangler secret put`, deliberately separate
+		// from NVIDIA_API_KEY — see worker/nvidia.js's `apiKey` override) — confirmed
+		// empirically to respond in a few seconds and to discriminate correctly on a
+		// forced tool_choice call. Revisit if a DeepSeek id is ever confirmed working.
+		"ASSISTANT_MODEL": "minimaxai/minimax-m3",
+		// The storyboarder's two tiers. Both are vars rather than constants so a tier can be
+		// re-pointed without a code change — which is exactly what round 7 needed when NVIDIA's
+		// own hosting of the free weights turned out to be the problem rather than the weights.
+		//
+		// PAID: gpt-5.6-sol at high reasoning effort, via /v1/responses. Round 7 measured 76% of
+		// its output tokens going to reasoning, so this task is reasoning-bound and the effort
+		// setting is load-bearing, not a knob.
+		//
+		// FREE: the same Nemotron weights NVIDIA hosts, served from OpenRouter — ~12x faster on
+		// identical weights, and not restricted to evaluation use. See worker/openrouter.js.
+		"STORYBOARDER_MODEL": "gpt-5.6-sol",
+		"STORYBOARDER_EFFORT": "high",
+		"OPENROUTER_BASE_URL": "https://openrouter.ai/api/v1",
+		"FREE_STORYBOARD_MODEL": "nvidia/nemotron-3-ultra-550b-a55b:free"
+	}
 }

@@ -1,4 +1,4 @@
-import { Eye, Film, ScanLine, TriangleAlert, Type } from 'lucide-react';
+import { ClipboardCheck, Eye, Film, ScanLine, TriangleAlert, Type } from 'lucide-react';
 import AgentThought from './AgentThought';
 import { RevealOnce } from './RevealText';
 import { resolveNftThumb, resolveNftName } from '../../services/alchemy';
@@ -95,6 +95,11 @@ const DossierSummary = ({ entry, state }) => {
               {hazard}
             </Flag>
           ))}
+          {state?.previsFlagged && (
+            <Flag icon={ClipboardCheck}>
+              Previs Supervisor: {state.previsIssue || 'flagged before writing began'}
+            </Flag>
+          )}
         </div>
       </div>
     </div>

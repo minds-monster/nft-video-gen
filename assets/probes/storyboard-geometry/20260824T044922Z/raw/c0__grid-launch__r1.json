@@ -1,0 +1,1653 @@
+{
+  "cell": "c0",
+  "fixture": "grid-launch",
+  "fixtureSha": "b2d6f4830c1e",
+  "repeat": 1,
+  "film": {
+    "beats": [
+      {
+        "framing": "MWS",
+        "cameraAngle": "eye-level",
+        "cameraMovement": "the camera trucks right with medium amplitude at slow speed, gliding at open side-window height outside the car while holding <Subject 2> alone in frame",
+        "subjectsInFrame": [
+          {
+            "subject": "<Subject 2>",
+            "screenPosition": "center",
+            "depth": "midground",
+            "action": "Parked on the wet left-hand starting-grid lane with its front storage compartment raised open; rain beads on the camouflage bodywork and bright yellow wheels while floodlight reflections ripple beneath it."
+          }
+        ],
+        "subjectsExcluded": [
+          "<Subject 1>",
+          "<Subject 3>",
+          "<Subject 4>",
+          "<Subject 5>",
+          "<Subject 6>"
+        ],
+        "screenDirection": [
+          {
+            "subject": "<Subject 2>",
+            "movement": "static"
+          }
+        ],
+        "continuityCheck": {
+          "consistent": true,
+          "changes": []
+        },
+        "containmentNotes": "<Subject 2> is stationary on the left side of the two-car grid pair. Its front storage compartment is physically open upward at the nose. <Subject 1>, the driver of <Subject 2>, remains inside the car but must not be visible in this opening frame; the camera stays outside the vehicle and does not look through the windshield. No other cast subject enters the frame. <Subject 6> is a garment worn by <Subject 5> and is excluded with <Subject 5>; it must not appear as an independent mannequin or figure.",
+        "visualPrompt": "Live-action, cinematic, a medium-wide eye-level shot opens a single continuous unbroken nighttime take on <Subject 2> alone, parked on the left-hand lane of a rain-soaked black-asphalt starting grid. The sleek camouflage-wrapped supercar sits in the midground, centered in frame, its bright yellow wheels sharply visible and its front storage compartment raised open at the nose. Heavy rain falls through hard white overhead floodlight beams; water beads across the car, puddles mirror the lights, and low steam drifts across the grid surface. Blurred safety barriers and packed tiered grandstands line both sides in the distant background, with spectators cheering indistinctly. The camera trucks right with medium amplitude at slow speed at the car's open side-window height, remaining outside the vehicle at all times and never revealing the driver. No people, second car, bear-like grid figure, garment, or mannequin are visible."
+      },
+      {
+        "framing": "MCU",
+        "cameraAngle": "eye-level",
+        "cameraMovement": "the camera trucks right with medium amplitude at slow speed, gliding continuously at the open side-window height outside <Subject 2> and looking inward through the driver-side window",
+        "subjectsInFrame": [
+          {
+            "subject": "<Subject 1>",
+            "screenPosition": "center-left",
+            "depth": "midground",
+            "action": "Sits alive in the driver's seat inside <Subject 2>, wearing the neon yellow tracksuit, yellow hat, and red heart-shaped sunglasses; both hands grip the steering wheel as rain-lit reflections flicker across the open side window."
+          },
+          {
+            "subject": "<Subject 2>",
+            "screenPosition": "center",
+            "depth": "midground",
+            "action": "Remains stationary on the wet left-hand starting-grid lane; its camouflage-wrapped driver-side body, open side window, and bright yellow wheel edge frame the driver while rain beads on the exterior."
+          }
+        ],
+        "subjectsExcluded": [
+          "<Subject 3>",
+          "<Subject 4>",
+          "<Subject 5>",
+          "<Subject 6>"
+        ],
+        "screenDirection": [
+          {
+            "subject": "<Subject 1>",
+            "movement": "static"
+          },
+          {
+            "subject": "<Subject 2>",
+            "movement": "static"
+          }
+        ],
+        "continuityCheck": {
+          "consistent": true,
+          "changes": [
+            {
+              "subject": "<Subject 2>",
+              "from": "center, midground",
+              "to": "center, midground",
+              "justifiedByBeatText": true
+            },
+            {
+              "subject": "<Subject 1>",
+              "from": "excluded/not visible inside <Subject 2>",
+              "to": "center-left, midground, visible through the open side window",
+              "justifiedByBeatText": true
+            }
+          ]
+        },
+        "containmentNotes": "<Subject 1> is physically inside <Subject 2> in its driver's seat, with both hands on the steering wheel; <Subject 1> is not outside the vehicle. <Subject 2> remains stationary on the left side of the side-by-side grid pair. The camera remains outside <Subject 2> throughout and sees <Subject 1> only through the open driver-side window, never through the windshield. The previously raised front storage compartment remains open but is outside this tighter window-height framing. <Subject 3> stays inside <Subject 4>, but neither is visible. <Subject 5> remains offscreen on the grid; <Subject 6> is worn by <Subject 5>, not an independent figure, and neither appears.",
+        "visualPrompt": "Live-action, cinematic, a medium-close eye-level shot continues the same unbroken nighttime take on a wet black-asphalt starting grid. The camera glides sideways to the right at slow speed, outside <Subject 2> at its open driver-side window height, and looks directly into the cabin. <Subject 1>, a living ordinary-skinned Bored Ape driver in a neon yellow tracksuit, yellow hat, red heart-shaped sunglasses, and white sneakers, sits in the driver's seat with both hands firmly on the steering wheel. The camouflage-wrapped exterior of <Subject 2> fills the midground around the open window, with a bright yellow wheel edge visible below; the car is stationary in the left lane of the two-car grid pair. Heavy rain streaks through overhead floodlight beams, water beads on the car, puddles reflect white light, and low steam slides across the ground. Safety barriers and packed cheering grandstands remain blurred beyond the grid. Keep <Subject 3>, <Subject 4>, <Subject 5>, and <Subject 6> completely out of frame; no cuts, no scene change, and no camera entry into either car."
+      },
+      {
+        "framing": "MCU",
+        "cameraAngle": "eye-level",
+        "cameraMovement": "the camera trucks right with medium amplitude at slow speed, continuing the single smooth window-height glide outside the cars and settling alongside the open driver-side window of <Subject 4>",
+        "subjectsInFrame": [
+          {
+            "subject": "<Subject 3>",
+            "screenPosition": "center",
+            "depth": "midground",
+            "action": "Sits alive inside <Subject 4> in the driver's seat, hands at the steering wheel; the pink-haired driver turns their head toward the exterior camera and looks straight into the lens through the open side window, orange translucent glasses catching floodlight reflections."
+          },
+          {
+            "subject": "<Subject 4>",
+            "screenPosition": "center",
+            "depth": "midground",
+            "action": "Remains stationary in the right-hand lane of the side-by-side starting-grid pair; its white rounded driver-side body and open side window frame the driver as rain beads across the exterior."
+          }
+        ],
+        "subjectsExcluded": [
+          "<Subject 1>",
+          "<Subject 2>",
+          "<Subject 5>",
+          "<Subject 6>"
+        ],
+        "screenDirection": [
+          {
+            "subject": "<Subject 3>",
+            "movement": "static"
+          },
+          {
+            "subject": "<Subject 4>",
+            "movement": "static"
+          }
+        ],
+        "continuityCheck": {
+          "consistent": true,
+          "changes": [
+            {
+              "subject": "<Subject 1>",
+              "from": "center-left, midground, visible inside <Subject 2>",
+              "to": "excluded/not visible",
+              "justifiedByBeatText": true
+            },
+            {
+              "subject": "<Subject 2>",
+              "from": "center, midground, visible",
+              "to": "excluded/not visible",
+              "justifiedByBeatText": true
+            },
+            {
+              "subject": "<Subject 3>",
+              "from": "excluded/not visible inside <Subject 4>",
+              "to": "center, midground, visible through the open side window",
+              "justifiedByBeatText": true
+            },
+            {
+              "subject": "<Subject 4>",
+              "from": "excluded/not visible",
+              "to": "center, midground, visible",
+              "justifiedByBeatText": true
+            }
+          ]
+        },
+        "containmentNotes": "<Subject 3> is physically inside <Subject 4> in the driver's seat and remains there, with hands on its steering wheel; <Subject 3> is never outside the car. <Subject 4> is stationary on the right side of the two-car grid pair. The camera stays outside both cars at all times and observes <Subject 3> only through <Subject 4>'s open driver-side window, never through a windshield. <Subject 1> remains inside stationary <Subject 2> offscreen to the left; neither is visible in this framing. <Subject 5> remains offscreen on the grid, and <Subject 6> is worn by <Subject 5>, not an independent figure; neither appears.",
+        "visualPrompt": "Live-action, cinematic, a medium-close eye-level shot continues one continuous unbroken nighttime take on a rain-soaked black-asphalt starting grid. The camera trucks right with medium amplitude at slow speed, gliding at open side-window height outside the cars and arriving beside the open driver-side window of <Subject 4>, never entering either vehicle. <Subject 4>, a stationary white rounded-silhouette sports car in the right-hand lane of the side-by-side grid pair, fills the midground around its open window; rain beads on its white bodywork and floodlight reflections ripple across the wet paint. Inside, <Subject 3> is a living ordinary-skinned driver with pink buzz-cut hair, orange translucent glasses, a green patent-leather moto jacket over a red shirt, black buckled slacks, and black combat boots. Seated at the wheel, <Subject 3> turns to face outward and looks directly into the lens, the glasses reflecting the overhead floodlights. Heavy rain falls visibly through the floodlight beams, low steam drifts across puddled asphalt, and blurred barriers with packed cheering grandstands rise on both sides. Keep <Subject 1>, <Subject 2>, <Subject 5>, and <Subject 6> entirely out of frame. No cut, no scene change, and no impossible windshield view."
+      },
+      {
+        "framing": "MWS",
+        "cameraAngle": "eye-level",
+        "cameraMovement": "the camera trucks right with medium amplitude at slow speed, continuing the single smooth window-height glide outside the stationary cars and carrying past <Subject 4> toward the front of the grid",
+        "subjectsInFrame": [
+          {
+            "subject": "<Subject 5>",
+            "screenPosition": "center-right",
+            "depth": "foreground",
+            "action": "Stands alone on the wet grid at the front of the two waiting cars, alive with ordinary skin beneath the stylized bear-like appearance; wearing <Subject 6> over the floral-patterned body and green helmet marked “100,” raises one arm straight upward as a start signal."
+          },
+          {
+            "subject": "<Subject 6>",
+            "screenPosition": "center-right",
+            "depth": "foreground",
+            "action": "Is visibly worn on <Subject 5>'s torso as a deep-red velvet bomber jacket with silver filigree embroidery; it is clothing, not an independent figure."
+          },
+          {
+            "subject": "<Subject 2>",
+            "screenPosition": "left",
+            "depth": "midground",
+            "action": "Waits stationary behind <Subject 5> in the left lane of the side-by-side starting-grid pair, camouflage wrap and bright yellow wheels wet with rain; its driver remains inside and is not visible from this exterior angle."
+          },
+          {
+            "subject": "<Subject 4>",
+            "screenPosition": "right",
+            "depth": "midground",
+            "action": "Waits stationary behind <Subject 5> in the right lane of the side-by-side starting-grid pair, its white rounded body and four circular LED headlamps facing forward through rain and low steam; its driver remains inside and is not visible from this exterior angle."
+          }
+        ],
+        "subjectsExcluded": [
+          "<Subject 1>",
+          "<Subject 3>"
+        ],
+        "screenDirection": [
+          {
+            "subject": "<Subject 5>",
+            "movement": "static"
+          },
+          {
+            "subject": "<Subject 6>",
+            "movement": "static"
+          },
+          {
+            "subject": "<Subject 2>",
+            "movement": "static"
+          },
+          {
+            "subject": "<Subject 4>",
+            "movement": "static"
+          }
+        ],
+        "continuityCheck": {
+          "consistent": true,
+          "changes": [
+            {
+              "subject": "<Subject 3>",
+              "from": "center, midground, visible inside <Subject 4> through its open driver-side window",
+              "to": "excluded/not visible, still inside <Subject 4>",
+              "justifiedByBeatText": true
+            },
+            {
+              "subject": "<Subject 4>",
+              "from": "center, midground, close alongside its open driver-side window",
+              "to": "right, midground, seen from outside behind <Subject 5>",
+              "justifiedByBeatText": true
+            },
+            {
+              "subject": "<Subject 5>",
+              "from": "excluded/not visible",
+              "to": "center-right, foreground, visible standing at the front of the grid",
+              "justifiedByBeatText": true
+            },
+            {
+              "subject": "<Subject 6>",
+              "from": "excluded/not visible",
+              "to": "center-right, foreground, visible only as clothing worn by <Subject 5>",
+              "justifiedByBeatText": true
+            },
+            {
+              "subject": "<Subject 2>",
+              "from": "excluded/not visible",
+              "to": "left, midground, visible waiting behind <Subject 5>",
+              "justifiedByBeatText": true
+            }
+          ]
+        },
+        "containmentNotes": "<Subject 5> stands on the grid surface ahead of both cars and is never inside a vehicle. <Subject 6> is physically worn by <Subject 5> and must never appear as a separate mannequin, figure, or object. <Subject 1> remains physically inside stationary <Subject 2>; <Subject 3> remains physically inside stationary <Subject 4>; neither driver is visible in this beat. <Subject 2> stays on the left and <Subject 4> stays on the right of the side-by-side pair, both behind <Subject 5>. The camera remains outside both cars throughout the same unbroken take; no cuts, no scene changes, no windshield viewpoint, and no vehicle movement.",
+        "visualPrompt": "Live-action, cinematic, a medium-wide eye-level shot continues the same single unbroken nighttime take on a wet black-asphalt starting grid. The camera trucks right with medium amplitude at slow speed, maintaining a smooth sideways glide at window height outside the stationary cars and moving beyond the right-hand car toward the front of the grid. In the foreground at center-right, <Subject 5> stands alone on rain-slick asphalt ahead of the cars, a living ordinary-skinned stylized bear-like character wearing a green helmet with white “100” numerals and dense multicolored floral motifs. <Subject 5> wears <Subject 6>, a deep-red velvet bomber jacket with elaborate silver floral-and-vine filigree embroidery and a heart-shaped embroidered chest panel, and raises one arm straight upward as a start signal. The jacket is clearly worn clothing, never a separate figure. Behind the signaler, <Subject 2> waits stationary in the left lane, a camouflage-wrapped sleek supercar with bright yellow wheels, while <Subject 4> waits stationary in the right lane, a white rounded-silhouette sports car with four circular LED headlamps. Both drivers remain inside their respective cars but are not visible. Heavy rain streaks through overhead floodlight beams, steam drifts low across puddled ground, and packed cheering grandstands rise beyond barriers on both sides. Keep <Subject 1> and <Subject 3> entirely out of frame. No cut, no scene change, no vehicle movement, and the camera never enters either car."
+      },
+      {
+        "framing": "MWS",
+        "cameraAngle": "eye-level",
+        "cameraMovement": "the camera trucks right with medium amplitude at slow speed, maintaining the single smooth window-height glide outside the cars as both accelerate forward past it",
+        "subjectsInFrame": [
+          {
+            "subject": "<Subject 5>",
+            "screenPosition": "far-left",
+            "depth": "background",
+            "action": "Completes the start signal by dropping the raised arm sharply to the side while standing on the wet grid, then remains clear of the accelerating lanes; a living ordinary-skinned stylized bear-like figure wearing the green helmet marked “100.”"
+          },
+          {
+            "subject": "<Subject 6>",
+            "screenPosition": "far-left",
+            "depth": "background",
+            "action": "Remains visibly worn on <Subject 5>'s torso as the deep-red velvet bomber jacket with silver filigree embroidery; it is clothing only, never an independent figure."
+          },
+          {
+            "subject": "<Subject 2>",
+            "screenPosition": "left",
+            "depth": "midground",
+            "action": "Launches forward from the left lane in a hard straight-line acceleration, camouflage-wrapped body and bright yellow wheels spinning as the tires throw a dense fan of rainwater spray behind it; <Subject 1> remains physically inside the driver seat and is not visible from this exterior side angle."
+          },
+          {
+            "subject": "<Subject 4>",
+            "screenPosition": "right",
+            "depth": "midground",
+            "action": "Launches forward simultaneously from the right lane in a hard straight-line acceleration, its white rounded body and four circular LED headlamps cutting through rain as the tires throw a dense fan of water spray behind it; <Subject 3> remains physically inside the driver seat and is not visible from this exterior side angle."
+          }
+        ],
+        "subjectsExcluded": [
+          "<Subject 1>",
+          "<Subject 3>"
+        ],
+        "screenDirection": [
+          {
+            "subject": "<Subject 5>",
+            "movement": "static"
+          },
+          {
+            "subject": "<Subject 6>",
+            "movement": "static"
+          },
+          {
+            "subject": "<Subject 2>",
+            "movement": "left-to-right"
+          },
+          {
+            "subject": "<Subject 4>",
+            "movement": "left-to-right"
+          }
+        ],
+        "continuityCheck": {
+          "consistent": true,
+          "changes": [
+            {
+              "subject": "<Subject 5>",
+              "from": "center-right, foreground",
+              "to": "far-left, background",
+              "justifiedByBeatText": true
+            },
+            {
+              "subject": "<Subject 6>",
+              "from": "center-right, foreground",
+              "to": "far-left, background",
+              "justifiedByBeatText": true
+            },
+            {
+              "subject": "<Subject 2>",
+              "from": "left, midground, stationary",
+              "to": "left, midground, accelerating forward",
+              "justifiedByBeatText": true
+            },
+            {
+              "subject": "<Subject 4>",
+              "from": "right, midground, stationary",
+              "to": "right, midground, accelerating forward",
+              "justifiedByBeatText": true
+            }
+          ]
+        },
+        "containmentNotes": "<Subject 5> stands on the grid surface and is never inside either vehicle; after dropping the arm, <Subject 5> remains behind and clear of the two accelerating cars. <Subject 6> is physically worn by <Subject 5> and must never appear as a separate mannequin, figure, or object. <Subject 1> remains physically inside <Subject 2>, and <Subject 3> remains physically inside <Subject 4>; neither driver is visible in this exterior window-height side view. <Subject 2> remains the left car and <Subject 4> the right car as they launch together straight down the grid. The camera stays outside both cars at all times in the same continuous unbroken take, with no cuts, scene changes, windshield view, or entry into either cabin.",
+        "visualPrompt": "Live-action, cinematic, a medium-wide eye-level shot continues the same single unbroken nighttime take on a wet black-asphalt starting grid. The camera trucks right with medium amplitude at slow speed, maintaining a smooth sideways glide at open-window height outside the cars as both cars accelerate forward past it. At far-left in the background, <Subject 5>, a living ordinary-skinned stylized bear-like character in a green helmet marked with white “100” numerals and dense multicolored floral motifs, sharply drops the raised start-signal arm and remains safely clear on the wet grid. <Subject 5> wears <Subject 6>, a deep-red velvet bomber jacket with elaborate silver floral-and-vine filigree embroidery and a heart-shaped embroidered chest panel; the jacket is worn clothing only, never a separate figure. In the midground, <Subject 2> launches hard from the left lane, its camouflage wrap and bright yellow wheels streaking through rain while spinning tires blast a dense fan of water spray behind it. Beside it in the right lane, <Subject 4> launches at the same instant, a white rounded-silhouette sports car with four circular LED headlamps and a black rectangular front bumper, also throwing heavy tire spray. Both drivers remain inside their respective cars but are not visible from this exterior side angle: keep <Subject 1> and <Subject 3> entirely out of frame. Heavy rain falls through overhead floodlight beams, low steam drifts across puddled asphalt, and packed grandstands cheer beyond barriers on both sides. No cut, no scene change, and the camera never enters either car."
+      },
+      {
+        "framing": "EWS",
+        "cameraAngle": "high",
+        "cameraMovement": "the camera cranes up and pulls out with large amplitude at slow speed, continuing the same smooth sideways drift down the grid while remaining outside the cars",
+        "subjectsInFrame": [
+          {
+            "subject": "<Subject 2>",
+            "screenPosition": "center-left",
+            "depth": "background",
+            "action": "Speeds away down the left lane into the rain, its camouflage-wrapped body reduced by distance and its bright yellow wheels sending a fading wake of water spray across the wet asphalt; <Subject 1> remains physically inside the driver seat and is too distant to see."
+          },
+          {
+            "subject": "<Subject 4>",
+            "screenPosition": "center-right",
+            "depth": "background",
+            "action": "Speeds away alongside <Subject 2> in the right lane, its white rounded silhouette and four circular LED headlamps diminishing into rain and spray; <Subject 3> remains physically inside the driver seat and is too distant to see."
+          },
+          {
+            "subject": "<Subject 5>",
+            "screenPosition": "far-left",
+            "depth": "midground",
+            "action": "Stands safely clear on the wet starting grid behind the departing cars, a living ordinary-skinned stylized bear-like figure in the green helmet marked “100,” watching the cars vanish down the illuminated lanes."
+          },
+          {
+            "subject": "<Subject 6>",
+            "screenPosition": "far-left",
+            "depth": "midground",
+            "action": "Remains worn on <Subject 5>'s torso as the deep-red velvet bomber jacket with silver filigree embroidery; it is garment material only and never an independent figure."
+          }
+        ],
+        "subjectsExcluded": [
+          "<Subject 1>",
+          "<Subject 3>"
+        ],
+        "screenDirection": [
+          {
+            "subject": "<Subject 2>",
+            "movement": "away-from-camera"
+          },
+          {
+            "subject": "<Subject 4>",
+            "movement": "away-from-camera"
+          },
+          {
+            "subject": "<Subject 5>",
+            "movement": "static"
+          },
+          {
+            "subject": "<Subject 6>",
+            "movement": "static"
+          }
+        ],
+        "continuityCheck": {
+          "consistent": true,
+          "changes": [
+            {
+              "subject": "<Subject 2>",
+              "from": "left, midground",
+              "to": "center-left, background",
+              "justifiedByBeatText": true
+            },
+            {
+              "subject": "<Subject 4>",
+              "from": "right, midground",
+              "to": "center-right, background",
+              "justifiedByBeatText": true
+            },
+            {
+              "subject": "<Subject 5>",
+              "from": "far-left, background",
+              "to": "far-left, midground",
+              "justifiedByBeatText": true
+            },
+            {
+              "subject": "<Subject 6>",
+              "from": "far-left, background",
+              "to": "far-left, midground",
+              "justifiedByBeatText": true
+            }
+          ]
+        },
+        "containmentNotes": "This remains one continuous unbroken take with no cut or scene change. <Subject 2> stays in the left lane and <Subject 4> stays in the right lane as both recede away from the camera; their apparent shift toward center is caused by the high, pulled-back wide composition, not a lane change. <Subject 1> is physically inside <Subject 2>, and <Subject 3> is physically inside <Subject 4>; neither driver is visible at this distance. <Subject 5> remains on the grid and never enters a car. <Subject 6> is physically worn by <Subject 5>, never a mannequin or separate figure. The camera remains outside both vehicles throughout the crane-up and pullback.",
+        "visualPrompt": "Live-action, cinematic, an extreme-wide high-angle view continues the same single unbroken nighttime take over a wet black-asphalt starting grid. The camera cranes up and pulls out with large amplitude at slow speed, retaining a gentle sideways drift down the grid and staying outside the cars at all times. The entire rain-soaked grid, reflective lane markings, barriers, and packed tiered grandstands on both sides fill the frame beneath harsh overhead floodlights. <Subject 2> races away in the left lane at center-left background, its camouflage wrap and bright yellow wheels shrinking into heavy rain, with a thinning trail of tire spray. <Subject 4> races away beside it in the right lane at center-right background, its white rounded sports-car silhouette and four circular LED headlamps fading into rain and steam. Both drivers remain contained inside their cars and are not visible: exclude <Subject 1> and <Subject 3> from view. At far-left midground, <Subject 5>, a living ordinary-skinned stylized bear-like character wearing the green helmet marked with white “100” numerals and dense multicolored floral motifs, stands safely behind the launch lanes watching the cars disappear. <Subject 6>, the deep-red velvet bomber jacket with elaborate silver floral-and-vine filigree and a heart-shaped chest panel, is visibly worn by <Subject 5> and is never a separate figure. Heavy rain streaks through floodlight beams, low steam slides over puddled asphalt, spectators cheer from both grandstands, and the two cars vanish into the rain without any cut or scene change."
+      }
+    ]
+  },
+  "calls": [
+    {
+      "usage": {
+        "promptTokens": 1801,
+        "completionTokens": 496,
+        "reasoningTokens": 0
+      },
+      "latencyMs": 7064,
+      "attempts": 1,
+      "costUsd": 0.009554,
+      "request": {
+        "model": "gpt-5.6-terra",
+        "reasoning_effort": "none",
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are the Storyboarder on a film crew that turns licensed NFT\nartwork into short generated video. Your job is not to describe a pretty picture — it is a\nprecise technical blocking specification for one beat, the kind a cinematographer leaves for\na director, exact enough that a video-render pipeline can follow it without guessing.\n\nMiniMax-H3 expects a structured script, not a paragraph. Emit three fields:\n\n1. integrated_multimodal_description — the visuals, action, camera and diegetic sound,\n   along a timeline. Open with visual style and composition (\"Live-action, cinematic, a\n   medium-wide shot frames...\"). A single shot needs no timestamp; if you genuinely need a\n   second shot, mark it \"[Shot 2] At 00:03.500, the camera cuts to...\".\n2. overall_soundscape — ambient, physical and non-verbal sound. One to four sentences.\n3. non_diegetic_music — score the characters cannot hear. One to three sentences, or \"N/A\".\n\nCamera moves are written as natural English actions, never as bracketed labels. The formula\nis motion + amplitude + speed: \"the camera pushes in with small amplitude at slow speed\".\nAvailable motions: Zoom In/Out, Push In/Out, Pan Left/Right, Truck Left/Right, Tilt Up/Down,\nPedestal Up/Down, Arc Shot, Tracking Shot, Static Shot, Shake Slightly/Strongly, POV, Roll.\n\nEach text field can run to 7000 characters. Length is not a virtue in itself, but this model\nis directed, not hinted at — be specific and complete rather than terse.\n\nRules:\n1. Never place a subject in subjectsInFrame that this beat's own text doesn't put there. If a\n   cast member has a reference available (listed below) but this beat's action doesn't\n   involve them, they go in subjectsExcluded — even though they're referenced elsewhere in\n   the film. An early, unearned reveal is a real error, not a safe default.\n2. cameraMovement is natural English (motion + amplitude + speed), drawn from H3's own\n   vocabulary above — never a bracketed label, never invented terminology H3 doesn't use.\n3. When given the previous beat's own blocking JSON, compare explicitly: report every subject\n   whose screenPosition or depth changed, and say plainly whether this beat's own text\n   justifies that change. An unexplained flip in position is a mistake to report, not\n   something to silently accept or paper over.\n4. containmentNotes says whatever a renderer needs to get physically right — who is inside\n   what, who is holding what, any constraint this beat implies. A person in a vehicle is\n   inside it, not visible through the windshield from an impossible angle.\n5. visualPrompt is a plain-English rendering of everything above, precise enough that an\n   image model could work from it directly later — but you are not drawing anything yourself.\n6. Every \"subject\" field everywhere in the schema is the bare tag and nothing else — exactly\n   \"<Subject 1>\", never \"<Subject 1> — the ape\" or any other appended description. Downstream\n   code matches these by exact tag; anything extra breaks that match silently.\n\nReturn the blocking spec by calling the tool. Write no prose outside it."
+          },
+          {
+            "role": "user",
+            "content": "World: Night on a wet black asphalt starting grid, heavy rain falling through the beams of overhead floodlights and steam drifting low across the ground. Tiered grandstands rise on both sides beyond the barriers, packed with cheering spectators.\nStaging: <Subject 1> is the driver of <Subject 2> and stays inside it. <Subject 3> is the driver of <Subject 4> and stays inside it. <Subject 5> stands on the grid itself and is never in a car. <Subject 6> is a garment worn by <Subject 5>, never an independent figure. The two cars sit side by side on the grid, <Subject 2> on the left of the pair and <Subject 4> on the right.\nGuard: Every character has ordinary skin and is a living figure, not a mannequin and not a chrome statue.\nFilm's overall camera direction: One continuous unbroken take. The camera glides in a single smooth sideways movement down the grid at window height, staying outside the cars at all times and looking in through their open side windows.\nContinuity: This is one single continuous unbroken shot filmed in one take. There are no cuts and no scene changes at any point.\n\nCast with references available (referencePlan order):\n<Subject 1> — A Bored Ape character wearing a neon yellow tracksuit, red heart-shaped sunglasses, yellow hat, and white sneakers. (neon yellow tracksuit, red heart-shaped sunglasses, yellow hat)\n<Subject 2> — a sleek supercar with a camouflage wrap pattern, black tinted windows, and bright yellow wheels (camouflage wrap pattern, bright yellow wheels, black tinted windows)\n<Subject 3> — A pink‑haired figure wearing orange translucent glasses, a green patent leather moto jacket over a red shirt, black cotton‑wool slacks with buckles, and black leather combat boots. (pink buzz-cut hair, orange translucent glasses, green patent leather moto jacket)\n<Subject 4> — a white rounded-silhouette sports car with four round LED headlamps (four circular LED headlamps, shield-shaped badge on hood, black rectangular front bumper with large air intakes)\n<Subject 5> — a stylized bear-like character wearing a green helmet marked '100' and covered in multicolored floral patterns (green helmet with white '100' numerals, white bear-like figure covered in dense multicolored floral motifs, large stylized flowers and insects surrounding the figure)\n<Subject 6> — a deep-red velvet bomber jacket with elaborate silver filigree embroidery displayed on a glossy iridescent mannequin (deep-red velvet fabric, silver metallic embroidery with floral and vine motifs, prominent heart-shaped embroidered panel on chest)\n\nThis beat: Rain falls across the starting grid. The camera opens on <Subject 2> alone, its front storage compartment standing open, no one else yet in frame.\n\nThis is the first beat — continuityCheck should be { consistent: true, changes: [] }.\n\nWrite the blocking spec."
+          }
+        ],
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "emit_blocking",
+              "description": "Return the blocking spec.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "framing": {
+                    "type": "string",
+                    "enum": [
+                      "ECU",
+                      "CU",
+                      "MCU",
+                      "MS",
+                      "MWS",
+                      "WS",
+                      "EWS"
+                    ],
+                    "description": "Shot size."
+                  },
+                  "cameraAngle": {
+                    "type": "string",
+                    "enum": [
+                      "low",
+                      "eye-level",
+                      "high",
+                      "dutch",
+                      "overhead"
+                    ]
+                  },
+                  "cameraMovement": {
+                    "type": "string",
+                    "description": "Natural English, drawn from H3's own vocabulary (motion + amplitude + speed) — never a bracketed label."
+                  },
+                  "subjectsInFrame": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "subject": {
+                          "type": "string",
+                          "description": "Exactly the tag, nothing appended — e.g. \"<Subject 1>\", never \"<Subject 1> — description\"."
+                        },
+                        "screenPosition": {
+                          "type": "string",
+                          "enum": [
+                            "far-left",
+                            "left",
+                            "center-left",
+                            "center",
+                            "center-right",
+                            "right",
+                            "far-right"
+                          ]
+                        },
+                        "depth": {
+                          "type": "string",
+                          "enum": [
+                            "foreground",
+                            "midground",
+                            "background"
+                          ]
+                        },
+                        "action": {
+                          "type": "string",
+                          "description": "What this subject is doing right now, in this frame."
+                        }
+                      },
+                      "required": [
+                        "subject",
+                        "screenPosition",
+                        "depth",
+                        "action"
+                      ]
+                    }
+                  },
+                  "subjectsExcluded": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Subjects with a reference available who must NOT appear in this frame — bare tags only, e.g. \"<Subject 4>\"."
+                  },
+                  "screenDirection": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "subject": {
+                          "type": "string",
+                          "description": "Exactly the tag, e.g. \"<Subject 1>\" — nothing appended."
+                        },
+                        "movement": {
+                          "type": "string",
+                          "enum": [
+                            "left-to-right",
+                            "right-to-left",
+                            "toward-camera",
+                            "away-from-camera",
+                            "static"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "subject",
+                        "movement"
+                      ]
+                    }
+                  },
+                  "continuityCheck": {
+                    "type": "object",
+                    "properties": {
+                      "consistent": {
+                        "type": "boolean"
+                      },
+                      "changes": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "subject": {
+                              "type": "string",
+                              "description": "Exactly the tag, e.g. \"<Subject 1>\" — nothing appended."
+                            },
+                            "from": {
+                              "type": "string"
+                            },
+                            "to": {
+                              "type": "string"
+                            },
+                            "justifiedByBeatText": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "subject",
+                            "from",
+                            "to",
+                            "justifiedByBeatText"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "consistent",
+                      "changes"
+                    ],
+                    "description": "Empty changes array and consistent:true when there is no previous beat, or nothing moved."
+                  },
+                  "containmentNotes": {
+                    "type": "string"
+                  },
+                  "visualPrompt": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "framing",
+                  "cameraAngle",
+                  "cameraMovement",
+                  "subjectsInFrame",
+                  "subjectsExcluded",
+                  "screenDirection",
+                  "continuityCheck",
+                  "containmentNotes",
+                  "visualPrompt"
+                ]
+              }
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "function",
+          "function": {
+            "name": "emit_blocking"
+          }
+        },
+        "temperature": 0.3,
+        "max_completion_tokens": 1500
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 2285,
+        "completionTokens": 741,
+        "reasoningTokens": 0
+      },
+      "latencyMs": 8010,
+      "attempts": 1,
+      "costUsd": 0.013462000000000002,
+      "request": {
+        "model": "gpt-5.6-terra",
+        "reasoning_effort": "none",
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are the Storyboarder on a film crew that turns licensed NFT\nartwork into short generated video. Your job is not to describe a pretty picture — it is a\nprecise technical blocking specification for one beat, the kind a cinematographer leaves for\na director, exact enough that a video-render pipeline can follow it without guessing.\n\nMiniMax-H3 expects a structured script, not a paragraph. Emit three fields:\n\n1. integrated_multimodal_description — the visuals, action, camera and diegetic sound,\n   along a timeline. Open with visual style and composition (\"Live-action, cinematic, a\n   medium-wide shot frames...\"). A single shot needs no timestamp; if you genuinely need a\n   second shot, mark it \"[Shot 2] At 00:03.500, the camera cuts to...\".\n2. overall_soundscape — ambient, physical and non-verbal sound. One to four sentences.\n3. non_diegetic_music — score the characters cannot hear. One to three sentences, or \"N/A\".\n\nCamera moves are written as natural English actions, never as bracketed labels. The formula\nis motion + amplitude + speed: \"the camera pushes in with small amplitude at slow speed\".\nAvailable motions: Zoom In/Out, Push In/Out, Pan Left/Right, Truck Left/Right, Tilt Up/Down,\nPedestal Up/Down, Arc Shot, Tracking Shot, Static Shot, Shake Slightly/Strongly, POV, Roll.\n\nEach text field can run to 7000 characters. Length is not a virtue in itself, but this model\nis directed, not hinted at — be specific and complete rather than terse.\n\nRules:\n1. Never place a subject in subjectsInFrame that this beat's own text doesn't put there. If a\n   cast member has a reference available (listed below) but this beat's action doesn't\n   involve them, they go in subjectsExcluded — even though they're referenced elsewhere in\n   the film. An early, unearned reveal is a real error, not a safe default.\n2. cameraMovement is natural English (motion + amplitude + speed), drawn from H3's own\n   vocabulary above — never a bracketed label, never invented terminology H3 doesn't use.\n3. When given the previous beat's own blocking JSON, compare explicitly: report every subject\n   whose screenPosition or depth changed, and say plainly whether this beat's own text\n   justifies that change. An unexplained flip in position is a mistake to report, not\n   something to silently accept or paper over.\n4. containmentNotes says whatever a renderer needs to get physically right — who is inside\n   what, who is holding what, any constraint this beat implies. A person in a vehicle is\n   inside it, not visible through the windshield from an impossible angle.\n5. visualPrompt is a plain-English rendering of everything above, precise enough that an\n   image model could work from it directly later — but you are not drawing anything yourself.\n6. Every \"subject\" field everywhere in the schema is the bare tag and nothing else — exactly\n   \"<Subject 1>\", never \"<Subject 1> — the ape\" or any other appended description. Downstream\n   code matches these by exact tag; anything extra breaks that match silently.\n\nReturn the blocking spec by calling the tool. Write no prose outside it."
+          },
+          {
+            "role": "user",
+            "content": "World: Night on a wet black asphalt starting grid, heavy rain falling through the beams of overhead floodlights and steam drifting low across the ground. Tiered grandstands rise on both sides beyond the barriers, packed with cheering spectators.\nStaging: <Subject 1> is the driver of <Subject 2> and stays inside it. <Subject 3> is the driver of <Subject 4> and stays inside it. <Subject 5> stands on the grid itself and is never in a car. <Subject 6> is a garment worn by <Subject 5>, never an independent figure. The two cars sit side by side on the grid, <Subject 2> on the left of the pair and <Subject 4> on the right.\nGuard: Every character has ordinary skin and is a living figure, not a mannequin and not a chrome statue.\nFilm's overall camera direction: One continuous unbroken take. The camera glides in a single smooth sideways movement down the grid at window height, staying outside the cars at all times and looking in through their open side windows.\nContinuity: This is one single continuous unbroken shot filmed in one take. There are no cuts and no scene changes at any point.\n\nCast with references available (referencePlan order):\n<Subject 1> — A Bored Ape character wearing a neon yellow tracksuit, red heart-shaped sunglasses, yellow hat, and white sneakers. (neon yellow tracksuit, red heart-shaped sunglasses, yellow hat)\n<Subject 2> — a sleek supercar with a camouflage wrap pattern, black tinted windows, and bright yellow wheels (camouflage wrap pattern, bright yellow wheels, black tinted windows)\n<Subject 3> — A pink‑haired figure wearing orange translucent glasses, a green patent leather moto jacket over a red shirt, black cotton‑wool slacks with buckles, and black leather combat boots. (pink buzz-cut hair, orange translucent glasses, green patent leather moto jacket)\n<Subject 4> — a white rounded-silhouette sports car with four round LED headlamps (four circular LED headlamps, shield-shaped badge on hood, black rectangular front bumper with large air intakes)\n<Subject 5> — a stylized bear-like character wearing a green helmet marked '100' and covered in multicolored floral patterns (green helmet with white '100' numerals, white bear-like figure covered in dense multicolored floral motifs, large stylized flowers and insects surrounding the figure)\n<Subject 6> — a deep-red velvet bomber jacket with elaborate silver filigree embroidery displayed on a glossy iridescent mannequin (deep-red velvet fabric, silver metallic embroidery with floral and vine motifs, prominent heart-shaped embroidered panel on chest)\n\nThis beat: The camera glides along the grid and finds <Subject 1> sitting inside <Subject 2> in the driver's seat, both hands on the wheel, seen through the open side window.\n\nThe previous beat's own blocking JSON, for your continuityCheck comparison:\n{\"framing\":\"MWS\",\"cameraAngle\":\"eye-level\",\"cameraMovement\":\"the camera trucks right with medium amplitude at slow speed, gliding at open side-window height outside the car while holding <Subject 2> alone in frame\",\"subjectsInFrame\":[{\"subject\":\"<Subject 2>\",\"screenPosition\":\"center\",\"depth\":\"midground\",\"action\":\"Parked on the wet left-hand starting-grid lane with its front storage compartment raised open; rain beads on the camouflage bodywork and bright yellow wheels while floodlight reflections ripple beneath it.\"}],\"subjectsExcluded\":[\"<Subject 1>\",\"<Subject 3>\",\"<Subject 4>\",\"<Subject 5>\",\"<Subject 6>\"],\"screenDirection\":[{\"subject\":\"<Subject 2>\",\"movement\":\"static\"}],\"continuityCheck\":{\"consistent\":true,\"changes\":[]},\"containmentNotes\":\"<Subject 2> is stationary on the left side of the two-car grid pair. Its front storage compartment is physically open upward at the nose. <Subject 1>, the driver of <Subject 2>, remains inside the car but must not be visible in this opening frame; the camera stays outside the vehicle and does not look through the windshield. No other cast subject enters the frame. <Subject 6> is a garment worn by <Subject 5> and is excluded with <Subject 5>; it must not appear as an independent mannequin or figure.\",\"visualPrompt\":\"Live-action, cinematic, a medium-wide eye-level shot opens a single continuous unbroken nighttime take on <Subject 2> alone, parked on the left-hand lane of a rain-soaked black-asphalt starting grid. The sleek camouflage-wrapped supercar sits in the midground, centered in frame, its bright yellow wheels sharply visible and its front storage compartment raised open at the nose. Heavy rain falls through hard white overhead floodlight beams; water beads across the car, puddles mirror the lights, and low steam drifts across the grid surface. Blurred safety barriers and packed tiered grandstands line both sides in the distant background, with spectators cheering indistinctly. The camera trucks right with medium amplitude at slow speed at the car's open side-window height, remaining outside the vehicle at all times and never revealing the driver. No people, second car, bear-like grid figure, garment, or mannequin are visible.\"}\n\nWrite the blocking spec."
+          }
+        ],
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "emit_blocking",
+              "description": "Return the blocking spec.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "framing": {
+                    "type": "string",
+                    "enum": [
+                      "ECU",
+                      "CU",
+                      "MCU",
+                      "MS",
+                      "MWS",
+                      "WS",
+                      "EWS"
+                    ],
+                    "description": "Shot size."
+                  },
+                  "cameraAngle": {
+                    "type": "string",
+                    "enum": [
+                      "low",
+                      "eye-level",
+                      "high",
+                      "dutch",
+                      "overhead"
+                    ]
+                  },
+                  "cameraMovement": {
+                    "type": "string",
+                    "description": "Natural English, drawn from H3's own vocabulary (motion + amplitude + speed) — never a bracketed label."
+                  },
+                  "subjectsInFrame": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "subject": {
+                          "type": "string",
+                          "description": "Exactly the tag, nothing appended — e.g. \"<Subject 1>\", never \"<Subject 1> — description\"."
+                        },
+                        "screenPosition": {
+                          "type": "string",
+                          "enum": [
+                            "far-left",
+                            "left",
+                            "center-left",
+                            "center",
+                            "center-right",
+                            "right",
+                            "far-right"
+                          ]
+                        },
+                        "depth": {
+                          "type": "string",
+                          "enum": [
+                            "foreground",
+                            "midground",
+                            "background"
+                          ]
+                        },
+                        "action": {
+                          "type": "string",
+                          "description": "What this subject is doing right now, in this frame."
+                        }
+                      },
+                      "required": [
+                        "subject",
+                        "screenPosition",
+                        "depth",
+                        "action"
+                      ]
+                    }
+                  },
+                  "subjectsExcluded": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Subjects with a reference available who must NOT appear in this frame — bare tags only, e.g. \"<Subject 4>\"."
+                  },
+                  "screenDirection": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "subject": {
+                          "type": "string",
+                          "description": "Exactly the tag, e.g. \"<Subject 1>\" — nothing appended."
+                        },
+                        "movement": {
+                          "type": "string",
+                          "enum": [
+                            "left-to-right",
+                            "right-to-left",
+                            "toward-camera",
+                            "away-from-camera",
+                            "static"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "subject",
+                        "movement"
+                      ]
+                    }
+                  },
+                  "continuityCheck": {
+                    "type": "object",
+                    "properties": {
+                      "consistent": {
+                        "type": "boolean"
+                      },
+                      "changes": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "subject": {
+                              "type": "string",
+                              "description": "Exactly the tag, e.g. \"<Subject 1>\" — nothing appended."
+                            },
+                            "from": {
+                              "type": "string"
+                            },
+                            "to": {
+                              "type": "string"
+                            },
+                            "justifiedByBeatText": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "subject",
+                            "from",
+                            "to",
+                            "justifiedByBeatText"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "consistent",
+                      "changes"
+                    ],
+                    "description": "Empty changes array and consistent:true when there is no previous beat, or nothing moved."
+                  },
+                  "containmentNotes": {
+                    "type": "string"
+                  },
+                  "visualPrompt": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "framing",
+                  "cameraAngle",
+                  "cameraMovement",
+                  "subjectsInFrame",
+                  "subjectsExcluded",
+                  "screenDirection",
+                  "continuityCheck",
+                  "containmentNotes",
+                  "visualPrompt"
+                ]
+              }
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "function",
+          "function": {
+            "name": "emit_blocking"
+          }
+        },
+        "temperature": 0.3,
+        "max_completion_tokens": 1500
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 2523,
+        "completionTokens": 843,
+        "reasoningTokens": 0
+      },
+      "latencyMs": 7540,
+      "attempts": 1,
+      "costUsd": 0.015162,
+      "request": {
+        "model": "gpt-5.6-terra",
+        "reasoning_effort": "none",
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are the Storyboarder on a film crew that turns licensed NFT\nartwork into short generated video. Your job is not to describe a pretty picture — it is a\nprecise technical blocking specification for one beat, the kind a cinematographer leaves for\na director, exact enough that a video-render pipeline can follow it without guessing.\n\nMiniMax-H3 expects a structured script, not a paragraph. Emit three fields:\n\n1. integrated_multimodal_description — the visuals, action, camera and diegetic sound,\n   along a timeline. Open with visual style and composition (\"Live-action, cinematic, a\n   medium-wide shot frames...\"). A single shot needs no timestamp; if you genuinely need a\n   second shot, mark it \"[Shot 2] At 00:03.500, the camera cuts to...\".\n2. overall_soundscape — ambient, physical and non-verbal sound. One to four sentences.\n3. non_diegetic_music — score the characters cannot hear. One to three sentences, or \"N/A\".\n\nCamera moves are written as natural English actions, never as bracketed labels. The formula\nis motion + amplitude + speed: \"the camera pushes in with small amplitude at slow speed\".\nAvailable motions: Zoom In/Out, Push In/Out, Pan Left/Right, Truck Left/Right, Tilt Up/Down,\nPedestal Up/Down, Arc Shot, Tracking Shot, Static Shot, Shake Slightly/Strongly, POV, Roll.\n\nEach text field can run to 7000 characters. Length is not a virtue in itself, but this model\nis directed, not hinted at — be specific and complete rather than terse.\n\nRules:\n1. Never place a subject in subjectsInFrame that this beat's own text doesn't put there. If a\n   cast member has a reference available (listed below) but this beat's action doesn't\n   involve them, they go in subjectsExcluded — even though they're referenced elsewhere in\n   the film. An early, unearned reveal is a real error, not a safe default.\n2. cameraMovement is natural English (motion + amplitude + speed), drawn from H3's own\n   vocabulary above — never a bracketed label, never invented terminology H3 doesn't use.\n3. When given the previous beat's own blocking JSON, compare explicitly: report every subject\n   whose screenPosition or depth changed, and say plainly whether this beat's own text\n   justifies that change. An unexplained flip in position is a mistake to report, not\n   something to silently accept or paper over.\n4. containmentNotes says whatever a renderer needs to get physically right — who is inside\n   what, who is holding what, any constraint this beat implies. A person in a vehicle is\n   inside it, not visible through the windshield from an impossible angle.\n5. visualPrompt is a plain-English rendering of everything above, precise enough that an\n   image model could work from it directly later — but you are not drawing anything yourself.\n6. Every \"subject\" field everywhere in the schema is the bare tag and nothing else — exactly\n   \"<Subject 1>\", never \"<Subject 1> — the ape\" or any other appended description. Downstream\n   code matches these by exact tag; anything extra breaks that match silently.\n\nReturn the blocking spec by calling the tool. Write no prose outside it."
+          },
+          {
+            "role": "user",
+            "content": "World: Night on a wet black asphalt starting grid, heavy rain falling through the beams of overhead floodlights and steam drifting low across the ground. Tiered grandstands rise on both sides beyond the barriers, packed with cheering spectators.\nStaging: <Subject 1> is the driver of <Subject 2> and stays inside it. <Subject 3> is the driver of <Subject 4> and stays inside it. <Subject 5> stands on the grid itself and is never in a car. <Subject 6> is a garment worn by <Subject 5>, never an independent figure. The two cars sit side by side on the grid, <Subject 2> on the left of the pair and <Subject 4> on the right.\nGuard: Every character has ordinary skin and is a living figure, not a mannequin and not a chrome statue.\nFilm's overall camera direction: One continuous unbroken take. The camera glides in a single smooth sideways movement down the grid at window height, staying outside the cars at all times and looking in through their open side windows.\nContinuity: This is one single continuous unbroken shot filmed in one take. There are no cuts and no scene changes at any point.\n\nCast with references available (referencePlan order):\n<Subject 1> — A Bored Ape character wearing a neon yellow tracksuit, red heart-shaped sunglasses, yellow hat, and white sneakers. (neon yellow tracksuit, red heart-shaped sunglasses, yellow hat)\n<Subject 2> — a sleek supercar with a camouflage wrap pattern, black tinted windows, and bright yellow wheels (camouflage wrap pattern, bright yellow wheels, black tinted windows)\n<Subject 3> — A pink‑haired figure wearing orange translucent glasses, a green patent leather moto jacket over a red shirt, black cotton‑wool slacks with buckles, and black leather combat boots. (pink buzz-cut hair, orange translucent glasses, green patent leather moto jacket)\n<Subject 4> — a white rounded-silhouette sports car with four round LED headlamps (four circular LED headlamps, shield-shaped badge on hood, black rectangular front bumper with large air intakes)\n<Subject 5> — a stylized bear-like character wearing a green helmet marked '100' and covered in multicolored floral patterns (green helmet with white '100' numerals, white bear-like figure covered in dense multicolored floral motifs, large stylized flowers and insects surrounding the figure)\n<Subject 6> — a deep-red velvet bomber jacket with elaborate silver filigree embroidery displayed on a glossy iridescent mannequin (deep-red velvet fabric, silver metallic embroidery with floral and vine motifs, prominent heart-shaped embroidered panel on chest)\n\nThis beat: Continuing down the grid, the camera reaches <Subject 4>, where <Subject 3> sits inside at the wheel and turns to look straight down the lens.\n\nThe previous beat's own blocking JSON, for your continuityCheck comparison:\n{\"framing\":\"MCU\",\"cameraAngle\":\"eye-level\",\"cameraMovement\":\"the camera trucks right with medium amplitude at slow speed, gliding continuously at the open side-window height outside <Subject 2> and looking inward through the driver-side window\",\"subjectsInFrame\":[{\"subject\":\"<Subject 1>\",\"screenPosition\":\"center-left\",\"depth\":\"midground\",\"action\":\"Sits alive in the driver's seat inside <Subject 2>, wearing the neon yellow tracksuit, yellow hat, and red heart-shaped sunglasses; both hands grip the steering wheel as rain-lit reflections flicker across the open side window.\"},{\"subject\":\"<Subject 2>\",\"screenPosition\":\"center\",\"depth\":\"midground\",\"action\":\"Remains stationary on the wet left-hand starting-grid lane; its camouflage-wrapped driver-side body, open side window, and bright yellow wheel edge frame the driver while rain beads on the exterior.\"}],\"subjectsExcluded\":[\"<Subject 3>\",\"<Subject 4>\",\"<Subject 5>\",\"<Subject 6>\"],\"screenDirection\":[{\"subject\":\"<Subject 1>\",\"movement\":\"static\"},{\"subject\":\"<Subject 2>\",\"movement\":\"static\"}],\"continuityCheck\":{\"consistent\":true,\"changes\":[{\"subject\":\"<Subject 2>\",\"from\":\"center, midground\",\"to\":\"center, midground\",\"justifiedByBeatText\":true},{\"subject\":\"<Subject 1>\",\"from\":\"excluded/not visible inside <Subject 2>\",\"to\":\"center-left, midground, visible through the open side window\",\"justifiedByBeatText\":true}]},\"containmentNotes\":\"<Subject 1> is physically inside <Subject 2> in its driver's seat, with both hands on the steering wheel; <Subject 1> is not outside the vehicle. <Subject 2> remains stationary on the left side of the side-by-side grid pair. The camera remains outside <Subject 2> throughout and sees <Subject 1> only through the open driver-side window, never through the windshield. The previously raised front storage compartment remains open but is outside this tighter window-height framing. <Subject 3> stays inside <Subject 4>, but neither is visible. <Subject 5> remains offscreen on the grid; <Subject 6> is worn by <Subject 5>, not an independent figure, and neither appears.\",\"visualPrompt\":\"Live-action, cinematic, a medium-close eye-level shot continues the same unbroken nighttime take on a wet black-asphalt starting grid. The camera glides sideways to the right at slow speed, outside <Subject 2> at its open driver-side window height, and looks directly into the cabin. <Subject 1>, a living ordinary-skinned Bored Ape driver in a neon yellow tracksuit, yellow hat, red heart-shaped sunglasses, and white sneakers, sits in the driver's seat with both hands firmly on the steering wheel. The camouflage-wrapped exterior of <Subject 2> fills the midground around the open window, with a bright yellow wheel edge visible below; the car is stationary in the left lane of the two-car grid pair. Heavy rain streaks through overhead floodlight beams, water beads on the car, puddles reflect white light, and low steam slides across the ground. Safety barriers and packed cheering grandstands remain blurred beyond the grid. Keep <Subject 3>, <Subject 4>, <Subject 5>, and <Subject 6> completely out of frame; no cuts, no scene change, and no camera entry into either car.\"}\n\nWrite the blocking spec."
+          }
+        ],
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "emit_blocking",
+              "description": "Return the blocking spec.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "framing": {
+                    "type": "string",
+                    "enum": [
+                      "ECU",
+                      "CU",
+                      "MCU",
+                      "MS",
+                      "MWS",
+                      "WS",
+                      "EWS"
+                    ],
+                    "description": "Shot size."
+                  },
+                  "cameraAngle": {
+                    "type": "string",
+                    "enum": [
+                      "low",
+                      "eye-level",
+                      "high",
+                      "dutch",
+                      "overhead"
+                    ]
+                  },
+                  "cameraMovement": {
+                    "type": "string",
+                    "description": "Natural English, drawn from H3's own vocabulary (motion + amplitude + speed) — never a bracketed label."
+                  },
+                  "subjectsInFrame": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "subject": {
+                          "type": "string",
+                          "description": "Exactly the tag, nothing appended — e.g. \"<Subject 1>\", never \"<Subject 1> — description\"."
+                        },
+                        "screenPosition": {
+                          "type": "string",
+                          "enum": [
+                            "far-left",
+                            "left",
+                            "center-left",
+                            "center",
+                            "center-right",
+                            "right",
+                            "far-right"
+                          ]
+                        },
+                        "depth": {
+                          "type": "string",
+                          "enum": [
+                            "foreground",
+                            "midground",
+                            "background"
+                          ]
+                        },
+                        "action": {
+                          "type": "string",
+                          "description": "What this subject is doing right now, in this frame."
+                        }
+                      },
+                      "required": [
+                        "subject",
+                        "screenPosition",
+                        "depth",
+                        "action"
+                      ]
+                    }
+                  },
+                  "subjectsExcluded": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Subjects with a reference available who must NOT appear in this frame — bare tags only, e.g. \"<Subject 4>\"."
+                  },
+                  "screenDirection": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "subject": {
+                          "type": "string",
+                          "description": "Exactly the tag, e.g. \"<Subject 1>\" — nothing appended."
+                        },
+                        "movement": {
+                          "type": "string",
+                          "enum": [
+                            "left-to-right",
+                            "right-to-left",
+                            "toward-camera",
+                            "away-from-camera",
+                            "static"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "subject",
+                        "movement"
+                      ]
+                    }
+                  },
+                  "continuityCheck": {
+                    "type": "object",
+                    "properties": {
+                      "consistent": {
+                        "type": "boolean"
+                      },
+                      "changes": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "subject": {
+                              "type": "string",
+                              "description": "Exactly the tag, e.g. \"<Subject 1>\" — nothing appended."
+                            },
+                            "from": {
+                              "type": "string"
+                            },
+                            "to": {
+                              "type": "string"
+                            },
+                            "justifiedByBeatText": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "subject",
+                            "from",
+                            "to",
+                            "justifiedByBeatText"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "consistent",
+                      "changes"
+                    ],
+                    "description": "Empty changes array and consistent:true when there is no previous beat, or nothing moved."
+                  },
+                  "containmentNotes": {
+                    "type": "string"
+                  },
+                  "visualPrompt": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "framing",
+                  "cameraAngle",
+                  "cameraMovement",
+                  "subjectsInFrame",
+                  "subjectsExcluded",
+                  "screenDirection",
+                  "continuityCheck",
+                  "containmentNotes",
+                  "visualPrompt"
+                ]
+              }
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "function",
+          "function": {
+            "name": "emit_blocking"
+          }
+        },
+        "temperature": 0.3,
+        "max_completion_tokens": 1500
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 2622,
+        "completionTokens": 1113,
+        "reasoningTokens": 0
+      },
+      "latencyMs": 9577,
+      "attempts": 1,
+      "costUsd": 0.0186,
+      "request": {
+        "model": "gpt-5.6-terra",
+        "reasoning_effort": "none",
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are the Storyboarder on a film crew that turns licensed NFT\nartwork into short generated video. Your job is not to describe a pretty picture — it is a\nprecise technical blocking specification for one beat, the kind a cinematographer leaves for\na director, exact enough that a video-render pipeline can follow it without guessing.\n\nMiniMax-H3 expects a structured script, not a paragraph. Emit three fields:\n\n1. integrated_multimodal_description — the visuals, action, camera and diegetic sound,\n   along a timeline. Open with visual style and composition (\"Live-action, cinematic, a\n   medium-wide shot frames...\"). A single shot needs no timestamp; if you genuinely need a\n   second shot, mark it \"[Shot 2] At 00:03.500, the camera cuts to...\".\n2. overall_soundscape — ambient, physical and non-verbal sound. One to four sentences.\n3. non_diegetic_music — score the characters cannot hear. One to three sentences, or \"N/A\".\n\nCamera moves are written as natural English actions, never as bracketed labels. The formula\nis motion + amplitude + speed: \"the camera pushes in with small amplitude at slow speed\".\nAvailable motions: Zoom In/Out, Push In/Out, Pan Left/Right, Truck Left/Right, Tilt Up/Down,\nPedestal Up/Down, Arc Shot, Tracking Shot, Static Shot, Shake Slightly/Strongly, POV, Roll.\n\nEach text field can run to 7000 characters. Length is not a virtue in itself, but this model\nis directed, not hinted at — be specific and complete rather than terse.\n\nRules:\n1. Never place a subject in subjectsInFrame that this beat's own text doesn't put there. If a\n   cast member has a reference available (listed below) but this beat's action doesn't\n   involve them, they go in subjectsExcluded — even though they're referenced elsewhere in\n   the film. An early, unearned reveal is a real error, not a safe default.\n2. cameraMovement is natural English (motion + amplitude + speed), drawn from H3's own\n   vocabulary above — never a bracketed label, never invented terminology H3 doesn't use.\n3. When given the previous beat's own blocking JSON, compare explicitly: report every subject\n   whose screenPosition or depth changed, and say plainly whether this beat's own text\n   justifies that change. An unexplained flip in position is a mistake to report, not\n   something to silently accept or paper over.\n4. containmentNotes says whatever a renderer needs to get physically right — who is inside\n   what, who is holding what, any constraint this beat implies. A person in a vehicle is\n   inside it, not visible through the windshield from an impossible angle.\n5. visualPrompt is a plain-English rendering of everything above, precise enough that an\n   image model could work from it directly later — but you are not drawing anything yourself.\n6. Every \"subject\" field everywhere in the schema is the bare tag and nothing else — exactly\n   \"<Subject 1>\", never \"<Subject 1> — the ape\" or any other appended description. Downstream\n   code matches these by exact tag; anything extra breaks that match silently.\n\nReturn the blocking spec by calling the tool. Write no prose outside it."
+          },
+          {
+            "role": "user",
+            "content": "World: Night on a wet black asphalt starting grid, heavy rain falling through the beams of overhead floodlights and steam drifting low across the ground. Tiered grandstands rise on both sides beyond the barriers, packed with cheering spectators.\nStaging: <Subject 1> is the driver of <Subject 2> and stays inside it. <Subject 3> is the driver of <Subject 4> and stays inside it. <Subject 5> stands on the grid itself and is never in a car. <Subject 6> is a garment worn by <Subject 5>, never an independent figure. The two cars sit side by side on the grid, <Subject 2> on the left of the pair and <Subject 4> on the right.\nGuard: Every character has ordinary skin and is a living figure, not a mannequin and not a chrome statue.\nFilm's overall camera direction: One continuous unbroken take. The camera glides in a single smooth sideways movement down the grid at window height, staying outside the cars at all times and looking in through their open side windows.\nContinuity: This is one single continuous unbroken shot filmed in one take. There are no cuts and no scene changes at any point.\n\nCast with references available (referencePlan order):\n<Subject 1> — A Bored Ape character wearing a neon yellow tracksuit, red heart-shaped sunglasses, yellow hat, and white sneakers. (neon yellow tracksuit, red heart-shaped sunglasses, yellow hat)\n<Subject 2> — a sleek supercar with a camouflage wrap pattern, black tinted windows, and bright yellow wheels (camouflage wrap pattern, bright yellow wheels, black tinted windows)\n<Subject 3> — A pink‑haired figure wearing orange translucent glasses, a green patent leather moto jacket over a red shirt, black cotton‑wool slacks with buckles, and black leather combat boots. (pink buzz-cut hair, orange translucent glasses, green patent leather moto jacket)\n<Subject 4> — a white rounded-silhouette sports car with four round LED headlamps (four circular LED headlamps, shield-shaped badge on hood, black rectangular front bumper with large air intakes)\n<Subject 5> — a stylized bear-like character wearing a green helmet marked '100' and covered in multicolored floral patterns (green helmet with white '100' numerals, white bear-like figure covered in dense multicolored floral motifs, large stylized flowers and insects surrounding the figure)\n<Subject 6> — a deep-red velvet bomber jacket with elaborate silver filigree embroidery displayed on a glossy iridescent mannequin (deep-red velvet fabric, silver metallic embroidery with floral and vine motifs, prominent heart-shaped embroidered panel on chest)\n\nThis beat: <Subject 5>, wearing <Subject 6>, stands alone at the front of the grid with one arm raised, both cars waiting behind.\n\nThe previous beat's own blocking JSON, for your continuityCheck comparison:\n{\"framing\":\"MCU\",\"cameraAngle\":\"eye-level\",\"cameraMovement\":\"the camera trucks right with medium amplitude at slow speed, continuing the single smooth window-height glide outside the cars and settling alongside the open driver-side window of <Subject 4>\",\"subjectsInFrame\":[{\"subject\":\"<Subject 3>\",\"screenPosition\":\"center\",\"depth\":\"midground\",\"action\":\"Sits alive inside <Subject 4> in the driver's seat, hands at the steering wheel; the pink-haired driver turns their head toward the exterior camera and looks straight into the lens through the open side window, orange translucent glasses catching floodlight reflections.\"},{\"subject\":\"<Subject 4>\",\"screenPosition\":\"center\",\"depth\":\"midground\",\"action\":\"Remains stationary in the right-hand lane of the side-by-side starting-grid pair; its white rounded driver-side body and open side window frame the driver as rain beads across the exterior.\"}],\"subjectsExcluded\":[\"<Subject 1>\",\"<Subject 2>\",\"<Subject 5>\",\"<Subject 6>\"],\"screenDirection\":[{\"subject\":\"<Subject 3>\",\"movement\":\"static\"},{\"subject\":\"<Subject 4>\",\"movement\":\"static\"}],\"continuityCheck\":{\"consistent\":true,\"changes\":[{\"subject\":\"<Subject 1>\",\"from\":\"center-left, midground, visible inside <Subject 2>\",\"to\":\"excluded/not visible\",\"justifiedByBeatText\":true},{\"subject\":\"<Subject 2>\",\"from\":\"center, midground, visible\",\"to\":\"excluded/not visible\",\"justifiedByBeatText\":true},{\"subject\":\"<Subject 3>\",\"from\":\"excluded/not visible inside <Subject 4>\",\"to\":\"center, midground, visible through the open side window\",\"justifiedByBeatText\":true},{\"subject\":\"<Subject 4>\",\"from\":\"excluded/not visible\",\"to\":\"center, midground, visible\",\"justifiedByBeatText\":true}]},\"containmentNotes\":\"<Subject 3> is physically inside <Subject 4> in the driver's seat and remains there, with hands on its steering wheel; <Subject 3> is never outside the car. <Subject 4> is stationary on the right side of the two-car grid pair. The camera stays outside both cars at all times and observes <Subject 3> only through <Subject 4>'s open driver-side window, never through a windshield. <Subject 1> remains inside stationary <Subject 2> offscreen to the left; neither is visible in this framing. <Subject 5> remains offscreen on the grid, and <Subject 6> is worn by <Subject 5>, not an independent figure; neither appears.\",\"visualPrompt\":\"Live-action, cinematic, a medium-close eye-level shot continues one continuous unbroken nighttime take on a rain-soaked black-asphalt starting grid. The camera trucks right with medium amplitude at slow speed, gliding at open side-window height outside the cars and arriving beside the open driver-side window of <Subject 4>, never entering either vehicle. <Subject 4>, a stationary white rounded-silhouette sports car in the right-hand lane of the side-by-side grid pair, fills the midground around its open window; rain beads on its white bodywork and floodlight reflections ripple across the wet paint. Inside, <Subject 3> is a living ordinary-skinned driver with pink buzz-cut hair, orange translucent glasses, a green patent-leather moto jacket over a red shirt, black buckled slacks, and black combat boots. Seated at the wheel, <Subject 3> turns to face outward and looks directly into the lens, the glasses reflecting the overhead floodlights. Heavy rain falls visibly through the floodlight beams, low steam drifts across puddled asphalt, and blurred barriers with packed cheering grandstands rise on both sides. Keep <Subject 1>, <Subject 2>, <Subject 5>, and <Subject 6> entirely out of frame. No cut, no scene change, and no impossible windshield view.\"}\n\nWrite the blocking spec."
+          }
+        ],
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "emit_blocking",
+              "description": "Return the blocking spec.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "framing": {
+                    "type": "string",
+                    "enum": [
+                      "ECU",
+                      "CU",
+                      "MCU",
+                      "MS",
+                      "MWS",
+                      "WS",
+                      "EWS"
+                    ],
+                    "description": "Shot size."
+                  },
+                  "cameraAngle": {
+                    "type": "string",
+                    "enum": [
+                      "low",
+                      "eye-level",
+                      "high",
+                      "dutch",
+                      "overhead"
+                    ]
+                  },
+                  "cameraMovement": {
+                    "type": "string",
+                    "description": "Natural English, drawn from H3's own vocabulary (motion + amplitude + speed) — never a bracketed label."
+                  },
+                  "subjectsInFrame": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "subject": {
+                          "type": "string",
+                          "description": "Exactly the tag, nothing appended — e.g. \"<Subject 1>\", never \"<Subject 1> — description\"."
+                        },
+                        "screenPosition": {
+                          "type": "string",
+                          "enum": [
+                            "far-left",
+                            "left",
+                            "center-left",
+                            "center",
+                            "center-right",
+                            "right",
+                            "far-right"
+                          ]
+                        },
+                        "depth": {
+                          "type": "string",
+                          "enum": [
+                            "foreground",
+                            "midground",
+                            "background"
+                          ]
+                        },
+                        "action": {
+                          "type": "string",
+                          "description": "What this subject is doing right now, in this frame."
+                        }
+                      },
+                      "required": [
+                        "subject",
+                        "screenPosition",
+                        "depth",
+                        "action"
+                      ]
+                    }
+                  },
+                  "subjectsExcluded": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Subjects with a reference available who must NOT appear in this frame — bare tags only, e.g. \"<Subject 4>\"."
+                  },
+                  "screenDirection": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "subject": {
+                          "type": "string",
+                          "description": "Exactly the tag, e.g. \"<Subject 1>\" — nothing appended."
+                        },
+                        "movement": {
+                          "type": "string",
+                          "enum": [
+                            "left-to-right",
+                            "right-to-left",
+                            "toward-camera",
+                            "away-from-camera",
+                            "static"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "subject",
+                        "movement"
+                      ]
+                    }
+                  },
+                  "continuityCheck": {
+                    "type": "object",
+                    "properties": {
+                      "consistent": {
+                        "type": "boolean"
+                      },
+                      "changes": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "subject": {
+                              "type": "string",
+                              "description": "Exactly the tag, e.g. \"<Subject 1>\" — nothing appended."
+                            },
+                            "from": {
+                              "type": "string"
+                            },
+                            "to": {
+                              "type": "string"
+                            },
+                            "justifiedByBeatText": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "subject",
+                            "from",
+                            "to",
+                            "justifiedByBeatText"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "consistent",
+                      "changes"
+                    ],
+                    "description": "Empty changes array and consistent:true when there is no previous beat, or nothing moved."
+                  },
+                  "containmentNotes": {
+                    "type": "string"
+                  },
+                  "visualPrompt": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "framing",
+                  "cameraAngle",
+                  "cameraMovement",
+                  "subjectsInFrame",
+                  "subjectsExcluded",
+                  "screenDirection",
+                  "continuityCheck",
+                  "containmentNotes",
+                  "visualPrompt"
+                ]
+              }
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "function",
+          "function": {
+            "name": "emit_blocking"
+          }
+        },
+        "temperature": 0.3,
+        "max_completion_tokens": 1500
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 2889,
+        "completionTokens": 1071,
+        "reasoningTokens": 0
+      },
+      "latencyMs": 9533,
+      "attempts": 1,
+      "costUsd": 0.01863,
+      "request": {
+        "model": "gpt-5.6-terra",
+        "reasoning_effort": "none",
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are the Storyboarder on a film crew that turns licensed NFT\nartwork into short generated video. Your job is not to describe a pretty picture — it is a\nprecise technical blocking specification for one beat, the kind a cinematographer leaves for\na director, exact enough that a video-render pipeline can follow it without guessing.\n\nMiniMax-H3 expects a structured script, not a paragraph. Emit three fields:\n\n1. integrated_multimodal_description — the visuals, action, camera and diegetic sound,\n   along a timeline. Open with visual style and composition (\"Live-action, cinematic, a\n   medium-wide shot frames...\"). A single shot needs no timestamp; if you genuinely need a\n   second shot, mark it \"[Shot 2] At 00:03.500, the camera cuts to...\".\n2. overall_soundscape — ambient, physical and non-verbal sound. One to four sentences.\n3. non_diegetic_music — score the characters cannot hear. One to three sentences, or \"N/A\".\n\nCamera moves are written as natural English actions, never as bracketed labels. The formula\nis motion + amplitude + speed: \"the camera pushes in with small amplitude at slow speed\".\nAvailable motions: Zoom In/Out, Push In/Out, Pan Left/Right, Truck Left/Right, Tilt Up/Down,\nPedestal Up/Down, Arc Shot, Tracking Shot, Static Shot, Shake Slightly/Strongly, POV, Roll.\n\nEach text field can run to 7000 characters. Length is not a virtue in itself, but this model\nis directed, not hinted at — be specific and complete rather than terse.\n\nRules:\n1. Never place a subject in subjectsInFrame that this beat's own text doesn't put there. If a\n   cast member has a reference available (listed below) but this beat's action doesn't\n   involve them, they go in subjectsExcluded — even though they're referenced elsewhere in\n   the film. An early, unearned reveal is a real error, not a safe default.\n2. cameraMovement is natural English (motion + amplitude + speed), drawn from H3's own\n   vocabulary above — never a bracketed label, never invented terminology H3 doesn't use.\n3. When given the previous beat's own blocking JSON, compare explicitly: report every subject\n   whose screenPosition or depth changed, and say plainly whether this beat's own text\n   justifies that change. An unexplained flip in position is a mistake to report, not\n   something to silently accept or paper over.\n4. containmentNotes says whatever a renderer needs to get physically right — who is inside\n   what, who is holding what, any constraint this beat implies. A person in a vehicle is\n   inside it, not visible through the windshield from an impossible angle.\n5. visualPrompt is a plain-English rendering of everything above, precise enough that an\n   image model could work from it directly later — but you are not drawing anything yourself.\n6. Every \"subject\" field everywhere in the schema is the bare tag and nothing else — exactly\n   \"<Subject 1>\", never \"<Subject 1> — the ape\" or any other appended description. Downstream\n   code matches these by exact tag; anything extra breaks that match silently.\n\nReturn the blocking spec by calling the tool. Write no prose outside it."
+          },
+          {
+            "role": "user",
+            "content": "World: Night on a wet black asphalt starting grid, heavy rain falling through the beams of overhead floodlights and steam drifting low across the ground. Tiered grandstands rise on both sides beyond the barriers, packed with cheering spectators.\nStaging: <Subject 1> is the driver of <Subject 2> and stays inside it. <Subject 3> is the driver of <Subject 4> and stays inside it. <Subject 5> stands on the grid itself and is never in a car. <Subject 6> is a garment worn by <Subject 5>, never an independent figure. The two cars sit side by side on the grid, <Subject 2> on the left of the pair and <Subject 4> on the right.\nGuard: Every character has ordinary skin and is a living figure, not a mannequin and not a chrome statue.\nFilm's overall camera direction: One continuous unbroken take. The camera glides in a single smooth sideways movement down the grid at window height, staying outside the cars at all times and looking in through their open side windows.\nContinuity: This is one single continuous unbroken shot filmed in one take. There are no cuts and no scene changes at any point.\n\nCast with references available (referencePlan order):\n<Subject 1> — A Bored Ape character wearing a neon yellow tracksuit, red heart-shaped sunglasses, yellow hat, and white sneakers. (neon yellow tracksuit, red heart-shaped sunglasses, yellow hat)\n<Subject 2> — a sleek supercar with a camouflage wrap pattern, black tinted windows, and bright yellow wheels (camouflage wrap pattern, bright yellow wheels, black tinted windows)\n<Subject 3> — A pink‑haired figure wearing orange translucent glasses, a green patent leather moto jacket over a red shirt, black cotton‑wool slacks with buckles, and black leather combat boots. (pink buzz-cut hair, orange translucent glasses, green patent leather moto jacket)\n<Subject 4> — a white rounded-silhouette sports car with four round LED headlamps (four circular LED headlamps, shield-shaped badge on hood, black rectangular front bumper with large air intakes)\n<Subject 5> — a stylized bear-like character wearing a green helmet marked '100' and covered in multicolored floral patterns (green helmet with white '100' numerals, white bear-like figure covered in dense multicolored floral motifs, large stylized flowers and insects surrounding the figure)\n<Subject 6> — a deep-red velvet bomber jacket with elaborate silver filigree embroidery displayed on a glossy iridescent mannequin (deep-red velvet fabric, silver metallic embroidery with floral and vine motifs, prominent heart-shaped embroidered panel on chest)\n\nThis beat: The arm drops and both <Subject 2> and <Subject 4> launch forward off the line together, throwing spray.\n\nThe previous beat's own blocking JSON, for your continuityCheck comparison:\n{\"framing\":\"MWS\",\"cameraAngle\":\"eye-level\",\"cameraMovement\":\"the camera trucks right with medium amplitude at slow speed, continuing the single smooth window-height glide outside the stationary cars and carrying past <Subject 4> toward the front of the grid\",\"subjectsInFrame\":[{\"subject\":\"<Subject 5>\",\"screenPosition\":\"center-right\",\"depth\":\"foreground\",\"action\":\"Stands alone on the wet grid at the front of the two waiting cars, alive with ordinary skin beneath the stylized bear-like appearance; wearing <Subject 6> over the floral-patterned body and green helmet marked “100,” raises one arm straight upward as a start signal.\"},{\"subject\":\"<Subject 6>\",\"screenPosition\":\"center-right\",\"depth\":\"foreground\",\"action\":\"Is visibly worn on <Subject 5>'s torso as a deep-red velvet bomber jacket with silver filigree embroidery; it is clothing, not an independent figure.\"},{\"subject\":\"<Subject 2>\",\"screenPosition\":\"left\",\"depth\":\"midground\",\"action\":\"Waits stationary behind <Subject 5> in the left lane of the side-by-side starting-grid pair, camouflage wrap and bright yellow wheels wet with rain; its driver remains inside and is not visible from this exterior angle.\"},{\"subject\":\"<Subject 4>\",\"screenPosition\":\"right\",\"depth\":\"midground\",\"action\":\"Waits stationary behind <Subject 5> in the right lane of the side-by-side starting-grid pair, its white rounded body and four circular LED headlamps facing forward through rain and low steam; its driver remains inside and is not visible from this exterior angle.\"}],\"subjectsExcluded\":[\"<Subject 1>\",\"<Subject 3>\"],\"screenDirection\":[{\"subject\":\"<Subject 5>\",\"movement\":\"static\"},{\"subject\":\"<Subject 6>\",\"movement\":\"static\"},{\"subject\":\"<Subject 2>\",\"movement\":\"static\"},{\"subject\":\"<Subject 4>\",\"movement\":\"static\"}],\"continuityCheck\":{\"consistent\":true,\"changes\":[{\"subject\":\"<Subject 3>\",\"from\":\"center, midground, visible inside <Subject 4> through its open driver-side window\",\"to\":\"excluded/not visible, still inside <Subject 4>\",\"justifiedByBeatText\":true},{\"subject\":\"<Subject 4>\",\"from\":\"center, midground, close alongside its open driver-side window\",\"to\":\"right, midground, seen from outside behind <Subject 5>\",\"justifiedByBeatText\":true},{\"subject\":\"<Subject 5>\",\"from\":\"excluded/not visible\",\"to\":\"center-right, foreground, visible standing at the front of the grid\",\"justifiedByBeatText\":true},{\"subject\":\"<Subject 6>\",\"from\":\"excluded/not visible\",\"to\":\"center-right, foreground, visible only as clothing worn by <Subject 5>\",\"justifiedByBeatText\":true},{\"subject\":\"<Subject 2>\",\"from\":\"excluded/not visible\",\"to\":\"left, midground, visible waiting behind <Subject 5>\",\"justifiedByBeatText\":true}]},\"containmentNotes\":\"<Subject 5> stands on the grid surface ahead of both cars and is never inside a vehicle. <Subject 6> is physically worn by <Subject 5> and must never appear as a separate mannequin, figure, or object. <Subject 1> remains physically inside stationary <Subject 2>; <Subject 3> remains physically inside stationary <Subject 4>; neither driver is visible in this beat. <Subject 2> stays on the left and <Subject 4> stays on the right of the side-by-side pair, both behind <Subject 5>. The camera remains outside both cars throughout the same unbroken take; no cuts, no scene changes, no windshield viewpoint, and no vehicle movement.\",\"visualPrompt\":\"Live-action, cinematic, a medium-wide eye-level shot continues the same single unbroken nighttime take on a wet black-asphalt starting grid. The camera trucks right with medium amplitude at slow speed, maintaining a smooth sideways glide at window height outside the stationary cars and moving beyond the right-hand car toward the front of the grid. In the foreground at center-right, <Subject 5> stands alone on rain-slick asphalt ahead of the cars, a living ordinary-skinned stylized bear-like character wearing a green helmet with white “100” numerals and dense multicolored floral motifs. <Subject 5> wears <Subject 6>, a deep-red velvet bomber jacket with elaborate silver floral-and-vine filigree embroidery and a heart-shaped embroidered chest panel, and raises one arm straight upward as a start signal. The jacket is clearly worn clothing, never a separate figure. Behind the signaler, <Subject 2> waits stationary in the left lane, a camouflage-wrapped sleek supercar with bright yellow wheels, while <Subject 4> waits stationary in the right lane, a white rounded-silhouette sports car with four circular LED headlamps. Both drivers remain inside their respective cars but are not visible. Heavy rain streaks through overhead floodlight beams, steam drifts low across puddled ground, and packed cheering grandstands rise beyond barriers on both sides. Keep <Subject 1> and <Subject 3> entirely out of frame. No cut, no scene change, no vehicle movement, and the camera never enters either car.\"}\n\nWrite the blocking spec."
+          }
+        ],
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "emit_blocking",
+              "description": "Return the blocking spec.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "framing": {
+                    "type": "string",
+                    "enum": [
+                      "ECU",
+                      "CU",
+                      "MCU",
+                      "MS",
+                      "MWS",
+                      "WS",
+                      "EWS"
+                    ],
+                    "description": "Shot size."
+                  },
+                  "cameraAngle": {
+                    "type": "string",
+                    "enum": [
+                      "low",
+                      "eye-level",
+                      "high",
+                      "dutch",
+                      "overhead"
+                    ]
+                  },
+                  "cameraMovement": {
+                    "type": "string",
+                    "description": "Natural English, drawn from H3's own vocabulary (motion + amplitude + speed) — never a bracketed label."
+                  },
+                  "subjectsInFrame": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "subject": {
+                          "type": "string",
+                          "description": "Exactly the tag, nothing appended — e.g. \"<Subject 1>\", never \"<Subject 1> — description\"."
+                        },
+                        "screenPosition": {
+                          "type": "string",
+                          "enum": [
+                            "far-left",
+                            "left",
+                            "center-left",
+                            "center",
+                            "center-right",
+                            "right",
+                            "far-right"
+                          ]
+                        },
+                        "depth": {
+                          "type": "string",
+                          "enum": [
+                            "foreground",
+                            "midground",
+                            "background"
+                          ]
+                        },
+                        "action": {
+                          "type": "string",
+                          "description": "What this subject is doing right now, in this frame."
+                        }
+                      },
+                      "required": [
+                        "subject",
+                        "screenPosition",
+                        "depth",
+                        "action"
+                      ]
+                    }
+                  },
+                  "subjectsExcluded": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Subjects with a reference available who must NOT appear in this frame — bare tags only, e.g. \"<Subject 4>\"."
+                  },
+                  "screenDirection": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "subject": {
+                          "type": "string",
+                          "description": "Exactly the tag, e.g. \"<Subject 1>\" — nothing appended."
+                        },
+                        "movement": {
+                          "type": "string",
+                          "enum": [
+                            "left-to-right",
+                            "right-to-left",
+                            "toward-camera",
+                            "away-from-camera",
+                            "static"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "subject",
+                        "movement"
+                      ]
+                    }
+                  },
+                  "continuityCheck": {
+                    "type": "object",
+                    "properties": {
+                      "consistent": {
+                        "type": "boolean"
+                      },
+                      "changes": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "subject": {
+                              "type": "string",
+                              "description": "Exactly the tag, e.g. \"<Subject 1>\" — nothing appended."
+                            },
+                            "from": {
+                              "type": "string"
+                            },
+                            "to": {
+                              "type": "string"
+                            },
+                            "justifiedByBeatText": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "subject",
+                            "from",
+                            "to",
+                            "justifiedByBeatText"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "consistent",
+                      "changes"
+                    ],
+                    "description": "Empty changes array and consistent:true when there is no previous beat, or nothing moved."
+                  },
+                  "containmentNotes": {
+                    "type": "string"
+                  },
+                  "visualPrompt": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "framing",
+                  "cameraAngle",
+                  "cameraMovement",
+                  "subjectsInFrame",
+                  "subjectsExcluded",
+                  "screenDirection",
+                  "continuityCheck",
+                  "containmentNotes",
+                  "visualPrompt"
+                ]
+              }
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "function",
+          "function": {
+            "name": "emit_blocking"
+          }
+        },
+        "temperature": 0.3,
+        "max_completion_tokens": 1500
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 2845,
+        "completionTokens": 1021,
+        "reasoningTokens": 0
+      },
+      "latencyMs": 9520,
+      "attempts": 1,
+      "costUsd": 0.017942,
+      "request": {
+        "model": "gpt-5.6-terra",
+        "reasoning_effort": "none",
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are the Storyboarder on a film crew that turns licensed NFT\nartwork into short generated video. Your job is not to describe a pretty picture — it is a\nprecise technical blocking specification for one beat, the kind a cinematographer leaves for\na director, exact enough that a video-render pipeline can follow it without guessing.\n\nMiniMax-H3 expects a structured script, not a paragraph. Emit three fields:\n\n1. integrated_multimodal_description — the visuals, action, camera and diegetic sound,\n   along a timeline. Open with visual style and composition (\"Live-action, cinematic, a\n   medium-wide shot frames...\"). A single shot needs no timestamp; if you genuinely need a\n   second shot, mark it \"[Shot 2] At 00:03.500, the camera cuts to...\".\n2. overall_soundscape — ambient, physical and non-verbal sound. One to four sentences.\n3. non_diegetic_music — score the characters cannot hear. One to three sentences, or \"N/A\".\n\nCamera moves are written as natural English actions, never as bracketed labels. The formula\nis motion + amplitude + speed: \"the camera pushes in with small amplitude at slow speed\".\nAvailable motions: Zoom In/Out, Push In/Out, Pan Left/Right, Truck Left/Right, Tilt Up/Down,\nPedestal Up/Down, Arc Shot, Tracking Shot, Static Shot, Shake Slightly/Strongly, POV, Roll.\n\nEach text field can run to 7000 characters. Length is not a virtue in itself, but this model\nis directed, not hinted at — be specific and complete rather than terse.\n\nRules:\n1. Never place a subject in subjectsInFrame that this beat's own text doesn't put there. If a\n   cast member has a reference available (listed below) but this beat's action doesn't\n   involve them, they go in subjectsExcluded — even though they're referenced elsewhere in\n   the film. An early, unearned reveal is a real error, not a safe default.\n2. cameraMovement is natural English (motion + amplitude + speed), drawn from H3's own\n   vocabulary above — never a bracketed label, never invented terminology H3 doesn't use.\n3. When given the previous beat's own blocking JSON, compare explicitly: report every subject\n   whose screenPosition or depth changed, and say plainly whether this beat's own text\n   justifies that change. An unexplained flip in position is a mistake to report, not\n   something to silently accept or paper over.\n4. containmentNotes says whatever a renderer needs to get physically right — who is inside\n   what, who is holding what, any constraint this beat implies. A person in a vehicle is\n   inside it, not visible through the windshield from an impossible angle.\n5. visualPrompt is a plain-English rendering of everything above, precise enough that an\n   image model could work from it directly later — but you are not drawing anything yourself.\n6. Every \"subject\" field everywhere in the schema is the bare tag and nothing else — exactly\n   \"<Subject 1>\", never \"<Subject 1> — the ape\" or any other appended description. Downstream\n   code matches these by exact tag; anything extra breaks that match silently.\n\nReturn the blocking spec by calling the tool. Write no prose outside it."
+          },
+          {
+            "role": "user",
+            "content": "World: Night on a wet black asphalt starting grid, heavy rain falling through the beams of overhead floodlights and steam drifting low across the ground. Tiered grandstands rise on both sides beyond the barriers, packed with cheering spectators.\nStaging: <Subject 1> is the driver of <Subject 2> and stays inside it. <Subject 3> is the driver of <Subject 4> and stays inside it. <Subject 5> stands on the grid itself and is never in a car. <Subject 6> is a garment worn by <Subject 5>, never an independent figure. The two cars sit side by side on the grid, <Subject 2> on the left of the pair and <Subject 4> on the right.\nGuard: Every character has ordinary skin and is a living figure, not a mannequin and not a chrome statue.\nFilm's overall camera direction: One continuous unbroken take. The camera glides in a single smooth sideways movement down the grid at window height, staying outside the cars at all times and looking in through their open side windows.\nContinuity: This is one single continuous unbroken shot filmed in one take. There are no cuts and no scene changes at any point.\n\nCast with references available (referencePlan order):\n<Subject 1> — A Bored Ape character wearing a neon yellow tracksuit, red heart-shaped sunglasses, yellow hat, and white sneakers. (neon yellow tracksuit, red heart-shaped sunglasses, yellow hat)\n<Subject 2> — a sleek supercar with a camouflage wrap pattern, black tinted windows, and bright yellow wheels (camouflage wrap pattern, bright yellow wheels, black tinted windows)\n<Subject 3> — A pink‑haired figure wearing orange translucent glasses, a green patent leather moto jacket over a red shirt, black cotton‑wool slacks with buckles, and black leather combat boots. (pink buzz-cut hair, orange translucent glasses, green patent leather moto jacket)\n<Subject 4> — a white rounded-silhouette sports car with four round LED headlamps (four circular LED headlamps, shield-shaped badge on hood, black rectangular front bumper with large air intakes)\n<Subject 5> — a stylized bear-like character wearing a green helmet marked '100' and covered in multicolored floral patterns (green helmet with white '100' numerals, white bear-like figure covered in dense multicolored floral motifs, large stylized flowers and insects surrounding the figure)\n<Subject 6> — a deep-red velvet bomber jacket with elaborate silver filigree embroidery displayed on a glossy iridescent mannequin (deep-red velvet fabric, silver metallic embroidery with floral and vine motifs, prominent heart-shaped embroidered panel on chest)\n\nThis beat: The camera cranes up and back to hold the whole wet grid and the grandstands as the cars disappear into the rain.\n\nThe previous beat's own blocking JSON, for your continuityCheck comparison:\n{\"framing\":\"MWS\",\"cameraAngle\":\"eye-level\",\"cameraMovement\":\"the camera trucks right with medium amplitude at slow speed, maintaining the single smooth window-height glide outside the cars as both accelerate forward past it\",\"subjectsInFrame\":[{\"subject\":\"<Subject 5>\",\"screenPosition\":\"far-left\",\"depth\":\"background\",\"action\":\"Completes the start signal by dropping the raised arm sharply to the side while standing on the wet grid, then remains clear of the accelerating lanes; a living ordinary-skinned stylized bear-like figure wearing the green helmet marked “100.”\"},{\"subject\":\"<Subject 6>\",\"screenPosition\":\"far-left\",\"depth\":\"background\",\"action\":\"Remains visibly worn on <Subject 5>'s torso as the deep-red velvet bomber jacket with silver filigree embroidery; it is clothing only, never an independent figure.\"},{\"subject\":\"<Subject 2>\",\"screenPosition\":\"left\",\"depth\":\"midground\",\"action\":\"Launches forward from the left lane in a hard straight-line acceleration, camouflage-wrapped body and bright yellow wheels spinning as the tires throw a dense fan of rainwater spray behind it; <Subject 1> remains physically inside the driver seat and is not visible from this exterior side angle.\"},{\"subject\":\"<Subject 4>\",\"screenPosition\":\"right\",\"depth\":\"midground\",\"action\":\"Launches forward simultaneously from the right lane in a hard straight-line acceleration, its white rounded body and four circular LED headlamps cutting through rain as the tires throw a dense fan of water spray behind it; <Subject 3> remains physically inside the driver seat and is not visible from this exterior side angle.\"}],\"subjectsExcluded\":[\"<Subject 1>\",\"<Subject 3>\"],\"screenDirection\":[{\"subject\":\"<Subject 5>\",\"movement\":\"static\"},{\"subject\":\"<Subject 6>\",\"movement\":\"static\"},{\"subject\":\"<Subject 2>\",\"movement\":\"left-to-right\"},{\"subject\":\"<Subject 4>\",\"movement\":\"left-to-right\"}],\"continuityCheck\":{\"consistent\":true,\"changes\":[{\"subject\":\"<Subject 5>\",\"from\":\"center-right, foreground\",\"to\":\"far-left, background\",\"justifiedByBeatText\":true},{\"subject\":\"<Subject 6>\",\"from\":\"center-right, foreground\",\"to\":\"far-left, background\",\"justifiedByBeatText\":true},{\"subject\":\"<Subject 2>\",\"from\":\"left, midground, stationary\",\"to\":\"left, midground, accelerating forward\",\"justifiedByBeatText\":true},{\"subject\":\"<Subject 4>\",\"from\":\"right, midground, stationary\",\"to\":\"right, midground, accelerating forward\",\"justifiedByBeatText\":true}]},\"containmentNotes\":\"<Subject 5> stands on the grid surface and is never inside either vehicle; after dropping the arm, <Subject 5> remains behind and clear of the two accelerating cars. <Subject 6> is physically worn by <Subject 5> and must never appear as a separate mannequin, figure, or object. <Subject 1> remains physically inside <Subject 2>, and <Subject 3> remains physically inside <Subject 4>; neither driver is visible in this exterior window-height side view. <Subject 2> remains the left car and <Subject 4> the right car as they launch together straight down the grid. The camera stays outside both cars at all times in the same continuous unbroken take, with no cuts, scene changes, windshield view, or entry into either cabin.\",\"visualPrompt\":\"Live-action, cinematic, a medium-wide eye-level shot continues the same single unbroken nighttime take on a wet black-asphalt starting grid. The camera trucks right with medium amplitude at slow speed, maintaining a smooth sideways glide at open-window height outside the cars as both cars accelerate forward past it. At far-left in the background, <Subject 5>, a living ordinary-skinned stylized bear-like character in a green helmet marked with white “100” numerals and dense multicolored floral motifs, sharply drops the raised start-signal arm and remains safely clear on the wet grid. <Subject 5> wears <Subject 6>, a deep-red velvet bomber jacket with elaborate silver floral-and-vine filigree embroidery and a heart-shaped embroidered chest panel; the jacket is worn clothing only, never a separate figure. In the midground, <Subject 2> launches hard from the left lane, its camouflage wrap and bright yellow wheels streaking through rain while spinning tires blast a dense fan of water spray behind it. Beside it in the right lane, <Subject 4> launches at the same instant, a white rounded-silhouette sports car with four circular LED headlamps and a black rectangular front bumper, also throwing heavy tire spray. Both drivers remain inside their respective cars but are not visible from this exterior side angle: keep <Subject 1> and <Subject 3> entirely out of frame. Heavy rain falls through overhead floodlight beams, low steam drifts across puddled asphalt, and packed grandstands cheer beyond barriers on both sides. No cut, no scene change, and the camera never enters either car.\"}\n\nWrite the blocking spec."
+          }
+        ],
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "emit_blocking",
+              "description": "Return the blocking spec.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "framing": {
+                    "type": "string",
+                    "enum": [
+                      "ECU",
+                      "CU",
+                      "MCU",
+                      "MS",
+                      "MWS",
+                      "WS",
+                      "EWS"
+                    ],
+                    "description": "Shot size."
+                  },
+                  "cameraAngle": {
+                    "type": "string",
+                    "enum": [
+                      "low",
+                      "eye-level",
+                      "high",
+                      "dutch",
+                      "overhead"
+                    ]
+                  },
+                  "cameraMovement": {
+                    "type": "string",
+                    "description": "Natural English, drawn from H3's own vocabulary (motion + amplitude + speed) — never a bracketed label."
+                  },
+                  "subjectsInFrame": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "subject": {
+                          "type": "string",
+                          "description": "Exactly the tag, nothing appended — e.g. \"<Subject 1>\", never \"<Subject 1> — description\"."
+                        },
+                        "screenPosition": {
+                          "type": "string",
+                          "enum": [
+                            "far-left",
+                            "left",
+                            "center-left",
+                            "center",
+                            "center-right",
+                            "right",
+                            "far-right"
+                          ]
+                        },
+                        "depth": {
+                          "type": "string",
+                          "enum": [
+                            "foreground",
+                            "midground",
+                            "background"
+                          ]
+                        },
+                        "action": {
+                          "type": "string",
+                          "description": "What this subject is doing right now, in this frame."
+                        }
+                      },
+                      "required": [
+                        "subject",
+                        "screenPosition",
+                        "depth",
+                        "action"
+                      ]
+                    }
+                  },
+                  "subjectsExcluded": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Subjects with a reference available who must NOT appear in this frame — bare tags only, e.g. \"<Subject 4>\"."
+                  },
+                  "screenDirection": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "subject": {
+                          "type": "string",
+                          "description": "Exactly the tag, e.g. \"<Subject 1>\" — nothing appended."
+                        },
+                        "movement": {
+                          "type": "string",
+                          "enum": [
+                            "left-to-right",
+                            "right-to-left",
+                            "toward-camera",
+                            "away-from-camera",
+                            "static"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "subject",
+                        "movement"
+                      ]
+                    }
+                  },
+                  "continuityCheck": {
+                    "type": "object",
+                    "properties": {
+                      "consistent": {
+                        "type": "boolean"
+                      },
+                      "changes": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "subject": {
+                              "type": "string",
+                              "description": "Exactly the tag, e.g. \"<Subject 1>\" — nothing appended."
+                            },
+                            "from": {
+                              "type": "string"
+                            },
+                            "to": {
+                              "type": "string"
+                            },
+                            "justifiedByBeatText": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "subject",
+                            "from",
+                            "to",
+                            "justifiedByBeatText"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "consistent",
+                      "changes"
+                    ],
+                    "description": "Empty changes array and consistent:true when there is no previous beat, or nothing moved."
+                  },
+                  "containmentNotes": {
+                    "type": "string"
+                  },
+                  "visualPrompt": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "framing",
+                  "cameraAngle",
+                  "cameraMovement",
+                  "subjectsInFrame",
+                  "subjectsExcluded",
+                  "screenDirection",
+                  "continuityCheck",
+                  "containmentNotes",
+                  "visualPrompt"
+                ]
+              }
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "function",
+          "function": {
+            "name": "emit_blocking"
+          }
+        },
+        "temperature": 0.3,
+        "max_completion_tokens": 1500
+      }
+    }
+  ],
+  "costUsd": 0.09335
+}
