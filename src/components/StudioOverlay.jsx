@@ -10,11 +10,11 @@ import {
   resolveNftName,
 } from '../services/alchemy';
 import { findCollection, artRatio } from '../data/brands';
-import { LICENSE_STATUS } from '../config/licensing';
+import { PAYMENT_STATUS } from '../config/payment';
 import { useCollectionNfts } from '../hooks/useCollectionNfts';
 import { useMindChatContext } from '../context/mindChat';
 import { useAvailableNfts } from '../lib/unavailableMedia';
-import { LicenseSummary } from './LicenseBadge';
+import { PaymentSummary } from './PaymentBadge';
 import PromptBar from './PromptBar';
 import ChatThread from './ChatThread';
 import { PROMPT_IDEAS } from '../data/prompts';
@@ -100,7 +100,7 @@ const StudioBody = ({ selection, onSelect, initialPrompt }) => {
   // mp4 (adidas Phase 1), and a video that won't play falls back to the still.
   const film = videoFailed ? null : (video ?? (imageFailed && mayBeVideoUrl(image) ? image : null));
   const description = nft ? resolveNftDescription(nft) : '';
-  const status = isMock ? LICENSE_STATUS.DEMO : LICENSE_STATUS.LICENSABLE;
+  const status = isMock ? PAYMENT_STATUS.DEMO : PAYMENT_STATUS.PAYABLE;
 
   const step = (delta) => {
     if (index < 0 || !siblings.length) return;
@@ -239,7 +239,7 @@ const StudioBody = ({ selection, onSelect, initialPrompt }) => {
           )}
         </div>
 
-        <LicenseSummary status={status} />
+        <PaymentSummary status={status} />
 
         <button
           type="button"

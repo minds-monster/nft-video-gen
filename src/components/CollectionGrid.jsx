@@ -4,8 +4,8 @@ import { ChevronRight, Clock } from 'lucide-react';
 import { useCollectionNfts } from '../hooks/useCollectionNfts';
 import { chainLabel } from '../services/alchemy';
 import { DEFAULT_ART_RATIO, artRatio } from '../data/brands';
-import { LICENSE_STATUS } from '../config/licensing';
-import LicenseBadge from './LicenseBadge';
+import { PAYMENT_STATUS } from '../config/payment';
+import PaymentBadge from './PaymentBadge';
 import NftCard from './NftCard';
 import { useAvailableNfts } from '../lib/unavailableMedia';
 import { cn } from '../lib/cn';
@@ -81,8 +81,8 @@ const CollectionGrid = ({ brand, onOpen, limit = 12 }) => {
             <span className="h-8 w-1 rounded-full" style={{ backgroundColor: brand.accent }} />
             <h3 className="text-3xl uppercase tracking-tight md:text-4xl">{brand.name}</h3>
             {active && (
-              <LicenseBadge
-                status={isMock ? LICENSE_STATUS.DEMO : LICENSE_STATUS.LICENSABLE}
+              <PaymentBadge
+                status={isMock ? PAYMENT_STATUS.DEMO : PAYMENT_STATUS.PAYABLE}
                 className="translate-y-0.5"
               />
             )}

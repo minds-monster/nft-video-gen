@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Play, Wand2 } from 'lucide-react';
+import { Check, Play, Wand2 } from 'lucide-react';
 import {
   mayBeVideoUrl,
   resolveNftMedia,
@@ -8,8 +8,7 @@ import {
   resolveNftThumb,
 } from '../services/alchemy';
 import { DEFAULT_ART_RATIO } from '../data/brands';
-import { LICENSE_STATUS } from '../config/licensing';
-import LicenseBadge from './LicenseBadge';
+import { PAYMENT_STATUS } from '../config/payment';
 import { useReportUnavailable } from '../lib/unavailableMedia';
 import { cn } from '../lib/cn';
 
@@ -41,7 +40,7 @@ const NftCard = ({
   ratio = DEFAULT_ART_RATIO,
   // The canvas picker reuses this card for "choose a piece", where "Make video" would
   // be the wrong promise and a ring is needed to show what's already on the arc.
-  actionLabel = 'Make video',
+  actionLabel = 'Add to cast',
   actionIcon: ActionIcon = Wand2,
   selected = false,
 }) => {
@@ -53,7 +52,7 @@ const NftCard = ({
   const { image, video } = resolveNftMedia(nft);
   const bed = resolveNftThumb(nft);
   const name = resolveNftName(nft);
-  const status = isMock ? LICENSE_STATUS.DEMO : LICENSE_STATUS.LICENSABLE;
+  const status = isMock ? PAYMENT_STATUS.DEMO : PAYMENT_STATUS.PAYABLE;
 
   const showStill = Boolean(image) && !failed;
   // If the still failed to load and its URL could be a video, it probably IS one —
@@ -232,19 +231,21 @@ const NftCard = ({
         )}
       </div>
 
-      <div className="absolute inset-x-0 top-0 flex items-start justify-between p-3">
-        <LicenseBadge
-          status={status}
-          className="opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-        />
-        <span
-          className={cn(
-            'keyline flex items-center gap-1 rounded-full bg-purple-600 px-2 py-1 text-[11px] font-semibold text-white transition-opacity duration-300 group-hover:opacity-100',
-            selected ? 'opacity-100' : 'opacity-0',
-          )}
-        >
-          <ActionIcon className="w-3 h-3" /> {selected ? 'On the arc' : actionLabel}
-        </span>
+      <div className="absolute inset-x-0 top-0 flex items-start justify-end p-3">
+        {selected ? (
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-600 text-white shadow-[0_0_12px_rgb(var(--brand-rgb)/0.5)] border border-purple-400">
+            <Check className="h-3.5 w-3.5 stroke-[3]" />
+          </span>
+        ) : (
+          <span
+            className={cn(
+              'keyline flex items-center gap-1 rounded-full bg-purple-600 px-2 py-1 text-[11px] font-semibold text-white transition-opacity duration-300 group-hover:opacity-100',
+              'opacity-0',
+            )}
+          >
+            <ActionIcon className="w-3 h-3" /> {actionLabel}
+          </span>
+        )}
       </div>
     </motion.button>
   );

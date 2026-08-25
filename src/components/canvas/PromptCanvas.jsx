@@ -17,6 +17,7 @@ import StoryboarderPanel from './panels/StoryboarderPanel';
 import ProducerPanel from './panels/ProducerPanel';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { checkHealth } from '../../services/swarm';
 import { STAGE } from '../../hooks/useScreenwriter';
 import { cn } from '../../lib/cn';
@@ -102,8 +103,14 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder }) => {
     };
   }, [open]);
 
+  const lastOpen = useRef(false);
   const openScrollY = useRef(0);
-  if (!open) openScrollY.current = window.scrollY;
+  if (open && !lastOpen.current) {
+    openScrollY.current = window.scrollY;
+    lastOpen.current = true;
+  } else if (!open) {
+    lastOpen.current = false;
+  }
 
   const [morphing, setMorphing] = useState(false);
   const mounted = useRef(false);
@@ -126,9 +133,10 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder }) => {
   }, []);
 
   const inset = wide ? EXPANDED_INSET : 0;
+  const isFixed = open && !morphing;
   const target = open
     ? {
-        top: openScrollY.current + inset,
+        top: isFixed ? inset : openScrollY.current + inset,
         left: inset,
         width: viewport.width - inset * 2,
         height: viewport.height - inset * 2,
@@ -139,6 +147,7 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder }) => {
   const blurred = !(open && !morphing);
 
   useFocusTrap(shellRef, open, { restoreFocus: false });
+  useBodyScrollLock(open && !morphing);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -255,7 +264,7 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder }) => {
                 opacity: { duration: 0.5, delay: 0.12 },
               }
         }
-        style={{ position: 'absolute', zIndex }}
+        style={{ position: isFixed ? 'fixed' : 'absolute', zIndex }}
         className={cn(
           'composer-bloom overflow-hidden border border-slate-700/50 outline-none',
           blurred && 'backdrop-blur-xl',

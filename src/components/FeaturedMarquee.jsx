@@ -5,6 +5,7 @@ import { LIVE_COLLECTIONS, artRatio } from '../data/brands';
 import NftCard from './NftCard';
 import { useAvailableNfts } from '../lib/unavailableMedia';
 import { cn } from '../lib/cn';
+import { assetKey } from '../lib/assetKey';
 
 // Widths are derived from the registry's real ratios rather than assumed square, so the
 // placeholder strip is the same shape as the loaded one and nothing shifts sideways.
@@ -35,7 +36,7 @@ const SkeletonRow = () => (
  * version hardcoded -1000px and visibly jumped), and hovering pauses it so you can
  * actually click something.
  */
-const FeaturedMarquee = ({ onOpen, className }) => {
+const FeaturedMarquee = ({ onToggle, selectedKeys, className }) => {
   const { items, loading, isMock } = useFeaturedNfts({ perCollection: 3, max: 24 });
   const [paused, setPaused] = useState(false);
   const reduceMotion = useReducedMotion();
@@ -57,6 +58,7 @@ const FeaturedMarquee = ({ onOpen, className }) => {
 
   return (
     <div
+      id="explore"
       className={cn('relative border-y border-white/5 bg-black/30 py-8', className)}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
@@ -71,25 +73,24 @@ const FeaturedMarquee = ({ onOpen, className }) => {
           )}
           style={paused ? { animationPlayState: 'paused' } : undefined}
         >
-          {track.map(({ nft, collection }, index) => (
-            <NftCard
-              key={`${collection.address}-${nft.tokenId}-${index}`}
-              nft={nft}
-              brand={collection.brand}
-              isMock={isMock}
-              onOpen={() =>
-                onOpen?.({
-                  chain: collection.chain,
-                  address: collection.address,
-                  tokenId: nft.tokenId,
-                })
-              }
-              ratio={artRatio(collection)}
-              // Height is fixed and the width follows the artwork's shape, so the strip reads
-              // as a real strip of film: narrow portraits, wide slabs, whatever the piece is.
-              className="h-44 w-auto shrink-0 md:h-52"
-            />
-          ))}
+          {track.map(({ nft, collection }, index) => {
+            const key = assetKey(collection.chain, collection.address, nft.tokenId);
+            const isSelected = selectedKeys?.has(key) ?? false;
+            return (
+              <NftCard
+                key={`${collection.address}-${nft.tokenId}-${index}`}
+                nft={nft}
+                brand={collection.brand}
+                isMock={isMock}
+                selected={isSelected}
+                onOpen={() => onToggle?.({ nft, collection })}
+                ratio={artRatio(collection)}
+                // Height is fixed and the width follows the artwork's shape, so the strip reads
+                // as a real strip of film: narrow portraits, wide slabs, whatever the piece is.
+                className="h-44 w-auto shrink-0 md:h-52"
+              />
+            );
+          })}
         </div>
       </div>
     </div>

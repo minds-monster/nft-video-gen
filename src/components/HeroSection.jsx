@@ -4,7 +4,7 @@ import HeroBackdrop from './HeroBackdrop';
 import { COLLAPSED_HEIGHT } from './canvas/PromptCanvas';
 import PromptSuggestions from './canvas/panels/PromptSuggestions';
 import { BRANDS, LIVE_BRANDS } from '../data/brands';
-import { LICENSE } from '../config/licensing';
+import { PAYMENT } from '../config/payment';
 
 // A type-set marquee of names — deliberately no trademark logo files.
 // Live brands lead; anything still pending follows. No cap: this used to be
@@ -86,7 +86,6 @@ const HeroSection = ({ setAnchor, backdropPaused = false, onPromptSelect }) => (
           <PromptSuggestions
             onSelect={onPromptSelect}
             count={4}
-            showRefresh
             className="justify-center"
             label="Try"
           />
@@ -115,12 +114,12 @@ const HeroSection = ({ setAnchor, backdropPaused = false, onPromptSelect }) => (
       </div>
 
       <div className="mt-10 flex flex-col items-center gap-2 text-xs text-slate-500">
-        <a href="#brands" className="flex items-center gap-2 hover:text-slate-300 transition-colors">
+        <a href="#explore" className="flex items-center gap-2 hover:text-slate-300 transition-colors">
           <ArrowDown className="w-3.5 h-3.5" />
-          Explore the work
+          Choose your production elements
         </a>
         <span>
-          {LICENSE.priceEth} {LICENSE.token} per licence · {LICENSE.protocol} on {LICENSE.chain}
+          {PAYMENT.priceEth} {PAYMENT.token} per payment · {PAYMENT.protocol} on {PAYMENT.chain}
         </span>
       </div>
     </motion.div>

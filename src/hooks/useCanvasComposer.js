@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFeaturedNfts } from './useFeaturedNfts';
 import { useCollectionNfts } from './useCollectionNfts';
-import { useBodyScrollLock } from './useBodyScrollLock';
 import { useAnchorRect } from './useAnchorRect';
 import { pickDiverseCast } from '../lib/diversity';
 import { candidateKey } from '../lib/assetKey';
@@ -88,7 +87,7 @@ export const useCanvasComposer = () => {
     return [...bySubject.values()];
   }, [rawPool, isMock]);
 
-  useBodyScrollLock(open);
+
 
   // Load the collection currently being previewed so the render panel can step prev/next.
   const previewCollection = preview?.collection;
@@ -119,12 +118,8 @@ export const useCanvasComposer = () => {
     [isMock],
   );
 
-  // First fill, once the pool has landed.
-  useEffect(() => {
-    if (seeded.current || poolLoading || !pool.length) return;
-    seeded.current = true;
-    seedCast(pickDiverseCast(pool, CAST_SIZE));
-  }, [pool, poolLoading, seedCast]);
+  // No initial random cast selection
+
 
   // When the user browses a collection (preview set without a specific NFT), land on the
   // first piece with resolvable media once the collection loads.

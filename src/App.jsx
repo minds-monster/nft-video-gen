@@ -1,47 +1,52 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { MotionConfig } from 'framer-motion';
 import { MousePointerClick, Sparkles, Stamp } from 'lucide-react';
 import HeroSection from './components/HeroSection';
 import FeaturedMarquee from './components/FeaturedMarquee';
-import BrandRail, { SECTOR_ALL } from './components/BrandRail';
-import CollectionGrid from './components/CollectionGrid';
-import StudioOverlay from './components/StudioOverlay';
 import PromptCanvas from './components/canvas/PromptCanvas';
 import ConnectMindModal from './components/ConnectMindModal';
 import MindChatProvider from './context/MindChatContext';
 import { useMindChatContext } from './context/mindChat';
-import { useStudioSelection } from './hooks/useStudioSelection';
 import { useCanvasComposer } from './hooks/useCanvasComposer';
 import { useScreenwriter } from './hooks/useScreenwriter';
 import { useStoryboarder } from './hooks/useStoryboarder';
-import { BRANDS, LIVE_COLLECTIONS, SECTORS, hasLiveCollection, searchBrands } from './data/brands';
-import { LICENSE } from './config/licensing';
+import { assetKey } from './lib/assetKey';
+import { BRANDS, LIVE_COLLECTIONS } from './data/brands';
+import { PAYMENT } from './config/payment';
 
 const STEPS = [
   {
     icon: MousePointerClick,
     title: 'Pick a piece',
-    body: 'Browse work from the brands below — or search any collection ever minted.',
+    body: 'Browse work from the brands below — or add the contract address of any collection ever minted.',
   },
   {
     icon: Sparkles,
-    title: 'Describe your film',
-    body: 'Tell the mind what you want to see. Direct it in conversation until it lands.',
+    title: 'Connect your mind',
+    body: (
+      <>
+        Your{' '}
+        <a
+          href="https://hellominds.ai"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-purple-400 hover:text-purple-300 underline"
+        >
+          mind
+        </a>{' '}
+        is the producer, and helps you manage the creative output and project budget.
+      </>
+    ),
   },
   {
     icon: Stamp,
-    title: 'It licenses itself',
-    body: `${LICENSE.priceEth} ${LICENSE.token} via ${LICENSE.protocol} on ${LICENSE.chain}, paid to the piece's holder as it's made.`,
+    title: 'Craft your movie with the swarm',
+    body: `Your crew of agents springs into action, executing your creative vision from concept to final cut.`,
   },
 ];
 
 const AppShell = () => {
   const { session, openModal } = useMindChatContext();
-  const { selection, open, close, pendingPrompt } = useStudioSelection();
-  const [sector, setSector] = useState(SECTOR_ALL);
-  const [query, setQuery] = useState('');
-  const [custom, setCustom] = useState(null);
-
   const composer = useCanvasComposer();
   // The other half of the canvas. useCanvasComposer owns the prompt and the cast and says
   // outright that it owns no submit behaviour; this is what that seam was left for.
@@ -73,42 +78,25 @@ const AppShell = () => {
     loadFilms(session.token);
   }, [session?.token, loadFilms]);
 
-  // The Studio is the deeper surface. The only way to reach it while the canvas is up is
-  // the browser restoring an old #/studio hash, and when that happens the canvas yields.
   const { closeCanvas, setAnchor, openCanvas, setPrompt, open: canvasOpen } = composer;
-  useEffect(() => {
-    if (selection) closeCanvas();
-  }, [selection, closeCanvas]);
+
+  const handleToggleAsset = useCallback(
+    ({ nft, collection }) => {
+      const key = assetKey(collection.chain, collection.address, nft.tokenId);
+      if (composer.castKeys.has(key)) {
+        composer.removeAsset(key);
+      } else {
+        composer.addAsset({ nft, collection }, 'curated', composer.isMock);
+      }
+    },
+    [composer],
+  );
 
   const selectPrompt = (idea) => {
     setPrompt(idea);
     openCanvas();
   };
 
-  const openContract = ({ chain, address, name }) => {
-    setCustom({
-      slug: `custom-${address.toLowerCase()}`,
-      name: name || 'Custom collection',
-      sector: 'Search result',
-      accent: '#951EF5',
-      blurb: `Opened by contract address on ${chain}.`,
-      collections: [{ name: name || 'Collection', chain, address }],
-    });
-    setQuery('');
-  };
-
-  const sections = useMemo(() => {
-    const matched = searchBrands(query);
-    const pool = sector === SECTOR_ALL ? matched : matched.filter((b) => b.sector === sector);
-    // Live brands first: a visitor should hit real, licensable work immediately.
-    const ordered = [...pool].sort(
-      (a, b) => Number(hasLiveCollection(b)) - Number(hasLiveCollection(a)),
-    );
-
-    return (sector === SECTOR_ALL ? SECTORS : [sector])
-      .map((name) => ({ sector: name, brands: ordered.filter((brand) => brand.sector === name) }))
-      .filter((group) => group.brands.length > 0);
-  }, [query, sector]);
 
   return (
     <div className="relative flex min-h-screen flex-col bg-slate-950 font-sans text-slate-50">
@@ -142,9 +130,6 @@ const AppShell = () => {
           </a>
 
           <nav className="hidden gap-8 text-sm font-medium text-slate-400 md:flex">
-            <a href="#brands" className="transition-colors hover:text-white">
-              Brands
-            </a>
             <a href="#how-it-works" className="transition-colors hover:text-white">
               How it works
             </a>
@@ -168,59 +153,15 @@ const AppShell = () => {
       <main inert={canvasOpen} className="relative z-10 flex-1">
         <HeroSection
           setAnchor={setAnchor}
-          backdropPaused={canvasOpen || Boolean(selection)}
+          backdropPaused={canvasOpen}
           onPromptSelect={selectPrompt}
         />
 
-        <FeaturedMarquee onOpen={open} />
-
-        <BrandRail
-          sector={sector}
-          onSectorChange={setSector}
-          query={query}
-          onQueryChange={setQuery}
-          onOpenContract={openContract}
+        <FeaturedMarquee
+          onToggle={handleToggleAsset}
+          selectedKeys={composer.castKeys}
         />
 
-        <div className="mx-auto max-w-7xl space-y-16 px-6 py-12">
-          {custom && (
-            <div>
-              <div className="mb-4 flex items-center justify-between gap-4">
-                <p className="text-xs uppercase tracking-widest text-slate-500">Search result</p>
-                <button
-                  type="button"
-                  onClick={() => setCustom(null)}
-                  className="text-xs text-slate-500 hover:text-white"
-                >
-                  Dismiss
-                </button>
-              </div>
-              <CollectionGrid brand={custom} onOpen={open} />
-            </div>
-          )}
-
-          {sections.map((group) => (
-            <div key={group.sector} className="space-y-10">
-              <div className="flex items-center gap-4">
-                <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
-                  {group.sector}
-                </h2>
-                <span className="h-px flex-1 bg-white/10" />
-                <span className="text-xs text-slate-600">{group.brands.length}</span>
-              </div>
-
-              {group.brands.map((brand) => (
-                <CollectionGrid key={brand.slug} brand={brand} onOpen={open} />
-              ))}
-            </div>
-          ))}
-
-          {!sections.length && !custom && (
-            <p className="py-16 text-center text-sm text-slate-500">
-              Nothing matches “{query}”. Try a brand name, a collection, or paste a contract address.
-            </p>
-          )}
-        </div>
 
         {/* The one purple tear on the page. It sits at the seam where the browsing wall
             ends and the explainer begins, so it reads as an event rather than as wallpaper.
@@ -230,11 +171,11 @@ const AppShell = () => {
         <section id="how-it-works" className="bg-black/20 py-16">
           <div className="mx-auto max-w-7xl px-6">
             <h2 className="text-3xl uppercase tracking-tight shadow-type md:text-4xl">
-              Licensing, handled as you create
+              Automatic Attribution
             </h2>
             <p className="mt-2 max-w-2xl text-sm text-slate-400">
-              No contracts to negotiate, no rights desk to email. The licence settles on-chain the
-              moment the work is generated.
+              Create with content which has it's ownership data intact,
+              from some of the world's leading brands.
             </p>
 
             <div className="mt-10 grid gap-6 md:grid-cols-3">
@@ -260,8 +201,8 @@ const AppShell = () => {
       <footer inert={canvasOpen} className="relative z-20 mt-auto py-10">
         <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-6 text-center text-sm text-slate-500">
           <p>
-            {BRANDS.length} brands · {LIVE_COLLECTIONS.length} collections live · licensing via{' '}
-            <span className="text-purple-300">{LICENSE.protocol}</span>
+            {BRANDS.length} brands · {LIVE_COLLECTIONS.length} collections live · agentic payments via{' '}
+            <span className="text-purple-300">{PAYMENT.protocol}</span>
           </p>
           <p>
             Powered by <span className="text-purple-400"><a href="https://www.munerate.com">Munerate</a></span>
@@ -276,13 +217,6 @@ const AppShell = () => {
         screenwriter={screenwriter}
         storyboarder={storyboarder}
         onLaunch={screenwriter.launch}
-      />
-
-      <StudioOverlay
-        selection={selection}
-        onSelect={open}
-        onClose={close}
-        initialPrompt={pendingPrompt}
       />
 
       <ConnectMindModal />
