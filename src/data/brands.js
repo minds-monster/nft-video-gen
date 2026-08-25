@@ -312,7 +312,10 @@ export const BRANDS = [
         artRatio: 2 / 3,
         // Token names resolve, so these render as brand-tinted fallback tiles with the
         // right titles rather than as broken images — but there is no artwork to show.
-        note: 'The red-pill cohort. ARTWORK CURRENTLY UNRETRIEVABLE: Alchemy never ingested this contract (thumbnailUrl/pngUrl/contentType all null) so it just echoes the raw ipfs:// URL, and the CID itself is no longer pinned — ipfs.io and pinata time out, w3s.link and nftstorage.link answer 504. Nothing in this codebase can fix that; it needs the collection re-pinned at source. Kept in the registry because it is a verified first-party contract and its titles still resolve.',
+        // RE-CHECKED 2026-08-25: no longer true. Alchemy has since ingested this contract —
+        // pngUrl and cachedUrl both resolve, contentType image/jpeg, 1000x1500 as declared.
+        // Kept below as the record of what was wrong and when, since it was measured once.
+        note: 'The red-pill cohort. WAS UNRETRIEVABLE UNTIL 2026-08-25: Alchemy never ingested this contract (thumbnailUrl/pngUrl/contentType all null) so it just echoes the raw ipfs:// URL, and the CID itself is no longer pinned — ipfs.io and pinata time out, w3s.link and nftstorage.link answer 504. Nothing in this codebase can fix that; it needs the collection re-pinned at source. Kept in the registry because it is a verified first-party contract and its titles still resolve.',
       },
       {
         name: 'The Matrix Avatars — Blue Pill',

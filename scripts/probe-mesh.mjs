@@ -215,6 +215,33 @@
 // driver in a car) to say so with. A garment mesh without a wearer to attach to is an asset with
 // nowhere to go.
 
+// ── MATRIX AVATAR #44: A GOOD CHARACTER AND A BROKEN PROP — measured 2026-08-25 ──────────────
+//
+// The hardest still tried so far: a dark figure against a dark, busy matrix-rain background, in a
+// black trench coat, holding a katana and a shotgun. `3d-render`, so low inference, and 1.8m with
+// heightConfidence "known".
+//
+// THE FIGURE IS EXCELLENT. Complete and coherent from every angle, and the BACK of the trench
+// coat reads as the same character rather than as a blank shell — the thing a flat source cannot
+// give. The busy background did not contaminate it. 100k triangles, 3.7MB.
+//
+// THE HELD PROPS ARE WRONG, and in an instructive way. The katana and shotgun are reconstructed,
+// which is impressive for objects that thin, but they are extruded into DEPTH: in the artwork the
+// blade lies in the image plane, angled down across the body, and in the mesh it projects
+// backwards well past the figure. This is single-image depth ambiguity at its purest — a long
+// thin object gives almost no cue about which way it points, and the reconstructor picks wrong.
+//
+// TWO CONSEQUENCES FOR STAGING, neither cosmetic:
+//   - the bounding box is inflated in x and z by a prop that should be inside the figure's
+//     footprint. Height-based fitting survives this (the blade is horizontal, so size.y is still
+//     the figure), but anything using width or depth for spacing or collision does not.
+//   - `inference: low` is right about the body and wrong about the props. Confidence is a
+//     property of REGIONS of a mesh, not of the whole thing, and the medium can only ever
+//     describe the whole. Worth knowing before the label is trusted too far.
+//
+// Also, the brand registry's note that this collection's artwork is UNRETRIEVABLE is out of date:
+// Alchemy has since ingested the Red Pill contract and pngUrl/cachedUrl both resolve.
+
 // TO REDEPLOY THE SELF-HOSTED PATH, kept only because the finding above cost more time than
 // money to work out and a future round may want it back:
 //   pod: template runpod-torch-v240, 40GB container disk, community, ports "22/tcp"
