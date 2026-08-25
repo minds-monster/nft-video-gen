@@ -14,8 +14,44 @@
 //   node --env-file-if-exists=.env scripts/probe-mesh.mjs              # cost model, $0
 //   node --env-file-if-exists=.env scripts/probe-mesh.mjs --gpu "NVIDIA RTX A4000"
 //
-// H5-H8 (is the mesh honest, what does it really cost, how heavy is the GLB, does medium predict
-// honesty) need a deployed endpoint and are added here once one exists.
+// ── FIRST MESH TRIAL — measured 2026-08-25 on a real GPU, recorded so it is not re-run blind ──
+//
+// Model: TripoSR (single-image, the lightest of the family). Hardware: RTX 4000 Ada 20GB,
+// community cloud, $0.20/hr. Total cost of the trial: $0.039 for 13 minutes.
+//
+// H6 COST AND LATENCY — answered, and an order of magnitude cheaper than projected above:
+//   model forward      320ms warm (1450ms on the first image)
+//   mesh extraction    ~2.4s   <- dominates; marching cubes at the default 256 resolution
+//   background removal ~1.4s per image
+//   per mesh, warm     ~4.2s  =  $0.00023 at $0.20/hr
+//
+// H7 GLB WEIGHT — 1.55MB to 3.57MB, 81k-187k triangles, vertex-coloured. Five in one page is
+// ~12MB on top of three.js, which is why the renderer loads a mesh only on expand/orbit.
+//
+// H5 IS THE PROBLEM, AND THE TRIAL WAS ONLY PARTLY VALID. Four fixtures ran; two of them were
+// never a fair test, because rembg failed to isolate a subject and TripoSR was handed a
+// RECTANGLE. It duly reconstructed a rectangle: a flat relief slab with an invented black back.
+// Read TripoSR's own saved input.png before believing any mesh result — it shows exactly what the
+// model was given, and twice here it was not what we thought.
+//
+//   sneaker    rembg kept the whole white product shot   -> slab. INVALID INPUT, not a verdict.
+//   astronaut  rembg kept the whole frame                -> slab. INVALID INPUT.
+//   ape-card   rembg correctly isolated THE CARD         -> a card-shaped slab. The medium gate
+//              predicted exactly this: the object in a trading card IS the card.
+//   lambo      rembg isolated the car cleanly            -> an unrecognisable lumpy blob.
+//
+// The Lamborghini is the one clean trial: a 3d-render, properly isolated, precisely the case the
+// gate says deserves a mesh — and the result is not a car. Under the asset bar (is this honest?)
+// that is a failure, not a near miss. One clean trial is not a verdict on image-to-3D; it is a
+// verdict on TripoSR, which is the oldest and weakest model of its family.
+//
+// TO REDEPLOY, because this cost more time than money to work out:
+//   pod: template runpod-torch-v240, 40GB container disk, community, ports "22/tcp"
+//   nvcc is INSTALLED BUT NOT ON PATH in that image, and torchmcubes silently fails to build
+//   without it. export PATH=/usr/local/cuda/bin:$PATH, CUDACXX, CUDA_HOME, TORCH_CUDA_ARCH_LIST.
+//   pip install -r requirements.txt ABORTS ENTIRELY when torchmcubes fails, so nothing else
+//   installs either — build torchmcubes first, then the requirements, then onnxruntime, which
+//   rembg needs and the requirements file does not list.
 
 import { execFileSync } from 'node:child_process';
 
