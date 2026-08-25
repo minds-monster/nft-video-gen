@@ -9,7 +9,7 @@
 // that idea, made to work in production too.
 
 import { castPiece } from './casting-director.js';
-import { handleCastArt } from './cast-art.js';
+import { handleCastArt, handleCastList } from './cast-art.js';
 import { handleCastMesh, handleCastMeshGenerate } from './mesh.js';
 import { screenwrite } from './screenwriter.js';
 import { handlePrevisDossierReview } from './previs-supervisor.js';
@@ -62,6 +62,7 @@ const ROUTES = {
   'GET /api/storyboard/image': handleStoryboardImage,
   // Same-origin so the renderer can READ these pixels — see worker/cast-art.js's header.
   'GET /api/cast/art': handleCastArt,
+  'GET /api/cast/list': handleCastList,
   // A mesh, or an honest account of why this piece does not get one — see worker/mesh.js.
   'GET /api/cast/mesh': handleCastMesh,
   'POST /api/cast/mesh': handleCastMeshGenerate,

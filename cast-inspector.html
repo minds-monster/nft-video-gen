@@ -1,0 +1,174 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Cast inspector</title>
+<!--
+  A DEV TOOL, and deliberately not part of the app.
+
+  It lives at the project root rather than in public/, which means Vite serves it in development
+  and the production build never includes it — dev-only by construction rather than by a flag
+  somebody has to remember.
+
+  It exists because of a gap in how this round was checked. Every judgement the pipeline makes
+  about a piece — its real height, its body plan, whether it may honestly have a mesh — was
+  verifiable only by generating a whole film, or by taking my word from a screenshot. This puts
+  the card and the mesh side by side, at the size they are actually looked at, with the reason
+  printed underneath. A gate you cannot inspect is a gate nobody should trust.
+
+    npm run dev   ->   http://localhost:5173/cast-inspector.html
+-->
+<style>
+  :root { color-scheme: dark; }
+  body { margin:0; background:#0b0a14; color:#cbd5e1;
+         font:14px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; }
+  header { padding:20px 24px 8px; border-bottom:1px solid #1e1b3a; }
+  h1 { margin:0 0 4px; font-size:16px; letter-spacing:.22em; text-transform:uppercase; color:#c4b5fd; }
+  .sub { color:#64748b; font-size:12px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(420px,1fr)); gap:16px; padding:16px 24px 60px; }
+  .card { border:1px solid #1e1b3a; border-radius:14px; background:#0f0d1e; overflow:hidden; }
+  .head { padding:10px 12px; border-bottom:1px solid #1e1b3a; }
+  .subject { font-size:13px; color:#e2e8f0; }
+  .key { font:11px ui-monospace,monospace; color:#475569; word-break:break-all; margin-top:2px; }
+  .views { display:flex; gap:1px; background:#1e1b3a; }
+  .view { flex:1; aspect-ratio:1; background:#0b0a14; position:relative; display:flex; align-items:center; justify-content:center; }
+  .view canvas, .view img { max-width:100%; max-height:100%; display:block; }
+  .tag { position:absolute; top:6px; left:6px; font-size:9px; letter-spacing:.14em; text-transform:uppercase;
+         background:#000a; padding:2px 6px; border-radius:99px; color:#64748b; }
+  .meta { padding:10px 12px; display:flex; flex-wrap:wrap; gap:6px; font-size:11px; }
+  .pill { padding:2px 8px; border-radius:99px; background:#1e1b3a; color:#a5b4fc; }
+  .pill.warn { background:#422006; color:#fbbf24; }
+  .pill.good { background:#052e16; color:#4ade80; }
+  .reason { padding:0 12px 12px; font-size:11px; color:#64748b; line-height:1.5; }
+  .empty { padding:40px 24px; color:#475569; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Cast inspector</h1>
+  <div class="sub" id="sub">loading…</div>
+</header>
+<div class="grid" id="grid"></div>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { buildCastTexture, castArtUrl } from './src/lib/castTexture.js';
+
+const grid = document.getElementById('grid');
+const sub = document.getElementById('sub');
+
+/** The cut-out, drawn exactly as the renderer builds it — same module, no reimplementation. */
+const drawCard = async (host, assetKey) => {
+  try {
+    const built = await buildCastTexture(castArtUrl(assetKey));
+    built.canvas.style.maxWidth = '100%';
+    built.canvas.style.maxHeight = '100%';
+    host.appendChild(built.canvas);
+    host.insertAdjacentHTML('beforeend',
+      `<span class="tag">card ${built.keyed ? '· keyed' : '· not keyed'}</span>`);
+  } catch (error) {
+    host.innerHTML = `<span class="tag">card</span><span style="color:#475569;font-size:11px;padding:12px;text-align:center">${error.message}</span>`;
+  }
+};
+
+/** The mesh, turning, so the back of it is not something you have to take on trust. */
+const drawMesh = async (host, assetKey) => {
+  const response = await fetch(`/api/cast/mesh?asset=${encodeURIComponent(assetKey)}`);
+  const type = response.headers.get('content-type') ?? '';
+  if (!type.includes('gltf')) {
+    const body = await response.json().catch(() => ({}));
+    host.innerHTML = `<span class="tag">mesh</span><span style="color:#475569;font-size:11px;padding:14px;text-align:center">${body.status ?? 'none'}</span>`;
+    return;
+  }
+
+  const buffer = await response.arrayBuffer();
+  const gltf = await new Promise((res, rej) => new GLTFLoader().parse(buffer, '', res, rej));
+
+  const size = 260;
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(size, size);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  host.appendChild(renderer.domElement);
+  host.insertAdjacentHTML('beforeend', '<span class="tag">mesh · orbiting</span>');
+
+  const scene = new THREE.Scene();
+  scene.add(new THREE.AmbientLight(0xffffff, 2.2));
+  const key = new THREE.DirectionalLight(0xffffff, 1.3);
+  key.position.set(2, 3, 2);
+  scene.add(key);
+
+  const object = gltf.scene;
+  const box = new THREE.Box3().setFromObject(object);
+  const extent = box.getSize(new THREE.Vector3());
+  const centre = box.getCenter(new THREE.Vector3());
+  object.position.sub(centre);
+  const pivot = new THREE.Group();
+  pivot.add(object);
+  scene.add(pivot);
+
+  // Framed off the BOUNDING SPHERE, not the largest axis. A car is four times longer than it is
+  // tall, and fitting it by its longest edge parks the camera so far back that the thing you are
+  // being asked to judge is a smudge in the middle of the frame.
+  const radius = extent.length() / 2;
+  const fov = 35;
+  const camera = new THREE.PerspectiveCamera(fov, 1, radius / 100, radius * 20);
+  const distance = (radius / Math.sin((fov * Math.PI) / 360)) * 0.62;
+  camera.position.set(0, radius * 0.32, distance);
+  camera.lookAt(0, 0, 0);
+
+  // Turning on its own, because the whole question a mesh has to answer is what it looks like
+  // from the angles the source artwork never showed.
+  const spin = () => {
+    pivot.rotation.y += 0.006;
+    renderer.render(scene, camera);
+    requestAnimationFrame(spin);
+  };
+  spin();
+};
+
+const render = async () => {
+  const { pieces } = await (await fetch('/api/cast/list')).json();
+  const meshed = pieces.filter((p) => p.mesh.status === 'ready').length;
+  const refused = pieces.filter((p) => p.mesh.status === 'ineligible').length;
+  sub.textContent = `${pieces.length} piece(s) · ${meshed} with a mesh · ${refused} card-only by the medium gate · ${pieces.length - meshed - refused} undecided`;
+
+  if (!pieces.length) {
+    grid.innerHTML = '<div class="empty">No pieces at dossier v5 yet. Cast something, or run scripts/backfill-profiles.mjs.</div>';
+    return;
+  }
+
+  for (const piece of pieces) {
+    const profile = piece.profile;
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="head">
+        <div class="subject">${piece.subject ?? '(no subject)'}</div>
+        <div class="key">${piece.assetKey}</div>
+      </div>
+      <div class="views"><div class="view" data-card></div><div class="view" data-mesh></div></div>
+      <div class="meta">
+        <span class="pill">${piece.medium ?? '?'}</span>
+        ${profile ? `<span class="pill">${profile.bodyPlan}</span>` : ''}
+        ${profile ? `<span class="pill">${profile.heightM}m × ${profile.widthM}m × ${profile.depthM}m</span>` : '<span class="pill warn">no profile</span>'}
+        ${profile?.headRatio ? `<span class="pill">head ratio ${profile.headRatio}</span>` : ''}
+        ${profile ? `<span class="pill">${profile.heightConfidence}</span>` : ''}
+        <span class="pill ${piece.mesh.status === 'ready' ? 'good' : piece.mesh.status === 'ineligible' ? 'warn' : ''}">
+          mesh: ${piece.mesh.status}${piece.mesh.bytes ? ` · ${(piece.mesh.bytes / 1048576).toFixed(1)}MB` : ''}
+        </span>
+      </div>
+      ${piece.mesh.reason ? `<div class="reason">${piece.mesh.reason}</div>` : ''}
+    `;
+    grid.appendChild(card);
+    drawCard(card.querySelector('[data-card]'), piece.assetKey);
+    drawMesh(card.querySelector('[data-mesh]'), piece.assetKey).catch((error) => {
+      card.querySelector('[data-mesh]').innerHTML = `<span class="tag">mesh</span><span style="color:#475569;font-size:11px;padding:12px">${error.message}</span>`;
+    });
+  }
+};
+
+render();
+</script>
+</body>
+</html>

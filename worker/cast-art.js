@@ -157,3 +157,47 @@ export async function handleCastArt(request, env) {
     },
   });
 }
+
+/**
+ * Every piece the store knows about, with what has been decided about it.
+ *
+ * Read-only and non-sensitive — it lists artwork that is already public on chain, plus the
+ * judgements this build has made about it. It exists so the cast can be LOOKED AT: a decision
+ * like "this piece gets a card, not a mesh" is only trustworthy if someone can put the card and
+ * the mesh side by side and check, and until now that required a full film to be generated.
+ */
+export async function handleCastList(request, env) {
+  const version = Number(new URL(request.url).searchParams.get('v') || 5);
+  if (!env.DOSSIERS) return json({ pieces: [] });
+
+  const prefix = `dossier:v${version}:`;
+  const listed = await env.DOSSIERS.list({ prefix, limit: 200 });
+
+  const pieces = await Promise.all(
+    listed.keys.map(async ({ name }) => {
+      const assetKey = name.slice(prefix.length);
+      const [dossier, mesh] = await Promise.all([
+        env.DOSSIERS.get(name, 'json'),
+        env.DOSSIERS.get(`castmesh:v1:${assetKey}`, 'json'),
+      ]);
+      return {
+        assetKey,
+        subject: dossier?.subject ?? null,
+        medium: dossier?.medium ?? null,
+        framing: dossier?.framing ?? null,
+        identityMarkers: dossier?.identityMarkers ?? [],
+        profile: dossier?.physicalProfile ?? null,
+        sourceUrl: dossier?.sourceImageUrls?.[0] ?? null,
+        mesh: mesh
+          ? {
+              status: mesh.status ?? (mesh.meshEligible === false ? 'ineligible' : mesh.r2Key ? 'ready' : 'absent'),
+              reason: mesh.reason ?? null,
+              bytes: mesh.bytes ?? null,
+            }
+          : { status: 'undecided', reason: null, bytes: null },
+      };
+    }),
+  );
+
+  return json({ pieces, truncated: !listed.list_complete });
+}
