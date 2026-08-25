@@ -185,6 +185,15 @@ export async function handleCastList(request, env) {
         subject: dossier?.subject ?? null,
         medium: dossier?.medium ?? null,
         framing: dossier?.framing ?? null,
+        // WHETHER THIS PIECE HAS FOOTAGE, AND WHAT IT SHOWS. Surfaced because it is the one
+        // thing that can overturn a mesh refusal: `medium` describes the STILL, and a piece
+        // whose still is a card may have a film that shows the subject in the round. Measured on
+        // the adidas ape — refused on its still, reconstructs cleanly from one frame of its own
+        // turntable. A refusal standing next to an unwatched film is a question, not a verdict.
+        film: {
+          watched: Boolean(dossier?.watchedFilm),
+          motionNotes: dossier?.motionNotes || null,
+        },
         identityMarkers: dossier?.identityMarkers ?? [],
         profile: dossier?.physicalProfile ?? null,
         sourceUrl: dossier?.sourceImageUrls?.[0] ?? null,

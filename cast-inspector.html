@@ -25,7 +25,7 @@
   header { padding:20px 24px 8px; border-bottom:1px solid #1e1b3a; }
   h1 { margin:0 0 4px; font-size:16px; letter-spacing:.22em; text-transform:uppercase; color:#c4b5fd; }
   .sub { color:#64748b; font-size:12px; }
-  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(420px,1fr)); gap:16px; padding:16px 24px 60px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(520px,1fr)); gap:16px; padding:16px 24px 60px; }
   .card { border:1px solid #1e1b3a; border-radius:14px; background:#0f0d1e; overflow:hidden; }
   .head { padding:10px 12px; border-bottom:1px solid #1e1b3a; }
   .subject { font-size:13px; color:#e2e8f0; }
@@ -40,6 +40,10 @@
   .pill.warn { background:#422006; color:#fbbf24; }
   .pill.good { background:#052e16; color:#4ade80; }
   .reason { padding:0 12px 12px; font-size:11px; color:#64748b; line-height:1.5; }
+  .film { padding:0 12px 10px; font-size:11px; color:#7dd3fc; line-height:1.5; }
+  .film .label { color:#38bdf8; letter-spacing:.1em; text-transform:uppercase; font-size:9px; }
+  .flag { margin:0 12px 12px; padding:8px 10px; border-radius:8px; font-size:11px; line-height:1.5;
+          background:#082f49; color:#7dd3fc; border:1px solid #0c4a6e; }
   .empty { padding:40px 24px; color:#475569; }
   .view[data-mesh] { cursor:zoom-in; }
   .hint { position:absolute; bottom:6px; right:6px; font-size:9px; letter-spacing:.12em;
@@ -86,6 +90,22 @@ import { buildCastTexture, castArtUrl } from './src/lib/castTexture.js';
 const grid = document.getElementById('grid');
 const sub = document.getElementById('sub');
 
+/**
+ * Meshes made by hand during a probe, NOT by the pipeline, shown beside the pipeline's own answer.
+ *
+ * Listed explicitly rather than discovered, because the labelling is the point: these are not
+ * something the system produces today, and a panel that let them pass for pipeline output would
+ * misrepresent the state of the build. The ape is here because it is the case that shows the
+ * medium gate judging the wrong thing — refused on its still, and reconstructed cleanly from one
+ * frame of its own turntable.
+ */
+const PROBE_MESHES = {
+  'eth-mainnet:0x28472a58a490c5e09a238847f66a68a47cc76f0f:1': {
+    url: '/assets/probes/mesh-round9/ape-FROM-VIDEO-FRAME.glb',
+    label: 'probe · from a video frame',
+  },
+};
+
 /** The cut-out, drawn exactly as the renderer builds it — same module, no reimplementation. */
 const drawCard = async (host, assetKey) => {
   try {
@@ -101,12 +121,12 @@ const drawCard = async (host, assetKey) => {
 };
 
 /** The mesh, turning, so the back of it is not something you have to take on trust. */
-const drawMesh = async (host, assetKey, piece) => {
-  const response = await fetch(`/api/cast/mesh?asset=${encodeURIComponent(assetKey)}`);
+const drawMesh = async (host, url, piece, label = 'mesh') => {
+  const response = await fetch(url);
   const type = response.headers.get('content-type') ?? '';
-  if (!type.includes('gltf')) {
+  if (!type.includes('gltf') && !url.endsWith('.glb')) {
     const body = await response.json().catch(() => ({}));
-    host.innerHTML = `<span class="tag">mesh</span><span style="color:#475569;font-size:11px;padding:14px;text-align:center">${body.status ?? 'none'}</span>`;
+    host.innerHTML = `<span class="tag">${label}</span><span style="color:#475569;font-size:11px;padding:14px;text-align:center">${body.status ?? 'none'}</span>`;
     return;
   }
 
@@ -118,7 +138,7 @@ const drawMesh = async (host, assetKey, piece) => {
   renderer.setSize(size, size);
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   host.appendChild(renderer.domElement);
-  host.insertAdjacentHTML('beforeend', '<span class="tag">mesh · orbiting</span>');
+  host.insertAdjacentHTML('beforeend', `<span class="tag">${label}</span>`);
 
   const scene = new THREE.Scene();
   scene.add(new THREE.AmbientLight(0xffffff, 2.2));
@@ -141,7 +161,12 @@ const drawMesh = async (host, assetKey, piece) => {
   const radius = extent.length() / 2;
   const fov = 35;
   const camera = new THREE.PerspectiveCamera(fov, 1, radius / 100, radius * 20);
-  const distance = (radius / Math.sin((fov * Math.PI) / 360)) * 0.62;
+  // Never closer than the bounding sphere needs, with a little to spare. 0.62 filled the panel
+  // nicely for a car and guillotined every standing figure at the shins; 0.92 still grazed the
+  // hat. The arithmetic says a height-dominated subject needs ~0.97, so this sits just past it —
+  // a thumbnail with margin beats one that crops, because the cropping is not obvious until you
+  // already trust what you are looking at.
+  const distance = (radius / Math.sin((fov * Math.PI) / 360)) * 1.02;
   camera.position.set(0, radius * 0.32, distance);
   camera.lookAt(0, 0, 0);
 
@@ -272,7 +297,11 @@ const render = async () => {
   const { pieces } = await (await fetch('/api/cast/list')).json();
   const meshed = pieces.filter((p) => p.mesh.status === 'ready').length;
   const refused = pieces.filter((p) => p.mesh.status === 'ineligible').length;
-  sub.textContent = `${pieces.length} piece(s) · ${meshed} with a mesh · ${refused} card-only by the medium gate · ${pieces.length - meshed - refused} undecided`;
+  const withFilm = pieces.filter((p) => p.mesh.status === 'ineligible' && p.film?.watched).length;
+  sub.textContent =
+    `${pieces.length} piece(s) · ${meshed} with a mesh · ${refused} card-only by the medium gate · ` +
+    `${pieces.length - meshed - refused} undecided` +
+    (withFilm ? `  ·  ${withFilm} refused on a still that also has FOOTAGE` : '');
 
   if (!pieces.length) {
     grid.innerHTML = '<div class="empty">No pieces at dossier v5 yet. Cast something, or run scripts/backfill-profiles.mjs.</div>';
@@ -281,6 +310,10 @@ const render = async () => {
 
   for (const piece of pieces) {
     const profile = piece.profile;
+    const probe = PROBE_MESHES[piece.assetKey] ?? null;
+    // The signal worth acting on: the pipeline said no on the strength of a still, and a film
+    // exists that it never consulted. That is a question rather than a verdict.
+    const opportunity = piece.mesh.status === 'ineligible' && piece.film?.watched;
     const card = document.createElement('div');
     card.className = 'card';
     card.innerHTML = `
@@ -288,7 +321,11 @@ const render = async () => {
         <div class="subject">${piece.subject ?? '(no subject)'}</div>
         <div class="key">${piece.assetKey}</div>
       </div>
-      <div class="views"><div class="view" data-card></div><div class="view" data-mesh></div></div>
+      <div class="views">
+        <div class="view" data-card></div>
+        <div class="view" data-mesh></div>
+        ${probe ? '<div class="view" data-probe></div>' : ''}
+      </div>
       <div class="meta">
         <span class="pill">${piece.medium ?? '?'}</span>
         ${profile ? `<span class="pill">${profile.bodyPlan}</span>` : ''}
@@ -300,12 +337,19 @@ const render = async () => {
         </span>
       </div>
       ${piece.mesh.reason ? `<div class="reason">${piece.mesh.reason}</div>` : ''}
+      ${piece.film?.motionNotes ? `<div class="film"><span class="label">film</span> ${piece.film.motionNotes}</div>` : ''}
+      ${opportunity ? `<div class="flag">Refused on its STILL — but this piece has footage. ${probe ? 'The third panel is a mesh built from one frame of it.' : 'Worth checking whether the film shows the subject in the round.'}</div>` : ''}
     `;
     grid.appendChild(card);
     drawCard(card.querySelector('[data-card]'), piece.assetKey);
-    drawMesh(card.querySelector('[data-mesh]'), piece.assetKey, piece).catch((error) => {
+    drawMesh(card.querySelector('[data-mesh]'), `/api/cast/mesh?asset=${encodeURIComponent(piece.assetKey)}`, piece).catch((error) => {
       card.querySelector('[data-mesh]').innerHTML = `<span class="tag">mesh</span><span style="color:#475569;font-size:11px;padding:12px">${error.message}</span>`;
     });
+    if (probe) {
+      drawMesh(card.querySelector('[data-probe]'), probe.url, piece, probe.label).catch((error) => {
+        card.querySelector('[data-probe]').innerHTML = `<span class="tag">${probe.label}</span><span style="color:#475569;font-size:11px;padding:12px">${error.message}</span>`;
+      });
+    }
   }
 };
 
