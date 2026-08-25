@@ -41,6 +41,21 @@
   .pill.good { background:#052e16; color:#4ade80; }
   .reason { padding:0 12px 12px; font-size:11px; color:#64748b; line-height:1.5; }
   .empty { padding:40px 24px; color:#475569; }
+  .view[data-mesh] { cursor:zoom-in; }
+  .hint { position:absolute; bottom:6px; right:6px; font-size:9px; letter-spacing:.12em;
+          text-transform:uppercase; color:#3f3f5a; }
+  dialog { border:none; background:#0b0a14; padding:0; width:min(96vw,1100px); height:min(92vh,820px);
+           border-radius:16px; color:#cbd5e1; }
+  dialog::backdrop { background:#000c; }
+  .stage { position:relative; width:100%; height:100%; }
+  .stage canvas { width:100%; height:100%; display:block; }
+  .bar { position:absolute; top:10px; left:10px; right:10px; display:flex; gap:8px; align-items:center; }
+  .bar .title { flex:1; font-size:12px; color:#94a3b8; }
+  button { font:inherit; font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+           background:#1e1b3a; color:#a5b4fc; border:none; border-radius:99px; padding:6px 12px; cursor:pointer; }
+  button:hover { background:#2d2856; color:#c7d2fe; }
+  button[aria-pressed="true"] { background:#4c1d95; color:#ede9fe; }
+  .foot { position:absolute; bottom:10px; left:12px; font-size:10px; color:#475569; }
 </style>
 </head>
 <body>
@@ -50,9 +65,22 @@
 </header>
 <div class="grid" id="grid"></div>
 
+<dialog id="viewer">
+  <div class="stage">
+    <div class="bar">
+      <span class="title" id="v-title"></span>
+      <button id="v-wire" aria-pressed="false">Wireframe</button>
+      <button id="v-spin" aria-pressed="true">Spin</button>
+      <button id="v-close">Close</button>
+    </div>
+    <div class="foot" id="v-foot"></div>
+  </div>
+</dialog>
+
 <script type="module">
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { buildCastTexture, castArtUrl } from './src/lib/castTexture.js';
 
 const grid = document.getElementById('grid');
@@ -73,7 +101,7 @@ const drawCard = async (host, assetKey) => {
 };
 
 /** The mesh, turning, so the back of it is not something you have to take on trust. */
-const drawMesh = async (host, assetKey) => {
+const drawMesh = async (host, assetKey, piece) => {
   const response = await fetch(`/api/cast/mesh?asset=${encodeURIComponent(assetKey)}`);
   const type = response.headers.get('content-type') ?? '';
   if (!type.includes('gltf')) {
@@ -125,7 +153,120 @@ const drawMesh = async (host, assetKey) => {
     requestAnimationFrame(spin);
   };
   spin();
+
+  host.insertAdjacentHTML('beforeend', '<span class="hint">click to inspect</span>');
+  host.onclick = () => openViewer(gltf, piece);
 };
+
+/**
+ * The full viewer: drag to orbit, scroll to zoom, and a wireframe toggle.
+ *
+ * The tile thumbnails auto-spin, which is enough to see THAT a mesh has a back but not enough to
+ * judge it. Judging means stopping on the angle you are suspicious of and looking, which is a
+ * thing a fixed animation cannot do.
+ *
+ * WIREFRAME IS NOT A GIMMICK HERE. Texture hides geometry: the Lamborghini's rear reads as
+ * "slightly soft" with its PBR maps on and as "the reconstructor had no evidence here" with them
+ * off. Since what we are deciding is whether a mesh is HONEST rather than whether it is pretty,
+ * being able to strip the paint off is the more useful of the two views.
+ */
+const viewer = document.getElementById('viewer');
+let active = null;
+
+const openViewer = (gltf, piece) => {
+  document.getElementById('v-title').textContent = piece.subject ?? piece.assetKey;
+  document.getElementById('v-foot').textContent =
+    `${piece.assetKey}  ·  ${piece.mesh.bytes ? (piece.mesh.bytes / 1048576).toFixed(2) + ' MB' : ''}`;
+
+  const stage = viewer.querySelector('.stage');
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  stage.insertBefore(renderer.domElement, stage.firstChild);
+
+  const scene = new THREE.Scene();
+  scene.add(new THREE.AmbientLight(0xffffff, 2.0));
+  const key = new THREE.DirectionalLight(0xffffff, 1.4);
+  key.position.set(3, 4, 2);
+  scene.add(key);
+  const fill = new THREE.DirectionalLight(0x8b5cf6, 0.6);
+  fill.position.set(-3, 1, -2);
+  scene.add(fill);
+
+  const object = gltf.scene.clone(true);
+  const box = new THREE.Box3().setFromObject(object);
+  const extent = box.getSize(new THREE.Vector3());
+  object.position.sub(box.getCenter(new THREE.Vector3()));
+  scene.add(object);
+
+  const radius = extent.length() / 2;
+  const camera = new THREE.PerspectiveCamera(35, 1, radius / 200, radius * 40);
+  camera.position.set(radius * 0.9, radius * 0.5, radius * 1.9);
+
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+
+  // Both materials are kept, so toggling is instant and neither is rebuilt on every click.
+  const originals = new Map();
+  object.traverse((node) => {
+    if (node.isMesh) originals.set(node, node.material);
+  });
+  const wireMaterial = new THREE.MeshBasicMaterial({ color: 0xc4b5fd, wireframe: true, transparent: true, opacity: 0.55 });
+
+  let wire = false;
+  let spin = true;
+  const wireButton = document.getElementById('v-wire');
+  const spinButton = document.getElementById('v-spin');
+
+  const setWire = (on) => {
+    wire = on;
+    wireButton.setAttribute('aria-pressed', String(on));
+    for (const [node, material] of originals) node.material = on ? wireMaterial : material;
+  };
+  const setSpin = (on) => {
+    spin = on;
+    spinButton.setAttribute('aria-pressed', String(on));
+  };
+  wireButton.onclick = () => setWire(!wire);
+  spinButton.onclick = () => setSpin(!spin);
+  // Dragging means you want to look at something specific — so it stops spinning on its own
+  // rather than fighting you back to its own idea of a good angle.
+  controls.addEventListener('start', () => setSpin(false));
+
+  let running = true;
+  const tick = () => {
+    if (!running) return;
+    const { clientWidth: w, clientHeight: h } = stage;
+    if (renderer.domElement.width !== w || renderer.domElement.height !== h) {
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+    if (spin) object.rotation.y += 0.005;
+    controls.update();
+    renderer.render(scene, camera);
+    requestAnimationFrame(tick);
+  };
+
+  active = {
+    close: () => {
+      running = false;
+      controls.dispose();
+      renderer.dispose();
+      renderer.domElement.remove();
+    },
+  };
+  setWire(false);
+  setSpin(true);
+  viewer.showModal();
+  tick();
+};
+
+document.getElementById('v-close').onclick = () => viewer.close();
+viewer.addEventListener('close', () => {
+  active?.close();
+  active = null;
+});
 
 const render = async () => {
   const { pieces } = await (await fetch('/api/cast/list')).json();
@@ -162,7 +303,7 @@ const render = async () => {
     `;
     grid.appendChild(card);
     drawCard(card.querySelector('[data-card]'), piece.assetKey);
-    drawMesh(card.querySelector('[data-mesh]'), piece.assetKey).catch((error) => {
+    drawMesh(card.querySelector('[data-mesh]'), piece.assetKey, piece).catch((error) => {
       card.querySelector('[data-mesh]').innerHTML = `<span class="tag">mesh</span><span style="color:#475569;font-size:11px;padding:12px">${error.message}</span>`;
     });
   }

@@ -34,3 +34,6 @@ dist-ssr
 assets/refs/
 assets/renders/
 assets/audio/candidates/
+# Round-9 mesh probe artefacts: ~60MB of GLBs, reproducible from scripts/probe-mesh.mjs
+# and the recorded task ids. Kept on disk to open in a viewer, out of git for their size.
+assets/probes/mesh-round9/
