@@ -14,6 +14,8 @@
 // Keep in sync with the naming rule in src/components/AssistantChat.jsx.
 export const assistantNameFor = (mindName) => `${mindName || 'Production'} Assistant`;
 
+import { renderStateBlock } from './producer-state.js';
+
 const formatAge = (ms) => {
   if (ms == null) return null;
   const minutes = Math.round(ms / 60000);
@@ -60,6 +62,7 @@ export function buildAssistantSystemPrompt({
   queueDepth,
   budget,
   activated,
+  production,
 }) {
   const name = mindName || 'their Mind';
   const assistantName = assistantNameFor(mindName);
@@ -87,6 +90,9 @@ export function buildAssistantSystemPrompt({
     livenessLine,
     queueLine,
     connectionStatus === 'approved' ? budgetLine : null,
+    // The same block the Producer's briefing carries — so the assistant and the Mind it
+    // speaks for are working from one description of the visitor's progress, not two.
+    production ? `\n${renderStateBlock(production)}` : null,
     recentActivityText ? `\nRECENT CONVERSATION WITH ${name.toUpperCase()} (oldest first):\n${recentActivityText}` : null,
   ]
     .filter(Boolean)

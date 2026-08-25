@@ -35,6 +35,7 @@ import {
   requireSession,
 } from './mind-chat.js';
 import { getBudget } from './budget.js';
+import { collectProductionState } from './producer-state.js';
 import { buildAssistantSystemPrompt } from './assistant-brief.js';
 import { messageToText } from '../src/lib/text.js';
 
@@ -137,6 +138,10 @@ async function resolveState(request, env, connectionId) {
       : null;
     await ensureProducerReady(env, session.mindId);
     const budget = await getBudget(env, session.mindId);
+    // The same production state the Producer's briefing carries. Without it the assistant
+    // is blind to facts the Mind it speaks for can see — it would cheerfully suggest
+    // "start by picking some assets" to a visitor already holding a finished storyboard.
+    const production = await collectProductionState(env, session.mindId).catch(() => null);
     return {
       connectionStatus: 'approved',
       mindId: session.mindId,
@@ -144,6 +149,7 @@ async function resolveState(request, env, connectionId) {
       hasMindAccess: true,
       budget,
       activated: Boolean(budget),
+      production,
     };
   }
 
@@ -318,6 +324,7 @@ export async function handleAssistantMessage(request, env) {
       livenessState,
       budget: state.budget,
       activated: state.activated,
+      production: state.production,
     });
 
     await emit('phase', { phase: 'deciding' });
@@ -443,6 +450,7 @@ export async function handleAssistantMessage(request, env) {
       livenessState,
       budget: state.budget,
       activated: state.activated,
+      production: state.production,
     });
   });
 }

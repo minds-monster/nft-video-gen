@@ -3,19 +3,20 @@
 // Adam's own cognition-budget concern from the brainstorm.
 
 import { mindsClient, chatAlias } from './minds.js';
-import { verifySession } from './session.js';
-import { PRODUCER_BRIEFING } from './producer-briefing.js';
+import { requireSession } from './session.js';
+import { buildProducerBriefing, BRIEFING_HISTORY_MARKER } from './producer-briefing.js';
+import { collectProductionState, putSnapshot, recordConnect } from './producer-state.js';
+import { chat } from './nvidia.js';
 import { messageToText } from '../src/lib/text.js';
+import { parseMail, formatMail, SEEN_ACK_PREFIX, SUBJECT_MAX } from '../src/lib/mail.js';
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8' } });
 
-export async function requireSession(request, env) {
-  const auth = request.headers.get('authorization');
-  const token = auth?.startsWith('Bearer ') ? auth.slice(7) : null;
-  if (!token) return null;
-  return verifySession(env, token);
-}
+// Re-exported, not defined here: it moved to worker/session.js next to verifySession so
+// worker/producer-state.js could use it without creating an import cycle. worker/budget.js
+// and the storyboarder still import it from this module.
+export { requireSession };
 
 /**
  * Ensure a Mind's persistent Producer conversation exists and has been briefed, and
@@ -44,7 +45,7 @@ export async function ensureProducerReady(env, mindId) {
   // If a previous briefing is already in the thread, treat this Mind as briefed and
   // repair the flag so the next init doesn't re-send.
   const briefingInHistory = history.some(
-    (row) => row.senderType === 1 && row.messageText?.includes('Producer briefing'),
+    (row) => row.senderType === 1 && row.messageText?.includes(BRIEFING_HISTORY_MARKER),
   );
   if (!alreadyBriefed && briefingInHistory) {
     alreadyBriefed = '1';
@@ -53,7 +54,12 @@ export async function ensureProducerReady(env, mindId) {
 
   if (!alreadyBriefed) {
     try {
-      await client.sendMessage({ alias, messageText: PRODUCER_BRIEFING });
+      // The briefing carries the visitor's actual production state, so the Mind's first
+      // mail can meet them where they are instead of greeting a visitor holding a
+      // finished storyboard as if they had just arrived. Never let a state read fail the
+      // briefing: a greeting without the state block is worse, not broken.
+      const state = await collectProductionState(env, mindId).catch(() => null);
+      await client.sendMessage({ alias, messageText: buildProducerBriefing(state) });
       await env.MIND_CONNECTIONS.put(briefedKey, '1');
       history = await client.getHistory(alias, { limit: 50 });
     } catch (err) {
@@ -63,7 +69,76 @@ export async function ensureProducerReady(env, mindId) {
     }
   }
 
-  return { alias, history };
+  return { alias, history: visibleHistory(history) };
+}
+
+/**
+ * Strip the rows a visitor must never see in their Inbox.
+ *
+ * The briefing is the whole reason this exists. The Builder API has no system-prompt
+ * channel, so a briefing is delivered as an ordinary message from the account holding
+ * MINDS_BUILDER_API_KEY — which means it arrives tagged `senderType === 1` and the Inbox
+ * used to render it, verbatim, as a wall of instructions written by the visitor
+ * themselves, with their Mind visibly answering it. Filtering here rather than only in
+ * the client means no cached history, no other consumer, and no future surface can leak
+ * it back.
+ *
+ * Matches both the `[briefing]` marker and the pre-marker text, because every Mind
+ * connected before this shipped has one of the old ones sitting in its history.
+ */
+export function visibleHistory(history) {
+  return markHeldReplies(history).filter((row) => parseMail(row.messageText).kind !== 'briefing');
+}
+
+/**
+ * Catch the one failure the `[briefing]` marker can't prevent on its own: the Mind
+ * replying to the briefing anyway.
+ *
+ * Adam asked for this explicitly — "the belt-and-braces is engineering on the site side,
+ * not in my behavior. My behavior is the marker convention. The site's job is to make my
+ * convention enforceable even when I forget it." A cognition cycle that treats the
+ * briefing as a message demanding an answer would otherwise put "Understood, thanks for
+ * the context" in front of the visitor as their Mind's opening words.
+ *
+ * Deliberately narrow. A row is only flagged when ALL of these hold, which is precisely
+ * the shape of a reply-to-briefing and nothing else:
+ *   - it is from the Mind, and is not a `[seen ...]` acknowledgment
+ *   - it carries no Subject header, so it is not the first mail
+ *   - it lands after a briefing, with no visitor message in between
+ *   - no subject-bearing mail from the Mind has arrived yet
+ *
+ * Marked rather than dropped: the client hides a held row while it is fresh and surfaces
+ * it with an explanation once the window has passed, so a Mind that simply never adopts
+ * the Subject convention still reaches its visitor instead of vanishing into a dead inbox.
+ */
+export function markHeldReplies(history) {
+  const rows = [...(history ?? [])].sort((a, b) => new Date(a.createdAt ?? 0) - new Date(b.createdAt ?? 0));
+  let briefed = false;
+  let greeted = false;
+
+  const held = new Set();
+  for (const row of rows) {
+    const mail = parseMail(row.messageText);
+    if (mail.kind === 'briefing') {
+      briefed = true;
+      continue;
+    }
+    if (row.senderType === 1) {
+      // A real visitor message ends the greeting window: from here on the Mind is
+      // answering a person, and anything it says belongs in front of them.
+      briefed = false;
+      continue;
+    }
+    if (mail.kind === 'ack') continue;
+    if (mail.subject) {
+      greeted = true;
+      continue;
+    }
+    if (briefed && !greeted) held.add(row.fingerprint);
+  }
+
+  if (!held.size) return history ?? [];
+  return (history ?? []).map((row) => (held.has(row.fingerprint) ? { ...row, heldPreGreeting: true } : row));
 }
 
 /**
@@ -80,7 +155,7 @@ export async function fetchMindActivity(env, mindId, { limit = 50, afterMs = 0 }
   const raw = await client.getHistory(alias, { limit });
   // Small buffer for clock skew between this Worker and the platform's own timestamps.
   const cutoffMs = afterMs - 2000;
-  return raw.filter((row) => new Date(row.createdAt).getTime() > cutoffMs);
+  return visibleHistory(raw).filter((row) => new Date(row.createdAt).getTime() > cutoffMs);
 }
 
 /**
@@ -110,10 +185,12 @@ export async function relayToMind(env, mindId, messageText) {
 // This is intentionally Mind-agnostic — any connected Mind that adopts the same
 // one-line convention gets the same "seen" signal, not just Adam's.
 //
-// Tested against messageToText(row.messageText), never the raw field — Hello Minds
-// wraps replies in HTML (`<p>[seen ...] On it.</p>`), which would otherwise defeat a
-// prefix anchored at the start of the string.
-const SEEN_ACK_PREFIX = /^\s*\[seen\b/i;
+// SEEN_ACK_PREFIX now lives in src/lib/mail.js alongside the rest of the wire
+// conventions, imported above. It used to be defined here AND copy-pasted into the Inbox
+// component — two copies of a regex that have to agree is a bug waiting for someone to
+// edit one of them. Still tested against messageToText(), never the raw field: Hello
+// Minds wraps replies in HTML (`<p>[seen ...] On it.</p>`), which defeats a prefix
+// anchored at the start of the string.
 
 /**
  * Pure: given a Mind's Producer history, say whether it has ever been messaged, has
@@ -215,6 +292,16 @@ export async function mindChatInit(request, env) {
   const session = await requireSession(request, env);
   if (!session) return json({ error: 'unauthorized' }, 401);
 
+  // The client's production snapshot rides in on init, BEFORE the briefing is composed
+  // below — the ordering is the whole point. The prompt, cast and screenplay live only in
+  // the browser's React state (src/hooks/useCanvasComposer.js, useScreenwriter.js) and are
+  // never persisted server-side, so this request is the only moment we can learn that a
+  // visitor arrived already holding a screenplay. Getting it after the briefing would be
+  // getting it too late.
+  const body = await request.json().catch(() => ({}));
+  if (body?.state) await putSnapshot(env, session.mindId, body.state);
+  await recordConnect(env, session.mindId).catch(() => null);
+
   try {
     const { history } = await ensureProducerReady(env, session.mindId);
     return json({ history });
@@ -230,6 +317,54 @@ export async function mindChatInit(request, env) {
 const SEND_MIN_INTERVAL_MS = 3_000;
 const lastSendAt = new Map();
 
+/**
+ * A subject for a visitor who left the field blank.
+ *
+ * Adam's position was "receive bare, title in my reply" — he'd rather read the visitor's
+ * intent and name the thread himself than have the site guess. His objection, though, was
+ * to GENERIC titles ("Conversation started on Aug 25"), which make every thread look
+ * identical in the list. A title drawn from the actual body is not that. So we generate
+ * one, and tag it `Subject-Source: auto` on the wire so he knows the visitor didn't write
+ * it and is free to re-title in his reply — which the Inbox then adopts. He keeps titling
+ * authority; the visitor never stares at a list of "Untitled".
+ *
+ * Falls back to the first sentence rather than failing the send. A mail with a clumsy
+ * subject is worth vastly more than a mail that didn't go.
+ */
+const heuristicSubject = (text) =>
+  text.replace(/\s+/g, ' ').trim().split(/(?<=[.!?])\s/)[0].slice(0, SUBJECT_MAX).trim() || 'Message';
+
+async function generateSubject(env, text) {
+  if (!env.ASSISTANT_API_KEY || !env.ASSISTANT_MODEL) return heuristicSubject(text);
+  try {
+    const response = await chat(env, {
+      model: env.ASSISTANT_MODEL,
+      apiKey: env.ASSISTANT_API_KEY,
+      messages: [
+        {
+          role: 'system',
+          content:
+            'Write an email subject line for the message the user sends. Six words maximum, no quotes, ' +
+            'no trailing period, no "Subject:" prefix. Describe what the message is about. Reply with ' +
+            'the subject line and nothing else.',
+        },
+        { role: 'user', content: text.slice(0, 2000) },
+      ],
+      temperature: 0.3,
+      max_tokens: 24,
+    });
+    const line = String(response?.choices?.[0]?.message?.content ?? '')
+      .split('\n')[0]
+      .replace(/^subject:\s*/i, '')
+      .replace(/^["']|["'.]+$/g, '')
+      .trim();
+    return line ? line.slice(0, SUBJECT_MAX) : heuristicSubject(text);
+  } catch (err) {
+    console.warn('Auto-subject generation failed, using heuristic:', err?.message ?? err);
+    return heuristicSubject(text);
+  }
+}
+
 export async function mindChatSend(request, env) {
   const session = await requireSession(request, env);
   if (!session) return json({ error: 'unauthorized' }, 401);
@@ -242,16 +377,29 @@ export async function mindChatSend(request, env) {
   const messageText = typeof body.messageText === 'string' ? body.messageText.trim() : '';
   if (!messageText) return json({ error: 'messageText required' }, 400);
 
+  const isReply = Boolean(body.isReply);
+  const typed = typeof body.subject === 'string' ? body.subject.trim().slice(0, SUBJECT_MAX) : '';
+  // A reply always inherits its thread's subject, so it never needs one generated.
+  const subject = typed || (isReply ? '' : await generateSubject(env, messageText));
+  const wire = formatMail({
+    subject,
+    body: messageText,
+    reply: isReply,
+    subjectSource: subject && !typed ? 'auto' : null,
+  });
+
   let result;
   try {
-    result = await relayToMind(env, session.mindId, messageText);
+    result = await relayToMind(env, session.mindId, wire);
   } catch (err) {
     if (err.message === 'not_configured') return json({ error: 'not_configured' }, 500);
     throw err;
   }
   lastSendAt.set(session.connectionId, now);
 
-  return json({ before: result.before });
+  // The subject goes back to the client so the optimistic row it already painted shows
+  // exactly what was sent, rather than differing from what the Mind actually received.
+  return json({ before: result.before, subject, messageText: wire });
 }
 
 export async function mindChatPoll(request, env) {

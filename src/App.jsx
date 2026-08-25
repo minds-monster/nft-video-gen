@@ -5,8 +5,11 @@ import HeroSection from './components/HeroSection';
 import FeaturedMarquee from './components/FeaturedMarquee';
 import PromptCanvas from './components/canvas/PromptCanvas';
 import ConnectMindModal from './components/ConnectMindModal';
+import PricingSection from './components/PricingSection';
 import MindChatProvider from './context/MindChatContext';
 import { useMindChatContext } from './context/mindChat';
+import { setProductionState } from './lib/productionState';
+import { resolveNftName } from './lib/nftMedia';
 import { useCanvasComposer } from './hooks/useCanvasComposer';
 import { useScreenwriter } from './hooks/useScreenwriter';
 import { useStoryboarder } from './hooks/useStoryboarder';
@@ -78,6 +81,28 @@ const AppShell = () => {
     loadFilms(session.token);
   }, [session?.token, loadFilms]);
 
+  // Publish how far this visitor has actually got, for the Producer briefing.
+  //
+  // Connecting a Mind is optional and frequently late: a visitor can arrive holding a cast,
+  // a screenplay, or a finished storyboard, because all three run on Zero Budget. None of
+  // that is visible to the Worker — the prompt, cast and screenplay never leave the browser
+  // until a storyboard is submitted — so without this the Mind's first message can only ever
+  // greet everyone as a beginner, which is exactly the moment a visitor stops believing it
+  // is really theirs. Published to a registry rather than passed down, because the hook that
+  // sends it lives inside MindChatProvider, which wraps this component; see
+  // src/lib/productionState.js.
+  useEffect(() => {
+    setProductionState({
+      hasPrompt: Boolean(composer.prompt?.trim()),
+      castCount: composer.cast.length,
+      castNames: composer.cast.map((entry) => resolveNftName(entry.nft)).filter(Boolean),
+      primaryName: composer.primary ? resolveNftName(composer.primary.nft) : null,
+      screenplayStage: screenwriter.stage,
+      beatCount: screenwriter.spec?.beats?.length ?? 0,
+      logline: screenwriter.spec?.logline ?? null,
+    });
+  }, [composer.prompt, composer.cast, composer.primary, screenwriter.stage, screenwriter.spec]);
+
   const { closeCanvas, setAnchor, openCanvas, setPrompt, open: canvasOpen } = composer;
 
   const handleToggleAsset = useCallback(
@@ -135,6 +160,9 @@ const AppShell = () => {
             </a>
             <a href="#explore" className="transition-colors hover:text-white">
               Assets
+            </a>
+            <a href="#pricing" className="transition-colors hover:text-white">
+              Pricing
             </a>
           </nav>
 
@@ -199,6 +227,8 @@ const AppShell = () => {
             </div>
           </div>
         </section>
+
+        <PricingSection onConnectMind={openModal} />
       </main>
 
       <footer inert={canvasOpen} className="relative z-20 mt-auto py-10">

@@ -56,3 +56,18 @@ export async function verifySession(env, token) {
     return null;
   }
 }
+
+/**
+ * The bearer-token half of the same concern: pull a session off a request, or null.
+ *
+ * Lives here rather than in worker/mind-chat.js — where it used to — because
+ * worker/producer-state.js needs it too, and importing it from mind-chat.js created a
+ * genuine import cycle (mind-chat → producer-briefing → producer-state → mind-chat).
+ * mind-chat.js re-exports it so every existing caller keeps working unchanged.
+ */
+export async function requireSession(request, env) {
+  const auth = request.headers.get('authorization');
+  const token = auth?.startsWith('Bearer ') ? auth.slice(7) : null;
+  if (!token) return null;
+  return verifySession(env, token);
+}

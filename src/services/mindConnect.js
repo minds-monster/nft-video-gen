@@ -44,22 +44,41 @@ export const connectStatus = async (connectionId) => {
   return res.json();
 };
 
-export const mindChatInit = async (token) => {
+// `state` is the production snapshot from src/lib/productionState.js, and it rides in on
+// init rather than on a later call for one reason: the Worker composes the Producer
+// briefing during THIS request. A snapshot that arrives afterwards is a snapshot the
+// greeting never saw, and the greeting is the thing it exists for.
+export const mindChatInit = async (token, state) => {
   const res = await fetch('/api/mind/init', {
     method: 'POST',
-    headers: { authorization: `Bearer ${token}` },
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+    body: JSON.stringify({ state }),
   });
   if (!res.ok) return { error: `init failed: ${res.status}` };
   return res.json();
 };
 
-export const mindChatSend = async (token, messageText) => {
+// `subject` may be blank on a new message — the Worker generates one from the body and
+// tags it `Subject-Source: auto` so the Mind knows the visitor didn't write it. A reply
+// always carries its thread's subject and sets `isReply`, which is what puts the RE: on it.
+export const mindChatSend = async (token, messageText, { subject = '', isReply = false } = {}) => {
   const res = await fetch('/api/mind/send', {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
-    body: JSON.stringify({ messageText }),
+    body: JSON.stringify({ messageText, subject, isReply }),
   });
   if (!res.ok) throw new Error(`send failed: ${res.status}`);
+  return res.json();
+};
+
+/** Keep the Worker's copy of the production snapshot fresh after the initial briefing. */
+export const putProductionState = async (token, state) => {
+  const res = await fetch('/api/producer/state', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+    body: JSON.stringify({ state }),
+  });
+  if (!res.ok) throw new Error(`state failed: ${res.status}`);
   return res.json();
 };
 

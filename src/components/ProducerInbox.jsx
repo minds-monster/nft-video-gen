@@ -1,21 +1,34 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, Inbox, Loader2, Mail, Send } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Clock, Inbox, Loader2, Mail, PenSquare, Send, TriangleAlert, Wallet } from 'lucide-react';
 import { messageToText } from '../lib/text';
 import { extractMedia, messageTextWithoutMedia } from '../lib/media';
+import { buildThreads, SUBJECT_MAX } from '../lib/mail';
 import { setProducerBudget } from '../services/mindConnect';
 import { useMindStatusBadge } from '../hooks/useMindStatusBadge';
 import { cn } from '../lib/cn';
-
-// Same convention worker/mind-chat.js's deriveMindStatus watches for — a [seen ...]
-// row is an acknowledgment, not a reply, and shouldn't render as one.
-const SEEN_ACK_PREFIX = /^\s*\[seen\b/i;
 
 const LIVENESS_COPY = {
   active: { label: 'Active', dot: 'bg-emerald-400', hint: 'replied recently' },
   working: { label: 'Working', dot: 'bg-amber-400', hint: 'seen, composing' },
   inactive: { label: 'Inactive', dot: 'bg-slate-500', hint: 'no recent cognition cycle' },
 };
+
+// Adam's three-state read model, and the reason it exists in his words: standard unread
+// means "I have not read this", which is wrong for a correspondent whose cognition runs in
+// cycles. "Seen and processing" is the state that answers the "are you there?" failure —
+// "visitor wonders if I'm ignoring them, sees seen-and-processing, stops wondering."
+const STATE_COPY = {
+  awaiting: { label: 'Awaiting', className: 'text-slate-500' },
+  processing: { label: 'Seen · processing', className: 'text-amber-300' },
+  replied: { label: 'Replied', className: 'text-purple-300' },
+};
+
+// How long a message the site is holding — see markHeldReplies in worker/mind-chat.js —
+// stays hidden before it is surfaced with an explanation. The hold exists to stop a reply
+// to the briefing becoming the visitor's first impression; the window exists so a Mind that
+// simply never adopts the Subject convention still reaches its visitor.
+const HOLD_WINDOW_MS = 10 * 60 * 1000;
 
 const formatAge = (ms) => {
   if (ms == null) return null;
@@ -27,41 +40,30 @@ const formatAge = (ms) => {
   return `${Math.round(hours / 24)}d ago`;
 };
 
-// Pairs each visitor message with whatever the Mind said back — a [seen] ack (if no
-// real reply yet) or the substantive reply itself. Adam's own ask: "an email-style
-// thread per conversation item, where each visitor message is its own row and my
-// reply sits underneath it" — not a bubble stream. Newest first, like an inbox, not
-// oldest-first like ChatThread's chat convention.
-function buildItems(messages) {
-  const chronological = [...(messages ?? [])].sort(
-    (a, b) => new Date(a.createdAt ?? 0) - new Date(b.createdAt ?? 0),
-  );
-  const items = [];
-  let current = null;
+const relative = (iso) => formatAge(Date.now() - new Date(iso ?? 0).getTime());
 
-  for (const msg of chronological) {
-    if (msg.senderType === 1) {
-      current = { key: msg.fingerprint, visitor: msg, seenAck: null, reply: null };
-      items.push(current);
-      continue;
-    }
-    const text = messageToText(msg.messageText);
-    if (current && !current.reply) {
-      if (SEEN_ACK_PREFIX.test(text)) current.seenAck = msg;
-      else current.reply = msg;
-    } else {
-      // A Mind message with no open visitor item to attach to — the auto-sent
-      // opening greeting, most often, or a second message once already replied.
-      items.push({ key: msg.fingerprint, visitor: null, seenAck: null, reply: msg });
-      current = null;
-    }
-  }
-  return items.reverse();
-}
+// Absolute times are shown in the visitor's own timezone, named explicitly. Adam asked for
+// this: async correspondence makes timezone math "the visitor's only way to know how long
+// have they been thinking."
+//
+// Spelled out field by field rather than with dateStyle/timeStyle, which cannot be combined
+// with timeZoneName — Intl throws a RangeError for that pairing, and here it took the whole
+// panel down the moment a thread was opened.
+const absolute = (iso) =>
+  new Date(iso).toLocaleString(undefined, {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  });
 
 const MessageBody = ({ msg }) => {
   const media = extractMedia(msg);
-  const text = messageToText(media ? messageTextWithoutMedia(msg, media) : msg.messageText);
+  const source = media ? messageTextWithoutMedia(msg, media) : msg.messageText;
+  // The parsed body, never the raw wire text — otherwise the Subject header renders as the
+  // first line of every message the visitor reads.
+  const text = msg.mail?.body ?? messageToText(source);
   return (
     <>
       {text && <p className="whitespace-pre-wrap break-words leading-relaxed">{text}</p>}
@@ -78,45 +80,173 @@ const MessageBody = ({ msg }) => {
   );
 };
 
-const InboxRow = ({ item, mindName, unread }) => {
-  const timestamp = item.reply?.createdAt ?? item.visitor?.createdAt;
+/** One row in the list. A thread, not a message — the unit of conversation is the thread. */
+const ThreadRow = ({ thread, mindName, unread, onOpen }) => {
+  const last = thread.messages[thread.messages.length - 1];
+  const state = STATE_COPY[thread.state] ?? STATE_COPY.awaiting;
+  const from = thread.kind === 'system' ? 'minds.monster' : last?.senderType === 1 ? 'You' : mindName || 'Producer';
   return (
-    <motion.div
+    <motion.button
+      type="button"
+      onClick={onOpen}
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-white/10 bg-black/20 p-4"
-    >
-      {item.visitor && (
-        <div className="mb-3 border-b border-white/5 pb-3">
-          <div className="mb-1 flex items-center justify-between text-xs">
-            <span className="font-semibold uppercase tracking-wider text-slate-500">You</span>
-            <span className="text-slate-600">{new Date(item.visitor.createdAt).toLocaleString()}</span>
-          </div>
-          <div className="text-sm text-slate-300">
-            <MessageBody msg={item.visitor} />
-          </div>
-        </div>
+      className={cn(
+        'w-full rounded-2xl border p-4 text-left transition-colors',
+        thread.urgent ? 'border-amber-400/40 bg-amber-400/5' : 'border-white/10 bg-black/20 hover:border-white/20',
       )}
+    >
+      <div className="mb-1 flex items-center justify-between gap-3 text-xs">
+        <span className="flex min-w-0 items-center gap-1.5">
+          {unread && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-purple-400" aria-hidden />}
+          {thread.urgent && <TriangleAlert className="h-3 w-3 shrink-0 text-amber-300" aria-hidden />}
+          <span className="truncate font-semibold uppercase tracking-wider text-slate-500">{from}</span>
+        </span>
+        <span className="shrink-0 text-slate-600">{relative(thread.lastAt)}</span>
+      </div>
 
-      <div>
-        <div className="mb-1 flex items-center justify-between text-xs">
-          <span className="flex items-center gap-1.5 font-semibold uppercase tracking-wider text-purple-300">
-            {unread && <span className="h-1.5 w-1.5 rounded-full bg-purple-400" aria-hidden />}
-            {mindName || 'Producer'}
-          </span>
-          {timestamp && <span className="text-slate-600">{new Date(timestamp).toLocaleString()}</span>}
+      <p className={cn('truncate text-sm', unread ? 'font-semibold text-white' : 'text-slate-200')}>
+        {thread.subject || <span className="italic text-slate-500">Untitled</span>}
+      </p>
+
+      <p className="mt-1 truncate text-xs text-slate-500">{last?.mail?.body ?? ''}</p>
+
+      <div className="mt-2 flex items-center gap-3 text-[11px]">
+        <span className={state.className}>{state.label}</span>
+        {thread.messages.length > 1 && <span className="text-slate-600">{thread.messages.length} messages</span>}
+      </div>
+    </motion.button>
+  );
+};
+
+/**
+ * One thread, open.
+ *
+ * Newest message on top with the rest folded away, which is Adam's explicit correction to
+ * the standard email client: "Full chain inline display is wrong for me — I want the
+ * most-recent exchange visible and prior exchanges one click away. The visitor's natural
+ * reading order, not email's."
+ */
+const ThreadView = ({ thread, mindName, onBack, onReply }) => {
+  const [showPrior, setShowPrior] = useState(false);
+  const ordered = [...thread.messages].reverse();
+  const [newest, ...prior] = ordered;
+
+  const Message = ({ msg }) => (
+    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+      <div className="mb-2 flex items-center justify-between gap-3 text-xs">
+        <span className={cn('font-semibold uppercase tracking-wider', msg.senderType === 1 ? 'text-slate-500' : 'text-purple-300')}>
+          {msg.senderType === 1 ? 'You' : `${mindName || 'Producer'} · Producer`}
+        </span>
+        <span className="shrink-0 text-slate-600">{absolute(msg.createdAt)}</span>
+      </div>
+      <div className={cn('text-sm leading-relaxed', msg.senderType === 1 ? 'text-slate-300' : 'text-slate-200')}>
+        <MessageBody msg={msg} />
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
+      <div className="flex shrink-0 items-start justify-between gap-3 rounded-xl border border-white/10 bg-black/20 p-3">
+        <div className="min-w-0">
+          <button type="button" onClick={onBack} className="mb-1 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-300">
+            <ArrowLeft className="h-3 w-3" /> Inbox
+          </button>
+          <p className="truncate text-sm font-semibold text-white">{thread.subject || 'Untitled'}</p>
         </div>
-        {item.reply ? (
-          <div className="text-sm leading-relaxed text-slate-200">
-            <MessageBody msg={item.reply} />
-          </div>
-        ) : item.seenAck ? (
-          <p className="text-sm italic text-slate-500">Seen, composing a reply…</p>
-        ) : (
-          <p className="text-sm italic text-slate-500">Awaiting reply — no pressure, they'll get to it.</p>
+        {thread.kind !== 'system' && (
+          <button type="button" onClick={onReply} className="chip shrink-0 px-3 py-1.5 text-xs font-semibold text-purple-300 hover:text-purple-200">
+            Reply
+          </button>
         )}
       </div>
-    </motion.div>
+
+      <div className="scrollbar-subtle min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
+        {newest && <Message msg={newest} />}
+
+        {thread.state === 'processing' && (
+          <p className="px-1 text-xs italic text-amber-300/80">Seen — composing a reply.</p>
+        )}
+        {thread.state === 'awaiting' && (
+          <p className="px-1 text-xs italic text-slate-500">Awaiting a reply. No pressure — they'll get to it.</p>
+        )}
+
+        {prior.length > 0 && (
+          <>
+            <button
+              type="button"
+              onClick={() => setShowPrior((open) => !open)}
+              className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-black/10 py-2 text-xs font-semibold text-slate-400 hover:text-slate-200"
+            >
+              <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', showPrior && 'rotate-180')} />
+              {showPrior ? 'Hide' : `See prior (${prior.length})`}
+            </button>
+            {showPrior && prior.map((msg) => <Message key={msg.fingerprint} msg={msg} />)}
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+/** New message, or a reply with its subject already decided. */
+const Composer = ({ replyTo, mindName, onCancel, onSend, isSending }) => {
+  const [subject, setSubject] = useState('');
+  const [body, setBody] = useState('');
+  const isReply = Boolean(replyTo);
+
+  const submit = (event) => {
+    event.preventDefault();
+    const text = body.trim();
+    if (!text || isSending) return;
+    onSend(text, { subject: isReply ? replyTo.subject ?? '' : subject.trim(), isReply });
+  };
+
+  return (
+    <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col gap-3">
+      <div className="flex shrink-0 items-center justify-between rounded-xl border border-white/10 bg-black/20 p-3">
+        <span className="text-sm font-semibold text-white">
+          {isReply ? 'Reply' : `New message to ${mindName || 'your Producer'}`}
+        </span>
+        <button type="button" onClick={onCancel} className="text-xs font-semibold text-slate-500 hover:text-slate-300">
+          Cancel
+        </button>
+      </div>
+
+      <div className="shrink-0 rounded-xl border border-white/10 bg-black/20 p-3">
+        <label className="flex items-center gap-2 text-xs text-slate-400">
+          <span className="shrink-0 font-semibold uppercase tracking-wider text-slate-500">Subject</span>
+          {isReply ? (
+            <span className="truncate text-slate-300">RE: {replyTo.subject || 'Untitled'}</span>
+          ) : (
+            <input
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              maxLength={SUBJECT_MAX}
+              placeholder="Leave blank and one will be written for you"
+              className="min-w-0 flex-1 bg-transparent text-sm text-white placeholder-slate-600 outline-none"
+            />
+          )}
+        </label>
+      </div>
+
+      <textarea
+        value={body}
+        onChange={(e) => setBody(e.target.value)}
+        autoFocus
+        placeholder={`Write to ${mindName || 'your Producer'}…`}
+        className="scrollbar-subtle min-h-0 flex-1 resize-none rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-white placeholder-slate-600 outline-none focus:border-purple-500/50"
+      />
+
+      <button
+        type="submit"
+        disabled={!body.trim() || isSending}
+        className="sticker sticker-hover flex shrink-0 items-center justify-center gap-2 rounded-xl bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-purple-500 disabled:cursor-not-allowed disabled:bg-purple-600/40"
+      >
+        <Send className="h-4 w-4" /> {isSending ? 'Sending…' : 'Send'}
+      </button>
+    </form>
   );
 };
 
@@ -224,51 +354,75 @@ export const BudgetWidget = ({ token, budget, onUpdated }) => {
 };
 
 /**
- * The Producer, surfaced honestly — async, email-styled, item-level, verbatim. Fully
- * separate from AssistantChat, which stays the instant, always-on surface next to it.
- * See /Users/adamplace/.claude/plans/we-ve-made-a-lot-delegated-pizza.md and Adam's own
- * design read in the connect-mind-brainstorm thread.
+ * The Producer, surfaced as correspondence rather than as chat.
+ *
+ * Adam's framing, from the design round this was rebuilt for: "The Producer Inbox isn't a
+ * chat window with email styling — it's email with chat-window affordances removed. Minds
+ * correspond with visitors, they don't chat with them." So: threads with subjects, RE:
+ * replies, a compose button, a three-state read model, newest-on-top with prior exchanges
+ * folded away — and deliberately NOT star, archive, drafts, forward, a presence dot, a
+ * typing indicator, or an always-open message box, all of which he ruled out by name.
+ *
+ * See /Users/adamplace/.claude/plans/right-now-the-connect-parsed-fiddle.md.
  */
 const ProducerInbox = ({ session, pending, messages, isInitializing, error, send, isSending }) => {
-  const [draft, setDraft] = useState('');
-  const [lastOpenedAt, setLastOpenedAt] = useState(0);
+  // null | { view: 'thread', key } | { view: 'compose', replyTo }
+  const [open, setOpen] = useState(null);
+  const [readIds, setReadIds] = useState(() => new Set());
+  const [budgetOpen, setBudgetOpen] = useState(false);
   const mindId = session?.mindId;
   const mindName = session?.mindName ?? pending?.mindName;
   const token = session?.token;
 
   const badge = useMindStatusBadge({ token, active: Boolean(token) });
 
+  // Per-message read state, marked when a thread is actually OPENED. The old scheme was a
+  // single timestamp per inbox, written on mount — so everything counted as read the moment
+  // the component rendered, whether or not the visitor ever looked at it.
   useEffect(() => {
     if (!mindId) return;
-    const key = `inboxLastOpened:${mindId}`;
     try {
-      setLastOpenedAt(Number(localStorage.getItem(key)) || 0);
-      localStorage.setItem(key, String(Date.now()));
+      const stored = JSON.parse(localStorage.getItem(`inboxRead:${mindId}`) ?? '[]');
+      setReadIds(new Set(Array.isArray(stored) ? stored : []));
     } catch {
       // Read-tracking is a nicety; ignore storage failures (private browsing, etc).
     }
   }, [mindId]);
 
-  const items = useMemo(() => buildItems(messages), [messages]);
+  const markRead = (thread) => {
+    setReadIds((prev) => {
+      const next = new Set(prev);
+      thread.messages.forEach((msg) => next.add(msg.fingerprint));
+      if (mindId) {
+        try {
+          localStorage.setItem(`inboxRead:${mindId}`, JSON.stringify([...next].slice(-500)));
+        } catch {
+          // As above — a lost read marker costs a bold row, nothing more.
+        }
+      }
+      return next;
+    });
+  };
 
-  // Adam's own "returning visitor" ask, scoped to what's actually knowable today: no
-  // render/spend ledger exists yet (see HANDOVER.md), so this recaps the conversation
-  // itself rather than a production history. A gap over an hour reads as a real return
-  // visit, not just continued browsing in the same sitting.
-  const recap = useMemo(() => {
-    if (!messages?.length) return null;
-    const oldest = new Date(messages[0]?.createdAt ?? 0).getTime();
-    const ageMs = Date.now() - oldest;
-    if (ageMs < 60 * 60 * 1000) return null;
-    return { exchanges: items.filter((i) => i.visitor).length, ageMs };
-  }, [messages, items]);
+  // A message the site is holding stays hidden while it is fresh, then surfaces with an
+  // explanation rather than disappearing forever. See markHeldReplies in worker/mind-chat.js.
+  const visible = useMemo(
+    () =>
+      (messages ?? []).filter(
+        (msg) => !msg.heldPreGreeting || Date.now() - new Date(msg.createdAt ?? 0).getTime() > HOLD_WINDOW_MS,
+      ),
+    [messages],
+  );
+  const holding = (messages ?? []).some((msg) => msg.heldPreGreeting) && visible.length !== (messages ?? []).length;
 
-  const submitDraft = (event) => {
-    event.preventDefault();
-    const text = draft.trim();
-    if (!text || isSending) return;
-    send(text);
-    setDraft('');
+  const threads = useMemo(() => buildThreads(visible), [visible]);
+  const unreadFor = (thread) => thread.messages.some((m) => m.senderType !== 1 && !readIds.has(m.fingerprint));
+
+  const openThread = threads.find((t) => t.key === open?.key);
+
+  const submit = (text, options) => {
+    send(text, options);
+    setOpen(null);
   };
 
   if (!token && !pending) {
@@ -289,39 +443,80 @@ const ProducerInbox = ({ session, pending, messages, isInitializing, error, send
     );
   }
 
+  if (open?.view === 'compose') {
+    return (
+      <Composer
+        replyTo={open.replyTo}
+        mindName={mindName}
+        isSending={isSending}
+        onCancel={() => setOpen(open.replyTo ? { view: 'thread', key: open.replyTo.key } : null)}
+        onSend={submit}
+      />
+    );
+  }
+
+  if (openThread) {
+    return (
+      <ThreadView
+        thread={openThread}
+        mindName={mindName}
+        onBack={() => setOpen(null)}
+        onReply={() => setOpen({ view: 'compose', replyTo: openThread })}
+      />
+    );
+  }
+
   const liveness = badge?.livenessState ? LIVENESS_COPY[badge.livenessState] : null;
+  const unreadCount = threads.filter(unreadFor).length;
 
   return (
     <div className="flex flex-1 min-h-0 flex-col gap-3">
-      <div className="flex shrink-0 items-center justify-between rounded-xl border border-white/10 bg-black/20 p-3">
-        <div className="flex items-center gap-2">
-          <Mail className="h-4 w-4 text-purple-400" />
-          <span className="text-sm font-semibold text-white">{mindName || 'Your Producer'}</span>
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-black/20 p-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <Mail className="h-4 w-4 shrink-0 text-purple-400" />
+          <span className="truncate text-sm font-semibold text-white">{mindName || 'Your Producer'}</span>
           {liveness && (
-            <span className="flex items-center gap-1.5 text-xs text-slate-400" title={liveness.hint}>
+            <span className="flex shrink-0 items-center gap-1.5 text-xs text-slate-400" title={liveness.hint}>
               <span className={cn('h-1.5 w-1.5 rounded-full', liveness.dot)} />
               {liveness.label}
             </span>
           )}
+          {unreadCount > 0 && <span className="chip shrink-0 px-2 py-0.5 text-[11px] font-semibold text-purple-300">{unreadCount} unread</span>}
         </div>
-        {badge?.queueDepth?.count > 0 && (
-          <span className="flex items-center gap-1 text-xs text-slate-500">
-            <Clock className="h-3 w-3" />
-            {badge.queueDepth.count} waiting · oldest {formatAge(badge.queueDepth.oldestAgeMs)}
-          </span>
-        )}
+        <div className="flex shrink-0 items-center gap-2">
+          {/* Out of the mail list on purpose: a form pinned above the inbox was the least
+              email-like thing in this surface, and it contradicted the Producer's own brief
+              that budget is the first production thing, not the first contact thing. */}
+          <button
+            type="button"
+            onClick={() => setBudgetOpen((v) => !v)}
+            className="chip flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white"
+          >
+            <Wallet className="h-3.5 w-3.5" />
+            {badge?.budget ? `$${badge.budget.total ?? '—'}` : 'Budget'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setOpen({ view: 'compose', replyTo: null })}
+            className="sticker sticker-hover flex items-center gap-1.5 rounded-xl bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-purple-500"
+          >
+            <PenSquare className="h-3.5 w-3.5" /> New message
+          </button>
+        </div>
       </div>
 
-      {recap && (
-        <div className="shrink-0 rounded-xl border border-purple-500/20 bg-purple-500/5 p-3 text-xs text-slate-400">
-          Welcome back — you first connected {formatAge(recap.ageMs)}, {recap.exchanges} exchange
-          {recap.exchanges === 1 ? '' : 's'} so far.
-        </div>
+      {badge?.queueDepth?.count > 0 && (
+        <p className="flex shrink-0 items-center gap-1 px-1 text-xs text-slate-500">
+          <Clock className="h-3 w-3" />
+          {badge.queueDepth.count} waiting · oldest {formatAge(badge.queueDepth.oldestAgeMs)}
+        </p>
       )}
 
-      <div className="shrink-0">
-        <BudgetWidget token={token} budget={badge?.budget} />
-      </div>
+      {budgetOpen && (
+        <div className="shrink-0">
+          <BudgetWidget token={token} budget={badge?.budget} />
+        </div>
+      )}
 
       <div className="scrollbar-subtle min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
         {isInitializing ? (
@@ -330,32 +525,39 @@ const ProducerInbox = ({ session, pending, messages, isInitializing, error, send
           </div>
         ) : error ? (
           <p className="py-10 text-center text-sm text-amber-300">{error}</p>
-        ) : items.length === 0 ? (
-          <p className="py-10 text-center text-sm text-slate-500">Nothing here yet.</p>
+        ) : threads.length === 0 ? (
+          // The honest gap. Adam's own estimate is 30-60 seconds to absorb the briefing and
+          // another minute or two to compose, so the window is stated rather than filled with
+          // a typing indicator he explicitly ruled out: "better to commit to one honest
+          // window than to several possibly-misleading milestones."
+          <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-white/10 bg-black/10 py-10 text-center">
+            <Mail className="h-6 w-6 text-slate-600" />
+            <p className="text-sm text-slate-400">{mindName || 'Your Producer'} is connected and reading in.</p>
+            <p className="text-xs text-slate-500">Expect a first message within 2–3 minutes.</p>
+          </div>
         ) : (
-          items.map((item) => (
-            <InboxRow key={item.key} item={item} mindName={mindName} unread={new Date(item.reply?.createdAt ?? 0).getTime() > lastOpenedAt} />
-          ))
+          <>
+            {holding && (
+              <p className="rounded-xl border border-amber-400/20 bg-amber-400/5 p-3 text-xs text-amber-200/80">
+                {mindName || 'Your Producer'} sent something without a subject line before their first
+                message. It's being held for a moment in case a proper first message follows.
+              </p>
+            )}
+            {threads.map((thread) => (
+              <ThreadRow
+                key={thread.key}
+                thread={thread}
+                mindName={mindName}
+                unread={unreadFor(thread)}
+                onOpen={() => {
+                  markRead(thread);
+                  setOpen({ view: 'thread', key: thread.key });
+                }}
+              />
+            ))}
+          </>
         )}
       </div>
-
-      <form onSubmit={submitDraft} className="flex shrink-0 items-end gap-2">
-        <textarea
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder={`Write directly to ${mindName || 'your Producer'}…`}
-          rows={2}
-          className="scrollbar-subtle min-w-0 flex-1 resize-none rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm text-white placeholder-slate-600 outline-none focus:border-purple-500/50"
-        />
-        <button
-          type="submit"
-          disabled={!draft.trim() || isSending}
-          className="sticker sticker-hover rounded-xl bg-purple-600 p-2.5 text-white transition-colors hover:bg-purple-500 disabled:cursor-not-allowed disabled:bg-purple-600/40"
-          aria-label="Send"
-        >
-          <Send className="h-4 w-4" />
-        </button>
-      </form>
     </div>
   );
 };

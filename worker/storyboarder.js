@@ -95,6 +95,116 @@ const DRAFT_TTL_SECONDS = 7 * 24 * 60 * 60;
 const r2Key = (mindId, aFrameId, version) => `storyboard/${mindId}/${aFrameId}/${version}.png`;
 const makeFrameId = (beatIndex) => `beat-${beatIndex}-${crypto.randomUUID().slice(0, 8)}`;
 
+// A generation job: durable progress and result storage that survives a dropped SSE stream.
+//
+// The long model call is no longer tied to the HTTP response. POST /api/storyboard creates the job,
+// returns its id immediately, and starts the work under ctx.waitUntil. The client then connects to
+// a lightweight SSE endpoint that reads this record. If that progress stream drops, the work keeps
+// going and the client reconnects.
+const storyboardJobKey = (mindId, jobId) => `storyboard-job:${mindId}:${jobId}`;
+const makeJobId = () => crypto.randomUUID();
+const JOB_TTL_SECONDS = 24 * 60 * 60;
+
+async function loadStoryboardJob(env, mindId, jobId) {
+  return env.MIND_CONNECTIONS.get(storyboardJobKey(mindId, jobId), 'json').catch(() => null);
+}
+
+async function saveStoryboardJob(env, mindId, record) {
+  record.updatedAt = Date.now();
+  await env.MIND_CONNECTIONS.put(
+    storyboardJobKey(mindId, record.jobId),
+    JSON.stringify(record),
+    { expirationTtl: JOB_TTL_SECONDS },
+  );
+}
+
+export async function createStoryboardJob(env, mindId, { plan, filmId }) {
+  const jobId = makeJobId();
+  const record = {
+    jobId,
+    mindId,
+    filmId,
+    plan,
+    status: 'queued',
+    events: [],
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+  await saveStoryboardJob(env, mindId, record);
+  return { jobId, record };
+}
+
+/** Append-only event log. Progress narration is best-effort; losing a reasoning delta is
+ * acceptable, losing the final result is not, so terminal events flush synchronously.
+ *
+ * All writes are serialised through one promise chain so a status update cannot race with a
+ * pending-event flush and overwrite events. */
+function createJobLogger(env, mindId, jobId) {
+  let pending = [];
+  let flushTimer = null;
+  let closed = false;
+  let queue = Promise.resolve();
+
+  const enqueue = (fn) => {
+    queue = queue.then(fn).catch(() => {});
+    return queue;
+  };
+
+  const flush = async () => {
+    if (!pending.length) return;
+    if (flushTimer) {
+      clearTimeout(flushTimer);
+      flushTimer = null;
+    }
+    const batch = pending.splice(0);
+    try {
+      const record = await loadStoryboardJob(env, mindId, jobId);
+      if (!record) {
+        console.warn(`Storyboard job ${jobId} disappeared while flushing events`);
+        return;
+      }
+      record.events.push(...batch);
+      await saveStoryboardJob(env, mindId, record);
+    } catch (error) {
+      console.warn('Failed to flush storyboard job events:', error.message);
+      // Dropped progress narration is better than crashing the film.
+    }
+  };
+
+  const scheduleFlush = () => {
+    if (closed || flushTimer) return;
+    flushTimer = setTimeout(() => {
+      flushTimer = null;
+      enqueue(flush);
+    }, 250);
+  };
+
+  return {
+    log: (type, data) => {
+      if (closed) return;
+      pending.push({ type, data, at: Date.now() });
+      scheduleFlush();
+    },
+    flush: () => enqueue(flush),
+    setStatus: (status, extra = {}) =>
+      enqueue(async () => {
+        const record = await loadStoryboardJob(env, mindId, jobId);
+        if (!record) return;
+        record.status = status;
+        Object.assign(record, extra);
+        await saveStoryboardJob(env, mindId, record);
+      }),
+    close: () => {
+      closed = true;
+      if (flushTimer) {
+        clearTimeout(flushTimer);
+        flushTimer = null;
+      }
+      return enqueue(flush);
+    },
+  };
+}
+
 const emptyStoryboard = () => ({ frames: [], createdAt: Date.now() });
 
 /** The id under which a pre-film-identity storyboard is reachable. Explicit, so the visitor can
@@ -114,7 +224,7 @@ export const LEGACY_FILM_ID = 'legacy';
  * reachable only by asking for it BY NAME (`LEGACY_FILM_ID`), which the films index offers as an
  * explicit entry. Generosity about identity is indistinguishable from getting identity wrong.
  */
-async function loadStoryboard(env, mindId, filmId) {
+export async function loadStoryboard(env, mindId, filmId) {
   if (filmId === LEGACY_FILM_ID) {
     return (await env.MIND_CONNECTIONS.get(legacyStoryboardKey(mindId), 'json')) ?? emptyStoryboard();
   }
@@ -128,7 +238,7 @@ async function loadStoryboard(env, mindId, filmId) {
 
 /** The films index, plus the old single-slot record as an explicit, openable entry when it holds
  * anything worth opening. Listed rather than served: the visitor decides it is the one they want. */
-async function listFilms(env, mindId) {
+export async function listFilms(env, mindId) {
   const films = (await env.MIND_CONNECTIONS.get(filmIndexKey(mindId), 'json')) ?? [];
   const legacy = await env.MIND_CONNECTIONS.get(legacyStoryboardKey(mindId), 'json');
   if (!legacy?.frames?.length || legacy.filmId) return films;
@@ -554,34 +664,29 @@ const transitionFrame = (beatIndex, beatText) => ({
 });
 
 /**
- * The default path: one whole-film call, validated per beat, no image spend.
+ * The durable generation: one whole-film call, validated per beat, no image spend.
  *
- * The SSE contract is deliberately compatible with what useStoryboarder.js already consumes
- * (`phase` / `frame` / `result`), and adds `plan` (the tier decision, before anything runs) and
- * `heartbeat` (proof of life during the long call).
+ * This runs under ctx.waitUntil after POST /api/storyboard has already returned a job id. The
+ * heavy work is therefore not tied to an HTTP response stream, so a dropped progress SSE cannot
+ * kill it. Progress is written to a KV job log; the client reads it via GET
+ * /api/storyboard/job/:jobId/events.
  */
-export async function handleStoryboard(request, env, ctx) {
-  const session = await requireSession(request, env);
-  if (!session) return json({ error: 'unauthorized' }, 401);
-
-  const body = await request.json().catch(() => ({}));
-  const { spec, cast } = body;
-  if (!spec || !Array.isArray(spec.beats) || !spec.beats.length || !Array.isArray(cast) || !cast.length) {
-    return json({ error: 'Body needs { spec, cast: [{ key, dossier, name }] }' }, 400);
-  }
-
-  const mindId = session.mindId;
+async function runStoryboardJob(env, { mindId, spec, cast, plan, jobId }) {
+  const logger = createJobLogger(env, mindId, jobId);
+  const emit = async (type, data) => {
+    logger.log(type, data);
+    if (type === 'result' || type === 'error') {
+      await logger.flush();
+    }
+  };
   const castByKey = new Map(cast.map((c) => [c.key, c]));
 
-  // `ctx` matters here specifically: this handler holds a three-to-five-minute model call and
-  // then writes the only durable copy of the result. A visitor who closes the tab mid-run must
-  // still end up with their storyboard. See worker/sse.js's header for the incident.
-  return sseResponse(async (emit) => {
-    const plan = await resolveTier(env, mindId, spec.beats.length);
+  try {
     // The cap is applied HERE, before a single token is spent — a visitor is never allowed to
     // start a render they cannot finish. `overCap` is already in the plan event, so the UI can
     // say so in the visitor's own language rather than counting beats at them.
     const beats = spec.beats.slice(0, plan.maxBeats);
+    await logger.setStatus('running');
     await emit('plan', plan);
 
     const cappedSpec = { ...spec, beats };
@@ -645,7 +750,8 @@ export async function handleStoryboard(request, env, ctx) {
       // the free model would likely fail the same way and the honest answer is the error.
       const canFallBack = activePlan.tier === 'paid' && (error.outOfCredit || error.status === 401);
       if (!canFallBack) {
-        await emit('result', { frames: [], error: error.message, plan: activePlan });
+        await logger.setStatus('failed', { error: error.message });
+        await emit('error', { error: error.message, plan: activePlan, retryable: error?.status === 429 });
         return;
       }
       activePlan = {
@@ -676,7 +782,8 @@ export async function handleStoryboard(request, env, ctx) {
         model = result.model;
         await saveDraft(env, mindId, filmId, { film, usage, model, tier: activePlan.tier });
       } catch (fallbackError) {
-        await emit('result', { frames: [], error: fallbackError.message, plan: activePlan });
+        await logger.setStatus('failed', { error: fallbackError.message });
+        await emit('error', { error: fallbackError.message, plan: activePlan, retryable: fallbackError?.status === 429 });
         return;
       }
     }
@@ -831,6 +938,114 @@ export async function handleStoryboard(request, env, ctx) {
       subjectNames: storyboard.subjectNames,
       subjectAssets: storyboard.subjectAssets,
     });
+    await logger.setStatus('complete', { filmId: storyboard.filmId });
+  } catch (error) {
+    console.error('Storyboard job failed:', error);
+    await logger.setStatus('failed', { error: error.message });
+    await emit('error', { error: error.message, retryable: error?.status === 429 });
+  } finally {
+    await logger.close();
+  }
+}
+
+export async function handleStoryboard(request, env, ctx) {
+  const session = await requireSession(request, env);
+  if (!session) return json({ error: 'unauthorized' }, 401);
+
+  const body = await request.json().catch(() => ({}));
+  const { spec, cast } = body;
+  if (!spec || !Array.isArray(spec.beats) || !spec.beats.length || !Array.isArray(cast) || !cast.length) {
+    return json({ error: 'Body needs { spec, cast: [{ key, dossier, name }] }' }, 400);
+  }
+
+  const mindId = session.mindId;
+  const plan = await resolveTier(env, mindId, spec.beats.length);
+  const filmId = filmIdFor(spec);
+  const { jobId } = await createStoryboardJob(env, mindId, { plan, filmId });
+
+  // Start the long work in the background. The HTTP response completes immediately, so a dropped
+  // SSE progress stream cannot be mis-detected as a hung request.
+  ctx.waitUntil(runStoryboardJob(env, { mindId, spec, cast, plan, jobId }));
+
+  return json({ jobId, plan, filmId });
+}
+
+/** One job's current state. Cheap — a KV read — so the client can poll it freely. */
+export async function handleStoryboardJobStatus(request, env) {
+  const session = await requireSession(request, env);
+  if (!session) return json({ error: 'unauthorized' }, 401);
+
+  const { pathname } = new URL(request.url);
+  const parts = pathname.split('/');
+  const jobId = parts[4];
+  if (!jobId) return json({ error: 'job_id_required' }, 400);
+
+  const record = await loadStoryboardJob(env, session.mindId, jobId);
+  if (!record) return json({ error: 'not_found' }, 404);
+
+  return json({
+    jobId: record.jobId,
+    status: record.status,
+    filmId: record.filmId,
+    plan: record.plan,
+    events: record.events,
+    error: record.error ?? null,
+  });
+}
+
+const TERMINAL_EVENT = new Set(['result', 'error']);
+
+/** Lightweight SSE over the job log. The heavy generation runs elsewhere; this just polls KV. */
+export async function handleStoryboardJobEvents(request, env, ctx) {
+  const session = await requireSession(request, env);
+  if (!session) return json({ error: 'unauthorized' }, 401);
+
+  const { pathname, searchParams } = new URL(request.url);
+  const parts = pathname.split('/');
+  const jobId = parts[4];
+  if (!jobId) return json({ error: 'job_id_required' }, 400);
+
+  let lastEvent = Number(searchParams.get('lastEvent') ?? 0);
+  if (!Number.isFinite(lastEvent) || lastEvent < 0) lastEvent = 0;
+
+  return sseResponse(async (emit) => {
+    let sent = lastEvent;
+    let stagnant = 0;
+    // 2s poll * 15 rounds = 30 seconds of silence before the progress stream closes. The job
+    // keeps running; the client reconnects automatically, and the UI can fall back to status polling.
+    const maxStagnantRounds = 15;
+
+    while (stagnant < maxStagnantRounds) {
+      const record = await loadStoryboardJob(env, session.mindId, jobId);
+      if (!record) {
+        await emit('error', { error: 'Job not found' });
+        return;
+      }
+
+      const events = record.events.slice(sent);
+      for (const event of events) {
+        const ok = await emit(event.type, event.data);
+        sent += 1;
+        stagnant = 0;
+        if (!ok && !TERMINAL_EVENT.has(event.type)) {
+          // Client gone; stop spending KV polls on this connection.
+          return;
+        }
+      }
+
+      const terminal = record.status === 'complete' || record.status === 'failed';
+      if (terminal) {
+        if (!events.length && !sent) {
+          await emit('error', { error: record.error ?? 'Job finished with no events' });
+        }
+        return;
+      }
+
+      await new Promise((done) => setTimeout(done, 2000));
+      stagnant += 1;
+    }
+
+    // Stream closed after a long silence; the client will reconnect if the job is still running.
   }, ctx);
 }
 

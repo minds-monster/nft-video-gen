@@ -17,6 +17,7 @@ import { handleConnectInit, handleConnectStatus } from './connect.js';
 import { mindChatInit, mindChatSend, mindChatPoll } from './mind-chat.js';
 import { handleAssistantMessage, handleAssistantHistory, handleAssistantStatus } from './assistant.js';
 import { handleBudgetSet } from './budget.js';
+import { handleProducerState } from './producer-state.js';
 import {
   handleStoryboard,
   handleStoryboardSketch,
@@ -25,6 +26,8 @@ import {
   handleStoryboardPlan,
   handleStoryboardBeatRegenerate,
   handleStoryboardBeatOverride,
+  handleStoryboardJobStatus,
+  handleStoryboardJobEvents,
 } from './storyboarder.js';
 
 const json = (data, status = 200) =>
@@ -53,6 +56,7 @@ const ROUTES = {
   'GET /api/assistant/history': handleAssistantHistory,
   'GET /api/assistant/status': handleAssistantStatus,
   'POST /api/producer/budget': handleBudgetSet,
+  'POST /api/producer/state': handleProducerState,
   'GET /api/storyboard/plan': handleStoryboardPlan,
   'POST /api/storyboard': handleStoryboard,
   'POST /api/storyboard/beat/regenerate': handleStoryboardBeatRegenerate,
@@ -96,6 +100,18 @@ export default {
         freeStoryboardModel: env.FREE_STORYBOARD_MODEL ?? 'nvidia/nemotron-3-ultra-550b-a55b:free (default)',
         hasAssistantModel: Boolean(env.ASSISTANT_MODEL),
       });
+    }
+
+    if (pathname.startsWith('/api/storyboard/job/')) {
+      const parts = pathname.split('/');
+      const jobId = parts[4];
+      if (request.method === 'GET' && jobId) {
+        if (parts[5] === 'events') {
+          return handleStoryboardJobEvents(request, env, ctx);
+        }
+        return handleStoryboardJobStatus(request, env);
+      }
+      return json({ error: `No route for ${request.method} ${pathname}` }, 404);
     }
 
     const handler = ROUTES[`${request.method} ${pathname}`];

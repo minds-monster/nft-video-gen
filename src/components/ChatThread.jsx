@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { AlertCircle, Film, Loader2, MessageSquare } from 'lucide-react';
 import { extractMedia, messageTextWithoutMedia } from '../lib/media';
 import { messageToText } from '../lib/text';
+import { parseMail } from '../lib/mail';
 import { cn } from '../lib/cn';
 
 // mind.js waits up to 120s for a reply. Silent bouncing dots for two minutes reads
@@ -123,9 +124,11 @@ const ChatThread = ({
         messages.map((msg, idx) => {
           const isHuman = msg.senderType === 1;
           const media = isHuman ? null : extractMedia(msg);
-          const text = messageToText(
-            media ? messageTextWithoutMedia(msg, media) : msg.messageText,
-          );
+          // The mail BODY, not the raw wire text — messages now carry a `Subject:` header
+          // (see src/lib/mail.js), and this surface is a plain thread with no subject line
+          // of its own, so rendering the header here would just print it as a first line.
+          const source = media ? messageTextWithoutMedia(msg, media) : msg.messageText;
+          const text = parseMail(source).body || messageToText(source);
 
           return (
             <motion.div

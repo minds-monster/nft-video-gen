@@ -133,6 +133,89 @@ export const stream = async (path, body, { signal, onEvent, headers, retries = 0
 };
 
 /**
+ * GET an SSE stream for a storyboard job and auto-reconnect if it drops.
+ *
+ * The job runs independently of any single HTTP connection, so a dropped progress stream is a
+ * transient wire problem, not a lost film. Reconnects carry the last event index received, so
+ * the visitor picks up where they left off without duplicate narration.
+ */
+export const streamStoryboardJobEvents = async (jobId, token, { signal, onEvent, lastEvent = 0 } = {}) => {
+  let currentLastEvent = lastEvent;
+
+  for (let attempt = 0; ; attempt += 1) {
+    if (signal?.aborted) throw new Error('Aborted');
+
+    const path = `/api/storyboard/job/${encodeURIComponent(jobId)}/events?lastEvent=${currentLastEvent}`;
+    try {
+      const response = await fetch(path, {
+        method: 'GET',
+        signal,
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok || !response.body) {
+        const payload = await response.json().catch(() => null);
+        const error = new Error(payload?.error ?? `${path} → ${response.status}`);
+        error.status = response.status;
+        throw error;
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const frames = buffer.split('\n\n');
+        buffer = frames.pop() ?? '';
+
+        for (const frame of frames) {
+          let type = 'message';
+          let raw = '';
+          for (const line of frame.split('\n')) {
+            if (line.startsWith('event:')) type = line.slice(6).trim();
+            else if (line.startsWith('data:')) raw += line.slice(5).trim();
+          }
+          if (!raw) continue;
+
+          let data;
+          try {
+            data = JSON.parse(raw);
+          } catch {
+            continue;
+          }
+
+          currentLastEvent += 1;
+          onEvent?.(type, data);
+
+          if (type === 'result') return data;
+          if (type === 'error') {
+            const error = new Error(data.error);
+            error.retryable = Boolean(data.retryable);
+            throw error;
+          }
+        }
+      }
+
+      // The server closed the stream without a terminal event. The job is probably still running,
+      // so reconnect after a short wait.
+      onEvent?.('reconnect', { lastEvent: currentLastEvent, attempt });
+      await sleep(jitter(Math.min(1000 * 2 ** attempt, 10000)));
+    } catch (err) {
+      if (signal?.aborted) throw new Error('Aborted');
+      // 5xx or network errors are retryable; 4xx and explicit error events are not.
+      const retryable = err instanceof TypeError || (typeof err.status === 'number' && err.status >= 502 && err.status <= 504);
+      if (!retryable) throw err;
+      onEvent?.('reconnect', { lastEvent: currentLastEvent, attempt, reason: err.message });
+      await sleep(jitter(Math.min(1000 * 2 ** attempt, 15000)));
+    }
+  }
+};
+
+/**
  * Dossier for one piece, streaming the Casting Director's reasoning as it looks.
  *
  * Cached forever in KV behind the Worker, so a piece that has been looked at before returns
@@ -249,14 +332,38 @@ export const forStoryboardWire = ({ key, dossier, name, collectionName, nft }) =
   nft: forCastingWire({ key, nft }).nft,
 });
 
+/** Creates a storyboard generation job and returns its id. The heavy work runs server-side
+ * under ctx.waitUntil; the client then connects to the job's progress SSE. */
+export const createStoryboardJob = async ({ spec, cast }, token) => {
+  const response = await fetch('/api/storyboard', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ spec, cast: cast.map(forStoryboardWire) }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.error ?? `Storyboard job failed: ${response.status}`);
+  return payload;
+};
+
+/** Poll one job's current state and event log. */
+export const getStoryboardJobStatus = async (token, jobId) => {
+  const response = await fetch(`/api/storyboard/job/${encodeURIComponent(jobId)}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.error ?? `Job status failed: ${response.status}`);
+  return payload;
+};
+
 /** Generates a technical blocking spec per beat — text only, no image, no spend. `token` is
- * the visitor's Producer session. */
-export const storyboard = ({ spec, cast }, token, options) =>
-  stream(
-    '/api/storyboard',
-    { spec, cast: cast.map(forStoryboardWire) },
-    { ...options, headers: { ...options?.headers, Authorization: `Bearer ${token}` } },
-  );
+ * the visitor's Producer session.
+ *
+ * Implemented as a job dispatch + reconnectable progress SSE so a dropped connection cannot
+ * lose a film that is already generating. */
+export const storyboard = async ({ spec, cast }, token, options) => {
+  const { jobId } = await createStoryboardJob({ spec, cast }, token);
+  return streamStoryboardJobEvents(jobId, token, { ...options, lastEvent: 0 });
+};
 
 /** Generates (or regenerates) one frame's opt-in sketch preview, optionally with a
  * visitor-edited prompt — the only call in this file that spends real money. Never call this

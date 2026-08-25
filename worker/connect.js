@@ -12,6 +12,7 @@
 
 import { mindsClient, connectionAlias, parseApprovalDecision } from './minds.js';
 import { signSession } from './session.js';
+import { ensureProducerReady } from './mind-chat.js';
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8' } });
@@ -134,7 +135,7 @@ export async function reconstructConnectStatus(env, connectionId) {
   return { status: 'pending', mindId };
 }
 
-export async function handleConnectStatus(request, env) {
+export async function handleConnectStatus(request, env, ctx) {
   const { searchParams } = new URL(request.url);
   const connectionId = searchParams.get('connectionId');
   if (!connectionId || !isValidConnectionId(connectionId)) return json({ error: 'connectionId required' }, 400);
@@ -150,6 +151,19 @@ export async function handleConnectStatus(request, env) {
   if (result.status === 'approved') {
     const expiresAt = Date.now() + SESSION_TTL_MS;
     const token = await signSession(env, { mindId: result.mindId, connectionId, iat: Date.now(), exp: expiresAt });
+
+    // Brief the moment approval lands, not when the visitor first opens their Inbox. The
+    // Mind needs 30-60 seconds to absorb the briefing and another minute or two to compose
+    // its first mail — Adam's own estimate — and that clock should start while the connect
+    // modal is still animating, not after. Fire-and-forget via waitUntil: /api/mind/init
+    // does the same call and the `briefed:` flag makes it idempotent, so a failure here
+    // costs a head start and nothing else.
+    ctx?.waitUntil?.(
+      ensureProducerReady(env, result.mindId).catch((err) =>
+        console.warn('Eager briefing on approval failed:', err?.message ?? err),
+      ),
+    );
+
     return json({ status: 'approved', sessionToken: token, mindId: result.mindId, mindName: result.mindName, expiresAt });
   }
   return json({ status: result.status });

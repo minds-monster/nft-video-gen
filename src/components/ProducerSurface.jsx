@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Inbox, Sparkles } from 'lucide-react';
 import AssistantChat from './AssistantChat';
 import ProducerInbox from './ProducerInbox';
+import { buildThreads } from '../lib/mail';
 import { cn } from '../lib/cn';
 
 const TABS = [
@@ -30,6 +31,23 @@ const ProducerSurface = ({
 }) => {
   const [tab, setTab] = useState(defaultTab);
 
+  // An unread count on the tab itself, so a visitor sitting in the assistant surface can
+  // see that their Producer has actually written back. Read state is per message and lives
+  // in localStorage under the same key the Inbox writes — deliberately duplicated here as a
+  // read rather than lifted into state, since it changes only when a thread is opened.
+  const unread = useMemo(() => {
+    if (!session?.mindId) return 0;
+    let read = new Set();
+    try {
+      read = new Set(JSON.parse(localStorage.getItem(`inboxRead:${session.mindId}`) ?? '[]'));
+    } catch {
+      // No stored markers means everything reads as unread, which is the safe direction.
+    }
+    return buildThreads(messages).filter((thread) =>
+      thread.messages.some((msg) => msg.senderType !== 1 && !read.has(msg.fingerprint)),
+    ).length;
+  }, [messages, session?.mindId]);
+
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
       <div className="flex shrink-0 gap-1 rounded-xl border border-white/10 bg-black/20 p-1">
@@ -44,6 +62,14 @@ const ProducerSurface = ({
             )}
           >
             <Icon className="h-3.5 w-3.5" /> {label}
+            {key === 'inbox' && unread > 0 && (
+              <span className={cn(
+                'ml-0.5 rounded-full px-1.5 text-[10px] font-bold',
+                tab === key ? 'bg-white/20 text-white' : 'bg-purple-500/20 text-purple-300',
+              )}>
+                {unread}
+              </span>
+            )}
           </button>
         ))}
       </div>
