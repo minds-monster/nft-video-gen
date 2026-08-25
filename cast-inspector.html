@@ -106,9 +106,9 @@ const PROBE_MESHES = {
     note: 'The still is a card, so the pipeline built a standee. One frame of the film gave the character in the round. Video WON.',
   },
   'eth-mainnet:0xd71b53fe1df51075c5a965956cdc87421c2ffed7:3': {
-    url: '/assets/probes/mesh-round9/dg-jacket-MULTIVIEW-from-film.glb',
-    label: 'probe · multiview from film',
-    note: 'Front + side + back sampled from the film, fed as multiview. WORSE than the still alone — the film is 500px against a high-res still, the three frames are lit completely differently, and their azimuths were guessed. Video LOST.',
+    url: '/assets/probes/mesh-round9/dg-jacket-GARMENT-ONLY.glb',
+    label: 'probe · garment only',
+    note: 'isMannequin is true, and the pipeline mesh bakes the head, hands and legs in as one continuous surface — check the wireframe. Cropping the mannequin out of the SOURCE first gives the garment alone. It cannot be removed afterwards, because it was never a separate object. (A multiview attempt from this piece\'s film is also in assets/probes/ and came out worse than the still.)',
   },
 };
 

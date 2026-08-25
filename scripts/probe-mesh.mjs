@@ -142,6 +142,42 @@
 // (1) and (2) are properties of THIS film rather than of multiview, so a piece whose film is
 // high-res and evenly lit deserves re-testing before the approach is written off.
 
+// ── THE MANNEQUIN IS SCAFFOLDING, AND IT IS REMOVABLE — measured 2026-08-25 ──────────────────
+//
+// The point of a garment is that a character wears it, so a mannequin bust standing in a beat is
+// the wrong subject twice over: it is not the piece, and it is not a person.
+//
+// The pipeline mesh of the D&G jacket bakes the mannequin's head, hands and legs in as ONE
+// CONTINUOUS SURFACE with the jacket — visible immediately in wireframe. That is the answer to
+// "can it be removed afterwards": no. There is no mannequin object to delete, only geometry that
+// happens to be head-shaped, and cutting it would leave a hole somebody has to invent a fix for.
+//
+// Cropping the SOURCE to the garment before generating gives a clean jacket: no head, no legs, a
+// real neck opening at the collar. $0.30, and nothing invented — cropping only ever removes.
+//
+//   full still      jacket + chrome head + hands + legs, one closed surface
+//   cropped still   the garment alone, collar open, hem and cuffs intact
+//
+// TWO LIMITS WORTH STATING BEFORE ANYONE CALLS THIS SOLVED:
+//
+//   1. It is still a SHELL, not a wearable. The mesh is a jacket-shaped solid with no inside and
+//      no seams. It can be PLACED on a character at the right scale, which is all a previz frame
+//      needs; it cannot be WORN. A garment that drapes is a rigged-and-simulated asset, a
+//      different class of thing entirely, and no image-to-3D call produces one.
+//   2. The crop here was chosen by hand. Automating it needs a subject box that excludes the
+//      mannequin — which is the same free vision call probed at the start of stage B, where the
+//      model returned a normalised bounding box and a flat-background verdict for $0.
+//
+// The dossier already knows this piece is a garment on a bust: `isMannequin` is true, and it has
+// been true since round 1, where it exists to warn the Screenwriter that "the chrome is the most
+// salient thing in the reference and comes along into the render". The same flag should gate the
+// crop. The schema saw this coming; nothing has acted on it yet.
+//
+// It also connects to the open `wornBy` item: a jacket in a scene is not a free-standing subject
+// but something a character is wearing, and the scene schema currently has only `containerId` (a
+// driver in a car) to say so with. A garment mesh without a wearer to attach to is an asset with
+// nowhere to go.
+
 // TO REDEPLOY THE SELF-HOSTED PATH, kept only because the finding above cost more time than
 // money to work out and a future round may want it back:
 //   pod: template runpod-torch-v240, 40GB container disk, community, ports "22/tcp"
