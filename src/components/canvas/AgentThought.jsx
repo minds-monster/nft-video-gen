@@ -11,11 +11,20 @@ import { cn } from '../../lib/cn';
 // It streams live, then auto-folds when the agent finishes. Re-opening shows clean, settled
 // text — no permanent matrix glitch.
 
+// Two vocabularies land here, and CastingLog falls back from one to the other: the server's
+// PHASE, streamed as the agent works, and — for a piece with no stream at all, which is what a
+// warm cache hit looks like — the client's STATUS. They used to collide on `watching`, so an
+// unstarted piece announced that it was watching its film; the client's is now `casting`.
 const PHASE_LABEL = {
+  // Server phases (worker/casting-director.js, worker/screenwriter.js).
   looking: 'reading the artwork',
   watching: 'watching its film',
   formalising: 'writing it up',
   drafting: 'thinking the film through',
+  // Client statuses (src/hooks/useScreenwriter.js), seen only when nothing streamed.
+  casting: 'reading the artwork',
+  done: 'known already',
+  failed: 'couldn’t be read',
 };
 
 const StatusDot = ({ status }) => (

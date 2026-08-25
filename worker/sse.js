@@ -30,24 +30,87 @@
  *
  * Callers whose work is worth keeping should pass `ctx`. Callers whose output is only meaningful
  * live (a chat reply nobody is reading any more) can leave it out.
+ *
+ * NOT EVERY WRITE IS WORTH THE SAME, and conflating them is one of two ways a cast member ended
+ * up marked unreadable on 2026-08-25 while its finished dossier sat in KV. What was MEASURED that
+ * day is the mismatch itself: three pieces reported "/api/casting ended without a result" — which
+ * only happens when a stream closes carrying neither `result` nor `error` — and all three had
+ * complete, valid v5 dossiers, one of which the running Worker served from cache instantly when
+ * asked again. So the work finished and the delivery did not.
+ *
+ * The mechanism was not pinned to one of the two candidates, and both are closed here. The first
+ * is this latch: `emit` kept a single `clientGone` flag that ANY failed write set, after which
+ * every later write — including the terminal `result` — was a silent no-op. The Casting Director
+ * fires HUNDREDS of un-awaited `delta` writes per run, so one transient failure in that firehose
+ * was enough. The second is a plain truncation by something in the path, which the heartbeat
+ * below addresses.
+ *
+ * So the rule is now inverted, and the inversion is the load-bearing part. Rather than listing
+ * which frames are allowed to fail — a list that was wrong within a day, because it named the
+ * Casting Director's `delta` and not the Storyboarder's `reasoning`, `ghost` or `heartbeat` —
+ * only the TERMINAL frames may conclude anything from a failed write. Everything else is progress
+ * narration: attempted, logged if it fails, and never permitted to silence what comes after.
+ *
+ * That way a new progress event added later is safe by default. Under the old shape it would have
+ * been treated as terminal and could latch; the cost of the new shape is only that a genuinely
+ * dead client keeps getting cheap write attempts that fail fast, which is a much better trade
+ * than losing a finished film to a dropped heartbeat.
  */
+
+/** The frames that ARE the answer. Only these may conclude the client is gone. */
+const TERMINAL = new Set(['result', 'error']);
+
+/** How often to write a keep-alive comment. See the heartbeat note below. */
+const HEARTBEAT_MS = 15_000;
+
 export const sseResponse = (run, ctx) => {
   const { readable, writable } = new TransformStream();
   const writer = writable.getWriter();
   const encoder = new TextEncoder();
   let clientGone = false;
+  let warned = false;
+
+  /** One place that knows the wire format, so the heartbeat and the events cannot drift. */
+  const write = (frame) => writer.write(encoder.encode(frame));
+
+  /** Said once per stream. A silently swallowed write failure is why this bug took a session
+   * to find rather than a log line. */
+  const note = (type, error) => {
+    if (warned) return;
+    warned = true;
+    console.warn(`SSE write failed on "${type}":`, error?.message ?? error);
+  };
 
   /** Best-effort. Returns whether the client actually received it, for callers that care. */
   const emit = async (type, data) => {
-    if (clientGone) return false;
+    const terminal = TERMINAL.has(type);
+    // A terminal frame is always attempted, however the narration went. Progress frames skip
+    // once the client is known gone, purely to stop a dead connection spinning a token loop.
+    if (!terminal && clientGone) return false;
     try {
-      await writer.write(encoder.encode(`event: ${type}\ndata: ${JSON.stringify(data)}\n\n`));
+      await write(`event: ${type}\ndata: ${JSON.stringify(data)}\n\n`);
       return true;
-    } catch {
-      clientGone = true;
+    } catch (error) {
+      note(type, error);
+      // Only a failed TERMINAL write proves anything. A failed reasoning token says nothing —
+      // and acting as if it did is precisely what threw away finished dossiers and storyboards.
+      if (terminal) clientGone = true;
       return false;
     }
   };
+
+  // A LONG SILENCE IS INDISTINGUISHABLE FROM A DEAD CONNECTION, and something in the path
+  // always eventually decides it is the second one. The Casting Director's formalising pass is
+  // a forced tool call that cannot stream (see worker/nvidia.js), sitting on top of a retry
+  // ladder that can sleep 15s at a time — so minutes can pass between two events with nothing on
+  // the wire. A comment frame every 15s keeps the connection provably alive.
+  //
+  // Comments rather than a `heartbeat` event on purpose: both readers of this format already
+  // ignore a frame with no `data:` line (src/services/swarm.js, scripts/backfill-profiles.mjs),
+  // so this needed no client change and cannot be mistaken for content.
+  const heartbeat = setInterval(() => {
+    write(':hb\n\n').catch(() => {});
+  }, HEARTBEAT_MS);
 
   // Deliberately not awaited: the Response has to be returned immediately or the client
   // sees nothing until the work is done, which is the entire problem being solved.
@@ -67,6 +130,7 @@ export const sseResponse = (run, ctx) => {
         // The client hung up mid-failure. Nothing left to tell.
       }
     } finally {
+      clearInterval(heartbeat);
       await writer.close().catch(() => {});
     }
   })();

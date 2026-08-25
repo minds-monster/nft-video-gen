@@ -42,6 +42,10 @@ export const useStoryboarder = () => {
   const [error, setError] = useState(null);
   const [spend, setSpend] = useState(null);
   const [plan, setPlan] = useState(null);
+  // The tier's own time estimate, mirrored where a run in flight can read it. A ref rather than
+  // `plan` itself so `run` does not rebuild every time the badge updates — and written only at
+  // the two points that establish the estimate, not on every plan change.
+  const planRef = useRef(null);
   // tag -> the cast member's real name, from the worker. "<Subject 1>" is machinery, not language.
   const [subjectNames, setSubjectNames] = useState({});
   // tag -> { assetKey, name, profile, medium }. What each subject IS, so the renderer can draw
@@ -80,10 +84,41 @@ export const useStoryboarder = () => {
   const loadPlan = useCallback(async ({ token, beatCount }) => {
     try {
       const result = await getStoryboardPlan(token, beatCount);
+      planRef.current = result;
       setPlan(result);
       return result;
     } catch {
       return null;
+    }
+  }, []);
+
+  /**
+   * Go and get the storyboard whose stream was cut.
+   *
+   * NEVER a re-run, and the asymmetry with the Casting Director's one-line retry is the point: a
+   * storyboard is a single three-to-eight-minute model call, so re-running it on a transport
+   * failure would spend the whole wait again to reproduce something the Worker has very probably
+   * already finished. It has, in the ordinary case. `handleStoryboard` persists before it emits
+   * anything at all ("SAVE FIRST, THEN TELL THE BROWSER", worker/storyboarder.js) and runs under
+   * `ctx.waitUntil`, so a client that hangs up cannot stop the record being written.
+   *
+   * So the cure is a cheap GET, repeated while the run finishes. `filmIdFor(spec)` is a hash of
+   * the film's own text and is computed identically on both sides, so the caller needs no id it
+   * was not already able to derive.
+   */
+  const recoverAfterCut = useCallback(async ({ spec, token, deadlineMs }) => {
+    const filmId = filmIdFor(spec);
+    const until = Date.now() + deadlineMs;
+    for (;;) {
+      try {
+        const saved = await getStoryboard(token, filmId);
+        if (saved?.frames?.length) return saved;
+      } catch {
+        // Not reachable yet, or nothing saved under this film id — both are "not finished", and
+        // both are answered by waiting rather than by failing.
+      }
+      if (Date.now() >= until) return null;
+      await new Promise((done) => setTimeout(done, 5000));
     }
   }, []);
 
@@ -118,6 +153,7 @@ export const useStoryboarder = () => {
             // `plan` can arrive twice: once up front, and again if the paid model turns out to
             // be unavailable and the run falls back to free. The second one carries the reason.
             if (type === 'plan') {
+              planRef.current = data;
               setPlan(data);
               // The tier's beat cap is applied at the open, so the card count matches what will
               // actually be generated rather than what was asked for.
@@ -152,12 +188,39 @@ export const useStoryboarder = () => {
       if (result.error) setError(result.error);
     } catch (failure) {
       if (controller.signal.aborted) return;
+
+      // A CUT STREAM IS NOT A LOST FILM. The run keeps going server-side and saves itself; all
+      // that broke is the wire. Reported to the visitor as still working, because it is.
+      if (failure.truncated) {
+        setPhase('finalising');
+        // Whatever the tier said the whole call would take, from now — generous on purpose, since
+        // the alternative to waiting is throwing away a film that is already paid for in time.
+        const budgetMs = Math.max(60_000, (planRef.current?.estimateSeconds ?? 480) * 1000);
+        const saved = await recoverAfterCut({ spec, token, deadlineMs: budgetMs });
+        if (controller.signal.aborted) return;
+        if (saved) {
+          setFrames(saved.frames);
+          if (saved.subjectNames) setSubjectNames(saved.subjectNames);
+          if (saved.subjectAssets) setSubjectAssets(saved.subjectAssets);
+          if (saved.spend) setSpend(saved.spend);
+          setError(null);
+          return;
+        }
+        // Deliberately does not say whether anything was charged. The free tier costs nothing and
+        // the paid tier records spend before the frames are built, so a blanket reassurance would
+        // be false half the time — and the spend panel already reports the truth either way.
+        setError(
+          `The connection to the Storyboarder dropped, and no saved film appeared within ${Math.round(budgetMs / 60_000)} minutes (${failure.message}). Generating again is safe — it lands on the same film.`,
+        );
+        return;
+      }
+
       setError(failure.message);
     } finally {
       setRunning(false);
       setPhase(null);
     }
-  }, []);
+  }, [recoverAfterCut]);
 
   /** The visitor's explicit second attempt at a beat that failed validation. Three attempts and
    * the beat is dropped — the film keeps its integrity by losing a beat rather than hiding one. */

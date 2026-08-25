@@ -66,7 +66,13 @@ const useElapsed = (running) => {
  */
 export const useScreenwriter = () => {
   const [stage, setStage] = useState(STAGE.COMPOSE);
-  // key -> { status: 'queued'|'watching'|'done'|'failed', dossier?, cached?, error? }
+  // key -> { status: 'queued'|'casting'|'done'|'failed', dossier?, cached?, error? }
+  //
+  // `casting` was called `watching` until it collided with the Casting Director's OWN
+  // `watching` phase, which means "watching the token's film" — two different vocabularies
+  // sharing one key, resolved through the same lookup in CastingLog. A piece that had not
+  // started yet rendered as "WATCHING ITS FILM" behind a green done-dot, which is an actively
+  // misleading thing for a log whose job is to say what happened.
   const [analysis, setAnalysis] = useState({});
   const [spec, setSpec] = useState(null);
   const [error, setError] = useState(null);
@@ -116,6 +122,14 @@ export const useScreenwriter = () => {
             },
           };
         });
+        return;
+      }
+      // A retried attempt re-streams from the beginning; keeping the cut attempt's text would
+      // show the same reasoning twice. See the retry loop in src/services/swarm.js.
+      if (type === 'restart') {
+        setStreams((current) =>
+          current[owner] ? { ...current, [owner]: { phase: current[owner].phase, reasoning: '', content: '' } } : current,
+        );
         return;
       }
       if (type !== 'delta') return;
@@ -199,14 +213,23 @@ export const useScreenwriter = () => {
 
       try {
         const dossiers = new Map();
+        // Collected here rather than read back from `analysis` below. `analysis` is a stale
+        // closure — it is in this callback's dependency list, so the running invocation only ever
+        // sees the snapshot taken before the launch — which silently emptied the `detail` in the
+        // "none of these could be read" message, exactly when a reason mattered most.
+        const failures = [];
 
         await pooled(cast, CASTING_LANES, async (entry) => {
           if (signal.aborted) return;
-          patch(entry.key, { status: 'watching' });
+          patch(entry.key, { status: 'casting' });
           try {
+            // One retry, and only the transport kinds are retried (see isRetryable in
+            // src/services/swarm.js). A cut stream normally means the Worker finished and
+            // persisted the dossier anyway, so the second attempt is a cache hit rather than a
+            // second cold cast — which is why one is enough and two would be waste.
             const dossier = await castPiece(
               forCastingWire({ key: entry.key, nft: entry.nft }),
-              { signal, onEvent: feed(entry.key) },
+              { signal, onEvent: feed(entry.key), retries: 1 },
             );
             dossiers.set(entry.key, dossier);
             patch(entry.key, { status: 'done', dossier, cached: dossier.cached });
@@ -215,6 +238,7 @@ export const useScreenwriter = () => {
             if (signal.aborted) return;
             // One piece failing must not lose the film. The Screenwriter is told about the
             // cast it actually has, and the treatment names what could not be used.
+            failures.push(failure.message);
             patch(entry.key, { status: 'failed', error: failure.message });
             settle(entry.key);
           }
@@ -237,9 +261,7 @@ export const useScreenwriter = () => {
           }));
 
         if (!usable.length) {
-          const failures = Object.values(analysis).filter((state) => state?.status === 'failed');
-          const reasons = failures.map((state) => state.error).filter(Boolean);
-          const unique = [...new Set(reasons)];
+          const unique = [...new Set(failures.filter(Boolean))];
           const detail = unique.length
             ? ` (${unique.slice(0, 2).join('; ')}${unique.length > 2 ? '…' : ''})`
             : '';
@@ -305,7 +327,7 @@ export const useScreenwriter = () => {
         setStage(STAGE.WRITING);
       }
     },
-    [patch, feed, settle, analysis],
+    [patch, feed, settle],
   );
 
   /**

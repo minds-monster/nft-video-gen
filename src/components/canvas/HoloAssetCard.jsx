@@ -32,7 +32,7 @@ const FALLBACK_ACCENT = '#951EF5';
 // analysis was skipped.
 const CASTING_CHIP = {
   queued: { label: 'Queued', className: 'bg-black/70 text-slate-400' },
-  watching: { label: 'Reading', className: 'bg-purple-500/25 text-purple-200' },
+  casting: { label: 'Reading', className: 'bg-purple-500/25 text-purple-200' },
   done: { label: 'Read', className: 'bg-emerald-400/20 text-emerald-200' },
   cached: { label: 'Known', className: 'bg-emerald-400/15 text-emerald-300/90' },
   failed: { label: 'Unread', className: 'bg-red-500/25 text-red-200' },
@@ -255,7 +255,7 @@ const HoloAssetCard = ({
           exactly this HUD register — it is what HudFrame uses when the canvas opens — and
           reusing it means the Casting Director's work looks native to the surface rather than bolted
           on. Cast into the same `key` so it restarts if a card is re-read. */}
-      {analysis?.status === 'watching' && (
+      {analysis?.status === 'casting' && (
         <span
           key="sweep"
           aria-hidden="true"
@@ -275,7 +275,7 @@ const HoloAssetCard = ({
                 className={cn(
                   'rounded-full px-1.5 py-0.5 font-mono text-[8px] font-bold uppercase tracking-widest',
                   chip.className,
-                  analysis.status === 'watching' && 'animate-pulse',
+                  analysis.status === 'casting' && 'animate-pulse',
                 )}
               >
                 {chip.label}

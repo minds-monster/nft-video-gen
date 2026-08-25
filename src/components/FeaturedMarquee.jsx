@@ -40,9 +40,10 @@ const FeaturedMarquee = ({ onToggle, selectedKeys, className }) => {
   const { items, loading, isMock } = useFeaturedNfts({ perCollection: 3, max: 24 });
   const [paused, setPaused] = useState(false);
   const reduceMotion = useReducedMotion();
-  // Must run before the early returns below — and the strip is exactly where a token with
-  // dead artwork was most visible, since it interleaves every collection.
-  const available = useAvailableNfts(items, selectNft);
+  const filteredItems = items.filter(
+    (item) => item.collection?.brand?.slug !== 'animoca-brands'
+  );
+  const available = useAvailableNfts(filteredItems, selectNft);
 
   if (loading) {
     return (

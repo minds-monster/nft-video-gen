@@ -41,6 +41,8 @@
 // the ownership record — so the bar is "is this valid to sell as a portable, identity-bearing
 // artifact", which is a question about correctness rather than beauty.
 //
+import { fetchArtwork } from './artwork.js';
+
 const R2_PREFIX = 'cast';
 const MESH_VERSION = 1;
 
@@ -193,22 +195,12 @@ export const pollMeshTask = async (env, taskId) => {
 const dossierFor = async (env, assetKey, version) =>
   env.DOSSIERS ? env.DOSSIERS.get(`dossier:v${version}:${assetKey}`, 'json') : null;
 
-/** The same candidate walk worker/cast-art.js uses — dead IPFS gateways and hotlink-protected
- * CDNs are why this is a list rather than a URL. */
+/** The same candidate walk cast-art.js and casting-director.js use — and now literally the same
+ * one. The comment here used to claim that while quietly having no IPFS fallback at all, which is
+ * the exact drift that made worker/artwork.js worth extracting. */
 const fetchArtworkBytes = async (dossier) => {
-  const errors = [];
-  for (const url of dossier.sourceImageUrls ?? []) {
-    try {
-      const response = await fetch(url, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.0' },
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      return new Uint8Array(await response.arrayBuffer());
-    } catch (error) {
-      errors.push(`${url.slice(0, 50)}: ${error.message}`);
-    }
-  }
-  throw new Error(`Could not fetch the artwork: ${errors.join(' | ')}`);
+  const { bytes } = await fetchArtwork(dossier.sourceImageUrls);
+  return bytes;
 };
 
 const putRecord = async (env, assetKey, record) => {

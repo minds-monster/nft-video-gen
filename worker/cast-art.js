@@ -24,6 +24,8 @@
 // derived from, so a card on screen is traceable to the artwork it came from without anyone
 // having to trust that it is.
 
+import { fetchArtwork } from './artwork.js';
+
 const R2_PREFIX = 'cast';
 
 /** A year, immutable. The artwork behind a token id cannot change — the same reasoning that
@@ -48,41 +50,6 @@ const json = (data, status = 200) =>
 const dossierFor = async (env, assetKey, version) => {
   if (!env.DOSSIERS) return null;
   return env.DOSSIERS.get(`dossier:v${version}:${assetKey}`, 'json');
-};
-
-const IPFS_GATEWAYS = ['https://ipfs.io/ipfs/', 'https://cloudflare-ipfs.com/ipfs/'];
-
-const withIpfsFallback = (url) => {
-  if (!url?.startsWith('https://ipfs.io/ipfs/')) return [url];
-  const path = url.slice('https://ipfs.io/ipfs/'.length);
-  return IPFS_GATEWAYS.map((gateway) => gateway + path);
-};
-
-/**
- * The first of the candidates that actually answers with an image.
- *
- * Same walk as worker/casting-director.js's fetchImageAsDataUri, and the same hard-won reasons:
- * some IPFS CIDs have no providers left, some creator CDNs 403 a bare user-agent, and Alchemy's
- * mirror is the one that reliably resolves. Bytes rather than a data URI here, because these are
- * going into an <img>, not into a model's context window.
- */
-const fetchArtwork = async (urls) => {
-  const errors = [];
-  for (const url of urls.flatMap(withIpfsFallback)) {
-    if (!url) continue;
-    try {
-      const response = await fetch(url, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.0' },
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const contentType = response.headers.get('content-type') ?? 'image/png';
-      if (!contentType.startsWith('image/')) throw new Error(`content-type ${contentType}`);
-      return { bytes: new Uint8Array(await response.arrayBuffer()), contentType, url };
-    } catch (error) {
-      errors.push(`${url.slice(0, 60)}: ${error.message}`);
-    }
-  }
-  throw new Error(errors.join(' | ') || 'no candidate URLs');
 };
 
 /**

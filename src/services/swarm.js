@@ -24,8 +24,15 @@ const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 const jitter = (ms) => ms + Math.floor(Math.random() * Math.min(ms, 1000));
 
 export const stream = async (path, body, { signal, onEvent, headers, retries = 0 } = {}) => {
+  // A TRUNCATED STREAM IS THE MOST RETRYABLE FAILURE THERE IS, and it used to be the only one
+  // we gave up on. When a stream is cut the work usually finished anyway — the Worker keeps
+  // running and persists what it produced (see worker/sse.js) — so the retry is normally a cache
+  // hit answered in one round trip, not a second cold run. Three cast members were marked
+  // permanently unreadable on 2026-08-25 for want of exactly this.
   const isRetryable = (err) =>
-    err instanceof TypeError || (typeof err.status === 'number' && err.status >= 502 && err.status <= 504);
+    err instanceof TypeError ||
+    err.truncated === true ||
+    (typeof err.status === 'number' && err.status >= 502 && err.status <= 504);
 
   const attempt = async () => {
     const response = await fetch(path, {
@@ -49,6 +56,10 @@ export const stream = async (path, body, { signal, onEvent, headers, retries = 0
     let buffer = '';
     let result = null;
     let failure = null;
+    // Kept only to describe a truncation. "Ended without a result" says nothing about where it
+    // stopped; "cut off after 412 events, last was phase" says whether the work had even begun.
+    let events = 0;
+    let lastType = null;
 
     for (;;) {
       const { done, value } = await reader.read();
@@ -76,6 +87,9 @@ export const stream = async (path, body, { signal, onEvent, headers, retries = 0
           continue;
         }
 
+        events += 1;
+        lastType = type;
+
         if (type === 'result') result = data;
         else if (type === 'error') failure = data;
         else onEvent?.(type, data);
@@ -89,7 +103,15 @@ export const stream = async (path, body, { signal, onEvent, headers, retries = 0
       error.retryable = Boolean(failure.retryable);
       throw error;
     }
-    if (!result) throw new Error(`${path} ended without a result`);
+    if (!result) {
+      // Neither a `result` nor an `error` frame arrived, which the Worker cannot do
+      // deliberately: every thrown handler emits `error`. So the connection was cut, and this
+      // says so plainly rather than implying the endpoint decided to answer with nothing.
+      const where = lastType ? `after ${events} events, last was "${lastType}"` : 'before it said anything';
+      const error = new Error(`${path} was cut off ${where} — no result arrived`);
+      error.truncated = true;
+      throw error;
+    }
     return result;
   };
 
@@ -101,6 +123,10 @@ export const stream = async (path, body, { signal, onEvent, headers, retries = 0
       lastErr = err;
       if (!isRetryable(err) || i === retries) throw err;
       await sleep(jitter(500 * 2 ** i));
+      // The previous attempt may have streamed hundreds of tokens onto the user's screen before
+      // it was cut. Replaying them on top would read as the agent saying everything twice, so
+      // listeners are told to start the slot over rather than append to it.
+      onEvent?.('restart', { attempt: i + 2, reason: err.message });
     }
   }
   throw lastErr;

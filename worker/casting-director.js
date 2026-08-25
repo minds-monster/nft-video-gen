@@ -13,6 +13,7 @@
 
 import { chat, jsonFrom, streamChat } from './nvidia.js';
 import { sseResponse } from './sse.js';
+import { fetchArtwork, toDataUri } from './artwork.js';
 import {
   toHttp,
   resolveNftVideo,
@@ -317,76 +318,47 @@ const traitLines = (nft) => {
 // gateways, hotlink-protected CDNs, or URLs that need a browser user-agent. We fetch the
 // image in the Worker and hand it to the model as a base64 data URI. That keeps the bytes
 // we already resolved from Alchemy from being lost at the last hop.
+//
+// The walk itself now lives in worker/artwork.js, shared with cast-art.js and mesh.js — see that
+// file's header for what each candidate actually costs, and why refusing a non-image response is
+// the difference between "could not fetch it" and "the model could not describe it".
 const MAX_PROXY_BYTES = 5 * 1024 * 1024;
-
-const bytesToBase64 = (bytes) => {
-  let binary = '';
-  const len = bytes.byteLength;
-  const chunk = 0x8000;
-  for (let i = 0; i < len; i += chunk) {
-    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
-  }
-  return btoa(binary);
-};
-
-const IPFS_GATEWAYS = ['https://ipfs.io/ipfs/', 'https://cloudflare-ipfs.com/ipfs/'];
-
-const withIpfsFallback = (url) => {
-  if (!url?.startsWith('https://ipfs.io/ipfs/')) return [url];
-  const path = url.slice('https://ipfs.io/ipfs/'.length);
-  return IPFS_GATEWAYS.map((gateway) => gateway + path);
-};
-
-const fetchOneImageAsDataUri = async (url) => {
-  const response = await fetch(url, {
-    headers: {
-      // IPFS.io and some creator CDNs serve 403 or 0 bytes to bare fetch user-agents.
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.0',
-    },
-  });
-  if (!response.ok) {
-    throw new Error(`Image fetch ${response.status}: ${url.slice(0, 80)}`);
-  }
-  const contentLength = response.headers.get('content-length');
-  if (contentLength && Number(contentLength) > MAX_PROXY_BYTES) {
-    throw new Error(`Image too large to proxy: ${contentLength} bytes`);
-  }
-  const contentType = response.headers.get('content-type') || 'image/png';
-  const buffer = await response.arrayBuffer();
-  if (buffer.byteLength > MAX_PROXY_BYTES) {
-    throw new Error(`Image too large to proxy: ${buffer.byteLength} bytes`);
-  }
-  return `data:${contentType};base64,${bytesToBase64(new Uint8Array(buffer))}`;
-};
 
 // Exported for worker/storyboarder.js: it independently re-resolves the same raw asset
 // this function fetches for the dossier, rather than trusting the dossier's prose as a
 // substitute for the pixels. See that file's header for why this matters.
 export const fetchImageAsDataUri = async (urls) => {
-  const attempts = urls.flatMap(withIpfsFallback);
-  const errors = [];
-  for (const url of attempts) {
-    try {
-      const dataUri = await fetchOneImageAsDataUri(url);
-      console.info(`Proxied casting image from ${url.slice(0, 80)}`);
-      return dataUri;
-    } catch (error) {
-      errors.push(`${url.slice(0, 60)}: ${error.message}`);
-    }
-  }
-  throw new Error(errors.join(' | '));
+  const artwork = await fetchArtwork(urls, { maxBytes: MAX_PROXY_BYTES });
+  console.info(`Proxied casting image from ${artwork.url.slice(0, 80)}`);
+  return toDataUri(artwork);
 };
 
+/**
+ * The message parts both model passes are shown — built ONCE per cast.
+ *
+ * It used to be built per request, which meant the artwork was downloaded and base64-encoded
+ * twice for every cold cast (the looking pass and the formalising pass) and a third time if the
+ * dossier needed repairing. Beyond the wasted round trips and the multi-megabyte re-encodes, the
+ * two passes could resolve DIFFERENT candidates — one gateway alive for the first call and dead
+ * for the second — so the pass that reasoned about the picture and the pass that wrote it up were
+ * not guaranteed to have seen the same picture.
+ *
+ * Returns the parts alongside `imageError`: the fetch is allowed to fail (NVIDIA can often
+ * retrieve a URL we cannot), but the reason has to survive as something more than a log line, or
+ * an unfetchable piece surfaces as the model complaining about artwork it never received.
+ */
 const buildContent = async (nft) => {
   const parts = [];
+  let imageError = null;
   const stills = castingStills(nft);
   if (stills.length) {
     let imageUrl = stills[0];
     try {
       imageUrl = await fetchImageAsDataUri(stills);
     } catch (error) {
-      // Proxying failed — leave the best original URL and let NVIDIA try directly. The failure is
-      // logged so a persistently broken piece can be diagnosed without losing the run.
+      // Proxying failed — leave the best original URL and let NVIDIA try directly. The reason is
+      // kept so a persistently broken piece can be diagnosed without losing the run.
+      imageError = error.message;
       console.warn(`Could not proxy casting image for token #${nft?.tokenId}: ${error.message}`);
     }
     parts.push({ type: 'image_url', image_url: { url: imageUrl } });
@@ -410,14 +382,14 @@ const buildContent = async (nft) => {
       .join('\n'),
   });
 
-  return parts;
+  return { parts, imageError };
 };
 
-const request = async (env, nft, notes, previsNote) => ({
+const request = (env, content, notes, previsNote) => ({
   model: env.CASTING_MODEL,
   messages: [
     { role: 'system', content: BRIEF },
-    { role: 'user', content: await buildContent(nft) },
+    { role: 'user', content },
     // The looking pass's own words, fed back so this call formalises a judgement it has
     // already made rather than forming a fresh one. Omitted if that pass failed.
     ...(notes ? [{ role: 'assistant', content: notes }] : []),
@@ -513,7 +485,7 @@ const motionRequest = (env, film) => ({
  * the model's own first look, which makes this think-then-answer rather than two attempts
  * at the same question.
  */
-const lookRequest = async (env, nft) => ({
+const lookRequest = (env, content) => ({
   model: env.CASTING_MODEL,
   messages: [
     {
@@ -528,7 +500,7 @@ const lookRequest = async (env, nft) => ({
         'Never name a brand, a marque or a real person, even if you recognise one. Do not ' +
         'repeat that rule back to yourself; just describe what you see.',
     },
-    { role: 'user', content: await buildContent(nft) },
+    { role: 'user', content },
   ],
   chat_template_kwargs: { enable_thinking: true },
   temperature: 0.3,
@@ -642,7 +614,7 @@ const validate = (dossier) => {
   return dossier;
 };
 
-export const castPiece = async (httpRequest, env) => {
+export const castPiece = async (httpRequest, env, ctx) => {
   const { key, nft, refresh = false, previsNote } = await httpRequest.json();
   if (!key || !nft) {
     return Response.json({ error: 'Body needs { key, nft }' }, { status: 400 });
@@ -650,6 +622,11 @@ export const castPiece = async (httpRequest, env) => {
 
   const cacheKey = `dossier:v${SCHEMA_VERSION}:${key}`;
 
+  // `ctx` IS NOT OPTIONAL HERE, whatever the signature suggests. Casting was the one long
+  // endpoint that never passed it, so the runtime was free to cancel the whole invocation the
+  // moment the response stream was abandoned — killing a finished dossier seconds before the KV
+  // write that would have made it permanent. See worker/sse.js's header: the guarantee was
+  // written for exactly this handler and this handler was the one opting out of it.
   return sseResponse(async (emit) => {
     if (!castingStills(nft).length) {
       throw new Error(
@@ -669,11 +646,14 @@ export const castPiece = async (httpRequest, env) => {
       }
     }
 
+    // The artwork, resolved once and shown to every pass below.
+    const { parts, imageError } = await buildContent(nft);
+
     // ---- 1. the looking pass, streamed --------------------------------------------
     await emit('phase', { phase: 'looking' });
     let notes = '';
     try {
-      const looked = await streamChat(env, await lookRequest(env, nft), (delta) => {
+      const looked = await streamChat(env, lookRequest(env, parts), (delta) => {
         // Fire-and-forget: awaiting each write inside the delta callback would serialise
         // the parse loop against the socket and stutter the text the user is reading.
         emit('delta', delta).catch(() => {});
@@ -702,18 +682,34 @@ export const castPiece = async (httpRequest, env) => {
     // not need reasoning, and it is the one thing a still genuinely cannot answer.
     let dossier;
     try {
-      dossier = validate(jsonFrom(await chat(env, await request(env, nft, notes, previsNote))));
+      dossier = validate(jsonFrom(await chat(env, request(env, parts, notes, previsNote))));
     } catch (error) {
       // One repair pass with the complaint fed back. The defects worth repairing here — a
       // brand name in the subject, a missing field — are precisely the ones a model fixes
       // when told what it did, and a failed dossier costs the user their whole cast.
       console.warn(`Casting Director first pass rejected for ${key}:`, error.message);
-      const retry = await request(env, nft, notes, previsNote);
+      const retry = request(env, parts, notes, previsNote);
       retry.messages.push({
         role: 'user',
         content: `Your dossier was rejected: ${error.message}\n\nFix exactly that and emit it again.`,
       });
-      dossier = validate(jsonFrom(await chat(env, retry)));
+
+      try {
+        dossier = validate(jsonFrom(await chat(env, retry)));
+      } catch (repairError) {
+        // AN UNFETCHABLE IMAGE IS NOT A MODEL FAILURE, and reporting it as one sends whoever is
+        // debugging to the wrong half of the system. The repair pass still runs first — we hand
+        // the model the raw URL when proxying fails and it can often fetch what we could not, so
+        // a first-pass rejection is usually an ordinary brand leak rather than a blind guess. But
+        // once BOTH passes have failed on a piece whose pixels we never got, the artwork is the
+        // likeliest reason and the only one nobody downstream can work out for themselves.
+        if (imageError) {
+          throw new Error(
+            `Could not fetch this piece's artwork, and the dossier written without it was rejected twice: ${imageError}`,
+          );
+        }
+        throw repairError;
+      }
     }
 
     // ---- 3. the film ----------------------------------------------------------------
@@ -750,6 +746,10 @@ export const castPiece = async (httpRequest, env) => {
       // source is named — and any later pass that has to look at the same pixels again without
       // re-resolving the token from scratch.
       sourceImageUrls: castingStills(nft),
+      // Non-null only when every candidate refused us and NVIDIA fetched the URL itself. Worth
+      // storing: a dossier written from a picture we could not see is still a real dossier, but
+      // it is one whose provenance nothing downstream can re-check.
+      imageError,
       schemaVersion: SCHEMA_VERSION,
       model: env.CASTING_MODEL,
     };
@@ -760,5 +760,5 @@ export const castPiece = async (httpRequest, env) => {
     if (env.DOSSIERS) await env.DOSSIERS.put(cacheKey, JSON.stringify(record));
 
     await emit('result', { ...record, cached: false });
-  });
+  }, ctx);
 };

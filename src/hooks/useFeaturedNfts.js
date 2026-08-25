@@ -22,13 +22,8 @@ export const useFeaturedNfts = ({ perCollection = 4, max = 28 } = {}) => {
   useEffect(() => {
     let active = true;
 
-    // Filter out Animoca Brands from the showcase
-    const targets = LIVE_COLLECTIONS.filter(
-      (collection) => collection.brand?.slug !== 'animoca-brands'
-    );
-
     Promise.all(
-      targets.map((collection) =>
+      LIVE_COLLECTIONS.map((collection) =>
         loadCollection(collection.chain, collection.address, 24).then((result) => ({
           collection,
           result,
