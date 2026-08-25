@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { Billboard, Edges } from '@react-three/drei';
 import { useCastTexture } from './useCastTexture';
@@ -133,9 +133,50 @@ const Impostor = ({ subject, asset, nameOf, onHover, showArt = true, detail = fa
   const [hovered, setHovered] = useState(false);
   const group = useRef();
   const built = useCastTexture(showArt ? asset?.assetKey : null);
-  // Only asked for when the artwork is up AND the frame is being looked at closely.
-  const mesh = useCastMesh(asset?.assetKey ?? null, showArt && detail);
+
+  // WHEN THE MESH IS WORTH FETCHING.
+  //
+  // In SCHEMATIC mode: always, because a wireframe of the visitor's actual piece is the whole
+  // point of the schematic. A capsule tells you a figure is 1.8m tall; a wireframe of their ape
+  // tells you that AND which way its shoulders face and where its silhouette breaks the frame
+  // line. That is the view this storyboard exists to let someone judge a shot in.
+  //
+  // In ARTWORK mode: only on close inspection, because at tile size the card IS the source pixels
+  // and nothing beats it, and ~3.7MB per cast member is not worth spending to answer a question
+  // nobody asked.
+  const mesh = useCastMesh(asset?.assetKey ?? null, !showArt || detail);
   const showMesh = mesh?.status === 'ready';
+  // Schematic draws real geometry as wireframe; artwork draws it painted.
+  const asWireframe = !showArt;
+
+  // CLONED PER SUBJECT, and this is a correctness fix rather than a nicety: useCastMesh caches one
+  // loaded scene per piece and shares it across every tile on the page, and a three.js object can
+  // only have one parent. Handing the same object to two beats makes it JUMP to whichever mounted
+  // last. The clone shares geometry and textures, so it costs a node tree, not a mesh.
+  const instance = useMemo(() => {
+    if (!showMesh) return null;
+    const copy = mesh.scene.clone(true);
+    if (asWireframe) {
+      copy.traverse((node) => {
+        if (node.isMesh) {
+          node.material = new THREE.MeshBasicMaterial({
+            color: EDGE,
+            wireframe: true,
+            transparent: true,
+            opacity: hovered ? 0.75 : 0.45,
+          });
+        }
+      });
+    }
+    return copy;
+  }, [mesh, showMesh, asWireframe, hovered]);
+
+  // Wireframe materials are made here rather than shared, so they have to be released here too.
+  useEffect(() => () => {
+    instance?.traverse?.((node) => {
+      if (node.isMesh && node.material?.wireframe) node.material.dispose();
+    });
+  }, [instance]);
 
   const heightM = Math.max(subject.heightM ?? 1.8, 0.05);
   const widthM = Math.max(subject.widthM ?? 0.6, 0.05);
@@ -164,7 +205,7 @@ const Impostor = ({ subject, asset, nameOf, onHover, showArt = true, detail = fa
 
   return (
     <group ref={group} position={[subject.x ?? 0, y, subject.z ?? 0]} rotation={[0, yaw, 0]}>
-      {(built || showMesh) && <ContactDisc radius={Math.max(showMesh ? widthM : cardWidth, depthM) / 2} />}
+      {(built || (showMesh && !asWireframe)) && <ContactDisc radius={Math.max(showMesh ? widthM : cardWidth, depthM) / 2} />}
 
       {/* Faint when the artwork is up — the card is the subject then, and the volume is a
           reference behind it. Solid when there is no card, because then it is all there is. */}
@@ -199,12 +240,12 @@ const Impostor = ({ subject, asset, nameOf, onHover, showArt = true, detail = fa
         <meshBasicMaterial color={EDGE} transparent opacity={built ? 0.35 : 0.55} depthWrite={false} />
       </mesh>
 
-      {showMesh && (
+      {showMesh && instance && (
         // Fitted to the scene's own heightM rather than trusted to arrive at it — see
         // useCastMesh. The subject's yaw is applied by the enclosing group, so a mesh faces the
         // way the blocking says it faces.
         <group scale={heightM / mesh.unitHeight} position={mesh.offset.clone().multiplyScalar(heightM / mesh.unitHeight)}>
-          <primitive object={mesh.scene} onPointerOver={enter} onPointerOut={leave} />
+          <primitive object={instance} onPointerOver={enter} onPointerOut={leave} />
         </group>
       )}
 
