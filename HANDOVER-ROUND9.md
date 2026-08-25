@@ -1,7 +1,8 @@
 # Round 9 — making the cast real in the previz
 
-**Status: not started. This is a probe plan, not a build.** Round 8 is built and live; see
-`HANDOVER.md` for that. This document is the next question and how to answer it.
+**Status: DELIVERED, 2026-08-25.** This was the probe plan. What came back from running it — including
+the medium gate being stated, confirmed, and then overturned — is in `HANDOVER-ROUND10.md`. Kept as
+written, because the value of a pre-registered plan is that it is not edited after the results.
 
 ---
 
