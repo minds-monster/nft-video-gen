@@ -168,10 +168,32 @@
 // Making that systematic means one more field from a pass that is already looking at the image,
 // asked for only when `isMannequin` is true.
 //
-// AND A CEILING WORTH KNOWING: the collar still closes over. Tripo returns CLOSED SHELLS, so
-// there is no true neck opening to be had from any amount of masking — only a choice of what
-// colour the collar closes with. Masking decides what is in the mesh; it cannot decide that the
-// mesh has a hole.
+// I CLAIMED A CEILING HERE THAT DOES NOT EXIST, and the correction is the useful part.
+//
+// The first attempt keyed the chrome to alpha and then composited the result onto WHITE, and the
+// collar came back capped with a white lid. I concluded that Tripo returns closed shells and no
+// masking could buy an opening. Wrong: the lid was the white I put there. A later run that left
+// the alpha intact came back with a genuine dark void you can see down into. ALPHA IS HONOURED
+// and a real opening IS achievable.
+//
+// What actually governs it is subtler, and cost three generations to pin down:
+//
+//   opaque background + opaque neck    the mannequin's neck, reconstructed
+//   opaque background + WHITE neck     a clean jacket, collar capped with a white lid
+//   ALPHA background + ALPHA neck      a jacket with a real open collar — but the wide key that
+//                                      removed both also ate the garment's blue sequins
+//   opaque background + ALPHA neck     COLLAPSES. A flat slab with stray panels. An image whose
+//                                      background is opaque but which has a transparent hole in
+//                                      the middle of the subject is a thing the segmenter has no
+//                                      sensible reading of, and it does not fail gracefully.
+//
+// So the recipe is BOTH, not either: background to alpha by a flood fill from the edges, and the
+// ENCLOSED scaffolding to alpha by a hue key — because a flood fill can never reach inside a
+// collar, and a hue key over the whole frame is what eats sequins. Two operations with different
+// jobs. That combination has not yet been run cleanly; each half is proven separately.
+//
+// Adam's point stands and is the right instinct: these busts are DESIGNED to be neutral and
+// separable, which is exactly why a colour rule works on them where a box does not.
 //
 // TWO LIMITS WORTH STATING BEFORE ANYONE CALLS THIS SOLVED:
 //
