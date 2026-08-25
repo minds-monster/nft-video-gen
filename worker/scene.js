@@ -350,8 +350,12 @@ export const sceneScaleOf = (scene) => {
  *           these fails the fixture outright.
  *   SOFT  - rests on a tuned constant nobody has calibrated yet (how close is too close?).
  *           Scored, never a veto.
+ *
+ * `profiles` is optional and maps a subject tag to that piece's `physicalProfile` from its
+ * dossier. Passing it adds the height-agreement check below; omitting it changes nothing, which
+ * is what keeps every existing caller — and the golden-fixture suite — honest.
  */
-export const validateScene = (scene, { aspect = 16 / 9 } = {}) => {
+export const validateScene = (scene, { aspect = 16 / 9, profiles = null } = {}) => {
   const violations = [];
   const push = (code, severity, detail, extra = {}) =>
     violations.push({ code, severity, detail, beatIndex: scene.beatIndex, ...extra });
@@ -413,6 +417,36 @@ export const validateScene = (scene, { aspect = 16 / 9 } = {}) => {
       push('absurd-scale', FLOOR, `${s.subject} is ${s.heightM}m tall and ${s.widthM}m wide.`, {
         subject: s.subject,
       });
+    }
+    // THE HEIGHT THE DOSSIER OBSERVED VERSUS THE HEIGHT THE MODEL USED.
+    //
+    // Two severities, because the two failures are not the same failure. A 30% disagreement is a
+    // judgement call — the model may be staging a crouching figure, or reading a stylised
+    // character's proportions differently — and refusing the beat over it would throw away
+    // working geometry. An order-of-magnitude disagreement is not a judgement call: it means the
+    // model priced the shot on a different object than the one in the artwork, and since hFrac is
+    // directly proportional to heightM, the stated framing is then arithmetic about nothing.
+    //
+    // Soft first, on purpose. The threshold below is uncalibrated, and promoting it to a floor
+    // before the numbers exist would be exactly the tuned-constant veto the SOFT band is for.
+    const observed = profiles?.[s.subject]?.heightM;
+    if (finite(observed) && observed > 0 && finite(s.heightM) && s.heightM > 0) {
+      const ratio = s.heightM / observed;
+      if (ratio > 2 || ratio < 0.5) {
+        push(
+          'height-contradicts-profile',
+          FLOOR,
+          `${s.subject} is staged at ${s.heightM}m, but the piece itself was measured at ${observed}m — different by more than a factor of two, so the shot size is computed on the wrong object.`,
+          { subject: s.subject },
+        );
+      } else if (ratio > 1.25 || ratio < 0.8) {
+        push(
+          'height-contradicts-profile',
+          SOFT,
+          `${s.subject} is staged at ${s.heightM}m against a measured ${observed}m.`,
+          { subject: s.subject },
+        );
+      }
     }
     if (s.groundOffsetM < 0) {
       push('subject-underground', FLOOR, `${s.subject} sits at ${s.groundOffsetM}m, below ground.`, {
@@ -1128,6 +1162,12 @@ const RULES = `Rules.
    justifiedByBeatText set honestly. A subject's heightM never changes between beats — a person
    is the same height in beat 5 as in beat 1.
 
+2b. SIZES ARE GIVEN, NOT CHOSEN. Where a cast entry states a size, those are the numbers —
+   copy them into heightM and widthM in every beat that subject appears in. They were measured
+   from the artwork itself, and shot size is computed from them, so substituting your own
+   changes the framing of the shot without changing anything you can see. Only invent a size
+   for a subject the cast list gives none for.
+
 3. THE 180-DEGREE LINE. The line runs through the two principal subjects. Keep the camera on one
    side of it across consecutive beats. If a beat genuinely calls for crossing, cross — and
    expect the subjects to swap sides of frame, because that is what crossing means.
@@ -1171,13 +1211,34 @@ ${RULES}
 
 Return the film by calling the tool. Write no prose outside it.`;
 
+/**
+ * The observed size of a piece, in the words the model needs to plan a camera with.
+ *
+ * WHY THIS IS ON THE CAST LINE AND NOT IN THE RULES. hFrac is directly proportional to
+ * heightM, so before this existed the model invented a height and every shot size in the film
+ * inherited the invention. Stating the real one HERE — attached to the subject it belongs to,
+ * at the moment the model reads what that subject is — is what turns "a close-up of the ape"
+ * into an arithmetic problem with a known input.
+ *
+ * Silent when the dossier predates the profile (schema v4 and earlier). A cast line that says
+ * nothing is exactly what the model saw before; a cast line that says "unknown" invites it to
+ * reason about the gap.
+ */
+const profileLine = (dossier) => {
+  const profile = dossier?.physicalProfile;
+  if (!profile || !Number.isFinite(profile.heightM)) return '';
+  const confidence = profile.heightConfidence === 'unknowable' ? ', size unknowable — treat as approximate' : '';
+  const shape = profile.silhouetteNotes ? `; ${profile.silhouetteNotes}` : '';
+  return `\n    ${profile.bodyPlan}, ${profile.heightM}m tall × ${profile.widthM}m wide × ${profile.depthM}m deep${confidence}${shape}`;
+};
+
 export const castLine = (index, entry) => {
   const dossier = entry?.dossier ?? {};
   const subject = dossier.subject ?? entry?.name ?? entry?.key ?? 'unknown';
   const markers = dossier.identityMarkers?.length
     ? ` (${dossier.identityMarkers.slice(0, 3).join(', ')})`
     : '';
-  return `<Subject ${index + 1}> — ${subject}${markers}`;
+  return `<Subject ${index + 1}> — ${subject}${markers}${profileLine(dossier)}`;
 };
 
 const specHeader = (spec, cast) => {

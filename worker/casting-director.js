@@ -26,7 +26,114 @@ import {
 // v3: split the film into its own pass. Every v2 dossier for a token WITH a film was
 //     written by the reasoning-disabled video call and is measurably worse — see castPiece().
 // v4: reject dossiers that reuse lettering from the artwork in the subject — see validate().
-const SCHEMA_VERSION = 4;
+// v5: physicalProfile — what the piece IS in space, not just how it looks. See below.
+const SCHEMA_VERSION = 5;
+
+/**
+ * How big the thing actually is, and what shape of thing it is.
+ *
+ * THIS IS A DOSSIER FIELD, NOT A RENDERER FIELD, and that is an architectural decision rather
+ * than a filing convenience. Three consumers need it and they must not disagree: the Screenwriter
+ * plans prose around a subject's size, worker/scene.js computes hFrac from `heightM`, and the
+ * previz renderer picks its primitives from `bodyPlan`. One field set, three consumers, zero
+ * drift. Split it between the dossier and the renderer and they are guaranteed to diverge.
+ *
+ * WHY IT IS WORTH A SCHEMA BUMP. Until now the Storyboarder GUESSED a height for every subject,
+ * and `hFrac = heightM · focalMm / (zCam · sensorHeightMm)` — so a guessed height was a guessed
+ * shot size, in every beat of every film. This is the only part of round 9 that makes the film
+ * more CORRECT rather than only better-looking.
+ *
+ * The Casting Director is already looking at the pixels, and dossiers are cached permanently per
+ * asset, so this costs one extra field set on a call that was happening anyway.
+ */
+const PHYSICAL_PROFILE = {
+  type: 'object',
+  additionalProperties: false,
+  required: [
+    'bodyPlan',
+    'heightM',
+    'widthM',
+    'depthM',
+    'heightConfidence',
+    'headRatio',
+    'silhouetteNotes',
+    'facing',
+  ],
+  properties: {
+    bodyPlan: {
+      type: 'string',
+      enum: [
+        'biped',
+        'quadruped',
+        'vehicle',
+        'aircraft',
+        'vessel',
+        'object',
+        'architecture',
+        'creature-other',
+      ],
+      description:
+        'What KIND of thing this is in space, which decides the shape it is drawn as. A ' +
+        'character, avatar, mascot or humanoid creature that stands on two legs is "biped" ' +
+        'however stylised. A car, truck or bike is "vehicle". A handbag, sneaker or weapon is ' +
+        '"object". A building or structure is "architecture". Use "creature-other" for a ' +
+        'living thing that is none of the above — a bird, a fish, a blob.',
+    },
+    heightM: {
+      type: 'number',
+      minimum: 0.02,
+      maximum: 500,
+      description:
+        'How tall the SUBJECT would be in the real world, in metres — never the artwork, the ' +
+        'card or the frame around it. An adult human is about 1.8; a stylised ape character ' +
+        'about 1.5; a car about 1.3; a sneaker about 0.12; a tower block 70 or more. Estimate ' +
+        'from what the thing is, not from how big it looks in the picture.',
+    },
+    widthM: {
+      type: 'number',
+      minimum: 0.02,
+      maximum: 500,
+      description: 'Real-world width across the widest horizontal axis, in metres. An adult human is about 0.6; a car about 2.0.',
+    },
+    depthM: {
+      type: 'number',
+      minimum: 0.02,
+      maximum: 500,
+      description: 'Real-world depth front-to-back, in metres. An adult human is about 0.35; a car about 4.5.',
+    },
+    heightConfidence: {
+      type: 'string',
+      enum: ['known', 'inferred', 'unknowable'],
+      description:
+        '"known" when the subject is a real kind of thing with a standard size (a person, a ' +
+        'sedan, a sneaker). "inferred" when it is invented but comparable to something real. ' +
+        '"unknowable" when nothing in the image gives any sense of scale — say so rather than ' +
+        'inventing confidence.',
+    },
+    headRatio: {
+      type: ['number', 'null'],
+      description:
+        'For a figure only: total height divided by head height. A realistic adult human is ' +
+        'about 7.5; a chibi or big-headed character can be 3 or 4. null for anything without ' +
+        'a head. This is what stops a stylised character being drawn with realistic proportions.',
+    },
+    silhouetteNotes: {
+      type: 'string',
+      description:
+        'What the OUTLINE of this thing is, in a few words — the features that would still ' +
+        'identify it as a black shape. e.g. "long tail, wide shoulders, no neck", "low wedge ' +
+        'profile, huge rear wing". Empty string only if there is genuinely nothing distinctive.',
+    },
+    facing: {
+      type: 'string',
+      enum: ['toward', 'away', 'left', 'right', 'unclear'],
+      description:
+        'Which way the subject faces IN THIS ARTWORK. "toward" means it looks out at the ' +
+        'viewer. This says which side of the subject the artwork actually shows, so nothing ' +
+        'downstream has to guess whether it is holding a front view or a side one.',
+    },
+  },
+};
 
 const DOSSIER_SCHEMA = {
   type: 'object',
@@ -106,6 +213,7 @@ const DOSSIER_SCHEMA = {
         'Anything that will degrade a render or trip a content filter: visible brand ' +
         'marks, real faces, heavy type, a subject too small to read, extreme aspect.',
     },
+    physicalProfile: PHYSICAL_PROFILE,
   },
   required: [
     'subject',
@@ -118,6 +226,7 @@ const DOSSIER_SCHEMA = {
     'isMannequin',
     'motionNotes',
     'hazards',
+    'physicalProfile',
   ],
 };
 
@@ -152,6 +261,21 @@ Rules, each learned from a render that failed:
 6. Only describe motion if you were given a film. Never infer it from a still.
 7. Be concrete and visual. "Striking cyberpunk aesthetic" is useless; "magenta rim light
    against a wet black street" can be rendered.
+
+8. SIZE IS THE SUBJECT'S, NOT THE PICTURE'S. physicalProfile describes how big the thing
+   would be if it walked into the room — never how big it appears in the artwork, and never
+   the dimensions of the card or frame around it. A sneaker photographed filling the whole
+   image is still about 0.12m tall. A character shown from the waist up is still described
+   at full standing height.
+
+9. GET THE BODY PLAN RIGHT BEFORE THE NUMBERS. A camera placed for a 1.8m biped and a camera
+   placed for a 2m-wide vehicle are different shots, so calling a character a vehicle ruins
+   every frame it appears in. If the subject stands on two legs it is "biped", however
+   stylised, however synthetic, and whatever it is wearing or sitting in.
+
+10. SAY WHEN YOU CANNOT TELL. heightConfidence is "unknowable" when nothing in the piece
+   gives any sense of scale — an abstract form, a floating shape, a pattern. An honest
+   "unknowable" is useful downstream; a confident guess dressed as knowledge is not.
 
 Return the dossier by calling the emit_dossier tool. Do not write prose.`;
 
@@ -399,7 +523,8 @@ const lookRequest = async (env, nft) => ({
         'video. Look at this piece and write a concise visual description for the ' +
         'Screenwriter. Cover: what the subject is, the details that make it recognisable, ' +
         'how it is drawn, any lettering printed on it, how much of the frame the subject ' +
-        'fills, and anything that would cause trouble in a render. Four or five sentences. ' +
+        'fills, how big the thing would be if it stood in the room with you, and anything ' +
+        'that would cause trouble in a render. Four or five sentences. ' +
         'Never name a brand, a marque or a real person, even if you recognise one. Do not ' +
         'repeat that rule back to yourself; just describe what you see.',
     },
@@ -409,6 +534,67 @@ const lookRequest = async (env, nft) => ({
   temperature: 0.3,
   max_tokens: 2048,
 });
+
+const DIMENSIONS = ['heightM', 'widthM', 'depthM'];
+
+// Same bounds worker/scene.js enforces on a subject (scene.js:412). Stated here too rather
+// than imported: a dossier is written long before any scene exists, and a profile that the
+// scene schema would reject later is a defect NOW, at the one moment it can still be repaired
+// for the cost of a single call.
+const MIN_DIMENSION_M = 0.02;
+const MAX_DIMENSION_M = 500;
+
+/**
+ * The floor under the physical profile.
+ *
+ * Returns a complaint the model can act on, or null. Deliberately not a list of every
+ * imperfection — the repair pass gets ONE attempt, so it is told the single most important
+ * thing wrong rather than handed a report to triage.
+ *
+ * THE BODY-PLAN FLOOR IS THE ONE THAT MATTERS. Everything else here is shape-checking a
+ * forced tool call. But a character labelled a vehicle gets a camera placed for a car in
+ * every beat it appears in, and no downstream stage can recover from that, because nothing
+ * downstream ever sees the artwork again.
+ */
+export const validatePhysicalProfile = (profile) => {
+  if (!profile || typeof profile !== 'object') return 'physicalProfile is missing.';
+
+  const enums = PHYSICAL_PROFILE.properties;
+  for (const field of ['bodyPlan', 'heightConfidence', 'facing']) {
+    if (!enums[field].enum.includes(profile[field])) {
+      return `physicalProfile.${field} is "${profile[field]}", which is not one of: ${enums[field].enum.join(', ')}.`;
+    }
+  }
+
+  for (const field of DIMENSIONS) {
+    const value = profile[field];
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+      return `physicalProfile.${field} is not a number.`;
+    }
+    if (value < MIN_DIMENSION_M || value > MAX_DIMENSION_M) {
+      return `physicalProfile.${field} is ${value}m, outside the believable range ${MIN_DIMENSION_M}-${MAX_DIMENSION_M}m. Give the size of the SUBJECT in the real world, not of the artwork.`;
+    }
+  }
+
+  // A standing figure is taller than it is wide. This is the cheapest available test for
+  // "described a character with a vehicle's dimensions", and it costs nothing to be sure of.
+  if (profile.bodyPlan === 'biped' && profile.widthM >= profile.heightM) {
+    return `physicalProfile says a biped ${profile.heightM}m tall and ${profile.widthM}m wide — wider than it is tall. A standing figure is taller than it is wide; if this is really a vehicle or an object, say so in bodyPlan.`;
+  }
+
+  if (profile.headRatio !== null) {
+    if (typeof profile.headRatio !== 'number' || !Number.isFinite(profile.headRatio)) {
+      return 'physicalProfile.headRatio must be a number, or null for something with no head.';
+    }
+    // 2 is a big-headed chibi; 12 is a stylised elongated figure. Outside that the model has
+    // measured something other than a head.
+    if (profile.headRatio < 2 || profile.headRatio > 12) {
+      return `physicalProfile.headRatio is ${profile.headRatio}. A big-headed character is about 3, a realistic adult about 7.5 — this is neither.`;
+    }
+  }
+
+  return null;
+};
 
 /**
  * Validate rather than trust. A forced tool call gets the shape right almost always, and
@@ -449,6 +635,9 @@ const validate = (dossier) => {
       );
     }
   }
+
+  const profileComplaint = validatePhysicalProfile(dossier.physicalProfile);
+  if (profileComplaint) throw new Error(profileComplaint);
 
   return dossier;
 };
@@ -551,6 +740,16 @@ export const castPiece = async (httpRequest, env) => {
       key,
       watchedFilm,
       notes,
+      // WHAT THIS DOSSIER WAS WRITTEN FROM, recorded rather than reconstructable.
+      //
+      // The ordered candidate list, not the single URL that happened to resolve: fetching walks
+      // this list until one works (see fetchImageAsDataUri), and which one that is depends on
+      // which IPFS gateway is alive today. The list is the stable fact; the winner is not.
+      //
+      // Two things need it. Provenance — a derivative is only traceable to its source if the
+      // source is named — and any later pass that has to look at the same pixels again without
+      // re-resolving the token from scratch.
+      sourceImageUrls: castingStills(nft),
       schemaVersion: SCHEMA_VERSION,
       model: env.CASTING_MODEL,
     };

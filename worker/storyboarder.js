@@ -329,6 +329,8 @@ const violationInEnglish = (violation, nameOf = (tag) => tag) => {
       return `${who} is supposed to be inside something but ended up outside it`;
     case 'absurd-scale':
       return `something is the wrong size by orders of magnitude — ${violation.detail}`;
+    case 'height-contradicts-profile':
+      return `${who} was staged at a completely different size from the piece itself, so the shot size would be wrong`;
     case 'non-finite':
       return 'some of the coordinates came back as nonsense numbers';
     case 'missing-camera':
@@ -341,7 +343,22 @@ const violationInEnglish = (violation, nameOf = (tag) => tag) => {
   }
 };
 
-const floorViolations = (scene) => validateScene(scene).filter((v) => v.severity === 'floor');
+const floorViolations = (scene, profiles = null) =>
+  validateScene(scene, { profiles }).filter((v) => v.severity === 'floor');
+
+/**
+ * Tag -> the physical profile of the piece cast in that slot, so validateScene can check the
+ * height the model used against the height the Casting Director measured.
+ *
+ * Keyed by TAG rather than by cast key because that is what a scene's subjects are named by, and
+ * the referencePlan is the one place the two are joined — the same join subjectNamesFrom does.
+ */
+const profilesFrom = (spec, castByKey) =>
+  Object.fromEntries(
+    (spec.referencePlan ?? [])
+      .map((slot, i) => [`<Subject ${i + 1}>`, castByKey.get(slot.key)?.dossier?.physicalProfile])
+      .filter(([, profile]) => profile),
+  );
 
 const subjectNamesFrom = (spec, castByKey) =>
   Object.fromEntries(
@@ -445,6 +462,9 @@ export async function handleStoryboard(request, env, ctx) {
     const system = buildBrief(H3_FORMAT, COORDINATE_CONTRACT_V2);
     const user = buildFilmUserMessage(cappedSpec, cast);
     const nameOf = (tag) => subjectNamesFrom(spec, castByKey)[tag] ?? tag;
+    // Empty for a cast whose dossiers predate schema v5, which turns the height check off rather
+    // than failing every beat of an older cast — the profile is an improvement, not a prerequisite.
+    const profiles = profilesFrom(spec, castByKey);
 
     await emit('phase', { phase: 'planning', beats: beats.length, tier: plan.tier });
 
@@ -554,7 +574,7 @@ export async function handleStoryboard(request, env, ctx) {
       }
 
       let scene = byIndex.get(beatIndex) ?? null;
-      let violations = scene ? floorViolations(scene) : [{ code: 'missing-beat', severity: 'floor', detail: 'The model returned no geometry for this beat.' }];
+      let violations = scene ? floorViolations(scene, profiles) : [{ code: 'missing-beat', severity: 'floor', detail: 'The model returned no geometry for this beat.' }];
       let attempts = 1;
 
       // At most one repair per beat, at most three per film. The ceiling is not timidity: round 7
@@ -571,7 +591,7 @@ export async function handleStoryboard(request, env, ctx) {
           );
           spend = await recordSpend(env, mindId, { kind: 'llm', model: result.model, usage: result.usage, beatIndex });
           if (result.repaired) {
-            const afterRepair = floorViolations({ ...result.repaired, beatIndex });
+            const afterRepair = floorViolations({ ...result.repaired, beatIndex }, profiles);
             // The two-stage check. A repair is only a repair if it passes the check that
             // rejected the original; otherwise the original failure stands and is reported.
             if (!afterRepair.length) {
@@ -710,7 +730,9 @@ export async function handleStoryboardBeatRegenerate(request, env) {
     usage = result.usage;
     model = result.model;
     scene = result.repaired ? { ...result.repaired, beatIndex: frame.beatIndex } : null;
-    violations = scene ? floorViolations(scene) : [{ code: 'missing-beat', severity: 'floor', detail: 'The model returned no geometry for this beat.' }];
+    violations = scene
+      ? floorViolations(scene, profilesFrom(spec, castByKey))
+      : [{ code: 'missing-beat', severity: 'floor', detail: 'The model returned no geometry for this beat.' }];
   } catch (error) {
     violations = [{ code: 'call-failed', severity: 'floor', detail: error.message }];
   }
