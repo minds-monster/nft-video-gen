@@ -74,6 +74,24 @@ const IMAGE_QUALITY = 'low';
 const storyboardKey = (mindId, filmId) => `storyboard:${mindId}:${filmId}`;
 const legacyStoryboardKey = (mindId) => `storyboard:${mindId}`;
 const filmIndexKey = (mindId) => `storyboards:${mindId}`;
+
+// THE GENERATION, KEPT SEPARATELY FROM THE DERIVATION.
+//
+// One /api/storyboard call is a single three-to-eight-minute model call followed by validation, a
+// repair loop that can make MORE model calls, and scene construction — and until now the first
+// durable write of any of it happened after all of that. Anything that killed the invocation in
+// between threw away the expensive half to protect nothing: measured 2026-08-25, a run that
+// streamed 3943 reasoning events left no storyboard record in KV at all.
+//
+// So the model's raw answer is written the moment it arrives. It is not a storyboard and is never
+// served as one — it is the receipt for the part that cost minutes, so a re-run can skip straight
+// to the part that costs milliseconds.
+const draftKey = (mindId, filmId) => `storyboard-draft:${mindId}:${filmId}`;
+
+// A week. Long enough that a visitor coming back tomorrow still skips the regeneration, short
+// enough that abandoned drafts do not accumulate — unlike a storyboard, a draft has no value once
+// its film has been built.
+const DRAFT_TTL_SECONDS = 7 * 24 * 60 * 60;
 const r2Key = (mindId, aFrameId, version) => `storyboard/${mindId}/${aFrameId}/${version}.png`;
 const makeFrameId = (beatIndex) => `beat-${beatIndex}-${crypto.randomUUID().slice(0, 8)}`;
 
@@ -142,6 +160,34 @@ async function indexFilm(env, mindId, record) {
   const next = [entry, ...existing.filter((f) => f.filmId !== record.filmId)].slice(0, MAX_INDEXED_FILMS);
   await env.MIND_CONNECTIONS.put(filmIndexKey(mindId), JSON.stringify(next));
 }
+
+/** Best-effort by design: failing to checkpoint must never fail the run that produced the thing
+ * worth checkpointing. A lost draft costs a regeneration; a thrown draft write would cost the film. */
+async function saveDraft(env, mindId, filmId, draft) {
+  try {
+    await env.MIND_CONNECTIONS.put(
+      draftKey(mindId, filmId),
+      JSON.stringify({ ...draft, filmId, createdAt: Date.now() }),
+      { expirationTtl: DRAFT_TTL_SECONDS },
+    );
+  } catch (error) {
+    console.warn('Storyboard draft checkpoint failed:', error.message);
+  }
+}
+
+const loadDraft = async (env, mindId, filmId) =>
+  env.MIND_CONNECTIONS.get(draftKey(mindId, filmId), 'json').catch(() => null);
+
+/** Dropped once the storyboard it fed has been saved — past that point the record IS the answer
+ * and a stale draft could only ever contradict it. */
+const clearDraft = async (env, mindId, filmId) => {
+  try {
+    await env.MIND_CONNECTIONS.delete(draftKey(mindId, filmId));
+  } catch {
+    // A draft that outlives its film is harmless: it expires on its own, and the reuse path
+    // below only ever runs when there is no storyboard yet.
+  }
+};
 
 async function saveStoryboard(env, mindId, record) {
   if (!record.filmId) throw new Error('A storyboard cannot be saved without a filmId.');
@@ -278,14 +324,83 @@ async function generateFilm(env, plan, { system, user, signal, onReasoning }) {
  * as it arrives, and — every `GHOST_INTERVAL_MS` — re-reads the whole trace for geometry it has
  * talked itself into, so the frames visibly assemble and correct themselves while it works.
  *
- * Re-reading the whole trace rather than appending is deliberate: the model revises, and a later
- * statement must be able to overrule an earlier one on screen. See worker/reasoning-geometry.js.
+ * Re-reading rather than appending is deliberate: the model revises, and a later statement must be
+ * able to overrule an earlier one on screen. See worker/reasoning-geometry.js.
+ *
+ * WHAT IT COSTS, AND WHY THAT IS NOW BOUNDED. Re-reading the WHOLE trace was the original design,
+ * and it is quadratic: measured 2026-08-25 at 16KB->26ms, 32KB->90ms, 63KB->332ms, 127KB->1334ms —
+ * doubling the trace roughly quadruples the parse. A seven-minute film makes ~168 of these, so the
+ * ghost alone could spend ~19s of CPU at a 60KB trace and ~75s at 120KB, against a 30s default
+ * limit. A Worker that exceeds its CPU limit is TERMINATED WITH NO CATCHABLE ERROR: nothing saved,
+ * no result, no error frame — which is exactly the shape of the run that prompted this.
+ *
+ * (Measured, and worth recording because the obvious suspect was wrong: the cost is NOT driven by
+ * the number of "Beat N:" headers and their nested slice+matchAll. 800 headers and 1 header over
+ * the same 92KB both cost ~1.1s. It is trace LENGTH alone.)
+ *
+ * So the ghost is bounded three ways below, in increasing order of bluntness. The ordering matters:
+ * the film is the product and the ghost is decoration for the wait, so every one of these degrades
+ * the decoration to protect the product, and never the reverse.
  */
 const GHOST_INTERVAL_MS = 2500;
+
+/**
+ * How much of the tail the ghost actually reads.
+ *
+ * The model revises what it just said, not what it said four minutes ago — and anything older has
+ * already been absorbed into the beats on screen, because this runs continuously rather than once
+ * at the end. So a trailing window keeps the "later overrules earlier" behaviour for the part that
+ * is still moving, and makes each parse cost a constant instead of a function of how long the model
+ * has been talking.
+ */
+const GHOST_WINDOW_BYTES = 32 * 1024;
+
+/**
+ * Total CPU the ghost may spend across a whole run.
+ *
+ * Past this it stops re-parsing and the frames hold their last state. The reasoning text and the
+ * heartbeat keep flowing, so the wait stays legible — what stops is only the re-derivation. A
+ * preview is never worth risking the film it is previewing.
+ */
+const GHOST_BUDGET_MS = 4000;
+
+/**
+ * The slice of the trace the ghost reads, anchored so the parser can still find its footing.
+ *
+ * A RAW BYTE CUT IS NOT SAFE HERE, and this is the part worth being careful about. Beats are found
+ * by BEAT_HEADER in worker/reasoning-geometry.js, which is anchored to a line start — and the
+ * parser returns NOTHING at all when it finds no header ("if (!markers.length) return"). So a
+ * window that happens to land after the model's last "Beat N:" line parses to an empty ghost, not
+ * to a partial one. Measured while building this: an unanchored slice of a header-less window
+ * turned a working ghost into hasGeometry=false.
+ *
+ * So the window is aligned to a line break (which the header pattern also accepts), and widened
+ * once if the first attempt caught no header. Two bounded slices in the worst case, and in the
+ * ordinary case — a model that announces its beats regularly — the first one is already right.
+ */
+const HEADER_IN_WINDOW = /(?:^|\n)\s*(?:beat|for beat)\s*\d+/i;
+
+const ghostWindow = (full) => {
+  if (full.length <= GHOST_WINDOW_BYTES) return full;
+  for (const size of [GHOST_WINDOW_BYTES, GHOST_WINDOW_BYTES * 2]) {
+    if (size >= full.length) break;
+    const cut = full.length - size;
+    // Start at the line break at or after the cut, so the window opens where a header could.
+    const nl = full.indexOf('\n', cut);
+    const text = full.slice(nl === -1 ? cut : nl);
+    if (HEADER_IN_WINDOW.test(text)) return text;
+  }
+  // No header within twice the window: hand back the widest bounded slice and let the parser say
+  // it found nothing, which leaves the previous ghost standing rather than blanking it.
+  const cut = Math.max(0, full.length - GHOST_WINDOW_BYTES * 2);
+  const nl = full.indexOf('\n', cut);
+  return full.slice(nl === -1 ? cut : nl);
+};
 
 const reasoningRelay = (emit, { names, maxBeats }) => {
   let lastGhostAt = 0;
   let lastSignature = '';
+  let spentMs = 0;
   // Which beat the model is talking about RIGHT NOW, tracked as cheaply as it can be: it announces
   // its own moves ("Beat 2: close on the ape"), so the last announcement wins until the next one.
   // This is what lets the thinking appear over the frame it is about, rather than in one column
@@ -298,10 +413,20 @@ const reasoningRelay = (emit, { names, maxBeats }) => {
       if (index >= 0 && index < maxBeats) currentBeat = index;
     }
     await emit('reasoning', { delta, beatIndex: currentBeat });
+
+    // Budget spent: the text keeps streaming, the frames just stop re-deriving.
+    if (spentMs >= GHOST_BUDGET_MS) return;
+
     const now = Date.now();
-    if (now - lastGhostAt < GHOST_INTERVAL_MS) return;
+    // The interval widens as the trace grows, so a long film makes FEWER parses rather than more
+    // expensive ones. Doubling every window: 2.5s at the start, 5s past 32KB, 10s past 64KB.
+    const interval = GHOST_INTERVAL_MS * 2 ** Math.floor(full.length / GHOST_WINDOW_BYTES);
+    if (now - lastGhostAt < interval) return;
     lastGhostAt = now;
-    const { beats, hasGeometry } = parseReasoningGeometry(full, { names, maxBeats });
+
+    const startedAt = Date.now();
+    const { beats, hasGeometry } = parseReasoningGeometry(ghostWindow(full), { names, maxBeats });
+    spentMs += Date.now() - startedAt;
     if (!hasGeometry) return;
     // Only speak when something actually changed — a ghost that re-renders identically every few
     // seconds is just a flicker.
@@ -469,22 +594,43 @@ export async function handleStoryboard(request, env, ctx) {
 
     await emit('phase', { phase: 'planning', beats: beats.length, tier: plan.tier });
 
+    const filmId = filmIdFor(spec);
+
     let film;
     let usage;
     let model;
     let activePlan = plan;
+
+    // A GENERATION THIS RUN DOES NOT HAVE TO PAY FOR AGAIN. If a previous attempt got the model's
+    // answer and then died before saving a storyboard — a killed invocation, a crash in the repair
+    // loop — the answer is still here. Reusing it turns a second wait of three to eight minutes
+    // into a second wait of about a second, and it costs nothing to check.
+    const draft = await loadDraft(env, mindId, filmId);
+    const resumed = Boolean(draft?.film);
+    if (draft?.film) {
+      film = draft.film;
+      usage = draft.usage;
+      model = draft.model;
+      if (draft.tier && draft.tier !== activePlan.tier) activePlan = { ...activePlan, tier: draft.tier };
+      await emit('phase', { phase: 'drafting', resumed: true });
+    }
+
     try {
-      const relay = activePlan.tier === 'free'
-        ? reasoningRelay(emit, { names: subjectNamesFrom(spec, castByKey), maxBeats: beats.length })
-        : undefined;
-      const result = await withHeartbeat(emit, 'drafting', () => {
-        return emit('phase', { phase: 'drafting' }).then(() =>
-          generateFilm(env, activePlan, { system, user, onReasoning: relay }),
-        );
-      });
-      film = result.data;
-      usage = result.usage;
-      model = result.model;
+      // Skipped entirely on a resumed draft — the previous attempt already did this.
+      if (!film) {
+        const relay = activePlan.tier === 'free'
+          ? reasoningRelay(emit, { names: subjectNamesFrom(spec, castByKey), maxBeats: beats.length })
+          : undefined;
+        const result = await withHeartbeat(emit, 'drafting', () => {
+          return emit('phase', { phase: 'drafting' }).then(() =>
+            generateFilm(env, activePlan, { system, user, onReasoning: relay }),
+          );
+        });
+        film = result.data;
+        usage = result.usage;
+        model = result.model;
+        await saveDraft(env, mindId, filmId, { film, usage, model, tier: activePlan.tier });
+      }
     } catch (error) {
       // THE PAID PROVIDER BEING UNAVAILABLE IS NOT THE VISITOR'S PROBLEM TO ABSORB.
       //
@@ -528,13 +674,20 @@ export async function handleStoryboard(request, env, ctx) {
         film = result.data;
         usage = result.usage;
         model = result.model;
+        await saveDraft(env, mindId, filmId, { film, usage, model, tier: activePlan.tier });
       } catch (fallbackError) {
         await emit('result', { frames: [], error: fallbackError.message, plan: activePlan });
         return;
       }
     }
 
-    let spend = await recordSpend(env, mindId, { kind: 'llm', model, usage, beatIndex: null });
+    // BILLED ONCE PER GENERATION, NOT ONCE PER ATTEMPT. A resumed draft's tokens were recorded by
+    // the attempt that actually spent them, so recording them again would charge a visitor twice
+    // for one model call because the FIRST attempt crashed — the worst possible direction for that
+    // error to run. Read the ledger instead of adding to it.
+    let spend = resumed
+      ? await getSpend(env, mindId)
+      : await recordSpend(env, mindId, { kind: 'llm', model, usage, beatIndex: null });
 
     await emit('phase', { phase: 'validating' });
 
@@ -558,7 +711,7 @@ export async function handleStoryboard(request, env, ctx) {
       // What each subject IS, and what it came from — see subjectAssetsFrom.
       subjectAssets: subjectAssetsFrom(spec, castByKey),
       // Which film this is. Without it a second film silently overwrites the first.
-      filmId: filmIdFor(spec),
+      filmId,
       logline: spec.logline ?? null,
       createdAt: Date.now(),
     };
@@ -647,6 +800,7 @@ export async function handleStoryboard(request, env, ctx) {
     // 2026-08-25: spend recorded, frames built, first write to a closed tab threw, and the KV
     // write two lines below it never happened.
     await saveStoryboard(env, mindId, storyboard);
+    await clearDraft(env, mindId, filmId);
 
     for (const frame of storyboard.frames) {
       await emit('frame', frame);

@@ -133,6 +133,9 @@ const AppShell = () => {
             <a href="#how-it-works" className="transition-colors hover:text-white">
               How it works
             </a>
+            <a href="#explore" className="transition-colors hover:text-white">
+              Assets
+            </a>
           </nav>
 
           <button
