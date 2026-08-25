@@ -3,6 +3,10 @@
 	"name": "nft-video-gen",
 	"main": "worker/index.js",
 	"compatibility_date": "2026-08-01",
+	"routes": [
+		{ "pattern": "minds.monster", "custom_domain": true },
+		{ "pattern": "www.minds.monster", "custom_domain": true }
+	],
 	// One deploy serves both halves: `dist/` (the Vite build) as static assets, and the
 	// Worker for /api/*. `run_worker_first` is what keeps them from fighting — without it
 	// the asset router answers /api/* with the SPA's index.html and the fetch handler is
