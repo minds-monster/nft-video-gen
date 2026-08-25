@@ -7,7 +7,7 @@
 //   1. `budget.paidTier` — a checkbox. Selects the MODEL. Default false.
 //   2. `budget.total` / `budget.perRender` — a spending CAP. Applies to both tiers equally.
 //   3. "a budget exists at all" — Producer oversight ACTIVATION, the rule from the inbox round,
-//      unchanged and deliberately untouched here. The free tier with a budget still gets a
+//      unchanged and deliberately untouched here. The Zero Budget tier with a budget still gets a
 //      Producer watching it.
 //
 // The paid tier additionally REQUIRES a total, because spending real money with no ceiling is the
@@ -60,7 +60,7 @@ export const OVER_CAP_COPY =
 
 /** The quiet always-on indicator. Duration, not beat count — same reason as above. */
 export const TIER_LABEL = {
-  free: 'Free tier · ~30-second scenes',
+  free: 'Zero Budget · ~30-second scenes',
   paid: 'Paid tier · full scenes',
 };
 

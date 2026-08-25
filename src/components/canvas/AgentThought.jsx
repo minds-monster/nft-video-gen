@@ -21,6 +21,7 @@ const PHASE_LABEL = {
   watching: 'watching its film',
   formalising: 'writing it up',
   drafting: 'thinking the film through',
+  reviewing: 'checking the cast against the prompt',
   // Client statuses (src/hooks/useScreenwriter.js), seen only when nothing streamed.
   casting: 'reading the artwork',
   done: 'known already',

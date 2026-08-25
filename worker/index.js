@@ -34,7 +34,7 @@ const json = (data, status = 200) =>
   });
 
 // Surfaced to the client so a rate-limited run can say so, rather than reading as a bug.
-// The free tier's ~40 RPM ceiling makes 429 an expected outcome, not an exceptional one.
+// The Zero Budget's ~40 RPM ceiling makes 429 an expected outcome, not an exceptional one.
 const failure = (error) => {
   const status = error?.status === 429 ? 429 : 500;
   return json({ error: error?.message ?? 'Unknown error', retryable: status === 429 }, status);
@@ -85,9 +85,9 @@ export default {
         hasConnectionsStore: Boolean(env.MIND_CONNECTIONS),
         hasOpenAiKey: Boolean(env.OPENAI_API_KEY),
         hasStoryboardStore: Boolean(env.STORYBOARD_IMAGES),
-        // The free storyboard tier's key. Distinct from OPENAI_API_KEY on purpose: a visitor
+        // The Zero Budget storyboard tier's key. Distinct from OPENAI_API_KEY on purpose: a visitor
         // with no budget set still gets a storyboard, and this is the key that pays for it
-        // (with time rather than money). Missing it means the free tier is dead, which is the
+        // (with time rather than money). Missing it means Zero Budget is dead, which is the
         // failure that looks like "the site is broken" to everyone who has not set a budget.
         hasOpenRouterKey: Boolean(env.OPENROUTER_API_KEY),
         castingModel: env.CASTING_MODEL,

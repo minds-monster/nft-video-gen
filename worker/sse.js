@@ -122,7 +122,7 @@ export const sseResponse = (run, ctx) => {
       try {
         await emit('error', {
           error: error?.message ?? 'Unknown error',
-          // The free tier's ~40 RPM ceiling makes 429 an expected outcome, and the UI says
+          // The Zero Budget's ~40 RPM ceiling makes 429 an expected outcome, and the UI says
           // "busy" rather than "broken" for those.
           retryable: error?.status === 429,
         });

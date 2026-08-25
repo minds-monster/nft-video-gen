@@ -17,7 +17,7 @@ import { STAGE_LABEL } from '../../../hooks/useStoryboarder';
  * along with the model that will actually do the work. Nobody should discover the tier from the
  * bill afterwards.
  *
- * Blocking is still free on the free tier — the BudgetWidget below is an offer, not a gate — but
+ * Blocking is still free on the Zero Budget tier — the BudgetWidget below is an offer, not a gate — but
  * it is no longer free unconditionally, which is why the estimate is stated rather than implied.
  */
 const StoryboarderPanel = ({ spec, cast, storyboarder, collapsed, onCollapse, onExpand }) => {
@@ -103,7 +103,7 @@ const StoryboarderPanel = ({ spec, cast, storyboarder, collapsed, onCollapse, on
 
         {!budget && (
           <p className="text-[10px] leading-relaxed text-slate-600">
-            Blocking on the free tier costs nothing. Set a budget below to unlock full-quality generation, or to try an actual sketch preview for a frame later — those spend real money.
+            Blocking on Zero Budget costs nothing. Set a budget below to unlock full-quality generation, or to try an actual sketch preview for a frame later — those spend real money.
           </p>
         )}
         {!budget && <BudgetWidget token={token} budget={budget} onUpdated={() => {}} />}

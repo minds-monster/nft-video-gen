@@ -91,7 +91,7 @@ export const chat = async (env, { model, signal, retries = 5, apiKey, baseUrl, .
     last = new NvidiaError(response.status, bodyText);
     if (!last.retryable || attempt === retries) throw last;
 
-    // The free tier's rate limit is the expected failure here, not the exceptional one: a
+    // The Zero Budget's rate limit is the expected failure here, not the exceptional one: a
     // cold seven-card cast is seven requests in a burst against ~40 RPM. Backing off is
     // the normal path, so it must not surface as a broken treatment.
     const retryAfter = Number(response.headers.get('retry-after')) || 0;

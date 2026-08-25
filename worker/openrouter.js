@@ -1,4 +1,4 @@
-// The free tier's transport: the same Nemotron weights, served from OpenRouter instead of
+// The Zero Budget transport: the same Nemotron weights, served from OpenRouter instead of
 // NVIDIA's own NIM.
 //
 // WHY OPENROUTER AND NOT NVIDIA, since the key for both is already in this repo. Round 7
@@ -10,7 +10,7 @@
 //   - OpenRouter is ~12x faster on identical weights (1.3s vs 16.2s on a trivial call) and
 //     completed a five-beat film in 236s where NVIDIA's own hosting could not.
 //   - NVIDIA's API Trial terms are evaluation-only and define production as "activity serving
-//     real end-users". A free tier on minds.monster is production use by that definition.
+//     real end-users". A Zero Budget tier on minds.monster is production use by that definition.
 //     OpenRouter's terms are not so limited.
 //
 // So the conclusion this file encodes is "model X FROM ORIGIN Y is good enough" (Adam's phrasing,

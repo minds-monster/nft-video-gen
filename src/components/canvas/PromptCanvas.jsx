@@ -482,6 +482,7 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder }) => {
                     <ScreenwriterPanel
                       live={screenwriter?.live ?? []}
                       thoughts={screenwriter?.thoughts ?? {}}
+                      error={screenwriter?.error ?? null}
                       collapsed={panelCollapsed.screenwriter}
                       onCollapse={() => collapsePanel('screenwriter')}
                       onExpand={() => expandPanel('screenwriter')}

@@ -208,7 +208,7 @@ const DECIDE_SCHEMA = {
   required: ['relayToMind', 'messageForMind', 'worthHolding'],
 };
 
-// The dedicated assistant key (ASSISTANT_API_KEY + minimaxai/minimax-m3) is on a free tier
+// The dedicated assistant key (ASSISTANT_API_KEY + minimaxai/minimax-m3) is on Zero Budget
 // that routinely 429s under manual testing. When it does, fall back to the casting director's
 // key/model (NVIDIA_API_KEY + nemotron-3-nano-omni), which is already proven reachable and
 // supports forced tool calls. This keeps the assistant responsive rather than silently failing.

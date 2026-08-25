@@ -756,7 +756,7 @@ export const castPiece = async (httpRequest, env, ctx) => {
 
     // No expirationTtl: the artwork behind a token id cannot change, so a dossier is a
     // permanent fact, not a cached one. This is what makes a warm cast instant and keeps
-    // repeat traffic off a rate-limited free tier.
+    // repeat traffic off rate-limited Zero Budget queries.
     if (env.DOSSIERS) await env.DOSSIERS.put(cacheKey, JSON.stringify(record));
 
     await emit('result', { ...record, cached: false });

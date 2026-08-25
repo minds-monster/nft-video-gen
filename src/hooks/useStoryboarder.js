@@ -206,7 +206,7 @@ export const useStoryboarder = () => {
           setError(null);
           return;
         }
-        // Deliberately does not say whether anything was charged. The free tier costs nothing and
+        // Deliberately does not say whether anything was charged. Zero Budget costs nothing and
         // the paid tier records spend before the frames are built, so a blanket reassurance would
         // be false half the time — and the spend panel already reports the truth either way.
         setError(

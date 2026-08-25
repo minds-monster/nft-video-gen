@@ -10,7 +10,7 @@ export const STAGE = {
   TREATMENT: 'treatment',
 };
 
-// How many pieces are cast at once. The NVIDIA free tier is rate-limited at roughly 40
+// How many pieces are cast at once. The NVIDIA Zero Budget model is rate-limited at roughly 40
 // requests/min account-wide, and a seven-card cold cast fired in one burst is the exact
 // shape that trips it. Two at a time keeps a full cast inside the budget while still
 // finishing far faster than a serial walk — and the Worker retries a 429 underneath anyway.
@@ -18,6 +18,17 @@ const CASTING_LANES = 2;
 
 /** Slot key for the Screenwriter's own stream, alongside the per-piece ones. */
 export const SCREENWRITER = 'screenwriter';
+
+/**
+ * Slot key for the Previs Supervisor, which runs BETWEEN casting and screenwriting.
+ *
+ * It had no slot at all until 2026-08-26, and no surface anywhere in the canvas — so the minutes
+ * it spends were dead air. Measured on a real five-piece cast: 23s to review, 60-120s to re-cast
+ * one flagged piece cold (`refresh: true`), 23s to re-check. For all of that every card read
+ * "known already" and the Screenwriter panel said it was waiting on the Casting Director, which
+ * had already finished. An agent that can hold the run for two minutes has to be able to say so.
+ */
+export const PREVIS = 'previs';
 
 /** Only the fields worker/screenwriter.js actually reads. */
 const forWire = ({ key, dossier, name, collectionName }) => ({ key, dossier, name, collectionName });
@@ -276,27 +287,41 @@ export const useScreenwriter = () => {
         // retry per flagged cast member, per its own authority floor — never a loop.
         // Advisory throughout: a failed review must never block the run it's meant to guard.
         try {
-          const firstReview = await previsDossierReview({ prompt, cast: usable }, { signal });
+          const firstReview = await previsDossierReview(
+            { prompt, cast: usable },
+            { signal, onEvent: feed(PREVIS) },
+          );
           if (firstReview.issues?.length && !signal.aborted) {
             const retried = [];
             for (const issue of firstReview.issues) {
               const entry = usable.find((u) => u.key === issue.key);
               if (!entry || signal.aborted) continue;
               try {
+                // Back to 'casting' for the duration: this is a COLD re-read (refresh: true skips
+                // the dossier cache), so the card must stop claiming the piece is already known
+                // while a fresh 60-120s call runs against it. Streamed into the piece's own slot,
+                // so the reasoning appears on the card it belongs to.
+                patch(entry.key, { status: 'casting' });
                 const revisedDossier = await castPiece(
                   { key: entry.key, nft: entry.nft, refresh: true, previsNote: issue.detail },
-                  { signal },
+                  { signal, onEvent: feed(entry.key), retries: 1 },
                 );
                 entry.dossier = revisedDossier;
-                patch(entry.key, { dossier: revisedDossier });
+                patch(entry.key, { status: 'done', dossier: revisedDossier });
+                settle(entry.key);
               } catch {
+                patch(entry.key, { status: 'done' });
+                settle(entry.key);
                 // Revision call itself failed (network, rate limit) — original dossier
                 // stands, and the re-check below will flag the same issue again.
               }
               retried.push(entry);
             }
             if (retried.length && !signal.aborted) {
-              const recheck = await previsDossierReview({ prompt, cast: retried }, { signal });
+              const recheck = await previsDossierReview(
+                { prompt, cast: retried },
+                { signal, onEvent: feed(PREVIS) },
+              );
               const stillFlagged = new Map((recheck.issues ?? []).map((issue) => [issue.key, issue]));
               for (const entry of retried) {
                 const issue = stillFlagged.get(entry.key);
@@ -306,6 +331,8 @@ export const useScreenwriter = () => {
           }
         } catch (error) {
           if (!signal.aborted) console.warn('Previs Supervisor review failed:', error.message);
+        } finally {
+          settle(PREVIS);
         }
         if (signal.aborted) return;
 
