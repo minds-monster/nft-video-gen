@@ -109,6 +109,39 @@
 // usable coverage is the front hemisphere rather than a true 360. Tripo's `multiview_to_model`
 // task type is confirmed valid and is the obvious next step for the angles that do exist.
 
+// ── THE JACKET PASS: VIDEO IS NOT A FREE UPGRADE — measured 2026-08-25 ───────────────────────
+//
+// D&G Collezione Genesi, "The Golden Impossible Jacket". `3d-render`, so the gate ALLOWS a mesh,
+// and `isMannequin` correctly true. Its film pans around the mannequin to show the back — so
+// unlike the ape, this is a piece where the pipeline already succeeds and the film offers extra
+// real angles on top. The obvious next move is multiview. It made things WORSE:
+//
+//   STILL only (the pipeline)          a clean, complete jacket, coherent from all four sides
+//   MULTIVIEW front+side+back (film)   lumpy, distorted sleeves, muddy form, a spurious flap
+//
+// Three reasons, and only the third is a fact about multiview itself:
+//   1. RESOLUTION. The film is 500x500; cropped to the garment it is ~300px. The still is
+//      high-res. More angles at a quarter of the detail is a bad trade.
+//   2. LIGHTING. The front frame is dim, the back frame is brightly lit gold, the side is warm.
+//      Multiview reconstruction assumes a subject that looks the same from every angle, and a
+//      cinematic film is lit to do the opposite.
+//   3. AZIMUTH. The slots are front/left/back/right and I supplied a three-quarter as "left".
+//      Views that are not where the model is told they are corrupt the reconstruction.
+//
+// SO THE RULE IS NOT "VIDEO BEATS STILLS". Put beside the ape result it is much narrower and much
+// more useful:
+//
+//   video WINS when the still shows the wrong thing — a card, a busy composite, an occluded
+//   subject. The ape's still is a card; one film frame gave the character in the round.
+//
+//   video LOSES when the still is already a clean, high-res, well-lit view of the right subject.
+//   Then the film is a lower-resolution, differently-lit second opinion and it drags quality down.
+//
+// The discriminator is therefore NOT "does a film exist" but "is the still a good view of the
+// subject" — which the dossier already half-answers with `framing` and `medium`. Note also that
+// (1) and (2) are properties of THIS film rather than of multiview, so a piece whose film is
+// high-res and evenly lit deserves re-testing before the approach is written off.
+
 // TO REDEPLOY THE SELF-HOSTED PATH, kept only because the finding above cost more time than
 // money to work out and a future round may want it back:
 //   pod: template runpod-torch-v240, 40GB container disk, community, ports "22/tcp"

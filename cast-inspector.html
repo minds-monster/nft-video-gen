@@ -73,7 +73,7 @@
   <div class="stage">
     <div class="bar">
       <span class="title" id="v-title"></span>
-      <button id="v-wire" aria-pressed="false">Wireframe</button>
+      <button id="v-wire" aria-pressed="true">Wireframe</button>
       <button id="v-spin" aria-pressed="true">Spin</button>
       <button id="v-close">Close</button>
     </div>
@@ -103,6 +103,12 @@ const PROBE_MESHES = {
   'eth-mainnet:0x28472a58a490c5e09a238847f66a68a47cc76f0f:1': {
     url: '/assets/probes/mesh-round9/ape-FROM-VIDEO-FRAME.glb',
     label: 'probe · from a video frame',
+    note: 'The still is a card, so the pipeline built a standee. One frame of the film gave the character in the round. Video WON.',
+  },
+  'eth-mainnet:0xd71b53fe1df51075c5a965956cdc87421c2ffed7:3': {
+    url: '/assets/probes/mesh-round9/dg-jacket-MULTIVIEW-from-film.glb',
+    label: 'probe · multiview from film',
+    note: 'Front + side + back sampled from the film, fed as multiview. WORSE than the still alone — the film is 500px against a high-res still, the three frames are lit completely differently, and their azimuths were guessed. Video LOST.',
   },
 };
 
@@ -281,7 +287,11 @@ const openViewer = (gltf, piece) => {
       renderer.domElement.remove();
     },
   };
-  setWire(false);
+  // WIREFRAME BY DEFAULT (Adam's call). The storyboard's whole visual language is schematic, and
+  // for judging a shot the geometry is the thing — paint is what you turn ON when you want to
+  // check identity rather than form. Colour is one click away and the toggle remembers nothing,
+  // so every mesh opens the same way.
+  setWire(true);
   setSpin(true);
   viewer.showModal();
   tick();
@@ -339,6 +349,7 @@ const render = async () => {
       ${piece.mesh.reason ? `<div class="reason">${piece.mesh.reason}</div>` : ''}
       ${piece.film?.motionNotes ? `<div class="film"><span class="label">film</span> ${piece.film.motionNotes}</div>` : ''}
       ${opportunity ? `<div class="flag">Refused on its STILL — but this piece has footage. ${probe ? 'The third panel is a mesh built from one frame of it.' : 'Worth checking whether the film shows the subject in the round.'}</div>` : ''}
+      ${probe?.note ? `<div class="reason"><strong style="color:#a5b4fc">${probe.label}</strong> — ${probe.note}</div>` : ''}
     `;
     grid.appendChild(card);
     drawCard(card.querySelector('[data-card]'), piece.assetKey);
