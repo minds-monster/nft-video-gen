@@ -142,47 +142,50 @@ test('an unknowable size is passed on as approximate rather than as fact', () =>
   assert.match(line, /size unknowable/);
 });
 
-// ─────────────────────────────────────────────────────────────────── the medium gate
+// ──────────────────────────────────────────────────────────── the medium LABEL (was a gate)
 //
-// Which pieces may have a mesh at all. Stated before the probe ran and confirmed by it: a
-// 3d-render car and a photoreal sneaker come back as complete objects; a flat-2d-vector figure
-// comes back as an invented egg body with voids where its arms should be, and a trading card
-// comes back as a paper-thin standee. Both refusals look plausible head-on and fall apart on
-// orbit, which is why this is a gate and not a preference.
+// Nothing is refused any more. The medium decides how much of a mesh is INFERRED rather than
+// observed, and that travels with the asset instead of deciding whether it exists. The reasoning
+// is in worker/mesh.js's header: derivation is what owes the artist, not fidelity, and a blocking
+// proxy never claims to be the artwork.
 
-import { meshEligibility } from '../../worker/mesh.js';
+import { meshDisposition } from '../../worker/mesh.js';
 
-test('the mediums that admit reconstruction are allowed a mesh', () => {
-  for (const medium of ['3d-render', 'photoreal']) {
-    assert.equal(meshEligibility({ medium }).eligible, true, medium);
+test('a piece with a dossier is never refused, whatever its medium', () => {
+  for (const medium of ['3d-render', 'photoreal', 'flat-2d-vector', 'pixel', 'trading-card', 'other']) {
+    assert.equal(meshDisposition({ medium }).known, true, medium);
+    assert.equal(meshDisposition({ medium }).representation, 'blocking-proxy', medium);
   }
 });
 
-test('the mediums that do not are refused, each with its own reason', () => {
-  for (const medium of ['flat-2d-vector', 'pixel', 'other']) {
-    const gate = meshEligibility({ medium });
-    assert.equal(gate.eligible, false, medium);
-    assert.match(gate.reason, /no back|invent/i);
+test('a render or a photograph is low inference; flat artwork is high', () => {
+  assert.equal(meshDisposition({ medium: '3d-render' }).inference, 'low');
+  assert.equal(meshDisposition({ medium: 'photoreal' }).inference, 'low');
+  assert.equal(meshDisposition({ medium: 'flat-2d-vector' }).inference, 'high');
+  assert.equal(meshDisposition({ medium: 'pixel' }).inference, 'high');
+});
+
+test('an unrecognised medium is HIGH inference, not low', () => {
+  // Fails toward honesty: a piece nothing is known about must not be described as well observed.
+  assert.equal(meshDisposition({ medium: 'something-new' }).inference, 'high');
+});
+
+test('a trading card carries a caveat about the SUBJECT, not about confidence', () => {
+  const d = meshDisposition({ medium: 'trading-card' });
+  assert.equal(d.known, true);
+  assert.match(d.caveat, /card rather than the subject/i);
+});
+
+test('no other medium invents a caveat for itself', () => {
+  for (const medium of ['3d-render', 'photoreal', 'flat-2d-vector', 'pixel']) {
+    assert.equal(meshDisposition({ medium }).caveat, null, medium);
   }
 });
 
-test('a trading card is refused for the card reason, not the flat reason', () => {
-  const gate = meshEligibility({ medium: 'trading-card' });
-  assert.equal(gate.eligible, false);
-  assert.match(gate.reason, /card/i);
-});
-
-test('an unknown medium is refused rather than allowed through', () => {
-  // The gate fails CLOSED. A piece nothing is known about must not get a mesh by default —
-  // the cost of wrongly refusing is a card, and the cost of wrongly allowing is a fabrication.
-  assert.equal(meshEligibility({ medium: 'something-new' }).eligible, false);
-  assert.equal(meshEligibility({}).eligible, false);
-  assert.equal(meshEligibility(null).eligible, false);
-});
-
-test('the refusal always carries a reason a person could read', () => {
-  for (const dossier of [{ medium: 'flat-2d-vector' }, { medium: 'trading-card' }, {}, null]) {
-    const gate = meshEligibility(dossier);
-    assert.ok(gate.reason && gate.reason.length > 20, JSON.stringify(dossier));
+test('not knowing what a piece is, is the one thing that still stops a mesh', () => {
+  for (const dossier of [{}, null, { medium: null }]) {
+    const d = meshDisposition(dossier);
+    assert.equal(d.known, false, JSON.stringify(dossier));
+    assert.ok(d.reason.length > 20);
   }
 });

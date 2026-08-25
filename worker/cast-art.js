@@ -199,11 +199,18 @@ export async function handleCastList(request, env) {
         sourceUrl: dossier?.sourceImageUrls?.[0] ?? null,
         mesh: mesh
           ? {
-              status: mesh.status ?? (mesh.meshEligible === false ? 'ineligible' : mesh.r2Key ? 'ready' : 'absent'),
+              // A refusal written by the old medium gate is a decision since overturned, not a
+              // fact about the piece — read it as "never generated". See worker/mesh.js.
+              status: mesh.status === 'ineligible' || mesh.meshEligible === false
+                ? 'absent'
+                : mesh.status ?? (mesh.r2Key ? 'ready' : 'absent'),
+              representation: mesh.representation ?? null,
+              inference: mesh.inference ?? null,
+              caveat: mesh.caveat ?? null,
               reason: mesh.reason ?? null,
               bytes: mesh.bytes ?? null,
             }
-          : { status: 'undecided', reason: null, bytes: null },
+          : { status: 'undecided', representation: null, inference: null, caveat: null, reason: null, bytes: null },
       };
     }),
   );

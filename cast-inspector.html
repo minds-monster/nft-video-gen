@@ -353,12 +353,12 @@ viewer.addEventListener('close', () => {
 const render = async () => {
   const { pieces } = await (await fetch('/api/cast/list')).json();
   const meshed = pieces.filter((p) => p.mesh.status === 'ready').length;
-  const refused = pieces.filter((p) => p.mesh.status === 'ineligible').length;
-  const withFilm = pieces.filter((p) => p.mesh.status === 'ineligible' && p.film?.watched).length;
+  const inferred = pieces.filter((p) => p.mesh.inference === 'high').length;
+  const cards = pieces.filter((p) => p.medium === 'trading-card' && p.film?.watched).length;
   sub.textContent =
-    `${pieces.length} piece(s) · ${meshed} with a mesh · ${refused} card-only by the medium gate · ` +
-    `${pieces.length - meshed - refused} undecided` +
-    (withFilm ? `  ·  ${withFilm} refused on a still that also has FOOTAGE` : '');
+    `${pieces.length} piece(s) · ${meshed} with a mesh · ${inferred} of them mostly INFERRED · ` +
+    `${pieces.length - meshed} not generated yet` +
+    (cards ? `  ·  ${cards} card still(s) with footage of the real subject` : '');
 
   if (!pieces.length) {
     grid.innerHTML = '<div class="empty">No pieces at dossier v5 yet. Cast something, or run scripts/backfill-profiles.mjs.</div>';
@@ -370,7 +370,9 @@ const render = async () => {
     const probes = PROBE_MESHES[piece.assetKey] ?? [];
     // The signal worth acting on: the pipeline said no on the strength of a still, and a film
     // exists that it never consulted. That is a question rather than a verdict.
-    const opportunity = piece.mesh.status === 'ineligible' && piece.film?.watched;
+    // Not "was it refused" any more — nothing is. This is "the still may show the wrong subject,
+    // and there is footage that shows the right one".
+    const opportunity = piece.medium === 'trading-card' && piece.film?.watched;
     const card = document.createElement('div');
     card.className = 'card';
     card.innerHTML = `
@@ -389,13 +391,15 @@ const render = async () => {
         ${profile ? `<span class="pill">${profile.heightM}m × ${profile.widthM}m × ${profile.depthM}m</span>` : '<span class="pill warn">no profile</span>'}
         ${profile?.headRatio ? `<span class="pill">head ratio ${profile.headRatio}</span>` : ''}
         ${profile ? `<span class="pill">${profile.heightConfidence}</span>` : ''}
-        <span class="pill ${piece.mesh.status === 'ready' ? 'good' : piece.mesh.status === 'ineligible' ? 'warn' : ''}">
+        <span class="pill ${piece.mesh.status === 'ready' ? 'good' : ''}">
           mesh: ${piece.mesh.status}${piece.mesh.bytes ? ` · ${(piece.mesh.bytes / 1048576).toFixed(1)}MB` : ''}
         </span>
+        ${piece.mesh.inference ? `<span class="pill ${piece.mesh.inference === 'low' ? '' : 'warn'}">${piece.mesh.inference} inference</span>` : ''}
       </div>
+      ${piece.mesh.caveat ? `<div class="reason">${piece.mesh.caveat}</div>` : ''}
       ${piece.mesh.reason ? `<div class="reason">${piece.mesh.reason}</div>` : ''}
       ${piece.film?.motionNotes ? `<div class="film"><span class="label">film</span> ${piece.film.motionNotes}</div>` : ''}
-      ${opportunity ? `<div class="flag">Refused on its STILL — but this piece has footage.${probes.length ? ' The strip below is what that footage makes possible.' : ' Worth checking whether the film shows the subject in the round.'}</div>` : ''}
+      ${opportunity ? `<div class="flag">The still is a card, so a mesh from it models the CARD — but this piece has footage of the subject itself.${probes.length ? ' The strip below is what that footage makes possible.' : ''}</div>` : ''}
       ${probes.map((pr) => `<div class="pnote"><b>${pr.label}</b><span class="v ${pr.verdict}">${pr.verdict}</span><br>${pr.note}</div>`).join('')}
       ${probes.length ? '<div style="height:12px"></div>' : ''}
     `;

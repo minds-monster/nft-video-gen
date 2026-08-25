@@ -7,34 +7,43 @@
 // scripts/probe-mesh.mjs for the full post-mortem; the transferable part is that a measurement
 // about ONE provider is not a measurement about the capability.
 //
-// THE MEDIUM GATE IS ENFORCED HERE, AND IT IS THE POINT OF THIS MODULE.
+// WHAT A MESH IS FOR, AND WHY NOTHING IS REFUSED ANY MORE.
+//
+// This module used to refuse a mesh to any piece whose `medium` implied the far side would be
+// invented — a flat 2D character, a trading card. The reasoning was that invented geometry sold
+// as a derivative is a fabrication wearing the artist's name.
+//
+// ADAM OVERTURNED IT, AND THE CORRECTION IS WORTH KEEPING BECAUSE THE OLD REASONING WAS INVERTED.
+// It implicitly held that only a FAITHFUL derivative owes the artist anything — that a partly
+// inferred one is somehow less their work. That is backwards. Derivation is what creates the
+// obligation, not fidelity, and a loose proxy built from someone's artwork owes them exactly as
+// much as a tight one.
+//
+// The "fabrication" objection only bites if the asset CLAIMS TO BE the artwork. These do not.
+// Their purpose is to be a blocking proxy: a volume at true scale that lets someone frame a shot.
+// Judged against that purpose, an inferred back is not a defect, and a piece that reads correctly
+// from every angle at previz scale has done its whole job. Measured, and it decided this: the
+// flat-2d astronaut was refused by the old rule and is one of the best-looking meshes in the set.
+//
+// SO THE MEDIUM IS NOW A LABEL, NOT A PERMISSION. Everything generates; what changes per piece is
+// how much of it was OBSERVED rather than IMPLIED, and that is recorded rather than used to
+// refuse. This is more honest than the gate was, not less: a stated confidence beats a silent
+// binary. The dossier already had the vocabulary — `physicalProfile.heightConfidence` is
+// 'known' | 'inferred' | 'unknowable', doing precisely this job for size.
+//
+// THE ONE THING A LABEL CANNOT FIX is a reconstruction of the WRONG SUBJECT. A trading card
+// reconstructs as a card, not as the character on it — that is not a confidence problem, it is a
+// picture of a different object, and the fix is a better source image (the token's own film,
+// where one exists) rather than a caveat.
 //
 // A mesh is not a rendering upgrade that has to look better than a cut-out. It is a product
 // asset — the thing an x402 bundle sells alongside the impostor, the Casting Director's notes and
 // the ownership record — so the bar is "is this valid to sell as a portable, identity-bearing
 // artifact", which is a question about correctness rather than beauty.
 //
-// Measured on real pieces, 2026-08-25, and this is why the gate is not negotiable:
-//
-//   3d-render car      a complete, recognisable car from front, flank and rear      SHIP
-//   3d-render sneaker  a complete, recognisable shoe from every angle               SHIP
-//   flat-2d astronaut  a smooth INVENTED egg body, black voids where arms belong    REFUSE
-//   trading-card ape   a paper-thin standee, the card as its backing plane          REFUSE
-//
-// Both refusals look completely plausible head-on and fall apart on orbit. That is the failure
-// this gate exists to prevent: not an ugly mesh, but a convincing one that quietly fabricates a
-// third dimension the source artwork never had, and ships it under the artist's name.
-//
-// INELIGIBILITY IS RECORDED, NEVER LEFT AS A GAP. A piece that gets no mesh gets a record saying
-// so and why. A format that can only express absence by omission cannot be honest about it — the
-// bundle has to be able to say "this piece has no mesh, and here is the reason".
-
 const R2_PREFIX = 'cast';
 const MESH_VERSION = 1;
 
-/** Which mediums admit volumetric reconstruction. Hard-coded from the dossier schema, stated
- * before the probe ran, and confirmed by it. No classifier ever picks this per asset. */
-const MESH_MEDIUMS = new Set(['3d-render', 'photoreal']);
 
 /**
  * The polygon budget, and it is load-bearing rather than a preference.
@@ -56,23 +65,34 @@ export const meshRecordKey = (assetKey) => `castmesh:v${MESH_VERSION}:${assetKey
 export const meshR2Key = (assetKey) => `${R2_PREFIX}/${assetKey}/v${MESH_VERSION}/mesh.glb`;
 
 /**
- * Whether this piece may have a mesh at all, and — when it may not — the reason in words a
- * visitor could read.
+ * What kind of mesh this piece yields, and how much of it is inference.
  *
- * Exported and pure so the same decision can be made in the renderer, in a backfill and in a
- * test without any of them re-deriving it.
+ * Never refuses. Returns a description that travels with the asset, so a consumer knows what they
+ * have rather than having to assume. Exported and pure so the renderer, a backfill and a test all
+ * read the same judgement instead of each re-deriving it.
  */
-export const meshEligibility = (dossier) => {
+export const meshDisposition = (dossier) => {
   const medium = dossier?.medium ?? null;
-  if (!medium) return { eligible: false, reason: 'This piece has no dossier yet, so nothing is known about what it is.' };
-  if (MESH_MEDIUMS.has(medium)) return { eligible: true, reason: null, medium };
+  if (!medium) {
+    return { known: false, reason: 'This piece has no dossier yet, so nothing is known about what it is.' };
+  }
+
+  // How much of the far side the source actually shows. A render or a photograph of a real object
+  // carries shading, occlusion and perspective that constrain the parts you cannot see; flat
+  // artwork carries almost none of that, and the model fills the gap.
+  const inference = { '3d-render': 'low', photoreal: 'low', 'trading-card': 'high' }[medium] ?? 'high';
+
   return {
-    eligible: false,
+    known: true,
     medium,
-    reason:
+    representation: 'blocking-proxy',
+    inference,
+    // A caveat is about the SUBJECT being wrong, not about confidence — see the header.
+    caveat:
       medium === 'trading-card'
-        ? 'The artwork is a card, so a reconstruction would model the card rather than the subject on it — measured, and it comes back as a paper-thin standee.'
-        : `A ${medium} piece has no back. A reconstruction would invent one, and an invented back is a fabrication wearing the artwork's name.`,
+        ? 'The artwork is a card, so a reconstruction models the card rather than the subject on it. Measured: it comes back as a paper-thin standee. Where the token carries a film showing the subject itself, that is the better source.'
+        : null,
+    reason: null,
   };
 };
 
@@ -203,17 +223,20 @@ const putRecord = async (env, assetKey, record) => {
  * never again be paid for and then lost because the request that started it went away.
  */
 export const requestMesh = async (env, assetKey, { dossierVersion = 5, force = false } = {}) => {
-  const existing = await env.DOSSIERS?.get(meshRecordKey(assetKey), 'json');
-  if (existing && !force && existing.status !== 'failed') return { ...existing, cached: true };
+  const existing = normalise(await env.DOSSIERS?.get(meshRecordKey(assetKey), 'json'));
+  const stale = existing && existing.status === 'ready' && !existing.representation;
+  if (existing && !force && !stale && !['failed', 'absent'].includes(existing.status)) {
+    return { ...existing, cached: true };
+  }
 
   const dossier = await dossierFor(env, assetKey, dossierVersion);
-  const gate = meshEligibility(dossier);
-  const base = { assetKey, meshVersion: MESH_VERSION, medium: gate.medium ?? null, createdAt: Date.now() };
+  const disposition = meshDisposition(dossier);
+  const base = { assetKey, meshVersion: MESH_VERSION, medium: disposition.medium ?? null, createdAt: Date.now() };
 
-  // A refusal is a first-class record, not an absence. The bundle has to be able to say why a
-  // piece has no mesh, and roughly half the library is in this branch.
-  if (!gate.eligible) {
-    return { ...(await putRecord(env, assetKey, { ...base, status: 'ineligible', meshEligible: false, reason: gate.reason, r2Key: null })), cached: false };
+  // The only thing that stops a mesh now is not knowing what the piece IS. Everything else
+  // generates and is labelled — see the header.
+  if (!disposition.known) {
+    return { ...(await putRecord(env, assetKey, { ...base, status: 'unknown', reason: disposition.reason, r2Key: null })), cached: false };
   }
 
   const bytes = await fetchArtworkBytes(dossier);
@@ -223,7 +246,11 @@ export const requestMesh = async (env, assetKey, { dossierVersion = 5, force = f
     ...(await putRecord(env, assetKey, {
       ...base,
       status: 'pending',
-      meshEligible: true,
+      // WHAT THIS ASSET IS, carried with it rather than assumed by whoever opens it. The whole
+      // argument for generating everything rests on the label being structural.
+      representation: disposition.representation,
+      inference: disposition.inference,
+      caveat: disposition.caveat,
       reason: null,
       taskId,
       r2Key: null,
@@ -286,8 +313,14 @@ export const collectMesh = async (env, assetKey) => {
  * change makes old data WRONG; this one only makes it terser.
  */
 const normalise = (record) => {
-  if (!record || record.status) return record;
-  if (record.meshEligible === false) return { ...record, status: 'ineligible' };
+  if (!record) return record;
+  // A refusal written by the old medium GATE is not a fact about the piece any more, it is a
+  // decision that has since been overturned. Read it as "never generated" so the piece can be,
+  // rather than bumping the version and orphaning three meshes that are already paid for.
+  if (record.status === 'ineligible' || record.meshEligible === false) {
+    return { ...record, status: 'absent', supersededGate: true };
+  }
+  if (record.status) return record;
   if (record.r2Key) return { ...record, status: 'ready' };
   return { ...record, status: 'absent' };
 };
@@ -308,10 +341,8 @@ export async function handleCastMesh(request, env) {
   const record = normalise(await collectMesh(env, assetKey));
   if (!record) return json({ status: 'absent', assetKey }, 404);
 
-  // 200 for a refusal, deliberately: "this piece does not get a mesh, and here is why" is the
-  // correct answer for about half the library, not a failure to serve one.
-  if (record.status === 'ineligible') {
-    return json({ status: 'ineligible', assetKey, medium: record.medium, reason: record.reason });
+  if (record.status === 'unknown') {
+    return json({ status: 'unknown', assetKey, reason: record.reason });
   }
   if (record.status === 'pending') {
     return json({ status: 'pending', assetKey, progress: record.progress ?? 0, taskId: record.taskId });
@@ -328,6 +359,8 @@ export async function handleCastMesh(request, env) {
       'access-control-allow-origin': '*',
       'x-source-url': record.sourceUrl ?? '',
       'x-mesh-bytes': String(record.bytes ?? 0),
+      'x-representation': record.representation ?? 'blocking-proxy',
+      'x-inference': record.inference ?? 'unknown',
     },
   });
 }
