@@ -119,7 +119,7 @@ const HeroSection = ({ setAnchor, backdropPaused = false, onPromptSelect }) => (
           Choose your production elements
         </a>
         <span>
-          {PAYMENT.priceEth} {PAYMENT.token} per payment · {PAYMENT.protocol} on {PAYMENT.chain}
+          {PAYMENT.priceEth} {PAYMENT.token} per call · {PAYMENT.protocol} on {PAYMENT.chain}
         </span>
       </div>
     </motion.div>
