@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { Billboard, Edges } from '@react-three/drei';
 import { useCastTexture } from './useCastTexture';
+import { useCastMesh } from './useCastMesh';
 
 // A cast member standing in the scene, as itself.
 //
@@ -17,8 +18,13 @@ import { useCastTexture } from './useCastTexture';
 // Orbit the frame and the card stays a card. That is deliberate and it is the honest answer: a
 // flat 2D piece has no side view, and generating one would be inventing a fact about someone's
 // artwork that their artwork does not contain. The proxy is what carries the volume around the
-// turn. Where a piece's medium genuinely admits reconstruction, a mesh is what replaces the card
-// — not a fabricated side view of it.
+// turn.
+//
+// WHERE THE MEDIUM ADMITS RECONSTRUCTION, THE MESH TAKES OVER — and only there, and only on
+// close inspection. `detail` is true when a frame is expanded or orbited, which is the moment
+// structure starts carrying identity; at tile size the card is literally the source pixels and
+// nothing can beat it. Roughly half the library never has a mesh at all (worker/mesh.js), and for
+// those the card is the final answer rather than a stand-in for a missing one.
 
 const PURPLE = '#a855f7';
 const EDGE = '#c4b5fd';
@@ -123,10 +129,13 @@ const Proxy = ({ profile, heightM, widthM, depthM, opacity }) => {
  * any other size would show a frame the render will not produce. Where the two disagree badly,
  * worker/scene.js has already refused the beat.
  */
-const Impostor = ({ subject, asset, nameOf, onHover, showArt = true }) => {
+const Impostor = ({ subject, asset, nameOf, onHover, showArt = true, detail = false }) => {
   const [hovered, setHovered] = useState(false);
   const group = useRef();
   const built = useCastTexture(showArt ? asset?.assetKey : null);
+  // Only asked for when the artwork is up AND the frame is being looked at closely.
+  const mesh = useCastMesh(asset?.assetKey ?? null, showArt && detail);
+  const showMesh = mesh?.status === 'ready';
 
   const heightM = Math.max(subject.heightM ?? 1.8, 0.05);
   const widthM = Math.max(subject.widthM ?? 0.6, 0.05);
@@ -155,17 +164,22 @@ const Impostor = ({ subject, asset, nameOf, onHover, showArt = true }) => {
 
   return (
     <group ref={group} position={[subject.x ?? 0, y, subject.z ?? 0]} rotation={[0, yaw, 0]}>
-      {built && <ContactDisc radius={Math.max(cardWidth, depthM) / 2} />}
+      {(built || showMesh) && <ContactDisc radius={Math.max(showMesh ? widthM : cardWidth, depthM) / 2} />}
 
       {/* Faint when the artwork is up — the card is the subject then, and the volume is a
           reference behind it. Solid when there is no card, because then it is all there is. */}
-      <Proxy
-        profile={profile}
-        heightM={heightM}
-        widthM={widthM}
-        depthM={depthM}
-        opacity={built ? 0.1 : hovered ? 0.42 : 0.22}
-      />
+      {/* Faint behind a card, gone behind a mesh, solid when it is all there is. The proxy exists
+          to carry volume the representation cannot; real geometry carries its own, and leaving the
+          box drawn behind it reads as a translucent slab through the middle of the subject. */}
+      {!showMesh && (
+        <Proxy
+          profile={profile}
+          heightM={heightM}
+          widthM={widthM}
+          depthM={depthM}
+          opacity={built ? 0.1 : hovered ? 0.42 : 0.22}
+        />
+      )}
       {!built && (
         <mesh position={[0, heightM / 2, 0]} onPointerOver={enter} onPointerOut={leave}>
           <boxGeometry args={[widthM, heightM, depthM]} />
@@ -185,7 +199,16 @@ const Impostor = ({ subject, asset, nameOf, onHover, showArt = true }) => {
         <meshBasicMaterial color={EDGE} transparent opacity={built ? 0.35 : 0.55} depthWrite={false} />
       </mesh>
 
-      {built && (
+      {showMesh && (
+        // Fitted to the scene's own heightM rather than trusted to arrive at it — see
+        // useCastMesh. The subject's yaw is applied by the enclosing group, so a mesh faces the
+        // way the blocking says it faces.
+        <group scale={heightM / mesh.unitHeight} position={mesh.offset.clone().multiplyScalar(heightM / mesh.unitHeight)}>
+          <primitive object={mesh.scene} onPointerOver={enter} onPointerOut={leave} />
+        </group>
+      )}
+
+      {built && !showMesh && (
         // Turns about +Y only, so the card is never seen edge-on and never tips. It faces the
         // camera; it does not pretend to have been photographed from there.
         <Billboard follow lockX lockZ position={[0, heightM / 2, 0]}>

@@ -88,6 +88,8 @@ const SceneStage = ({
   // volume — the representation degrades, the geometry does not.
   castAssets = null,
   showArt = false,
+  // True when the frame is expanded or orbited — the moment a mesh is worth its megabytes.
+  detail = false,
 }) => {
   const subjects = scene?.subjects ?? [];
   const camera = scene?.camera;
@@ -124,6 +126,7 @@ const SceneStage = ({
             nameOf={nameOf}
             onHover={onHover}
             showArt={showArt}
+            detail={detail}
           />
           <SubjectPath subject={subject} />
         </group>

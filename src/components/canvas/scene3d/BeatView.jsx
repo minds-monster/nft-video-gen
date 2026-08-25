@@ -87,6 +87,8 @@ const BeatView = ({ frame, aspect = 16 / 9, active = true, nameOf, castAssets, s
             onHover={setHovered}
             castAssets={castAssets}
             showArt={showArt}
+            // Orbiting IS the close inspection — it is the moment a flat card stops being enough.
+            detail={orbiting}
           />
         </View>
       )}

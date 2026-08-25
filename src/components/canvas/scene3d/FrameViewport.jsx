@@ -48,6 +48,7 @@ const FrameViewport = ({ frame, aspect = 16 / 9, nameOf, castAssets, showArt = f
           onHover={setHovered}
           castAssets={castAssets}
           showArt={showArt}
+          detail
         />
       </Canvas>
       <span className="pointer-events-none absolute right-2 top-2 rounded-full bg-black/70 px-2 py-0.5 text-[9px] uppercase tracking-wider text-slate-400">

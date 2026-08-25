@@ -29,8 +29,6 @@
 // so and why. A format that can only express absence by omission cannot be honest about it — the
 // bundle has to be able to say "this piece has no mesh, and here is the reason".
 
-import { sseResponse } from './sse.js';
-
 const R2_PREFIX = 'cast';
 const MESH_VERSION = 1;
 
@@ -81,7 +79,6 @@ export const meshEligibility = (dossier) => {
 // ─────────────────────────────────────────────────────────────────────── the Tripo transport
 
 const TRIPO_BASE = 'https://api.tripo3d.ai/v2/openapi';
-const POLL_INTERVAL_MS = 3000;
 
 export class TripoError extends Error {
   constructor(code, message) {
@@ -105,121 +102,76 @@ const requireKey = (env) => {
 };
 
 /**
- * One image in, one textured GLB out.
+ * Start a generation and return its handle. Does NOT wait for it.
  *
- * Submitted and polled rather than awaited in one call: measured at 56-107 seconds per piece,
- * which no single request should be holding open.
+ * A MESH TAKES 56-107 SECONDS AND NO REQUEST SHOULD BE HOLDING THAT OPEN. Learned here the
+ * expensive way: the first version awaited the whole task inside one SSE response, and the local
+ * server reloaded mid-flight seven times over one afternoon. Each reload killed the in-flight
+ * request, and each killed request abandoned a generation that had already been charged for —
+ * $0.60 of meshes that were made and then dropped on the floor.
+ *
+ * A dev-server reload is the harmless version of the real thing: a Worker eviction, a deploy, a
+ * closed tab. Any of them ends a long-held request, and the same handover that flagged "a closed
+ * tab still destroys a run" said what the fix is — make it a job. So this call is short and
+ * idempotent, the task id is written down BEFORE anything can go wrong, and `collectMesh` below
+ * finishes the work on some later, equally short request.
  */
-export const generateMesh = async (env, imageBytes, { onPhase, timeoutMs = 300_000 } = {}) => {
+const startMeshTask = async (env, imageBytes) => {
   const headers = { Authorization: `Bearer ${requireKey(env)}` };
 
   const form = new FormData();
   form.append('file', new Blob([imageBytes], { type: 'image/png' }), 'input.png');
-  const uploaded = await (await fetch(`${TRIPO_BASE}/upload`, { method: 'POST', headers, body: form })).json();
+  const uploaded = await tripoJson(fetch(`${TRIPO_BASE}/upload`, { method: 'POST', headers, body: form }));
   if (uploaded.code !== 0) throw new TripoError(uploaded.code, uploaded.message ?? 'upload failed');
-  const fileToken = uploaded.data?.image_token;
 
-  const created = await (
-    await fetch(`${TRIPO_BASE}/task`, {
+  const created = await tripoJson(
+    fetch(`${TRIPO_BASE}/task`, {
       method: 'POST',
       headers: { ...headers, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         type: 'image_to_model',
-        file: { type: 'png', file_token: fileToken },
+        file: { type: 'png', file_token: uploaded.data?.image_token },
         texture: true,
         face_limit: FACE_LIMIT,
       }),
-    })
-  ).json();
+    }),
+  );
   if (created.code !== 0) throw new TripoError(created.code, created.message ?? 'task rejected');
-  const taskId = created.data?.task_id;
-
-  const startedAt = Date.now();
-  for (;;) {
-    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
-    const polled = await (await fetch(`${TRIPO_BASE}/task/${taskId}`, { headers })).json();
-    const task = polled.data ?? {};
-
-    if (task.status === 'success') {
-      const url = task.output?.pbr_model || task.output?.model;
-      if (!url) throw new TripoError(0, 'the task succeeded but returned no model');
-      const glb = new Uint8Array(await (await fetch(url)).arrayBuffer());
-      return { glb, taskId, seconds: Math.round((Date.now() - startedAt) / 1000) };
-    }
-    if (['failed', 'banned', 'expired', 'cancelled'].includes(task.status)) {
-      throw new TripoError(0, `the task ended as ${task.status}`);
-    }
-    if (Date.now() - startedAt > timeoutMs) throw new TripoError(0, `task ${taskId} did not finish in time`);
-    onPhase?.({ status: task.status, progress: task.progress ?? 0, elapsedSeconds: Math.round((Date.now() - startedAt) / 1000) });
-  }
+  return created.data?.task_id;
 };
 
-// ─────────────────────────────────────────────────────────────────────── generation + cache
+/**
+ * Tripo's responses are not always JSON.
+ *
+ * Measured: a status call came back as an HTML error page mid-task, and an unguarded .json()
+ * threw and took a paid generation with it. Anything that is not JSON is a transport failure to
+ * be retried, never a result to be parsed.
+ */
+const tripoJson = async (promise) => {
+  const response = await promise;
+  const contentType = response.headers.get('content-type') ?? '';
+  if (!contentType.includes('json')) {
+    throw new TripoError(0, `expected JSON, got ${contentType || 'nothing'} (HTTP ${response.status})`);
+  }
+  return response.json();
+};
+
+/** Where a running task has got to. Never throws for a task still in progress. */
+export const pollMeshTask = async (env, taskId) => {
+  const headers = { Authorization: `Bearer ${requireKey(env)}` };
+  const polled = await tripoJson(fetch(`${TRIPO_BASE}/task/${taskId}`, { headers }));
+  const task = polled.data ?? {};
+  return {
+    status: task.status ?? 'unknown',
+    progress: task.progress ?? 0,
+    modelUrl: task.output?.pbr_model || task.output?.model || null,
+  };
+};
+
+// ─────────────────────────────────────────────────────────── the job, and its two short halves
 
 const dossierFor = async (env, assetKey, version) =>
   env.DOSSIERS ? env.DOSSIERS.get(`dossier:v${version}:${assetKey}`, 'json') : null;
-
-/**
- * The mesh for one piece, made once and never again.
- *
- * Returns the stored record either way — including for a piece the gate refuses, which is a
- * result rather than an error and is written down as one.
- */
-export const ensureMesh = async (env, assetKey, { dossierVersion = 5, onPhase, force = false } = {}) => {
-  const recordKey = meshRecordKey(assetKey);
-  if (!force) {
-    const existing = await env.DOSSIERS?.get(recordKey, 'json');
-    if (existing) return { ...existing, cached: true };
-  }
-
-  const dossier = await dossierFor(env, assetKey, dossierVersion);
-  const gate = meshEligibility(dossier);
-
-  const base = {
-    assetKey,
-    meshVersion: MESH_VERSION,
-    medium: gate.medium ?? null,
-    createdAt: Date.now(),
-  };
-
-  if (!gate.eligible) {
-    // A refusal is a first-class record. The bundle must be able to say why a piece has no mesh.
-    const record = { ...base, meshEligible: false, reason: gate.reason, r2Key: null };
-    await env.DOSSIERS?.put(recordKey, JSON.stringify(record));
-    return { ...record, cached: false };
-  }
-
-  // The same `sourceImageUrls` the card is built from, so a mesh and a card demonstrably derive
-  // from one recorded source rather than from two independent resolutions of "the artwork".
-  const source = dossier.sourceImageUrls?.[0];
-  onPhase?.({ status: 'fetching' });
-  const bytes = await fetchArtworkBytes(dossier);
-
-  onPhase?.({ status: 'generating' });
-  const { glb, taskId, seconds } = await generateMesh(env, bytes, { onPhase });
-
-  const r2Key = meshR2Key(assetKey);
-  await env.STORYBOARD_IMAGES?.put(r2Key, glb, {
-    httpMetadata: { contentType: 'model/gltf-binary' },
-    customMetadata: { assetKey, sourceUrl: source ?? '', taskId },
-  });
-
-  const record = {
-    ...base,
-    meshEligible: true,
-    reason: null,
-    r2Key,
-    bytes: glb.byteLength,
-    faceLimit: FACE_LIMIT,
-    seconds,
-    taskId,
-    // Provenance, on the record rather than alongside it: this mesh was computed FROM this URL.
-    sourceUrl: source ?? null,
-    model: 'tripo3d/image_to_model',
-  };
-  await env.DOSSIERS?.put(recordKey, JSON.stringify(record));
-  return { ...record, cached: false };
-};
 
 /** The same candidate walk worker/cast-art.js uses — dead IPFS gateways and hotlink-protected
  * CDNs are why this is a list rather than a URL. */
@@ -239,13 +191,112 @@ const fetchArtworkBytes = async (dossier) => {
   throw new Error(`Could not fetch the artwork: ${errors.join(' | ')}`);
 };
 
+const putRecord = async (env, assetKey, record) => {
+  await env.DOSSIERS?.put(meshRecordKey(assetKey), JSON.stringify(record));
+  return record;
+};
+
+/**
+ * PHASE ONE: decide, and if a mesh is warranted, start the task and write down its handle.
+ *
+ * Short by construction. The record is persisted the moment the task exists, so a generation can
+ * never again be paid for and then lost because the request that started it went away.
+ */
+export const requestMesh = async (env, assetKey, { dossierVersion = 5, force = false } = {}) => {
+  const existing = await env.DOSSIERS?.get(meshRecordKey(assetKey), 'json');
+  if (existing && !force && existing.status !== 'failed') return { ...existing, cached: true };
+
+  const dossier = await dossierFor(env, assetKey, dossierVersion);
+  const gate = meshEligibility(dossier);
+  const base = { assetKey, meshVersion: MESH_VERSION, medium: gate.medium ?? null, createdAt: Date.now() };
+
+  // A refusal is a first-class record, not an absence. The bundle has to be able to say why a
+  // piece has no mesh, and roughly half the library is in this branch.
+  if (!gate.eligible) {
+    return { ...(await putRecord(env, assetKey, { ...base, status: 'ineligible', meshEligible: false, reason: gate.reason, r2Key: null })), cached: false };
+  }
+
+  const bytes = await fetchArtworkBytes(dossier);
+  const taskId = await startMeshTask(env, bytes);
+
+  return {
+    ...(await putRecord(env, assetKey, {
+      ...base,
+      status: 'pending',
+      meshEligible: true,
+      reason: null,
+      taskId,
+      r2Key: null,
+      faceLimit: FACE_LIMIT,
+      // Provenance recorded with the job rather than after it: this mesh derives from this URL,
+      // stated before there is a mesh to attach it to.
+      sourceUrl: dossier.sourceImageUrls?.[0] ?? null,
+      model: 'tripo3d/image_to_model',
+    })),
+    cached: false,
+  };
+};
+
+/**
+ * PHASE TWO: if the task has finished, bring the bytes home.
+ *
+ * Also short, also idempotent, and safe to call as often as anyone likes — two callers racing
+ * both store identical bytes under the same key, which is a waste of one download and nothing
+ * worse.
+ */
+export const collectMesh = async (env, assetKey) => {
+  const record = await env.DOSSIERS?.get(meshRecordKey(assetKey), 'json');
+  if (!record || record.status !== 'pending') return record ?? null;
+
+  let task;
+  try {
+    task = await pollMeshTask(env, record.taskId);
+  } catch (error) {
+    // A transport failure is not a failed generation. The task id is on the record, so the next
+    // caller tries again rather than the mesh being written off.
+    return { ...record, pollError: error.message };
+  }
+
+  if (['failed', 'banned', 'expired', 'cancelled'].includes(task.status)) {
+    return putRecord(env, assetKey, { ...record, status: 'failed', reason: `The generation ended as ${task.status}.` });
+  }
+  if (task.status !== 'success' || !task.modelUrl) {
+    return { ...record, progress: task.progress };
+  }
+
+  const glb = new Uint8Array(await (await fetch(task.modelUrl)).arrayBuffer());
+  const r2Key = meshR2Key(assetKey);
+  await env.STORYBOARD_IMAGES?.put(r2Key, glb, {
+    httpMetadata: { contentType: 'model/gltf-binary' },
+    customMetadata: { assetKey, sourceUrl: record.sourceUrl ?? '', taskId: record.taskId },
+  });
+
+  return putRecord(env, assetKey, { ...record, status: 'ready', r2Key, bytes: glb.byteLength, readyAt: Date.now() });
+};
+
 // ─────────────────────────────────────────────────────────────────────── routes
 
 /**
- * One cast member's mesh, or an honest account of why there isn't one.
+ * A record's state, derived when it is not written down.
  *
- * Never generates. Generation takes a minute and a half and belongs behind an explicit request,
- * not behind a tile scrolling into view.
+ * `status` arrived after the first records did, and a record without one still says everything
+ * needed to work it out: no mesh allowed, or bytes already in R2. Deriving it is two lines and
+ * costs nothing, where the alternative — bumping the version so old records are never read —
+ * would orphan meshes that have already been paid for. Version bumps are right when a shape
+ * change makes old data WRONG; this one only makes it terser.
+ */
+const normalise = (record) => {
+  if (!record || record.status) return record;
+  if (record.meshEligible === false) return { ...record, status: 'ineligible' };
+  if (record.r2Key) return { ...record, status: 'ready' };
+  return { ...record, status: 'absent' };
+};
+
+/**
+ * One cast member's mesh, or an honest account of where it has got to.
+ *
+ * Collects a finished job on the way past — so the thing that finalises a generation is an
+ * ordinary short request, and no long-lived one has to survive for a mesh to arrive.
  */
 export async function handleCastMesh(request, env) {
   const { searchParams } = new URL(request.url);
@@ -254,13 +305,18 @@ export async function handleCastMesh(request, env) {
     return json({ error: 'asset must be a chain:address:tokenId key' }, 400);
   }
 
-  const record = await env.DOSSIERS?.get(meshRecordKey(assetKey), 'json');
+  const record = normalise(await collectMesh(env, assetKey));
   if (!record) return json({ status: 'absent', assetKey }, 404);
-  if (!record.meshEligible) {
-    // 200, not an error: "this piece does not get a mesh, and here is why" is the correct answer
-    // for roughly half the library, not a failure to serve one.
+
+  // 200 for a refusal, deliberately: "this piece does not get a mesh, and here is why" is the
+  // correct answer for about half the library, not a failure to serve one.
+  if (record.status === 'ineligible') {
     return json({ status: 'ineligible', assetKey, medium: record.medium, reason: record.reason });
   }
+  if (record.status === 'pending') {
+    return json({ status: 'pending', assetKey, progress: record.progress ?? 0, taskId: record.taskId });
+  }
+  if (record.status === 'failed') return json({ status: 'failed', assetKey, reason: record.reason }, 502);
 
   const object = await env.STORYBOARD_IMAGES?.get(record.r2Key);
   if (!object) return json({ status: 'absent', assetKey }, 404);
@@ -276,18 +332,15 @@ export async function handleCastMesh(request, env) {
   });
 }
 
-/** Generate one, on an explicit request. Streamed, because it takes 56-107 seconds and a silent
- * minute and a half is indistinguishable from a hang. */
-export async function handleCastMeshGenerate(request, env, ctx) {
+/** Start one. Returns as soon as the task has a handle, which is the whole point — see
+ * requestMesh. Polling for the result is what GET is for. */
+export async function handleCastMeshGenerate(request, env) {
   const body = await request.json().catch(() => ({}));
   const { asset, force = false } = body;
   if (!asset || !ASSET_KEY.test(asset)) return json({ error: 'Body needs { asset }' }, 400);
-
-  return sseResponse(async (emit) => {
-    const record = await ensureMesh(env, asset, {
-      force,
-      onPhase: (phase) => emit('phase', phase).catch(() => {}),
-    });
-    await emit('result', record);
-  }, ctx);
+  try {
+    return json(await requestMesh(env, asset, { force }));
+  } catch (error) {
+    return json({ error: error.message, outOfCredit: Boolean(error.outOfCredit) }, error.outOfCredit ? 402 : 500);
+  }
 }

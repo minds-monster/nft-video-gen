@@ -141,3 +141,48 @@ test('an unknowable size is passed on as approximate rather than as fact', () =>
   const line = castLine(0, { dossier: { subject: 'a floating glyph', identityMarkers: ['gold'], physicalProfile: { ...ape, bodyPlan: 'object', heightConfidence: 'unknowable', headRatio: null } } });
   assert.match(line, /size unknowable/);
 });
+
+// ─────────────────────────────────────────────────────────────────── the medium gate
+//
+// Which pieces may have a mesh at all. Stated before the probe ran and confirmed by it: a
+// 3d-render car and a photoreal sneaker come back as complete objects; a flat-2d-vector figure
+// comes back as an invented egg body with voids where its arms should be, and a trading card
+// comes back as a paper-thin standee. Both refusals look plausible head-on and fall apart on
+// orbit, which is why this is a gate and not a preference.
+
+import { meshEligibility } from '../../worker/mesh.js';
+
+test('the mediums that admit reconstruction are allowed a mesh', () => {
+  for (const medium of ['3d-render', 'photoreal']) {
+    assert.equal(meshEligibility({ medium }).eligible, true, medium);
+  }
+});
+
+test('the mediums that do not are refused, each with its own reason', () => {
+  for (const medium of ['flat-2d-vector', 'pixel', 'other']) {
+    const gate = meshEligibility({ medium });
+    assert.equal(gate.eligible, false, medium);
+    assert.match(gate.reason, /no back|invent/i);
+  }
+});
+
+test('a trading card is refused for the card reason, not the flat reason', () => {
+  const gate = meshEligibility({ medium: 'trading-card' });
+  assert.equal(gate.eligible, false);
+  assert.match(gate.reason, /card/i);
+});
+
+test('an unknown medium is refused rather than allowed through', () => {
+  // The gate fails CLOSED. A piece nothing is known about must not get a mesh by default —
+  // the cost of wrongly refusing is a card, and the cost of wrongly allowing is a fabrication.
+  assert.equal(meshEligibility({ medium: 'something-new' }).eligible, false);
+  assert.equal(meshEligibility({}).eligible, false);
+  assert.equal(meshEligibility(null).eligible, false);
+});
+
+test('the refusal always carries a reason a person could read', () => {
+  for (const dossier of [{ medium: 'flat-2d-vector' }, { medium: 'trading-card' }, {}, null]) {
+    const gate = meshEligibility(dossier);
+    assert.ok(gate.reason && gate.reason.length > 20, JSON.stringify(dossier));
+  }
+});
