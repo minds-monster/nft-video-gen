@@ -34,6 +34,11 @@ dist-ssr
 assets/refs/
 assets/renders/
 assets/audio/candidates/
-# Round-9 mesh probe artefacts: ~60MB of GLBs, reproducible from scripts/probe-mesh.mjs
-# and the recorded task ids. Kept on disk to open in a viewer, out of git for their size.
+# Generated 3D assets, wherever they land. Meshes are large (3-15MB each), reproducible from
+# scripts/probe-mesh.mjs and the recorded task ids, and in production they live in R2 rather than
+# in the repo at all. Ignored by EXTENSION rather than by directory on purpose: the round-9 rule
+# only covered assets/probes/mesh-round9/, so the next round writing to mesh-round10/ would have
+# committed 80MB of binaries without anyone noticing.
+*.glb
+*.gltf
 assets/probes/mesh-round9/
