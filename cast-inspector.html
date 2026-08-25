@@ -10,6 +10,10 @@
   and the production build never includes it — dev-only by construction rather than by a flag
   somebody has to remember.
 
+  Where a piece carries a strip of PROBE meshes underneath, those are experiments run by hand and
+  labelled with how they turned out — including the ones that failed, because a record that keeps
+  only the wins is a record of nothing. They are not something the pipeline produces.
+
   It exists because of a gap in how this round was checked. Every judgement the pipeline makes
   about a piece — its real height, its body plan, whether it may honestly have a mesh — was
   verifiable only by generating a whole film, or by taking my word from a screenshot. This puts
@@ -42,6 +46,17 @@
   .reason { padding:0 12px 12px; font-size:11px; color:#64748b; line-height:1.5; }
   .film { padding:0 12px 10px; font-size:11px; color:#7dd3fc; line-height:1.5; }
   .film .label { color:#38bdf8; letter-spacing:.1em; text-transform:uppercase; font-size:9px; }
+  /* Share the width rather than scroll. A probe that is off the edge of a strip is a probe
+     nobody knows exists, and the failures are the half most worth not losing. */
+  .probes { display:flex; gap:1px; background:#1e1b3a; }
+  .probes .view { flex:1 1 0; aspect-ratio:1; min-width:0; }
+  .pnote { padding:8px 12px 0; font-size:11px; line-height:1.5; color:#64748b; }
+  .pnote b { color:#a5b4fc; font-weight:600; }
+  .v { display:inline-block; margin-left:6px; padding:0 6px; border-radius:99px; font-size:9px;
+       letter-spacing:.1em; text-transform:uppercase; }
+  .v.best{background:#052e16;color:#4ade80}.v.better{background:#1e3a5f;color:#7dd3fc}
+  .v.mixed{background:#422006;color:#fbbf24}.v.worse{background:#3f1d1d;color:#fca5a5}
+  .v.broken{background:#450a0a;color:#f87171}
   .flag { margin:0 12px 12px; padding:8px 10px; border-radius:8px; font-size:11px; line-height:1.5;
           background:#082f49; color:#7dd3fc; border:1px solid #0c4a6e; }
   .empty { padding:40px 24px; color:#475569; }
@@ -100,17 +115,49 @@ const sub = document.getElementById('sub');
  * frame of its own turntable.
  */
 const PROBE_MESHES = {
-  'eth-mainnet:0x28472a58a490c5e09a238847f66a68a47cc76f0f:1': {
-    url: '/assets/probes/mesh-round9/ape-FROM-VIDEO-FRAME.glb',
-    label: 'probe · from a video frame',
-    note: 'The still is a card, so the pipeline built a standee. One frame of the film gave the character in the round. Video WON.',
-  },
-  'eth-mainnet:0xd71b53fe1df51075c5a965956cdc87421c2ffed7:3': {
-    url: '/assets/probes/mesh-round9/dg-jacket-MANNEQUIN-KEYED.glb',
-    label: 'probe · mannequin keyed out',
-    note: 'isMannequin is true, and the pipeline mesh bakes the head, hands and legs in as one continuous surface — check the wireframe. This one removes the bust from the SOURCE: a rectangular crop takes the head and legs, then a hue key takes the chrome neck inside the collar (the bust is blue, the garment is gold, so red-vs-blue dominance separates them cleanly). It cannot be removed after generation, because it was never a separate object. Note the collar still closes over — Tripo makes closed shells, so there is no true neck opening to be had, only a choice of what colour it closes with. Two more attempts are in assets/probes/: a rectangle-only crop, and a multiview from the film that came out worse than the still.',
-  },
+  'eth-mainnet:0x28472a58a490c5e09a238847f66a68a47cc76f0f:1': [
+    {
+      file: 'ape-FROM-VIDEO-FRAME.glb',
+      label: 'from a video frame',
+      verdict: 'best',
+      note: 'The still is a card, so the pipeline built a standee. One frame of the token\'s own turntable gave the character in the round.',
+    },
+  ],
+  'eth-mainnet:0xd71b53fe1df51075c5a965956cdc87421c2ffed7:3': [
+    {
+      file: 'dg-jacket-GARMENT-ONLY.glb',
+      label: 'rectangle crop',
+      verdict: 'better',
+      note: 'Head and legs gone. The chrome NECK survives inside the collar — a rectangle cannot follow the edge of a garment.',
+    },
+    {
+      file: 'dg-jacket-MANNEQUIN-KEYED.glb',
+      label: 'hue key + white fill',
+      verdict: 'best',
+      note: 'Chrome removed by colour (the bust is blue, the garment gold). Clean jacket — but compositing the hole onto white made the collar reconstruct as a lid.',
+    },
+    {
+      file: 'dg-jacket-ALPHA-open-collar-but-speckled.glb',
+      label: 'wide key + alpha',
+      verdict: 'mixed',
+      note: 'Background AND neck both to alpha: a GENUINE open collar, which proves alpha is honoured. But the key was wide enough to eat the garment\'s blue sequins.',
+    },
+    {
+      file: 'dg-jacket-ALPHA-neck-only-COLLAPSED.glb',
+      label: 'alpha neck, opaque bg',
+      verdict: 'broken',
+      note: 'Clean key, alpha left intact, background still opaque. Collapses to a flat slab: a transparent hole inside an opaque subject is something the segmenter has no reading of.',
+    },
+    {
+      file: 'dg-jacket-MULTIVIEW-from-film.glb',
+      label: 'multiview from film',
+      verdict: 'worse',
+      note: 'Front + side + back sampled from the token\'s film. Worse than the still alone — the film is 500px against a high-res still, its frames are lit completely differently, and the azimuths were guessed.',
+    },
+  ],
 };
+
+const PROBE_DIR = '/assets/probes/mesh-round9/';
 
 /** The cut-out, drawn exactly as the renderer builds it — same module, no reimplementation. */
 const drawCard = async (host, assetKey) => {
@@ -320,7 +367,7 @@ const render = async () => {
 
   for (const piece of pieces) {
     const profile = piece.profile;
-    const probe = PROBE_MESHES[piece.assetKey] ?? null;
+    const probes = PROBE_MESHES[piece.assetKey] ?? [];
     // The signal worth acting on: the pipeline said no on the strength of a still, and a film
     // exists that it never consulted. That is a question rather than a verdict.
     const opportunity = piece.mesh.status === 'ineligible' && piece.film?.watched;
@@ -334,8 +381,8 @@ const render = async () => {
       <div class="views">
         <div class="view" data-card></div>
         <div class="view" data-mesh></div>
-        ${probe ? '<div class="view" data-probe></div>' : ''}
       </div>
+      ${probes.length ? `<div class="probes">${probes.map((_, i) => `<div class="view" data-probe="${i}"></div>`).join('')}</div>` : ''}
       <div class="meta">
         <span class="pill">${piece.medium ?? '?'}</span>
         ${profile ? `<span class="pill">${profile.bodyPlan}</span>` : ''}
@@ -348,19 +395,21 @@ const render = async () => {
       </div>
       ${piece.mesh.reason ? `<div class="reason">${piece.mesh.reason}</div>` : ''}
       ${piece.film?.motionNotes ? `<div class="film"><span class="label">film</span> ${piece.film.motionNotes}</div>` : ''}
-      ${opportunity ? `<div class="flag">Refused on its STILL — but this piece has footage. ${probe ? 'The third panel is a mesh built from one frame of it.' : 'Worth checking whether the film shows the subject in the round.'}</div>` : ''}
-      ${probe?.note ? `<div class="reason"><strong style="color:#a5b4fc">${probe.label}</strong> — ${probe.note}</div>` : ''}
+      ${opportunity ? `<div class="flag">Refused on its STILL — but this piece has footage.${probes.length ? ' The strip below is what that footage makes possible.' : ' Worth checking whether the film shows the subject in the round.'}</div>` : ''}
+      ${probes.map((pr) => `<div class="pnote"><b>${pr.label}</b><span class="v ${pr.verdict}">${pr.verdict}</span><br>${pr.note}</div>`).join('')}
+      ${probes.length ? '<div style="height:12px"></div>' : ''}
     `;
     grid.appendChild(card);
     drawCard(card.querySelector('[data-card]'), piece.assetKey);
     drawMesh(card.querySelector('[data-mesh]'), `/api/cast/mesh?asset=${encodeURIComponent(piece.assetKey)}`, piece).catch((error) => {
       card.querySelector('[data-mesh]').innerHTML = `<span class="tag">mesh</span><span style="color:#475569;font-size:11px;padding:12px">${error.message}</span>`;
     });
-    if (probe) {
-      drawMesh(card.querySelector('[data-probe]'), probe.url, piece, probe.label).catch((error) => {
-        card.querySelector('[data-probe]').innerHTML = `<span class="tag">${probe.label}</span><span style="color:#475569;font-size:11px;padding:12px">${error.message}</span>`;
+    probes.forEach((pr, i) => {
+      const host = card.querySelector(`[data-probe="${i}"]`);
+      drawMesh(host, PROBE_DIR + pr.file, piece, pr.label).catch((error) => {
+        host.innerHTML = `<span class="tag">${pr.label}</span><span style="color:#475569;font-size:10px;padding:10px">${error.message}</span>`;
       });
-    }
+    });
   }
 };
 
