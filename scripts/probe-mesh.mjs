@@ -79,6 +79,36 @@
 // file, where an invalid model_version is rejected outright with code 2017): face_limit, quad,
 // texture_quality.
 
+// ── THE APE PASS: THE GATE IS JUDGING THE WRONG THING — measured 2026-08-25 ──────────────────
+//
+// The adidas "Into the Metaverse" ape is `trading-card`, so the medium gate refuses it a mesh,
+// and the refusal was correct on the evidence it had: a mesh built from that still comes back as
+// a paper-thin standee with the card's reverse for a back.
+//
+// But the token also carries a 16.8s 1920x1920 film, and the Casting Director's own motion pass
+// describes it exactly: "The character model rotates 360 degrees on a platform, then flips to
+// reveal the back of the card." The artist shot a turntable. One frame of it, cropped to the
+// character, produces a free-standing figure with real depth in profile, a properly formed back,
+// and no card anywhere. Same token, same artist, same character, $0.30 each:
+//
+//   from the STILL (the card)      a paper-thin standee, 296k triangles, card reverse as its back
+//   from a VIDEO FRAME (the ape)   a figure in the round, 101k triangles, no card at all
+//
+// THE FINDING IS NOT "USE VIDEO". It is that the gate is a property of the STILL when it should
+// be a property of the best available VIEW of the subject. `medium` describes how the artwork is
+// presented; it was standing in for "can this be reconstructed", and for a piece whose still is a
+// card and whose film is a turntable those two answers differ.
+//
+// AND THE DISTINCTION THAT MUST NOT BE LOST: this works because the extra views are REAL. They
+// are frames the artist rendered, not angles a model invented. Asking a video model to orbit a
+// still would produce something that looks the same and is fabricated — the same trap the gate
+// exists to catch, moving one step upstream. Real footage is evidence; generated footage is
+// inference wearing evidence's clothes.
+//
+// What the film does NOT give: past about 110 degrees the card occludes the character, so the
+// usable coverage is the front hemisphere rather than a true 360. Tripo's `multiview_to_model`
+// task type is confirmed valid and is the obvious next step for the angles that do exist.
+
 // TO REDEPLOY THE SELF-HOSTED PATH, kept only because the finding above cost more time than
 // money to work out and a future round may want it back:
 //   pod: template runpod-torch-v240, 40GB container disk, community, ports "22/tcp"
