@@ -45,7 +45,42 @@
 // that is a failure, not a near miss. One clean trial is not a verdict on image-to-3D; it is a
 // verdict on TripoSR, which is the oldest and weakest model of its family.
 //
-// TO REDEPLOY, because this cost more time than money to work out:
+// ── SECOND TRIAL: A HOSTED API, AND THE PREMISE THAT WAS WRONG — 2026-08-25 ──────────────────
+//
+// THE SELF-HOSTING PUSH WAS BUILT ON A BAD INFERENCE, and it is worth naming precisely because
+// it survived a plan, a design review and a deployment before anyone checked it. The measured
+// fact was "OpenRouter's catalogue contains no image-to-3D models". That is true. It hardened
+// into "therefore the mesh path must be self-hosted", which does not follow and was one search
+// away from being disproved: Tripo3D, fal.ai, Replicate and Stability all host image-to-3D.
+//
+// Tripo3D, image_to_model with texture, 30 credits = $0.30 per mesh:
+//
+//   lambo      3d-render   PASS  a complete, recognisable car. Coherent front, flank and rear.
+//   sneaker    3d-render   PASS  a complete, recognisable shoe from every angle.
+//   astronaut  flat-2d     FAIL  a smooth invented egg body with black voids where arms belong.
+//   ape-card   card        FAIL  a paper-thin standee: the figure is flat, the card its backing.
+//
+// H5 PASSES for the mediums the gate admits, and H8 IS CONFIRMED BY THE FAILURES rather than by
+// the successes — which is the stronger result. Both control pieces look plausible head-on and
+// fall apart on orbit, which is exactly the fraud the medium gate was written to prevent, and
+// exactly what could not have been judged from a thumbnail.
+//
+// THE EARLIER BLOB WAS THE MODEL, NOT THE MEDIUM. TripoSR failed on the same Lamborghini image
+// that Tripo3D reconstructs cleanly. A negative result from one model is not a result about the
+// capability — a lesson worth more than the $0.04 it cost.
+//
+// H6  $0.30 per mesh, 56-107s. Self-hosted TripoSR was $0.00023 and 4.2s, and produced blobs;
+//     cheapness is not a property worth having on its own.
+// H7  WAS FAILING and is now solved. Default output is 8.8-15.7MB at ~500k triangles, which is
+//     not loadable in a beat tile. `face_limit: 30000` returns 3.82MB at 102k triangles, and the
+//     only visible cost is slightly softer panel lines — invisible at tile size. Always send it.
+//
+// Parameters confirmed accepted by the task endpoint (they pass validation and fail later on the
+// file, where an invalid model_version is rejected outright with code 2017): face_limit, quad,
+// texture_quality.
+
+// TO REDEPLOY THE SELF-HOSTED PATH, kept only because the finding above cost more time than
+// money to work out and a future round may want it back:
 //   pod: template runpod-torch-v240, 40GB container disk, community, ports "22/tcp"
 //   nvcc is INSTALLED BUT NOT ON PATH in that image, and torchmcubes silently fails to build
 //   without it. export PATH=/usr/local/cuda/bin:$PATH, CUDACXX, CUDA_HOME, TORCH_CUDA_ARCH_LIST.
