@@ -30,7 +30,7 @@ const viewpointFor = (beat) => {
   return { position: [cx + back * 0.55, Math.max(span * 0.5, 3), cz + back], target: [cx, 1, cz] };
 };
 
-const GhostView = ({ beat, aspect = 16 / 9, active = true }) => {
+const GhostView = ({ beat, aspect = 16 / 9, active = true, castAssets = null }) => {
   const view = useMemo(() => viewpointFor(beat), [beat]);
   const hasAnything = Boolean(beat?.camera || beat?.subjects?.length);
 
@@ -40,7 +40,7 @@ const GhostView = ({ beat, aspect = 16 / 9, active = true }) => {
         <View className="h-full w-full">
           <PerspectiveCamera makeDefault fov={fovFromFocal(28, aspect)} position={view.position} near={0.05} far={4000} />
           <OrbitControls target={view.target} enablePan={false} enableZoom={false} enableDamping autoRotate autoRotateSpeed={0.35} />
-          <GhostStage beat={beat} aspect={aspect} />
+          <GhostStage beat={beat} aspect={aspect} castAssets={castAssets} />
         </View>
       )}
       <span className="pointer-events-none absolute left-2 top-2 flex items-center gap-1.5 rounded-full bg-sky-500/10 px-2 py-0.5 text-[9px] uppercase tracking-wider text-sky-300">

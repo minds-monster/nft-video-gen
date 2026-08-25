@@ -9,6 +9,7 @@
 // that idea, made to work in production too.
 
 import { castPiece } from './casting-director.js';
+import { handleCastArt } from './cast-art.js';
 import { screenwrite } from './screenwriter.js';
 import { handlePrevisDossierReview } from './previs-supervisor.js';
 import { handleConnectInit, handleConnectStatus } from './connect.js';
@@ -58,6 +59,8 @@ const ROUTES = {
   'POST /api/storyboard/sketch': handleStoryboardSketch,
   'GET /api/storyboard': handleStoryboardGet,
   'GET /api/storyboard/image': handleStoryboardImage,
+  // Same-origin so the renderer can READ these pixels — see worker/cast-art.js's header.
+  'GET /api/cast/art': handleCastArt,
 };
 
 export default {

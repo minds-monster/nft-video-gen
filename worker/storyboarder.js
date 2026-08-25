@@ -48,6 +48,7 @@ import {
   buildBrief,
   buildFilmUserMessage,
   compileBeatToH3,
+  subjectAssetsFrom,
   toStrictSchema,
   validateScene,
 } from './scene.js';
@@ -554,6 +555,8 @@ export async function handleStoryboard(request, env, ctx) {
       // what a person should ever be shown. Keeping the mapping on the record means a returning
       // visitor sees "the ape" without needing the original cast in hand.
       subjectNames: subjectNamesFrom(spec, castByKey),
+      // What each subject IS, and what it came from — see subjectAssetsFrom.
+      subjectAssets: subjectAssetsFrom(spec, castByKey),
       // Which film this is. Without it a second film silently overwrites the first.
       filmId: filmIdFor(spec),
       logline: spec.logline ?? null,
@@ -672,6 +675,7 @@ export async function handleStoryboard(request, env, ctx) {
       repaired,
       refused,
       subjectNames: storyboard.subjectNames,
+      subjectAssets: storyboard.subjectAssets,
     });
   }, ctx);
 }

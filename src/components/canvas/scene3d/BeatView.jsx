@@ -14,11 +14,16 @@ import { fovFromFocal } from './lens';
 // scene the moment you leave its point of view, which is the moment it stops being the viewpoint
 // and starts being an object.
 
+// Attribution where the visitor actually meets the work, not in stored metadata. Hovering a
+// subject says which piece it is, and — once the cast is on the record — which artwork it comes
+// from. That is the difference between attribution as a product surface and attribution as a
+// compliance checkbox.
 const HoverLabel = ({ hovered }) =>
   hovered ? (
     <div className="pointer-events-none absolute bottom-2 left-2 max-w-[85%] rounded-lg bg-black/80 px-2 py-1 text-[10px] leading-snug text-slate-200">
       <span className="font-semibold text-purple-200">{hovered.label}</span>
       {hovered.action ? <span className="text-slate-400"> — {hovered.action}</span> : null}
+      {hovered.source ? <span className="block text-[9px] text-slate-500">from {hovered.source}</span> : null}
     </div>
   ) : null;
 
@@ -28,7 +33,7 @@ const HoverLabel = ({ hovered }) =>
  * because browsers cap contexts at roughly 8-16 and a six-beat storyboard with a canvas per card
  * would sit right on that limit.
  */
-const BeatView = ({ frame, aspect = 16 / 9, active = true, nameOf }) => {
+const BeatView = ({ frame, aspect = 16 / 9, active = true, nameOf, castAssets, showArt = false }) => {
   const [orbiting, setOrbiting] = useState(false);
   const [hovered, setHovered] = useState(null);
   const scene = frame?.scene;
@@ -80,6 +85,8 @@ const BeatView = ({ frame, aspect = 16 / 9, active = true, nameOf }) => {
             showCamera={orbiting}
             nameOf={nameOf}
             onHover={setHovered}
+            castAssets={castAssets}
+            showArt={showArt}
           />
         </View>
       )}

@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
-import { Camera, Clock, Film, Loader2, Maximize2, RefreshCw, ShieldAlert, Sparkles, X } from 'lucide-react';
+import { Camera, Clock, Film, Image as ImageIcon, Loader2, Maximize2, RefreshCw, ShieldAlert, Sparkles, X } from 'lucide-react';
 import CanvasPanel from './CanvasPanel';
 import { storyboardImageUrl } from '../../../services/swarm';
 import { useMindChatContext } from '../../../context/mindChat';
@@ -29,6 +29,12 @@ import {
 // that calls itself a close-up while its numbers say wide shows "WS", because that is what H3
 // will be told and what the render will be. The redundant labels in the schema exist to be
 // checked against, not to be displayed.
+//
+// SCHEMATIC IS THE DEFAULT VIEW, and the artwork is one click away. Not a hedge — the two views
+// answer different questions. The schematic is where you judge whether the blocking is right, and
+// it is the surface editing will attach to; the artwork is where you see whether it is YOUR ape
+// standing there. The toggle is per-panel rather than per-tile because the question is usually
+// asked of the whole film at once.
 
 const SceneViewport = lazy(() => import('../scene3d/BeatView'));
 const ViewCanvas = lazy(() => import('../scene3d/ViewCanvas'));
@@ -152,6 +158,8 @@ const FrameCard = ({
   token,
   aspect,
   nameOf,
+  castAssets,
+  showArt,
   onGenerateSketch,
   sketching,
   regenerating,
@@ -252,7 +260,14 @@ const FrameCard = ({
               />
             ) : frame.scene ? (
               <Suspense fallback={null}>
-                <SceneViewport frame={frame} aspect={aspect} active={visible} nameOf={nameOf} />
+                <SceneViewport
+                  frame={frame}
+                  aspect={aspect}
+                  active={visible}
+                  nameOf={nameOf}
+                  castAssets={castAssets}
+                  showArt={showArt}
+                />
               </Suspense>
             ) : frame.blocking ? (
               <LegacyBlocking blocking={frame.blocking} />
@@ -303,7 +318,7 @@ const FrameCard = ({
 /** The "blow it up" view. Its own WebGL context rather than a shared <View>, because the modal
  * sits above the shared canvas in z-order and one extra context for one modal is well inside the
  * browser's limit. */
-const FrameModal = ({ frame, token, aspect, nameOf, onClose }) => {
+const FrameModal = ({ frame, token, aspect, nameOf, castAssets, showArt, onClose }) => {
   useEffect(() => {
     const onKeyDown = (event) => {
       if (event.key === 'Escape') onClose();
@@ -351,7 +366,13 @@ const FrameModal = ({ frame, token, aspect, nameOf, onClose }) => {
         ) : frame.scene ? (
           <div className="mb-4 aspect-video w-full overflow-hidden rounded-xl border border-white/10 bg-black/40">
             <Suspense fallback={null}>
-              <ModalViewport frame={frame} aspect={aspect} nameOf={nameOf} />
+              <ModalViewport
+                frame={frame}
+                aspect={aspect}
+                nameOf={nameOf}
+                castAssets={castAssets}
+                showArt={showArt}
+              />
             </Suspense>
           </div>
         ) : null}
@@ -435,7 +456,7 @@ const ThinkingStream = ({ reasoning }) => {
  * it has talked itself into, drawn as wireframe and corrected in place as it changes its mind.
  * That is honest about what is happening, which a progress bar never is.
  */
-const GhostCard = ({ beatIndex, beatText, ghost, reasoning, aspect, active }) => (
+const GhostCard = ({ beatIndex, beatText, ghost, reasoning, aspect, active, castAssets }) => (
   <div className="rounded-2xl border border-sky-500/20 bg-sky-500/[0.03]">
     <div className="space-y-2 p-3">
       <div className="flex items-center justify-between gap-2">
@@ -450,7 +471,7 @@ const GhostCard = ({ beatIndex, beatText, ghost, reasoning, aspect, active }) =>
 
       <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-sky-500/20 bg-black/40">
         <Suspense fallback={null}>
-          <GhostViewport beat={ghost} aspect={aspect} active={active} />
+          <GhostViewport beat={ghost} aspect={aspect} active={active} castAssets={castAssets} />
         </Suspense>
         {!ghost && (
           <span className="absolute inset-0 flex items-center justify-center text-[10px] uppercase tracking-widest text-slate-700">
@@ -504,6 +525,7 @@ const StoryboardPanel = ({ storyboarder }) => {
     plan,
     spend,
     subjectNames,
+    subjectAssets,
     films,
     openFilm,
     running,
@@ -515,6 +537,7 @@ const StoryboardPanel = ({ storyboarder }) => {
     beatTexts,
   } = storyboarder ?? {};
   const [expandedFrame, setExpandedFrame] = useState(null);
+  const [showArt, setShowArt] = useState(false);
   const rootRef = useRef(null);
 
   // The cast's real names, so a hover says "the ape" rather than "<Subject 1>". The tags are how
@@ -523,8 +546,36 @@ const StoryboardPanel = ({ storyboarder }) => {
   // mapping being stored.
   const nameOf = useMemo(() => (tag) => subjectNames?.[tag] ?? tag, [subjectNames]);
 
+  // Only offer the toggle when there is something to toggle TO. A storyboard blocked before the
+  // cast was recorded on the record has no artwork to show, and a control that does nothing is
+  // worse than no control.
+  const hasArt = useMemo(
+    () => Object.values(subjectAssets ?? {}).some((asset) => asset?.assetKey),
+    [subjectAssets],
+  );
+
   const aspect = 16 / 9;
-  const header = <TierBadge plan={plan} spend={spend} />;
+  const header = (
+    <div className="flex items-center gap-2">
+      {hasArt && (
+        <button
+          type="button"
+          onClick={() => setShowArt((on) => !on)}
+          title={showArt ? 'Show the schematic' : 'Show the cast artwork'}
+          className={cn(
+            'flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] uppercase tracking-wider transition-colors',
+            showArt
+              ? 'bg-purple-500/20 text-purple-200 hover:bg-purple-500/30'
+              : 'bg-black/40 text-slate-500 hover:text-slate-300',
+          )}
+        >
+          <ImageIcon className="h-3 w-3" />
+          {showArt ? 'Artwork' : 'Schematic'}
+        </button>
+      )}
+      <TierBadge plan={plan} spend={spend} />
+    </div>
+  );
 
   if (!frames?.length && !running) {
     return (
@@ -613,6 +664,7 @@ const StoryboardPanel = ({ storyboarder }) => {
                   ghost={(ghostBeats ?? []).find((b) => b.beatIndex === index)}
                   reasoning={reasoningByBeat?.[index]}
                   aspect={aspect}
+                  castAssets={subjectAssets}
                   active
                 />
               ))}
@@ -628,6 +680,8 @@ const StoryboardPanel = ({ storyboarder }) => {
                   token={token}
                   aspect={aspect}
                   nameOf={nameOf}
+                  castAssets={subjectAssets}
+                  showArt={showArt}
                   sketching={Boolean(sketching?.[frame.frameId])}
                   regenerating={Boolean(regenerating?.[frame.frameId])}
                   onRegenerate={regenerateBeat}
@@ -654,6 +708,8 @@ const StoryboardPanel = ({ storyboarder }) => {
           token={token}
           aspect={aspect}
           nameOf={nameOf}
+          castAssets={subjectAssets}
+          showArt={showArt}
           onClose={() => setExpandedFrame(null)}
         />
       )}

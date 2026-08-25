@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
+import { subjectAssetsFrom } from '../../worker/scene.js';
 import { filmIdFor } from '../../worker/film-id';
 import {
   storyboard,
@@ -43,6 +44,10 @@ export const useStoryboarder = () => {
   const [plan, setPlan] = useState(null);
   // tag -> the cast member's real name, from the worker. "<Subject 1>" is machinery, not language.
   const [subjectNames, setSubjectNames] = useState({});
+  // tag -> { assetKey, name, profile, medium }. What each subject IS, so the renderer can draw
+  // the piece rather than a capsule — and so a beat can name the artwork it derives from. Stored
+  // on the record, which is what makes it survive a reload with no cast in hand.
+  const [subjectAssets, setSubjectAssets] = useState({});
   // The visitor's other films, so earlier work is reachable rather than merely stored.
   const [films, setFilms] = useState([]);
   // The model thinking out loud, and the provisional geometry it has talked itself into. Both are
@@ -95,6 +100,11 @@ export const useStoryboarder = () => {
     setReasoningByBeat({});
     setGhostBeats([]);
     setBeatTexts(spec?.beats ?? []);
+    // THE CAST IS KNOWN BEFORE ANY OF THIS RUNS. It is per cast member, not per beat, so the
+    // ghost frames can open with the real pieces already standing on the grid — only their
+    // POSITIONS are provisional. The Worker sends the identical map back with the result; this is
+    // the same join, run early, so the wait shows the visitor's own cast rather than capsules.
+    setSubjectAssets(subjectAssetsFrom(spec ?? {}, new Map((cast ?? []).map((c) => [c.key, c]))));
     setElapsedSeconds(0);
     setPhase('planning');
 
@@ -136,6 +146,7 @@ export const useStoryboarder = () => {
       );
       setFrames(result.frames ?? []);
       if (result.subjectNames) setSubjectNames(result.subjectNames);
+      if (result.subjectAssets) setSubjectAssets(result.subjectAssets);
       if (result.plan) setPlan(result.plan);
       if (result.spend) setSpend(result.spend);
       if (result.error) setError(result.error);
@@ -220,6 +231,7 @@ export const useStoryboarder = () => {
       const result = await getStoryboard(token, filmId);
       setFrames(result.frames ?? []);
       setSubjectNames(result.subjectNames ?? {});
+      setSubjectAssets(result.subjectAssets ?? {});
       if (result.films) setFilms(result.films);
       if (result.spend) setSpend(result.spend);
       if (result.tier) setPlan({ tier: result.tier, model: result.model, label: result.tierLabel });
@@ -242,6 +254,7 @@ export const useStoryboarder = () => {
       const result = await getStoryboard(token, filmIdFor(spec));
       if (result?.frames?.length) setFrames(result.frames);
       if (result?.subjectNames) setSubjectNames(result.subjectNames);
+      if (result?.subjectAssets) setSubjectAssets(result.subjectAssets);
       if (result?.spend) setSpend(result.spend);
       // Enough of a plan to keep the tier badge honest on a reload — which tier and which model
       // actually made these frames. A fresh plan (with cost and time estimates) replaces it as
@@ -266,6 +279,7 @@ export const useStoryboarder = () => {
     spend,
     plan,
     subjectNames,
+    subjectAssets,
     films,
     reasoning,
     reasoningByBeat,

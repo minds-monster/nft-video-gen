@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
-import { Edges, Grid, Line } from '@react-three/drei';
+import { useMemo } from 'react';
+import { Grid, Line } from '@react-three/drei';
 import { cameraBasis, sensorHeightMm } from '../../../../worker/scene.js';
+import Impostor from './Impostor';
 
 // What one beat's geometry looks like, drawn from the same numbers worker/scene.js validates and
 // compiles to H3. Nothing here is decorative: every metre on screen is a metre in the JSON.
@@ -14,59 +15,15 @@ import { cameraBasis, sensorHeightMm } from '../../../../worker/scene.js';
 //   - hovering a subject shows its LABEL, not a handle. "This is the ape", not "drag to move".
 // Editing is the next pass, and these are cheap to reverse then. What matters now is that nothing
 // on screen lies about what it can do.
+//
+// ROUND 9 ADDS THE ARTWORK, BEHIND A TOGGLE. `showArt` swaps each subject's schematic volume for
+// the piece's own cut-out pixels at its measured height (see Impostor.jsx). Schematic stays the
+// default view: it is the surface for judging blocking, and it is what editing will attach to.
+// The two are the same geometry either way — the card is drawn at the height hFrac was computed
+// from, so turning the art on never changes what the shot is.
 
-const PURPLE = '#a855f7';
-const EDGE = '#c4b5fd';
 const CAMERA_COLOR = '#38bdf8';
 const PATH_COLOR = '#fbbf24';
-
-/** A person is a capsule, a car or a building is a box. Not cosmetic: a viewer has to be able to
- * tell a character from a vehicle at a glance, and the schema already says which is which by its
- * proportions — anything much taller than it is wide is a figure. */
-const isFigure = (subject) => subject.heightM > subject.widthM * 1.6;
-
-const Subject = ({ subject, nameOf, onHover }) => {
-  const [hovered, setHovered] = useState(false);
-  const height = Math.max(subject.heightM ?? 1.8, 0.05);
-  const width = Math.max(subject.widthM ?? 0.6, 0.05);
-  const y = (subject.groundOffsetM ?? 0) + height / 2;
-  const yaw = ((subject.yawDeg ?? 0) * Math.PI) / 180;
-
-  const label = nameOf(subject.subject);
-  const enter = () => {
-    setHovered(true);
-    onHover?.({ label, action: subject.action, tag: subject.subject });
-  };
-  const leave = () => {
-    setHovered(false);
-    onHover?.(null);
-  };
-
-  // A capsule's `args` are [radius, cylinderLength], and the caps add a radius at each end — so
-  // the cylinder has to be shortened by the full diameter or every figure stands taller than its
-  // own heightM, which is exactly the kind of quiet lie this whole build exists not to tell.
-  const radius = Math.min(width / 2, height / 2);
-  const cylinderLength = Math.max(height - radius * 2, 0.01);
-
-  return (
-    <group position={[subject.x ?? 0, y, subject.z ?? 0]} rotation={[0, yaw, 0]}>
-      <mesh onPointerOver={enter} onPointerOut={leave}>
-        {isFigure(subject) ? (
-          <capsuleGeometry args={[radius, cylinderLength, 4, 12]} />
-        ) : (
-          <boxGeometry args={[width, height, Math.max(width * 0.6, 0.2)]} />
-        )}
-        <meshBasicMaterial color={PURPLE} transparent opacity={hovered ? 0.42 : 0.22} />
-        <Edges color={hovered ? '#ffffff' : EDGE} />
-      </mesh>
-      {/* Which way this subject faces. yaw 0 faces +Z, per the coordinate contract. */}
-      <mesh position={[0, -height / 2 + 0.05, Math.max(width * 0.7, 0.35)]} rotation={[Math.PI / 2, 0, 0]}>
-        <coneGeometry args={[Math.min(width * 0.28, 0.22), Math.min(width * 0.5, 0.4), 3]} />
-        <meshBasicMaterial color={EDGE} transparent opacity={0.5} />
-      </mesh>
-    </group>
-  );
-};
 
 /** Where a subject travels within the beat. Drawn only when it actually moves, so a still frame
  * stays still — `endX`/`endZ` equal to `x`/`z` is the schema's own way of saying "does not move". */
@@ -120,7 +77,18 @@ const Frustum = ({ pose, focalMm, rollDeg = 0, aspect, color = CAMERA_COLOR, opa
  * through — and on when the visitor orbits away from it, which is the moment the camera becomes
  * a thing in the scene rather than the point of view on it.
  */
-const SceneStage = ({ scene, aspect = 16 / 9, showCamera = true, nameOf = (tag) => tag, onHover }) => {
+const SceneStage = ({
+  scene,
+  aspect = 16 / 9,
+  showCamera = true,
+  nameOf = (tag) => tag,
+  onHover,
+  // tag -> { assetKey, name, profile }. Absent for a storyboard made before the cast was
+  // recorded on the record, which is exactly when every subject falls back to its schematic
+  // volume — the representation degrades, the geometry does not.
+  castAssets = null,
+  showArt = false,
+}) => {
   const subjects = scene?.subjects ?? [];
   const camera = scene?.camera;
   const cameraMoved =
@@ -150,7 +118,13 @@ const SceneStage = ({ scene, aspect = 16 / 9, showCamera = true, nameOf = (tag) 
       />
       {subjects.map((subject) => (
         <group key={subject.subject}>
-          <Subject subject={subject} nameOf={nameOf} onHover={onHover} />
+          <Impostor
+            subject={subject}
+            asset={castAssets?.[subject.subject] ?? null}
+            nameOf={nameOf}
+            onHover={onHover}
+            showArt={showArt}
+          />
           <SubjectPath subject={subject} />
         </group>
       ))}

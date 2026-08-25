@@ -1241,6 +1241,42 @@ export const castLine = (index, entry) => {
   return `<Subject ${index + 1}> — ${subject}${markers}${profileLine(dossier)}`;
 };
 
+/**
+ * Tag -> the piece cast in that slot: what to draw it as, and what it derives from.
+ *
+ * STORED ON THE STORYBOARD, NOT DERIVED ON THE CLIENT, for the same reason `subjectNames` is —
+ * a visitor who reloads and re-opens an earlier film has no cast in hand, and a card that
+ * silently reverts to a grey capsule on reload is a representation that only works while you are
+ * watching it.
+ *
+ * It is also where provenance lives. Every frame of every film now names the source asset each
+ * subject derives from, which is the half of attribution that is genuinely painful to retrofit:
+ * the asset path can be rebuilt from the dossiers at any time, but the RENDER path cannot, so
+ * anything blocked before this existed is untraceable and always will be.
+ */
+export const subjectAssetsFrom = (spec, castByKey) =>
+  Object.fromEntries(
+    (spec.referencePlan ?? [])
+      .map((slot, i) => {
+        const entry = castByKey.get(slot.key);
+        if (!entry) return null;
+        return [
+          `<Subject ${i + 1}>`,
+          {
+            assetKey: entry.key,
+            name: entry.name ?? entry.collectionName ?? null,
+            collectionName: entry.collectionName ?? null,
+            // The renderer reads bodyPlan, depthM and headRatio off this. Null for a cast whose
+            // dossiers predate v5, which the renderer handles by falling back to its heuristic.
+            profile: entry.dossier?.physicalProfile ?? null,
+            medium: entry.dossier?.medium ?? null,
+            sourceImageUrls: entry.dossier?.sourceImageUrls ?? null,
+          },
+        ];
+      })
+      .filter(Boolean),
+  );
+
 const specHeader = (spec, cast) => {
   const referenceLines = (spec.referencePlan ?? []).map((slot, i) => {
     const entry = cast.find((c) => c.key === slot.key);
