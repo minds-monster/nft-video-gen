@@ -106,9 +106,9 @@ const PROBE_MESHES = {
     note: 'The still is a card, so the pipeline built a standee. One frame of the film gave the character in the round. Video WON.',
   },
   'eth-mainnet:0xd71b53fe1df51075c5a965956cdc87421c2ffed7:3': {
-    url: '/assets/probes/mesh-round9/dg-jacket-GARMENT-ONLY.glb',
-    label: 'probe · garment only',
-    note: 'isMannequin is true, and the pipeline mesh bakes the head, hands and legs in as one continuous surface — check the wireframe. Cropping the mannequin out of the SOURCE first gives the garment alone. It cannot be removed afterwards, because it was never a separate object. (A multiview attempt from this piece\'s film is also in assets/probes/ and came out worse than the still.)',
+    url: '/assets/probes/mesh-round9/dg-jacket-MANNEQUIN-KEYED.glb',
+    label: 'probe · mannequin keyed out',
+    note: 'isMannequin is true, and the pipeline mesh bakes the head, hands and legs in as one continuous surface — check the wireframe. This one removes the bust from the SOURCE: a rectangular crop takes the head and legs, then a hue key takes the chrome neck inside the collar (the bust is blue, the garment is gold, so red-vs-blue dominance separates them cleanly). It cannot be removed after generation, because it was never a separate object. Note the collar still closes over — Tripo makes closed shells, so there is no true neck opening to be had, only a choice of what colour it closes with. Two more attempts are in assets/probes/: a rectangle-only crop, and a multiview from the film that came out worse than the still.',
   },
 };
 

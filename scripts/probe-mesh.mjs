@@ -152,11 +152,26 @@
 // "can it be removed afterwards": no. There is no mannequin object to delete, only geometry that
 // happens to be head-shaped, and cutting it would leave a hole somebody has to invent a fix for.
 //
-// Cropping the SOURCE to the garment before generating gives a clean jacket: no head, no legs, a
-// real neck opening at the collar. $0.30, and nothing invented — cropping only ever removes.
+// Removing it from the SOURCE works, and it takes two steps rather than one:
 //
-//   full still      jacket + chrome head + hands + legs, one closed surface
-//   cropped still   the garment alone, collar open, hem and cuffs intact
+//   full still       jacket + chrome head + hands + legs, one closed surface
+//   rectangle crop   head and legs gone — but the chrome NECK survives inside the collar,
+//                    because a rectangle cannot follow the edge of a garment
+//   hue key          the neck gone too. The bust is blue and the garment is gold, so
+//                    "blue dominates red" separates them with an enormous margin, and it
+//                    catches nothing but a few blue sequins.
+//
+// THE COLOUR IS THE INTELLIGENCE, NOT THE RECTANGLE. A box is a guess about where the subject is;
+// a hue rule is a statement about what the subject is MADE OF, and it follows the garment's own
+// outline for free. Where the discriminator comes from is already in the dossier — `palette` is
+// the garment's colours, and anything markedly outside it in the collar region is scaffolding.
+// Making that systematic means one more field from a pass that is already looking at the image,
+// asked for only when `isMannequin` is true.
+//
+// AND A CEILING WORTH KNOWING: the collar still closes over. Tripo returns CLOSED SHELLS, so
+// there is no true neck opening to be had from any amount of masking — only a choice of what
+// colour the collar closes with. Masking decides what is in the mesh; it cannot decide that the
+// mesh has a hole.
 //
 // TWO LIMITS WORTH STATING BEFORE ANYONE CALLS THIS SOLVED:
 //
