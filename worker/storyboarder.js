@@ -40,7 +40,7 @@ import { getBudget, getSpend, recordSpend, markThresholdRelayed } from './budget
 import { editImage, estimateCostUsd, respond, jsonFromResponse } from './openai.js';
 import { filmCall, streamFilmCall, FREE_MAX_BEATS } from './openrouter.js';
 import { parseReasoningGeometry } from './reasoning-geometry.js';
-import { resolveTier, LATENCY_SECONDS, TIER_LABEL } from './tier.js';
+import { resolveTier, LATENCY_SECONDS, TIER_LABEL, checkStoryboardInput } from './tier.js';
 import { filmIdFor } from './film-id.js';
 import {
   SCENE_SCHEMA,
@@ -423,7 +423,19 @@ async function generateFilm(env, plan, { system, user, signal, onReasoning }) {
   if (!onReasoning) {
     return filmCall(env, { system, user, schema, signal });
   }
-  return streamFilmCall(env, { system, user, schema, signal, onReasoning });
+  try {
+    return await streamFilmCall(env, { system, user, schema, signal, onReasoning });
+  } catch (error) {
+    // A transient stream cut should not throw away a run that is minutes deep. The non-streamed
+    // path has its own retry ladder and returns the same shape, at the cost of losing the live
+    // reasoning animation.
+    const retryable = error?.status === 429 || error?.status >= 500 || error?.retryable;
+    if (retryable && !signal?.aborted) {
+      console.warn('Storyboarder streaming call failed, falling back to non-streamed call:', error.message);
+      return filmCall(env, { system, user, schema, signal });
+    }
+    throw error;
+  }
 }
 
 /**
@@ -960,14 +972,84 @@ export async function handleStoryboard(request, env, ctx) {
 
   const mindId = session.mindId;
   const plan = await resolveTier(env, mindId, spec.beats.length);
+
+  // Hard, deterministic caps are checked before any queue message is sent or any token is spent.
+  // The UI also gates the button, but the API is the source of truth.
+  const capViolations = checkStoryboardInput(plan, spec);
+  if (capViolations.length) {
+    return json({ error: 'over_cap', plan, violations: capViolations }, 400);
+  }
+
   const filmId = filmIdFor(spec);
   const { jobId } = await createStoryboardJob(env, mindId, { plan, filmId });
 
-  // Start the long work in the background. The HTTP response completes immediately, so a dropped
-  // SSE progress stream cannot be mis-detected as a hung request.
-  ctx.waitUntil(runStoryboardJob(env, { mindId, spec, cast, plan, jobId }));
+  // The generation is long-running (3-8 min). It cannot safely live under ctx.waitUntils
+  // 30-second ceiling, so it runs in a Queue consumer with up to 15 minutes of wall time and
+  // survives client disconnects. See handleStoryboardQueue below and wrangler.jsonc.
+  await env.STORYBOARD_JOBS.send({ mindId, spec, cast, plan, jobId, filmId }, { contentType: 'json' });
 
   return json({ jobId, plan, filmId });
+}
+
+/**
+ * Queue consumer entry point. Runs the long generation with up to 15 minutes of wall time,
+ * independent of any HTTP request, so a closed tab cannot kill a film that is already generating.
+ *
+ * Each message is acked when the job reaches a terminal state. Retries are limited: if a model
+ * call already spent money and then crashed, re-running it from scratch would double-charge.
+ * The draft-resume path inside runStoryboardJob makes retries cheap when the crash happened
+ * after the model answer arrived.
+ */
+export async function handleStoryboardQueue(batch, env, ctx) {
+  for (const message of batch.messages) {
+    const payload = message.body;
+    if (!payload || typeof payload !== 'object') {
+      message.ack();
+      continue;
+    }
+    const { mindId, spec, cast, plan, jobId, filmId } = payload;
+    if (!mindId || !jobId) {
+      message.ack();
+      continue;
+    }
+
+    try {
+      const record = await loadStoryboardJob(env, mindId, jobId);
+      if (!record) {
+        // The job record should have been created by POST /api/storyboard. Without it there is
+        // nowhere to stream events to, so drop the message rather than run blindly.
+        message.ack();
+        continue;
+      }
+      if (record.status === 'complete' || record.status === 'failed') {
+        message.ack();
+        continue;
+      }
+
+      await runStoryboardJob(env, { mindId, spec, cast, plan, jobId });
+      message.ack();
+    } catch (error) {
+      console.error('Storyboard queue consumer failed:', error);
+      // Only retry transient, likely-provider-side failures, and only a couple of times.
+      // Otherwise we mark the job failed and ack so the message does not loop forever.
+      const retryable = error?.status === 429 || error?.status >= 500 || error?.retryable;
+      if (message.attempts <= 2 && retryable) {
+        message.retry({ delaySeconds: 5 + message.attempts * 5 });
+      } else {
+        try {
+          const record = await loadStoryboardJob(env, mindId, jobId);
+          if (record && record.status !== 'complete' && record.status !== 'failed') {
+            record.status = 'failed';
+            record.error = error?.message ?? 'Queue consumer failed after retries';
+            await saveStoryboardJob(env, mindId, record);
+          }
+        } catch (updateErr) {
+          console.error('Failed to mark storyboard job failed:', updateErr.message);
+        }
+        message.ack();
+      }
+    }
+  }
 }
 
 /** One job's current state. Cheap — a KV read — so the client can poll it freely. */

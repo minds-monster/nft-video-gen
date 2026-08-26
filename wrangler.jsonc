@@ -64,6 +64,22 @@
 	"dev": {
 		"port": 8789
 	},
+	// Storyboard generation is long-running (3-8 min), so it cannot live under ctx.waitUntil
+	// on an HTTP request. A Queue consumer gives it up to 15 minutes and survives client
+	// disconnects. The same Worker is both producer and consumer.
+	"queues": {
+		"producers": [
+			{ "queue": "storyboard-jobs", "binding": "STORYBOARD_JOBS" }
+		],
+		"consumers": [
+			{
+				"queue": "storyboard-jobs",
+				"max_batch_size": 1,
+				"max_batch_timeout": 1,
+				"max_retries": 1
+			}
+		]
+	},
 	"vars": {
 		// Overridable per-environment so the whole stack can be pointed at OpenRouter (which
 		// serves the same weights) when NVIDIA's evaluation-only trial tier stops being

@@ -5,12 +5,32 @@ import { cn } from '../lib/cn';
 const PricingSection = ({ onConnectMind }) => {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleSubscribe = (e) => {
+  const handleSubscribe = async (e) => {
     e.preventDefault();
-    if (!email) return;
-    setSubscribed(true);
-    setEmail('');
+    if (!email || submitting) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      if (response.ok) {
+        setSubscribed(true);
+        setEmail('');
+      } else {
+        const data = await response.json();
+        setError(data.error || 'Failed to subscribe');
+      }
+    } catch (err) {
+      setError('Connection failed. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -100,7 +120,8 @@ const PricingSection = ({ onConnectMind }) => {
                   Coming soon
                 </span>
               </div>
-              <p className="mt-4 text-3xl font-extrabold text-slate-400 tracking-tight">—</p>
+              <p className="mt-4 text-3xl font-extrabold text-slate-400 tracking-tight">From $9/mo*</p>
+              <span className="text-[10px] text-slate-600 block mt-1">*With your own API keys or local models</span>
               <p className="mt-6 text-sm text-slate-500 leading-relaxed">
                 A subscription with minds.MONSTER will save you money on your existing vid gen requirements. Compatible with local models and third party APIs.
               </p>
@@ -111,22 +132,27 @@ const PricingSection = ({ onConnectMind }) => {
                   <Check className="w-4 h-4" /> Joined list!
                 </div>
               ) : (
-                <form onSubmit={handleSubscribe} className="flex gap-2">
-                  <input
-                    type="email"
-                    required
-                    placeholder="Enter email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-full px-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500/50 transition-colors"
-                  />
-                  <button
-                    type="submit"
-                    className="chip px-4 py-2.5 text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/10"
-                  >
-                    Join
-                  </button>
-                </form>
+                <div className="flex flex-col gap-1.5">
+                  <form onSubmit={handleSubscribe} className="flex gap-2">
+                    <input
+                      type="email"
+                      required
+                      disabled={submitting}
+                      placeholder={submitting ? "Joining..." : "Enter email"}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-full px-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500/50 transition-colors disabled:opacity-50"
+                    />
+                    <button
+                      type="submit"
+                      disabled={submitting}
+                      className="chip px-4 py-2.5 text-xs font-semibold text-slate-300 hover:text-white hover:bg-white/10 disabled:opacity-50"
+                    >
+                      Join
+                    </button>
+                  </form>
+                  {error && <p className="text-[10px] text-red-400 px-3">{error}</p>}
+                </div>
               )}
             </div>
           </div>

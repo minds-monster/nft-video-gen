@@ -139,11 +139,19 @@ export const stream = async (path, body, { signal, onEvent, headers, retries = 0
  * transient wire problem, not a lost film. Reconnects carry the last event index received, so
  * the visitor picks up where they left off without duplicate narration.
  */
-export const streamStoryboardJobEvents = async (jobId, token, { signal, onEvent, lastEvent = 0 } = {}) => {
+export const streamStoryboardJobEvents = async (jobId, token, { signal, onEvent, lastEvent = 0, deadlineMs = null } = {}) => {
   let currentLastEvent = lastEvent;
+  const startedAt = Date.now();
 
   for (let attempt = 0; ; attempt += 1) {
     if (signal?.aborted) throw new Error('Aborted');
+    if (deadlineMs != null && Date.now() - startedAt >= deadlineMs) {
+      const error = new Error(
+        `The Storyboarder did not finish within ${Math.round(deadlineMs / 1000)} seconds.`,
+      );
+      error.truncated = true;
+      throw error;
+    }
 
     const path = `/api/storyboard/job/${encodeURIComponent(jobId)}/events?lastEvent=${currentLastEvent}`;
     try {

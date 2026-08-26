@@ -12,6 +12,21 @@ import { castPiece } from './casting-director.js';
 import { handleCastArt, handleCastList } from './cast-art.js';
 import { handleCastMesh, handleCastMeshGenerate } from './mesh.js';
 import { screenwrite } from './screenwriter.js';
+
+async function handleSubscribe(request, env) {
+  try {
+    const { email } = await request.json();
+    if (!email || !email.includes('@')) {
+      return json({ error: 'Invalid email address' }, 400);
+    }
+    if (env.MIND_CONNECTIONS) {
+      await env.MIND_CONNECTIONS.put(`subscriber:${email.trim().toLowerCase()}`, new Date().toISOString());
+    }
+    return json({ success: true });
+  } catch (error) {
+    return json({ error: error.message }, 500);
+  }
+}
 import { handlePrevisDossierReview } from './previs-supervisor.js';
 import { handleConnectInit, handleConnectStatus } from './connect.js';
 import { mindChatInit, mindChatSend, mindChatPoll } from './mind-chat.js';
@@ -28,6 +43,7 @@ import {
   handleStoryboardBeatOverride,
   handleStoryboardJobStatus,
   handleStoryboardJobEvents,
+  handleStoryboardQueue,
 } from './storyboarder.js';
 
 const json = (data, status = 200) =>
@@ -70,9 +86,14 @@ const ROUTES = {
   // A mesh, or an honest account of why this piece does not get one — see worker/mesh.js.
   'GET /api/cast/mesh': handleCastMesh,
   'POST /api/cast/mesh': handleCastMeshGenerate,
+  'POST /api/subscribe': handleSubscribe,
 };
 
 export default {
+  async queue(batch, env, ctx) {
+    await handleStoryboardQueue(batch, env, ctx);
+  },
+
   async fetch(request, env, ctx) {
     const { pathname } = new URL(request.url);
 
@@ -89,6 +110,7 @@ export default {
         hasConnectionsStore: Boolean(env.MIND_CONNECTIONS),
         hasOpenAiKey: Boolean(env.OPENAI_API_KEY),
         hasStoryboardStore: Boolean(env.STORYBOARD_IMAGES),
+        hasStoryboardQueue: Boolean(env.STORYBOARD_JOBS),
         // The Zero Budget storyboard tier's key. Distinct from OPENAI_API_KEY on purpose: a visitor
         // with no budget set still gets a storyboard, and this is the key that pays for it
         // (with time rather than money). Missing it means Zero Budget is dead, which is the

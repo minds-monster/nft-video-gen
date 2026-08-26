@@ -6,6 +6,7 @@ import FeaturedMarquee from './components/FeaturedMarquee';
 import PromptCanvas from './components/canvas/PromptCanvas';
 import ConnectMindModal from './components/ConnectMindModal';
 import PricingSection from './components/PricingSection';
+import SwarmDiagram from './components/SwarmDiagram';
 import MindChatProvider from './context/MindChatContext';
 import { useMindChatContext } from './context/mindChat';
 import { setProductionState } from './lib/productionState';
@@ -208,6 +209,8 @@ const AppShell = () => {
               Create with content which has it's ownership data intact,
               from some of the world's leading brands.
             </p>
+
+            <SwarmDiagram />
 
             <div className="mt-10 grid gap-6 md:grid-cols-3">
               {STEPS.map((step, index) => (

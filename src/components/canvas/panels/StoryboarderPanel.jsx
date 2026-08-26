@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Clapperboard, Clock, Loader2 } from 'lucide-react';
 import CanvasPanel from './CanvasPanel';
 import { BudgetWidget } from '../../ProducerInbox';
@@ -7,6 +7,7 @@ import { useMindStatusBadge } from '../../../hooks/useMindStatusBadge';
 import { cn } from '../../../lib/cn';
 
 import { STAGE_LABEL } from '../../../hooks/useStoryboarder';
+import { checkStoryboardInput } from '../../../../worker/tier.js';
 
 /**
  * Trigger + status rail for the Storyboarder.
@@ -28,6 +29,14 @@ const StoryboarderPanel = ({ spec, cast, storyboarder, collapsed, onCollapse, on
 
   const { frames, phase, running, error, spend, plan, loadPlan, stageLabel, elapsedSeconds } = storyboarder ?? {};
   const nudgeFrame = (frames ?? []).find((f) => f.regenCount === 3);
+
+  // Deterministic, budget-aware caps. The API enforces the same check; this mirrors it so the
+  // visitor cannot even start a run the free tier would reject.
+  const capViolations = useMemo(() => {
+    if (!plan || !spec) return [];
+    return checkStoryboardInput(plan, spec);
+  }, [plan, spec]);
+  const capped = capViolations.length > 0;
 
   // The tier decision is fetched as soon as there is a spec to price, and again whenever the
   // budget changes — so the estimate on the button is the one the run will actually use, not a
@@ -73,10 +82,18 @@ const StoryboarderPanel = ({ spec, cast, storyboarder, collapsed, onCollapse, on
             <button
               type="button"
               onClick={send}
-              className="sticker sticker-hover w-full rounded-xl bg-purple-600 px-4 py-2 text-xs font-semibold text-white hover:bg-purple-500"
+              disabled={capped}
+              title={capped ? 'This scene is too long for the current tier' : undefined}
+              className="sticker sticker-hover w-full rounded-xl bg-purple-600 px-4 py-2 text-xs font-semibold text-white hover:bg-purple-500 disabled:cursor-not-allowed disabled:bg-purple-600/40"
             >
-              Send to Storyboarder
+              {capped ? 'Scene exceeds Zero Budget limits' : 'Send to Storyboarder'}
             </button>
+            {capped && (
+              <p className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-[11px] leading-relaxed text-amber-200">
+                {capViolations.map((v) => v.detail).join(' ')}
+                {' Set a budget to unlock the full scene, or shorten the prompt.'}
+              </p>
+            )}
             {plan && (
               <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[10px] uppercase tracking-wider text-slate-500">
                 <span className={plan.tier === 'paid' ? 'text-amber-300' : 'text-emerald-300'}>{plan.label}</span>
@@ -88,7 +105,7 @@ const StoryboarderPanel = ({ spec, cast, storyboarder, collapsed, onCollapse, on
                 </span>
               </p>
             )}
-            {plan?.overCapCopy && (
+            {!capped && plan?.overCapCopy && (
               <p className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-[11px] leading-relaxed text-amber-200">
                 {plan.overCapCopy}
               </p>

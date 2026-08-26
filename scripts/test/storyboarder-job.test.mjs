@@ -10,6 +10,7 @@ import {
   handleStoryboardJobStatus,
   handleStoryboardJobEvents,
   createStoryboardJob,
+  handleStoryboardQueue,
 } from '../../worker/storyboarder.js';
 
 class MockKV {
@@ -32,9 +33,19 @@ class MockKV {
   }
 }
 
+class MockQueue {
+  messages = [];
+
+  async send(body, _options) {
+    this.messages.push({ body, acked: false, retries: 0 });
+    return { metadata: { metrics: { backlogCount: this.messages.length, backlogBytes: 0, oldestMessageTimestamp: Date.now() } } };
+  }
+}
+
 const makeEnv = () => ({
   SESSION_SIGNING_SECRET: 'test-secret-must-be-at-least-32-bytes-long',
   MIND_CONNECTIONS: new MockKV(),
+  STORYBOARD_JOBS: new MockQueue(),
   FREE_STORYBOARD_MODEL: 'nvidia/nemotron-3-ultra-550b-a55b:free',
 });
 
@@ -74,7 +85,7 @@ const readSseEvents = async (response) => {
   return events;
 };
 
-test('POST /api/storyboard dispatches a job and returns its id', async () => {
+test('POST /api/storyboard creates a queued job and sends it to the storyboard queue', async () => {
   const env = makeEnv();
   const request = await authRequest(env, {
     url: 'http://localhost/api/storyboard',
@@ -85,19 +96,68 @@ test('POST /api/storyboard dispatches a job and returns its id', async () => {
     },
   });
 
-  let waited = false;
-  const response = await handleStoryboard(request, env, {
-    waitUntil: () => {
-      waited = true;
-    },
-  });
+  const response = await handleStoryboard(request, env, { waitUntil: () => {} });
 
   assert.equal(response.status, 200);
   const body = await response.json();
   assert.ok(body.jobId);
   assert.ok(body.filmId);
   assert.equal(body.plan.tier, 'free');
-  assert.ok(waited, 'ctx.waitUntil should have been called');
+  assert.equal(env.STORYBOARD_JOBS.messages.length, 1, 'a queue message should be sent');
+  assert.equal(env.STORYBOARD_JOBS.messages[0].body.jobId, body.jobId);
+  assert.ok(env.STORYBOARD_JOBS.messages[0].body.spec);
+  assert.ok(Array.isArray(env.STORYBOARD_JOBS.messages[0].body.cast));
+});
+
+test('POST /api/storyboard rejects a Zero Budget spec over the hard caps', async () => {
+  const env = makeEnv();
+  const request = await authRequest(env, {
+    url: 'http://localhost/api/storyboard',
+    method: 'POST',
+    body: {
+      spec: { beats: ['b1', 'b2', 'b3', 'b4'] },
+      cast: [{ key: 'k1', dossier: { subject: 'a weathered ape' }, name: 'Ape' }],
+    },
+  });
+
+  const response = await handleStoryboard(request, env, { waitUntil: () => {} });
+
+  assert.equal(response.status, 400);
+  const body = await response.json();
+  assert.equal(body.error, 'over_cap');
+  assert.ok(body.violations.some((v) => v.code === 'too-many-beats'));
+  assert.equal(env.STORYBOARD_JOBS.messages.length, 0, 'no queue message should be sent for a capped spec');
+});
+
+test('handleStoryboardQueue executes a queued job and reaches a terminal state', async () => {
+  const env = makeEnv();
+  const plan = { tier: 'free', maxBeats: 3, label: 'Zero Budget', model: env.FREE_STORYBOARD_MODEL };
+  const { jobId } = await createStoryboardJob(env, 'mind-test', { plan, filmId: 'film-123' });
+
+  const acked = [];
+  const message = {
+    body: {
+      mindId: 'mind-test',
+      spec: { beats: ['Beat 1: the ape looks at the camera.'] },
+      cast: [{ key: 'k1', dossier: { subject: 'a weathered ape' }, name: 'Ape' }],
+      plan,
+      jobId,
+      filmId: 'film-123',
+    },
+    attempts: 1,
+    ack() {
+      acked.push(jobId);
+    },
+    retry() {
+      throw new Error('retry should not be called');
+    },
+  };
+
+  await handleStoryboardQueue({ messages: [message] }, env, { waitUntil: () => {} });
+
+  assert.equal(acked.length, 1, 'message should be acked');
+  const record = JSON.parse(env.MIND_CONNECTIONS.store.get(`storyboard-job:mind-test:${jobId}`));
+  assert.ok(record.status === 'failed' || record.status === 'complete', `expected terminal status, got ${record.status}`);
 });
 
 test('job status endpoint returns a queued job', async () => {

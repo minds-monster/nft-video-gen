@@ -164,8 +164,16 @@ const ConnectMindModal = () => {
               <h2 className="text-lg font-semibold text-white">Connect Mind</h2>
             </div>
             <p className="mt-2 shrink-0 text-sm text-slate-400">
-              Bring your own Hello Minds Mind in as the Producer — it becomes the one you're
-              talking to across the site, from here on.
+              Bring your own{' '}
+              <a
+                href="https://hellominds.ai"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-purple-400 underline decoration-purple-500/50 underline-offset-4 hover:text-purple-300 transition-colors"
+              >
+                Mind
+              </a>{' '}
+              in as the producer — it oversees the production and helps you manage the budget via the Producer Inbox.
             </p>
 
             <div className="mt-6 flex min-h-0 flex-1 flex-col gap-4">
@@ -178,7 +186,7 @@ const ConnectMindModal = () => {
                     <p className="text-sm font-medium text-white">Waiting for your Mind to reply</p>
                     <p className="text-xs text-slate-500">
                       {seconds}s elapsed — a first-time connection can take a few minutes,
-                      especially while a human gets oriented on the other end
+                      you'll get a message in the producer inbox when your mind is ready
                     </p>
                   </div>
 

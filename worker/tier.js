@@ -21,12 +21,23 @@
 
 import { getBudget, getSpend } from './budget.js';
 import { GPT5_MODEL, TOKEN_PRICES } from './openai.js';
-import { FREE_FILM_MODEL, FREE_MAX_BEATS } from './openrouter.js';
+import { FREE_FILM_MODEL } from './openrouter.js';
 
 /** Six is the Screenwriter's own ceiling (SHOT_SPEC_SCHEMA in worker/rulebook.js), and round 7's
  * paid failures were all on the six-beat fixture too — six subjects on a continuous travelling
  * camera is the hardest thing anything in this repo has been asked to do. */
 export const PAID_MAX_BEATS = 6;
+
+/**
+ * Zero Budget is deliberately constrained so the free model can finish inside the provider's own
+ * time ceiling and the Queue/Worker limits. These are hard caps checked before a job is created.
+ * Start conservative and measure; the probe scripts can tell us where the ceiling really is.
+ */
+export const FREE_MAX_BEATS = 3;
+export const FREE_MAX_BEAT_CHARS = 300;
+export const FREE_MAX_TOTAL_BEAT_CHARS = 800;
+export const FREE_MAX_REFERENCES = 4;
+export const PAID_MAX_REFERENCES = 9;
 
 /**
  * Measured, not estimated, and reported as a real distribution rather than a comforting number —
@@ -112,4 +123,59 @@ export async function resolveTier(env, mindId, beatCount = 0) {
     budget,
     spentUsd: spend.totalSpent,
   };
+}
+
+/**
+ * Deterministic, budget-aware input caps. This is not agentic judgement — it is a hard gate that
+ * rejects specs the chosen tier cannot reliably finish. Checked before a job is created or a queue
+ * message is sent.
+ */
+export function checkStoryboardInput(plan, spec) {
+  if (!spec || typeof spec !== 'object') {
+    return [{ code: 'missing-spec', detail: 'No spec was provided.' }];
+  }
+  if (!Array.isArray(spec.beats) || spec.beats.length === 0) {
+    return [{ code: 'no-beats', detail: 'The spec has no beats.' }];
+  }
+
+  const violations = [];
+  const beats = spec.beats;
+  const referenceCount = (spec.referencePlan ?? []).length;
+
+  if (beats.length > plan.maxBeats) {
+    violations.push({
+      code: 'too-many-beats',
+      detail: `This tier allows up to ${plan.maxBeats} beat${plan.maxBeats === 1 ? '' : 's'}; the spec has ${beats.length}.`,
+    });
+  }
+
+  const maxRefs = plan.tier === 'paid' ? PAID_MAX_REFERENCES : FREE_MAX_REFERENCES;
+  if (referenceCount > maxRefs) {
+    violations.push({
+      code: 'too-many-references',
+      detail: `This tier allows up to ${maxRefs} reference slot${maxRefs === 1 ? '' : 's'}; the spec uses ${referenceCount}.`,
+    });
+  }
+
+  if (plan.tier === 'free') {
+    beats.forEach((beat, index) => {
+      const text = String(beat ?? '');
+      if (text.length > FREE_MAX_BEAT_CHARS) {
+        violations.push({
+          code: 'beat-too-long',
+          detail: `Beat ${index + 1} is ${text.length} characters; Zero Budget allows ${FREE_MAX_BEAT_CHARS}.`,
+        });
+      }
+    });
+
+    const totalChars = beats.reduce((sum, beat) => sum + String(beat ?? '').length, 0);
+    if (totalChars > FREE_MAX_TOTAL_BEAT_CHARS) {
+      violations.push({
+        code: 'total-beats-too-long',
+        detail: `The scene is ${totalChars} characters in total; Zero Budget allows ${FREE_MAX_TOTAL_BEAT_CHARS}.`,
+      });
+    }
+  }
+
+  return violations;
 }

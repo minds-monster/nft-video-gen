@@ -144,11 +144,18 @@ export const useStoryboarder = () => {
     setPhase('planning');
 
     try {
+      // Give the run the tier's estimated time plus a generous buffer. The Queue consumer can
+      // run for up to 15 minutes, but if something stalls we want to fall back to polling the
+      // saved result rather than leaving the visitor watching a spinner forever.
+      const estimateSeconds = planRef.current?.estimateSeconds ?? 240;
+      const deadlineMs = Math.max(180_000, (estimateSeconds + 180) * 1000);
+
       const result = await storyboard(
         { spec, cast },
         token,
         {
           signal: controller.signal,
+          deadlineMs,
           onEvent: (type, data) => {
             // `plan` can arrive twice: once up front, and again if the paid model turns out to
             // be unavailable and the run falls back to free. The second one carries the reason.
@@ -195,7 +202,7 @@ export const useStoryboarder = () => {
         setPhase('finalising');
         // Whatever the tier said the whole call would take, from now — generous on purpose, since
         // the alternative to waiting is throwing away a film that is already paid for in time.
-        const budgetMs = Math.max(60_000, (planRef.current?.estimateSeconds ?? 480) * 1000);
+        const budgetMs = Math.max(120_000, ((planRef.current?.estimateSeconds ?? 480) + 180) * 1000);
         const saved = await recoverAfterCut({ spec, token, deadlineMs: budgetMs });
         if (controller.signal.aborted) return;
         if (saved) {
