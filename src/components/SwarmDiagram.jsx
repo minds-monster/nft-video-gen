@@ -288,7 +288,7 @@ const SwarmDiagram = () => {
               <Gem className="w-5 h-5 text-pink-400" />
             </g>
             <text className="node-text" y="14" fill="#f472b6">PREMIUM ASSETS</text>
-            <text className="node-subtext" y="24">x402 Gated</text>
+            <text className="node-subtext" y="24">Hi-Res Art & Wireframes</text>
           </g>
         </svg>
       </div>

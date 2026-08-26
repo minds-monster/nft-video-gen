@@ -1,11 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, ChevronDown, Clock, Inbox, Loader2, Mail, PenSquare, Send, TriangleAlert, Wallet } from 'lucide-react';
+import { ArrowLeft, ChevronDown, Clock, Inbox, Loader2, Mail, PenSquare, Send, TriangleAlert } from 'lucide-react';
 import { messageToText } from '../lib/text';
 import { extractMedia, messageTextWithoutMedia } from '../lib/media';
 import { buildThreads, SUBJECT_MAX } from '../lib/mail';
-import { setProducerBudget } from '../services/mindConnect';
-import { useMindStatusBadge } from '../hooks/useMindStatusBadge';
 import { cn } from '../lib/cn';
 
 const LIVENESS_COPY = {
@@ -250,108 +248,6 @@ const Composer = ({ replyTo, mindName, onCancel, onSend, isSending }) => {
   );
 };
 
-// Exported: src/components/canvas/panels/StoryboarderPanel.jsx reuses this rather than
-// duplicating it — the Storyboarder is gated on the same budget this widget sets.
-export const BudgetWidget = ({ token, budget, onUpdated }) => {
-  const [total, setTotal] = useState(budget?.total ?? '');
-  const [perRender, setPerRender] = useState(budget?.perRender ?? '');
-  const [paidTier, setPaidTier] = useState(budget?.paidTier ?? false);
-  const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    setTotal(budget?.total ?? '');
-    setPerRender(budget?.perRender ?? '');
-    setPaidTier(budget?.paidTier ?? false);
-  }, [budget?.total, budget?.perRender, budget?.paidTier]);
-
-  const submit = async (event) => {
-    event.preventDefault();
-    if (saving) return;
-    setSaving(true);
-    try {
-      const result = await setProducerBudget(token, {
-        total: total === '' ? null : Number(total),
-        perRender: perRender === '' ? null : Number(perRender),
-        // Never inferred from the money. A visitor who has not ticked this box is on the free
-        // model no matter how large their budget is.
-        paidTier: total === '' ? false : paidTier,
-      });
-      onUpdated?.(result.budget);
-    } catch {
-      // Silently ignored — the fields keep whatever the visitor typed, they can retry.
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <form onSubmit={submit} className="rounded-2xl border border-white/10 bg-black/20 p-4">
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Budget</p>
-      <p className="mb-3 text-xs text-slate-500">
-        {budget ? 'Your Producer is properly in the loop now.' : "The one thing that gets your Producer properly involved — total spend, a per-render cap, or both."}
-      </p>
-      <div className="flex flex-wrap items-end gap-3">
-        <label className="flex flex-col gap-1 text-xs text-slate-400">
-          Total
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={total}
-            onChange={(e) => setTotal(e.target.value)}
-            placeholder="$"
-            className="w-24 rounded-lg border border-white/10 bg-black/30 px-2 py-1.5 text-sm text-white outline-none focus:border-purple-500/50"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-xs text-slate-400">
-          Per-render cap
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={perRender}
-            onChange={(e) => setPerRender(e.target.value)}
-            placeholder="$"
-            className="w-24 rounded-lg border border-white/10 bg-black/30 px-2 py-1.5 text-sm text-white outline-none focus:border-purple-500/50"
-          />
-        </label>
-        <button
-          type="submit"
-          disabled={saving || (total === '' && perRender === '')}
-          className="chip px-3 py-1.5 text-xs font-semibold text-purple-300 hover:text-purple-200 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {saving ? 'Saving…' : budget ? 'Update' : 'Set budget'}
-        </button>
-      </div>
-
-      {/* The model choice, separate from the money and off by default.
-          The free storyboarder is not a degraded toy — on the same test films it matched the paid
-          one on screen-position accuracy — so paid is a different trade-off rather than an
-          upgrade, and it gets its own deliberate click instead of arriving silently with a
-          budget. Needs a total, because spending real money with no ceiling is the exact thing
-          the budget exists to prevent. */}
-      <label className="mt-3 flex items-start gap-2 border-t border-white/5 pt-3 text-xs text-slate-400">
-        <input
-          type="checkbox"
-          checked={paidTier}
-          disabled={total === ''}
-          onChange={(e) => setPaidTier(e.target.checked)}
-          className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-purple-500 disabled:opacity-40"
-        />
-        <span>
-          <span className={total === '' ? 'text-slate-600' : 'text-slate-300'}>
-            Use full-quality generation
-          </span>
-          <span className="block text-[11px] leading-relaxed text-slate-500">
-            {total === ''
-              ? 'Set a total budget first — paid generation always runs under a ceiling.'
-              : 'Runs the storyboard on GPT-5.6-Sol, about $0.26 a scene, and allows longer scenes. Leave this off and it stays free.'}
-          </span>
-        </span>
-      </label>
-    </form>
-  );
-};
 
 /**
  * The Producer, surfaced as correspondence rather than as chat.
@@ -365,16 +261,13 @@ export const BudgetWidget = ({ token, budget, onUpdated }) => {
  *
  * See /Users/adamplace/.claude/plans/right-now-the-connect-parsed-fiddle.md.
  */
-const ProducerInbox = ({ session, pending, messages, isInitializing, error, send, isSending }) => {
+const ProducerInbox = ({ session, pending, messages, isInitializing, error, send, isSending, badge }) => {
   // null | { view: 'thread', key } | { view: 'compose', replyTo }
   const [open, setOpen] = useState(null);
   const [readIds, setReadIds] = useState(() => new Set());
-  const [budgetOpen, setBudgetOpen] = useState(false);
   const mindId = session?.mindId;
   const mindName = session?.mindName ?? pending?.mindName;
   const token = session?.token;
-
-  const badge = useMindStatusBadge({ token, active: Boolean(token) });
 
   // Per-message read state, marked when a thread is actually OPENED. The old scheme was a
   // single timestamp per inbox, written on mount — so everything counted as read the moment
@@ -484,17 +377,9 @@ const ProducerInbox = ({ session, pending, messages, isInitializing, error, send
           {unreadCount > 0 && <span className="chip shrink-0 px-2 py-0.5 text-[11px] font-semibold text-purple-300">{unreadCount} unread</span>}
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          {/* Out of the mail list on purpose: a form pinned above the inbox was the least
-              email-like thing in this surface, and it contradicted the Producer's own brief
-              that budget is the first production thing, not the first contact thing. */}
-          <button
-            type="button"
-            onClick={() => setBudgetOpen((v) => !v)}
-            className="chip flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white"
-          >
-            <Wallet className="h-3.5 w-3.5" />
-            {badge?.budget ? `$${badge.budget.total ?? '—'}` : 'Budget'}
-          </button>
+          {/* No budget control here any more. It sits above the Inbox/Assistant tabs in
+              ProducerSurface, so it is reachable from either surface and exists exactly once —
+              see src/components/BudgetWidget.jsx. */}
           <button
             type="button"
             onClick={() => setOpen({ view: 'compose', replyTo: null })}
@@ -510,12 +395,6 @@ const ProducerInbox = ({ session, pending, messages, isInitializing, error, send
           <Clock className="h-3 w-3" />
           {badge.queueDepth.count} waiting · oldest {formatAge(badge.queueDepth.oldestAgeMs)}
         </p>
-      )}
-
-      {budgetOpen && (
-        <div className="shrink-0">
-          <BudgetWidget token={token} budget={badge?.budget} />
-        </div>
       )}
 
       <div className="scrollbar-subtle min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">

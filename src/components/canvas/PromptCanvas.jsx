@@ -819,6 +819,7 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder }) => {
                         collapsed={collapsed.storyboarder}
                         onToggle={() => togglePanel('storyboarder')}
                         status={status.storyboarder}
+                        onOpenProducer={() => focusPanel('producer')}
                       />
                     </Panel>
                     <Separator {...handleProps} />

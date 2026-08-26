@@ -1,6 +1,5 @@
 import { Clapperboard, Clock, Loader2 } from 'lucide-react';
 import CanvasPanel from './CanvasPanel';
-import { BudgetWidget } from '../../ProducerInbox';
 import { cn } from '../../../lib/cn';
 
 import { STAGE_LABEL } from '../../../hooks/useStoryboarder';
@@ -14,9 +13,14 @@ import { STAGE_LABEL } from '../../../hooks/useStoryboarder';
  * with the model that will actually do the work. Nobody should discover the tier from the bill
  * afterwards.
  *
- * Blocking is still free on the Zero Budget tier — the BudgetWidget below is an offer, not a
- * gate — but it is no longer free unconditionally, which is why the estimate is stated rather
- * than implied.
+ * Blocking is still free on the Zero Budget tier, and it is no longer free unconditionally,
+ * which is why the estimate is stated rather than implied.
+ *
+ * THE BUDGET FORM IS NOT HERE. It belongs to the Producer, which is the agent whose job is the
+ * money; carrying a second copy of the control in the rail of the agent about to spend it meant
+ * the same form existed twice, framed two different ways, each going stale until its own poll
+ * caught up. What is left is the part that is genuinely this panel's business — the cost and
+ * time of THIS run, and a pointer to the Producer when the tier is what is standing in the way.
  *
  * THE TIER AND CAP DECISIONS ARE NOT MADE HERE ANY MORE. They live in useProductionPipeline,
  * because the pipeline bar's Block button and this panel's button are the same action and were
@@ -35,6 +39,7 @@ const StoryboarderPanel = ({
   collapsed,
   onToggle,
   status,
+  onOpenProducer,
 }) => {
   const { frames, phase, running, error, spend, stageLabel, elapsedSeconds } = storyboarder ?? {};
   const { plan, capped, capViolations } = pipeline ?? {};
@@ -95,8 +100,19 @@ const StoryboarderPanel = ({
           </button>
           {capped && (
             <p className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-[11px] leading-relaxed text-amber-200">
-              {(capViolations ?? []).map((v) => v.detail).join(' ')}
-              {' Set a budget to unlock the full scene, or shorten the prompt.'}
+              {(capViolations ?? []).map((v) => v.detail).join(' ')}{' '}
+              {onOpenProducer ? (
+                <button
+                  type="button"
+                  onClick={onOpenProducer}
+                  className="underline underline-offset-2 transition-colors hover:text-white"
+                >
+                  Set a budget in the Producer
+                </button>
+              ) : (
+                'Set a budget in the Producer'
+              )}{' '}
+              to unlock the full scene, or shorten the prompt.
             </p>
           )}
           {plan && (
@@ -123,14 +139,24 @@ const StoryboarderPanel = ({
         </>
       )}
 
-      {!budget && (
+      {!budget && !frames?.length && !running && (
         <p className="text-[10px] leading-relaxed text-slate-600">
-          Blocking on Zero Budget costs nothing. Set a budget below to unlock full-quality
-          generation, or to try an actual sketch preview for a frame later — those spend real
+          Blocking on Zero Budget costs nothing.{' '}
+          {onOpenProducer ? (
+            <button
+              type="button"
+              onClick={onOpenProducer}
+              className="text-purple-300 underline underline-offset-2 transition-colors hover:text-white"
+            >
+              Set a budget in the Producer
+            </button>
+          ) : (
+            'Set a budget in the Producer'
+          )}{' '}
+          to unlock full-quality generation and per-frame sketch previews — those spend real
           money.
         </p>
       )}
-      {!budget && <BudgetWidget token={token} budget={budget} onUpdated={() => {}} />}
 
       {running && (
         <div className="space-y-1 rounded-xl border border-white/10 bg-black/20 p-3 text-xs text-slate-400">
