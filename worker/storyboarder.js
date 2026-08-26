@@ -39,7 +39,6 @@ import { requireSession, relayToMind } from './mind-chat.js';
 import { getBudget, getSpend, recordSpend, markThresholdRelayed } from './budget.js';
 import { editImage, estimateCostUsd, respond, jsonFromResponse } from './openai.js';
 import { filmCall, streamFilmCall, FREE_MAX_BEATS } from './openrouter.js';
-import { parseReasoningGeometry } from './reasoning-geometry.js';
 import { resolveTier, LATENCY_SECONDS, TIER_LABEL, checkStoryboardInput } from './tier.js';
 import { filmIdFor } from './film-id.js';
 import {
@@ -464,60 +463,16 @@ async function generateFilm(env, plan, { system, user, signal, onReasoning }) {
  * the film is the product and the ghost is decoration for the wait, so every one of these degrades
  * the decoration to protect the product, and never the reverse.
  */
-const GHOST_INTERVAL_MS = 2500;
+const REASONING_INTERVAL_MS = 250;
 
 /**
- * How much of the tail the ghost actually reads.
+ * Reasoning text relay.
  *
- * The model revises what it just said, not what it said four minutes ago — and anything older has
- * already been absorbed into the beats on screen, because this runs continuously rather than once
- * at the end. So a trailing window keeps the "later overrules earlier" behaviour for the part that
- * is still moving, and makes each parse cost a constant instead of a function of how long the model
- * has been talking.
+ * The free tier streams the model's thinking as it works. We forward that text to the browser so
+ * the wait is legible — "someone is working" rather than a silent spinner. We no longer try to
+ * parse provisional geometry out of the prose; the real scene graph arrives atomically at the end
+ * and is the only geometry we trust.
  */
-const GHOST_WINDOW_BYTES = 32 * 1024;
-
-/**
- * Total CPU the ghost may spend across a whole run.
- *
- * Past this it stops re-parsing and the frames hold their last state. The reasoning text and the
- * heartbeat keep flowing, so the wait stays legible — what stops is only the re-derivation. A
- * preview is never worth risking the film it is previewing.
- */
-const GHOST_BUDGET_MS = 4000;
-
-/**
- * The slice of the trace the ghost reads, anchored so the parser can still find its footing.
- *
- * A RAW BYTE CUT IS NOT SAFE HERE, and this is the part worth being careful about. Beats are found
- * by BEAT_HEADER in worker/reasoning-geometry.js, which is anchored to a line start — and the
- * parser returns NOTHING at all when it finds no header ("if (!markers.length) return"). So a
- * window that happens to land after the model's last "Beat N:" line parses to an empty ghost, not
- * to a partial one. Measured while building this: an unanchored slice of a header-less window
- * turned a working ghost into hasGeometry=false.
- *
- * So the window is aligned to a line break (which the header pattern also accepts), and widened
- * once if the first attempt caught no header. Two bounded slices in the worst case, and in the
- * ordinary case — a model that announces its beats regularly — the first one is already right.
- */
-const HEADER_IN_WINDOW = /(?:^|\n)\s*(?:beat|for beat)\s*\d+/i;
-
-const ghostWindow = (full) => {
-  if (full.length <= GHOST_WINDOW_BYTES) return full;
-  for (const size of [GHOST_WINDOW_BYTES, GHOST_WINDOW_BYTES * 2]) {
-    if (size >= full.length) break;
-    const cut = full.length - size;
-    // Start at the line break at or after the cut, so the window opens where a header could.
-    const nl = full.indexOf('\n', cut);
-    const text = full.slice(nl === -1 ? cut : nl);
-    if (HEADER_IN_WINDOW.test(text)) return text;
-  }
-  // No header within twice the window: hand back the widest bounded slice and let the parser say
-  // it found nothing, which leaves the previous ghost standing rather than blanking it.
-  const cut = Math.max(0, full.length - GHOST_WINDOW_BYTES * 2);
-  const nl = full.indexOf('\n', cut);
-  return full.slice(nl === -1 ? cut : nl);
-};
 
 const reasoningRelay = (emit, { names, maxBeats }) => {
   let lastGhostAt = 0;

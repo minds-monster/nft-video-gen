@@ -93,6 +93,7 @@ export const filmCall = async (env, {
   maxTokens = 32768,
   retries = 2,
   signal,
+  enableThinking = true,
 }) => {
   const startedAt = Date.now();
   const payload = await chat(env, {
@@ -111,7 +112,7 @@ export const filmCall = async (env, {
     tool_choice: { type: 'function', function: { name: toolName } },
     temperature,
     max_tokens: maxTokens,
-    chat_template_kwargs: { enable_thinking: true },
+    chat_template_kwargs: { enable_thinking: enableThinking },
   });
 
   const choice = payload.choices?.[0];

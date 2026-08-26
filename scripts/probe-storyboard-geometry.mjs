@@ -144,6 +144,31 @@ const CELLS = {
     kind: 'scene', scope: 'film', transport: 'nvidia', model: NVIDIA_MODELS.super,
     contract: 'v2', enableThinking: true, maxTokens: 32768, free: true,
   },
+  // ── Temporary stage for the storyboarder slowness investigation. Free tier only, small matrix.
+  'f2-ultra-3-on': {
+    label: 'F2: Ultra 550B, 3 beats, thinking ON (production config)',
+    kind: 'scene', scope: 'film', transport: 'nvidia', model: NVIDIA_MODELS.ultra,
+    contract: 'v2', enableThinking: true, maxTokens: 32768, free: true, retries: 1,
+    trimBeats: 3,
+  },
+  'f2-ultra-3-off': {
+    label: 'F2: Ultra 550B, 3 beats, thinking OFF',
+    kind: 'scene', scope: 'film', transport: 'nvidia', model: NVIDIA_MODELS.ultra,
+    contract: 'v2', enableThinking: false, maxTokens: 32768, free: true, retries: 1,
+    trimBeats: 3,
+  },
+  'f2-ultra-2-on': {
+    label: 'F2: Ultra 550B, 2 beats, thinking ON',
+    kind: 'scene', scope: 'film', transport: 'nvidia', model: NVIDIA_MODELS.ultra,
+    contract: 'v2', enableThinking: true, maxTokens: 32768, free: true, retries: 1,
+    trimBeats: 2,
+  },
+  'f2-super-3-on': {
+    label: 'F2: Super 120B, 3 beats, thinking ON',
+    kind: 'scene', scope: 'film', transport: 'nvidia', model: NVIDIA_MODELS.super,
+    contract: 'v2', enableThinking: true, maxTokens: 32768, free: true, retries: 1,
+    trimBeats: 3,
+  },
   // Stage 2's ladder. Defined now so --dry-run can price them, run only when asked.
   'scene-film-terra-high': { label: 'ladder: terra @ high', kind: 'scene', scope: 'film', transport: 'responses', model: MODELS.terra, effort: 'high' },
   'scene-film-terra-med': { label: 'ladder: terra @ medium', kind: 'scene', scope: 'film', transport: 'responses', model: MODELS.terra, effort: 'medium' },
@@ -156,6 +181,7 @@ const STAGE_CELLS = {
   1: ['scene-film', 'scene-chain', 'c0', 'c1'],
   2: ['scene-film-v2'],
   f1: ['ultra-free'],
+  f2: ['f2-ultra-3-on', 'f2-ultra-3-off', 'f2-ultra-2-on', 'f2-super-3-on'],
 };
 
 // ─────────────────────────────────────────────────────────────────────── one film
@@ -239,9 +265,12 @@ const runFilm = async (cell, fixture) => {
   };
 
   if (cell.kind === 'scene' && cell.scope === 'film') {
+    const spec = cell.trimBeats && fixture.spec.beats.length > cell.trimBeats
+      ? { ...fixture.spec, beats: fixture.spec.beats.slice(0, cell.trimBeats) }
+      : fixture.spec;
     const data = record(await callModel(cell, {
       system: briefFor(cell),
-      user: buildFilmUserMessage(fixture.spec, fixture.cast),
+      user: buildFilmUserMessage(spec, fixture.cast),
       schema: SCENE_SCHEMA,
       toolName: 'emit_film',
     }));

@@ -1,0 +1,787 @@
+{
+  "runId": "20260826T090334Z",
+  "startedAt": "2026-08-26T09:14:18.375Z",
+  "fixture": "scale-extremes",
+  "results": [
+    {
+      "id": "ultra-3-on",
+      "label": "Ultra 550B, 3 beats, thinking ON",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "enableThinking": true,
+      "beatCount": 3,
+      "ok": true,
+      "latencyMs": 216519,
+      "attempts": 1,
+      "usage": {
+        "promptTokens": 4664,
+        "completionTokens": 8778,
+        "reasoningTokens": 5835
+      },
+      "beatCountReturned": 3,
+      "valid": true,
+      "sample": {
+        "units": "metres",
+        "aspect": 1.7778,
+        "sceneScaleNote": "Salt flat extends hundreds of metres in all directions; principal subject stages at origin with camera up to 80m back on +Z.",
+        "beats": [
+          {
+            "beatIndex": 0,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 0,
+                  "y": 1.6,
+                  "z": 80
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1,
+                  "z": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 0,
+                  "y": 1.6,
+                  "z": 80
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1,
+                  "z": 0
+                }
+              },
+              "focalStartMm": 24,
+              "focalEndMm": 24,
+              "rollDeg": 0,
+              "motion": "Static Shot",
+              "amplitude": "small",
+              "speed": "slow",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": 0,
+                "endX": 0,
+                "endZ": 0,
+                "groundOffsetM": 0,
+                "heightM": 1.7,
+                "widthM": 0.6,
+                "yawDeg": 0,
+                "containerId": null,
+                "action": "standing motionless as a distant speck",
+                "screenPosition": "center",
+                "depth": "background"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "EWS",
+            "changes": [],
+            "containmentNotes": "Subject stands alone on the salt flat, no containers.",
+            "proseNote": "Live-action, cinematic, an extreme wide shot frames the lone figure as a tiny speck at the centre of a vast white salt flat under an enormous pale sky. The camera sits high on the +Z axis at 80 metres, looking straight down the flat toward the origin with a 24mm lens, perfectly level and static. Hard noon light casts no shadows; the figure in a long coat faces the camera, motionless, dwarfed by the scale of the emptiness."
+          },
+          {
+            "beatIndex": 1,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 0,
+                  "y": 1.6,
+                  "z": 25
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1,
+                  "z": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 0,
+                  "y": 1.6,
+                  "z": 25
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1,
+                  "z": 15
+                }
+              },
+              "focalStartMm": 50,
+              "focalEndMm": 50,
+              "rollDeg": 0,
+              "motion": "Tilt Up",
+              "amplitude": "small",
+              "speed": "slow",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": 0,
+                "endX": 0,
+                "endZ": 15,
+                "groundOffsetM": 0,
+                "heightM": 1.7,
+                "widthM": 0.6,
+                "yawDeg": 0,
+                "containerId": null,
+                "action": "walking steadily toward the camera across the salt flat",
+                "screenPosition": "center",
+                "depth": "midground"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "WS",
+            "changes": [
+              {
+                "subject": "<Subject 1>",
+                "what": "moved from z=0 to z=15 along the ground plane",
+                "justifiedByBeatText": true
+              }
+            ],
+            "containmentNotes": "Subject walks freely on the salt flat, no containers.",
+            "proseNote": "Live-action, cinematic, a wide shot holds the camera at 25 metres on the +Z axis as the figure walks straight toward the lens from the far end of the flat, growing from a speck to a small but clear human shape. The 50mm lens keeps the figure centred; the camera tilts up slightly to track the approach, the subject advancing across the ground plane at a steady pace, salt dust faintly kicking up, the huge sky unchanged overhead."
+          },
+          {
+            "beatIndex": 2,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 0,
+                  "y": 1.55,
+                  "z": 15.1
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1.55,
+                  "z": 15
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 0,
+                  "y": 1.55,
+                  "z": 15.1
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1.55,
+                  "z": 15
+                }
+              },
+              "focalStartMm": 200,
+              "focalEndMm": 200,
+              "rollDeg": 0,
+              "motion": "Static Shot",
+              "amplitude": "small",
+              "speed": "slow",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": 15,
+                "endX": 0,
+                "endZ": 15,
+                "groundOffsetM": 0,
+                "heightM": 1.7,
+                "widthM": 0.6,
+                "yawDeg": 0,
+                "containerId": null,
+                "action": "eye opens, iris and flecks filling the frame",
+                "screenPosition": "center",
+                "depth": "foreground"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "ECU",
+            "changes": [],
+            "containmentNotes": "Extreme close-up on subject's eye; the rest of the figure is out of frame.",
+            "proseNote": "Live-action, cinematic, an extreme close-up slams in to the figure's right eye: the camera pushes to 10 centimetres from the face at 200mm, filling the entire frame with the iris, its crypts and flecks rendered in microscopic detail. The eye opens deliberately, the pupil contracting in the hard light. The rest of the figure and the salt flat vanish beyond the edges of the frame."
+          }
+        ]
+      }
+    },
+    {
+      "id": "ultra-3-off",
+      "label": "Ultra 550B, 3 beats, thinking OFF",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "enableThinking": false,
+      "beatCount": 3,
+      "ok": true,
+      "latencyMs": 171672,
+      "attempts": 1,
+      "usage": {
+        "promptTokens": 4664,
+        "completionTokens": 6331,
+        "reasoningTokens": 3588
+      },
+      "beatCountReturned": 3,
+      "valid": true,
+      "sample": {
+        "units": "metres",
+        "aspect": 1.7778,
+        "sceneScaleNote": "The salt flat is effectively infinite; the staged action occupies a 20-metre depth from the origin (beat 1) to the final close-up position (beat 3).",
+        "beats": [
+          {
+            "beatIndex": 0,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 0,
+                  "y": 1.6,
+                  "z": 80
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1,
+                  "z": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 0,
+                  "y": 1.6,
+                  "z": 80
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1,
+                  "z": 0
+                }
+              },
+              "focalStartMm": 24,
+              "focalEndMm": 24,
+              "rollDeg": 0,
+              "motion": "Static Shot",
+              "amplitude": "small",
+              "speed": "slow",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": 0,
+                "endX": 0,
+                "endZ": 0,
+                "groundOffsetM": 0,
+                "heightM": 1.7,
+                "widthM": 0.6,
+                "yawDeg": 0,
+                "containerId": null,
+                "action": "stands motionless as a speck on the salt flat",
+                "screenPosition": "center",
+                "depth": "background"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "EWS",
+            "changes": [],
+            "containmentNotes": "No containment. Subject stands alone on open ground.",
+            "proseNote": "A static extreme wide shot holds the lone figure at the center of an endless white salt flat under a huge pale sky; the camera at eighty metres with a 24mm lens makes her a mere speck, emphasizing the crushing scale of the landscape."
+          },
+          {
+            "beatIndex": 1,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 0,
+                  "y": 1.6,
+                  "z": 80
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1,
+                  "z": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 0,
+                  "y": 1.6,
+                  "z": 30
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1,
+                  "z": 20
+                }
+              },
+              "focalStartMm": 35,
+              "focalEndMm": 35,
+              "rollDeg": 0,
+              "motion": "Push In",
+              "amplitude": "large",
+              "speed": "medium",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": 0,
+                "endX": 0,
+                "endZ": 20,
+                "groundOffsetM": 0,
+                "heightM": 1.7,
+                "widthM": 0.6,
+                "yawDeg": 0,
+                "containerId": null,
+                "action": "walks steadily toward the camera across the salt crust",
+                "screenPosition": "center",
+                "depth": "midground"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "WS",
+            "changes": [
+              {
+                "subject": "<Subject 1>",
+                "what": "moves from z=0 to z=20 along the ground plane",
+                "justifiedByBeatText": true
+              }
+            ],
+            "containmentNotes": "No containment. Subject walks freely on open ground.",
+            "proseNote": "The camera pushes in with large amplitude at medium speed from eighty to thirty metres, tracking the figure as she walks toward the lens; a 35mm lens widens the view slightly while the push brings her from a distant speck to a clear waist-up presence, still small against the featureless expanse."
+          },
+          {
+            "beatIndex": 2,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 0,
+                  "y": 1.6,
+                  "z": 20.5
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1.6,
+                  "z": 20
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 0,
+                  "y": 1.6,
+                  "z": 20.1
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1.6,
+                  "z": 20
+                }
+              },
+              "focalStartMm": 100,
+              "focalEndMm": 100,
+              "rollDeg": 0,
+              "motion": "Push In",
+              "amplitude": "small",
+              "speed": "slow",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": 20,
+                "endX": 0,
+                "endZ": 20,
+                "groundOffsetM": 0,
+                "heightM": 1.7,
+                "widthM": 0.6,
+                "yawDeg": 0,
+                "containerId": null,
+                "action": "her right eye opens, the iris dilating to fill the frame",
+                "screenPosition": "center",
+                "depth": "foreground"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "ECU",
+            "changes": [],
+            "containmentNotes": "No containment. Extreme close-up frames only the eye; the rest of the subject exists outside the field of view.",
+            "proseNote": "An extreme close-up with a 100mm macro lens pushes in slowly from twenty centimetres to ten centimetres from her face, the camera locked on her right eye as it opens; the iris and its flecks expand to occupy the entire frame, the salt flat reflected in the wet surface."
+          }
+        ]
+      }
+    },
+    {
+      "id": "ultra-2-on",
+      "label": "Ultra 550B, 2 beats, thinking ON",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "enableThinking": true,
+      "beatCount": 2,
+      "ok": true,
+      "latencyMs": 128549,
+      "attempts": 1,
+      "usage": {
+        "promptTokens": 4641,
+        "completionTokens": 5778,
+        "reasoningTokens": 3619
+      },
+      "beatCountReturned": 2,
+      "valid": true,
+      "sample": {
+        "units": "metres",
+        "aspect": 1.7778,
+        "sceneScaleNote": "An infinite salt flat; the staged area is a 200m diameter circle of white crust centered on the origin, under a sky dome. The camera ranges from 60m to 10m back.",
+        "beats": [
+          {
+            "beatIndex": 0,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 0,
+                  "y": 1.6,
+                  "z": 60
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1,
+                  "z": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 0,
+                  "y": 1.6,
+                  "z": 60
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1,
+                  "z": 0
+                }
+              },
+              "focalStartMm": 24,
+              "focalEndMm": 24,
+              "rollDeg": 0,
+              "motion": "Static Shot",
+              "amplitude": "small",
+              "speed": "slow",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": 0,
+                "endX": 0,
+                "endZ": 0,
+                "groundOffsetM": 0,
+                "heightM": 1.7,
+                "widthM": 0.6,
+                "yawDeg": 0,
+                "containerId": null,
+                "action": "stands motionless at the far end of the salt flat",
+                "screenPosition": "center",
+                "depth": "background"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "EWS",
+            "changes": [],
+            "containmentNotes": "Subject stands free on the salt flat. No containers.",
+            "proseNote": "The camera sits far back at sixty metres with a wide 24mm lens, static, framing the lone figure as a tiny speck at the center of an immense white plain under a huge pale sky. Hard noon light flattens everything. The figure faces the camera, coat still, utterly alone."
+          },
+          {
+            "beatIndex": 1,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 0,
+                  "y": 1.6,
+                  "z": 12
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1,
+                  "z": 2
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 0,
+                  "y": 1.6,
+                  "z": 10
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1,
+                  "z": 5
+                }
+              },
+              "focalStartMm": 35,
+              "focalEndMm": 35,
+              "rollDeg": 0,
+              "motion": "Push In",
+              "amplitude": "small",
+              "speed": "slow",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": 2,
+                "endX": 0,
+                "endZ": 5,
+                "groundOffsetM": 0,
+                "heightM": 1.7,
+                "widthM": 0.6,
+                "yawDeg": 0,
+                "containerId": null,
+                "action": "walks steadily toward the camera across the salt flat",
+                "screenPosition": "center",
+                "depth": "midground"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "WS",
+            "changes": [
+              {
+                "subject": "<Subject 1>",
+                "what": "moved from z=0 to z=2 (start of beat)",
+                "justifiedByBeatText": true
+              }
+            ],
+            "containmentNotes": "Subject walks free on the salt flat. No containers.",
+            "proseNote": "The camera cuts to a closer wide shot at twelve metres on a 35mm lens. The figure walks toward us from two metres to five metres out, centered in frame. The camera pushes in slowly with small amplitude, keeping the figure at waist-to-knee height in the frame as the vast salt flat and enormous sky continue to dwarf them. The coat moves with each step. Hard noon light, sharp shadows."
+          }
+        ]
+      }
+    },
+    {
+      "id": "super-3-on",
+      "label": "Super 120B, 3 beats, thinking ON",
+      "model": "nvidia/nemotron-3-super-120b-a12b:free",
+      "enableThinking": true,
+      "beatCount": 3,
+      "ok": true,
+      "latencyMs": 119327,
+      "attempts": 1,
+      "usage": {
+        "promptTokens": 4664,
+        "completionTokens": 10324,
+        "reasoningTokens": 7861
+      },
+      "beatCountReturned": 3,
+      "valid": true,
+      "sample": {
+        "units": "metres",
+        "aspect": 1.7778,
+        "sceneScaleNote": "The salt flat extends at least 200 m in every direction; the figure walks roughly 30 m toward the camera.",
+        "beats": [
+          {
+            "beatIndex": 0,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 0,
+                  "y": 1.6,
+                  "z": 50
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1.5,
+                  "z": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 0,
+                  "y": 1.6,
+                  "z": 50
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1.5,
+                  "z": 0
+                }
+              },
+              "focalStartMm": 200,
+              "focalEndMm": 200,
+              "rollDeg": 0,
+              "motion": "Static Shot",
+              "amplitude": "small",
+              "speed": "slow",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": 0,
+                "endX": 0,
+                "endZ": 0,
+                "groundOffsetM": 0,
+                "heightM": 1.7,
+                "widthM": 0.6,
+                "yawDeg": 0,
+                "containerId": null,
+                "action": "stands still as a tiny speck on the vast salt flat",
+                "screenPosition": "center",
+                "depth": "background"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "EWS",
+            "changes": [],
+            "containmentNotes": "",
+            "proseNote": "A static wide shot shows the lone figure as a tiny speck at the far end of the endless white salt flat under a blazing noon sky, the camera locked off and observing the immense emptiness."
+          },
+          {
+            "beatIndex": 1,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 0,
+                  "y": 1.6,
+                  "z": 50
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1.5,
+                  "z": 0
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 0,
+                  "y": 1.6,
+                  "z": 50
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1.54,
+                  "z": 20
+                }
+              },
+              "focalStartMm": 200,
+              "focalEndMm": 200,
+              "rollDeg": 0,
+              "motion": "Tilt Up",
+              "amplitude": "small",
+              "speed": "slow",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": 0,
+                "endX": 0,
+                "endZ": 20,
+                "groundOffsetM": 0,
+                "heightM": 1.7,
+                "widthM": 0.6,
+                "yawDeg": 0,
+                "containerId": null,
+                "action": "walks toward the camera across the flat",
+                "screenPosition": "center",
+                "depth": "midground"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "WS",
+            "changes": [
+              {
+                "subject": "<Subject 1>",
+                "what": "position",
+                "justifiedByBeatText": true
+              }
+            ],
+            "containmentNotes": "",
+            "proseNote": "The camera holds steady, tilting up slightly as the figure strides forward across the salt flat, remaining a small but distinct presence against the endless white."
+          },
+          {
+            "beatIndex": 2,
+            "kind": "shot",
+            "transitionText": null,
+            "camera": {
+              "start": {
+                "position": {
+                  "x": 0,
+                  "y": 1.6,
+                  "z": 50
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1.54,
+                  "z": 20
+                }
+              },
+              "end": {
+                "position": {
+                  "x": 0,
+                  "y": 1.6,
+                  "z": 20.3
+                },
+                "lookAt": {
+                  "x": 0,
+                  "y": 1.5,
+                  "z": 20
+                }
+              },
+              "focalStartMm": 200,
+              "focalEndMm": 200,
+              "rollDeg": 0,
+              "motion": "Push In",
+              "amplitude": "large",
+              "speed": "fast",
+              "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+            },
+            "subjects": [
+              {
+                "subject": "<Subject 1>",
+                "x": 0,
+                "z": 20,
+                "endX": 0,
+                "endZ": 20,
+                "groundOffsetM": 0,
+                "heightM": 1.7,
+                "widthM": 0.6,
+                "yawDeg": 0,
+                "containerId": null,
+                "action": "opens her eye, the iris filling the frame",
+                "screenPosition": "center",
+                "depth": "foreground"
+              }
+            ],
+            "principalSubject": "<Subject 1>",
+            "framing": "ECU",
+            "changes": [],
+            "containmentNotes": "",
+            "proseNote": "The camera pushes in rapidly to an extreme close‑up on the figure’s eye, the iris and its flecks expanding to fill the entire frame as she gazes directly at the viewer."
+          }
+        ]
+      }
+    }
+  ]
+}
