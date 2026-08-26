@@ -163,7 +163,7 @@ test('handleStoryboardQueue executes a queued job and reaches a terminal state',
 test('job status endpoint returns a queued job', async () => {
   const env = makeEnv();
   const token = await signSession(env, { mindId: 'mind-test', exp: Date.now() + 3600000 });
-  const plan = { tier: 'free', maxBeats: 5, label: 'Zero Budget' };
+  const plan = { tier: 'free', maxBeats: 3, label: 'Zero Budget' };
   const { jobId } = await createStoryboardJob(env, 'mind-test', { plan, filmId: 'film-123' });
 
   const statusRequest = new Request(`http://localhost/api/storyboard/job/${jobId}`, {
@@ -180,7 +180,7 @@ test('job status endpoint returns a queued job', async () => {
 test('job events endpoint streams the recorded event log', async () => {
   const env = makeEnv();
   const token = await signSession(env, { mindId: 'mind-test', exp: Date.now() + 3600000 });
-  const plan = { tier: 'free', maxBeats: 5, label: 'Zero Budget' };
+  const plan = { tier: 'free', maxBeats: 3, label: 'Zero Budget' };
   const { jobId } = await createStoryboardJob(env, 'mind-test', { plan, filmId: 'film-123' });
 
   const key = `storyboard-job:mind-test:${jobId}`;
@@ -219,7 +219,7 @@ test('job events endpoint streams the recorded event log', async () => {
 test('job events endpoint closes after sending a terminal status', async () => {
   const env = makeEnv();
   const token = await signSession(env, { mindId: 'mind-test', exp: Date.now() + 3600000 });
-  const plan = { tier: 'free', maxBeats: 5, label: 'Zero Budget' };
+  const plan = { tier: 'free', maxBeats: 3, label: 'Zero Budget' };
   const { jobId } = await createStoryboardJob(env, 'mind-test', { plan, filmId: 'film-123' });
 
   const key = `storyboard-job:mind-test:${jobId}`;

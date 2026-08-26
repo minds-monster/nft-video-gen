@@ -438,34 +438,6 @@ async function generateFilm(env, plan, { system, user, signal, onReasoning }) {
 }
 
 /**
- * The wait, made watchable.
- *
- * Three to five minutes is the highest-stakes surface in this build, and until now it was a
- * spinner. It does not have to be: the model narrates the entire time. This forwards its thinking
- * as it arrives, and — every `GHOST_INTERVAL_MS` — re-reads the whole trace for geometry it has
- * talked itself into, so the frames visibly assemble and correct themselves while it works.
- *
- * Re-reading rather than appending is deliberate: the model revises, and a later statement must be
- * able to overrule an earlier one on screen. See worker/reasoning-geometry.js.
- *
- * WHAT IT COSTS, AND WHY THAT IS NOW BOUNDED. Re-reading the WHOLE trace was the original design,
- * and it is quadratic: measured 2026-08-25 at 16KB->26ms, 32KB->90ms, 63KB->332ms, 127KB->1334ms —
- * doubling the trace roughly quadruples the parse. A seven-minute film makes ~168 of these, so the
- * ghost alone could spend ~19s of CPU at a 60KB trace and ~75s at 120KB, against a 30s default
- * limit. A Worker that exceeds its CPU limit is TERMINATED WITH NO CATCHABLE ERROR: nothing saved,
- * no result, no error frame — which is exactly the shape of the run that prompted this.
- *
- * (Measured, and worth recording because the obvious suspect was wrong: the cost is NOT driven by
- * the number of "Beat N:" headers and their nested slice+matchAll. 800 headers and 1 header over
- * the same 92KB both cost ~1.1s. It is trace LENGTH alone.)
- *
- * So the ghost is bounded three ways below, in increasing order of bluntness. The ordering matters:
- * the film is the product and the ghost is decoration for the wait, so every one of these degrades
- * the decoration to protect the product, and never the reverse.
- */
-const REASONING_INTERVAL_MS = 250;
-
-/**
  * Reasoning text relay.
  *
  * The free tier streams the model's thinking as it works. We forward that text to the browser so
@@ -474,43 +446,15 @@ const REASONING_INTERVAL_MS = 250;
  * and is the only geometry we trust.
  */
 
-const reasoningRelay = (emit, { names, maxBeats }) => {
-  let lastGhostAt = 0;
-  let lastSignature = '';
-  let spentMs = 0;
-  // Which beat the model is talking about RIGHT NOW, tracked as cheaply as it can be: it announces
-  // its own moves ("Beat 2: close on the ape"), so the last announcement wins until the next one.
-  // This is what lets the thinking appear over the frame it is about, rather than in one column
-  // beside them — the model walks the beats in order, repeatedly, and the text follows it.
+const reasoningRelay = (emit, { maxBeats }) => {
   let currentBeat = 0;
-  return async (delta, full) => {
+  return async (delta) => {
     const mentioned = [...String(delta).matchAll(/beat\s*(\d+)/gi)].pop();
     if (mentioned) {
       const index = Number(mentioned[1]) - 1;
       if (index >= 0 && index < maxBeats) currentBeat = index;
     }
     await emit('reasoning', { delta, beatIndex: currentBeat });
-
-    // Budget spent: the text keeps streaming, the frames just stop re-deriving.
-    if (spentMs >= GHOST_BUDGET_MS) return;
-
-    const now = Date.now();
-    // The interval widens as the trace grows, so a long film makes FEWER parses rather than more
-    // expensive ones. Doubling every window: 2.5s at the start, 5s past 32KB, 10s past 64KB.
-    const interval = GHOST_INTERVAL_MS * 2 ** Math.floor(full.length / GHOST_WINDOW_BYTES);
-    if (now - lastGhostAt < interval) return;
-    lastGhostAt = now;
-
-    const startedAt = Date.now();
-    const { beats, hasGeometry } = parseReasoningGeometry(ghostWindow(full), { names, maxBeats });
-    spentMs += Date.now() - startedAt;
-    if (!hasGeometry) return;
-    // Only speak when something actually changed — a ghost that re-renders identically every few
-    // seconds is just a flicker.
-    const signature = JSON.stringify(beats);
-    if (signature === lastSignature) return;
-    lastSignature = signature;
-    await emit('ghost', { beats });
   };
 };
 
@@ -654,6 +598,7 @@ async function runStoryboardJob(env, { mindId, spec, cast, plan, jobId }) {
     // say so in the visitor's own language rather than counting beats at them.
     const beats = spec.beats.slice(0, plan.maxBeats);
     await logger.setStatus('running');
+    console.log(`[Storyboarder ${jobId}] starting ${plan.tier} tier, model=${plan.model}, beats=${beats.length}`);
     await emit('plan', plan);
 
     const cappedSpec = { ...spec, beats };
@@ -680,6 +625,7 @@ async function runStoryboardJob(env, { mindId, spec, cast, plan, jobId }) {
     const draft = await loadDraft(env, mindId, filmId);
     const resumed = Boolean(draft?.film);
     if (draft?.film) {
+      console.log(`[Storyboarder ${jobId}] resuming from draft, model=${draft.model}`);
       film = draft.film;
       usage = draft.usage;
       model = draft.model;
@@ -691,13 +637,16 @@ async function runStoryboardJob(env, { mindId, spec, cast, plan, jobId }) {
       // Skipped entirely on a resumed draft — the previous attempt already did this.
       if (!film) {
         const relay = activePlan.tier === 'free'
-          ? reasoningRelay(emit, { names: subjectNamesFrom(spec, castByKey), maxBeats: beats.length })
+          ? reasoningRelay(emit, { maxBeats: beats.length })
           : undefined;
+        console.log(`[Storyboarder ${jobId}] calling model ${activePlan.model} for ${beats.length} beat(s)`);
+        const callStartedAt = Date.now();
         const result = await withHeartbeat(emit, 'drafting', () => {
           return emit('phase', { phase: 'drafting' }).then(() =>
             generateFilm(env, activePlan, { system, user, onReasoning: relay }),
           );
         });
+        console.log(`[Storyboarder ${jobId}] model call finished in ${Date.now() - callStartedAt}ms, returned ${result.data?.beats?.length ?? 0} beat(s)`);
         film = result.data;
         usage = result.usage;
         model = result.model;
@@ -739,7 +688,6 @@ async function runStoryboardJob(env, { mindId, spec, cast, plan, jobId }) {
             system,
             user: buildFilmUserMessage({ ...cappedSpec, beats: beats.slice(0, FREE_MAX_BEATS) }, cast),
             onReasoning: reasoningRelay(emit, {
-              names: subjectNamesFrom(spec, castByKey),
               maxBeats: Math.min(beats.length, FREE_MAX_BEATS),
             }),
           }),
@@ -866,6 +814,7 @@ async function runStoryboardJob(env, { mindId, spec, cast, plan, jobId }) {
     }
 
     await emit('phase', { phase: 'finalising' });
+    console.log(`[Storyboarder ${jobId}] validation done: ${repaired.length} repaired, ${refused.length} refused, saving storyboard`);
 
     // SAVE FIRST, THEN TELL THE BROWSER. The whole film arrives from one call, so there is no
     // streaming value in emitting frames as they are validated — they are all ready within a
@@ -874,6 +823,7 @@ async function runStoryboardJob(env, { mindId, spec, cast, plan, jobId }) {
     // 2026-08-25: spend recorded, frames built, first write to a closed tab threw, and the KV
     // write two lines below it never happened.
     await saveStoryboard(env, mindId, storyboard);
+    console.log(`[Storyboarder ${jobId}] storyboard saved: ${storyboard.frames.length} frame(s)`);
     await clearDraft(env, mindId, filmId);
 
     for (const frame of storyboard.frames) {
@@ -906,8 +856,9 @@ async function runStoryboardJob(env, { mindId, spec, cast, plan, jobId }) {
       subjectAssets: storyboard.subjectAssets,
     });
     await logger.setStatus('complete', { filmId: storyboard.filmId });
+    console.log(`[Storyboarder ${jobId}] complete, filmId=${storyboard.filmId}`);
   } catch (error) {
-    console.error('Storyboard job failed:', error);
+    console.error(`[Storyboarder ${jobId}] failed:`, error);
     await logger.setStatus('failed', { error: error.message });
     await emit('error', { error: error.message, retryable: error?.status === 429 });
   } finally {
@@ -915,7 +866,7 @@ async function runStoryboardJob(env, { mindId, spec, cast, plan, jobId }) {
   }
 }
 
-export async function handleStoryboard(request, env, ctx) {
+export async function handleStoryboard(request, env) {
   const session = await requireSession(request, env);
   if (!session) return json({ error: 'unauthorized' }, 401);
 
@@ -955,14 +906,14 @@ export async function handleStoryboard(request, env, ctx) {
  * The draft-resume path inside runStoryboardJob makes retries cheap when the crash happened
  * after the model answer arrived.
  */
-export async function handleStoryboardQueue(batch, env, ctx) {
+export async function handleStoryboardQueue(batch, env) {
   for (const message of batch.messages) {
     const payload = message.body;
     if (!payload || typeof payload !== 'object') {
       message.ack();
       continue;
     }
-    const { mindId, spec, cast, plan, jobId, filmId } = payload;
+    const { mindId, spec, cast, plan, jobId } = payload;
     if (!mindId || !jobId) {
       message.ack();
       continue;

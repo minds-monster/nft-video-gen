@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { subjectAssetsFrom } from '../../worker/scene.js';
 import { filmIdFor } from '../../worker/film-id';
+import { LATENCY_SECONDS } from '../../worker/tier.js';
 import {
   storyboard,
   sketchStoryboardFrame,
@@ -54,14 +55,14 @@ export const useStoryboarder = () => {
   const [subjectAssets, setSubjectAssets] = useState({});
   // The visitor's other films, so earlier work is reachable rather than merely stored.
   const [films, setFilms] = useState([]);
-  // The model thinking out loud, and the provisional geometry it has talked itself into. Both are
-  // live-only: they are the WAIT made watchable, and they are replaced wholesale by the real
-  // frames the moment those arrive. Nothing here is ever stored or treated as an answer.
+  // The model thinking out loud. Live-only: it is the WAIT made watchable, and it is replaced by
+  // the real frames the moment those arrive. Nothing here is ever stored or treated as an answer.
   const [reasoning, setReasoning] = useState('');
   // The same stream, split by which beat the model was discussing when it said it — so the
   // thinking appears over the frame it is about.
   const [reasoningByBeat, setReasoningByBeat] = useState({});
-  const [ghostBeats, setGhostBeats] = useState([]);
+  // A short rolling log of events from the worker, for debugging "is it still alive?".
+  const [events, setEvents] = useState([]);
   // The beats being worked on, known the instant the run starts. The film gets its shape — one
   // card per beat — before it has any content, so the wait is spent watching those fill in rather
   // than watching an empty panel.
@@ -74,6 +75,8 @@ export const useStoryboarder = () => {
   const [sketching, setSketching] = useState({});
   const [regenerating, setRegenerating] = useState({});
   const abortRef = useRef(null);
+  // A client-side timer so elapsed seconds keep climbing even if the SSE stream is quiet.
+  const timerRef = useRef(null);
   // The spec/cast a later action needs to reuse — the expensive-to-reassemble half
   // (references, staging) doesn't change when one frame's prompt does.
   const contextRef = useRef(null);
@@ -133,22 +136,28 @@ export const useStoryboarder = () => {
     setFrames([]);
     setReasoning('');
     setReasoningByBeat({});
-    setGhostBeats([]);
+    setEvents([]);
     setBeatTexts(spec?.beats ?? []);
-    // THE CAST IS KNOWN BEFORE ANY OF THIS RUNS. It is per cast member, not per beat, so the
-    // ghost frames can open with the real pieces already standing on the grid — only their
-    // POSITIONS are provisional. The Worker sends the identical map back with the result; this is
-    // the same join, run early, so the wait shows the visitor's own cast rather than capsules.
+    // THE CAST IS KNOWN BEFORE ANY OF THIS RUNS. The Worker sends the identical map back with the
+    // result; this is the same join, run early, so the wait shows the visitor's own cast rather
+    // than capsules.
     setSubjectAssets(subjectAssetsFrom(spec ?? {}, new Map((cast ?? []).map((c) => [c.key, c]))));
     setElapsedSeconds(0);
     setPhase('planning');
 
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setElapsedSeconds((s) => s + 1);
+    }, 1000);
+
     try {
-      // Give the run the tier's estimated time plus a generous buffer. The Queue consumer can
-      // run for up to 15 minutes, but if something stalls we want to fall back to polling the
-      // saved result rather than leaving the visitor watching a spinner forever.
-      const estimateSeconds = planRef.current?.estimateSeconds ?? 240;
-      const deadlineMs = Math.max(180_000, (estimateSeconds + 180) * 1000);
+      // The deadline is based on the tier's measured maximum, not the p50 estimate. A free-tier
+      // run is allowed up to LATENCY_SECONDS.free.max; we add a buffer so a legitimately slow run
+      // is not killed early. The Queue consumer can run for up to 15 minutes, so this is still
+      // well inside the real ceiling.
+      const tier = planRef.current?.tier ?? 'free';
+      const tierMaxSeconds = LATENCY_SECONDS[tier]?.max ?? LATENCY_SECONDS.free.max;
+      const deadlineMs = (tierMaxSeconds + 120) * 1000;
 
       const result = await storyboard(
         { spec, cast },
@@ -157,6 +166,8 @@ export const useStoryboarder = () => {
           signal: controller.signal,
           deadlineMs,
           onEvent: (type, data) => {
+            // Keep a rolling debug log so the UI can show what the worker is doing.
+            setEvents((current) => [...current.slice(-19), { type, data, at: Date.now() }]);
             // `plan` can arrive twice: once up front, and again if the paid model turns out to
             // be unavailable and the run falls back to free. The second one carries the reason.
             if (type === 'plan') {
@@ -167,7 +178,9 @@ export const useStoryboarder = () => {
               if (data?.maxBeats) setBeatTexts((current) => current.slice(0, data.maxBeats));
             }
             if (type === 'phase') setPhase(data.phase);
-            if (type === 'heartbeat') setElapsedSeconds(data.elapsedSeconds ?? 0);
+            // The heartbeat is a cross-check against the client-side timer; if it carries a larger
+            // elapsed value, trust it (the worker knows when the phase actually started).
+            if (type === 'heartbeat') setElapsedSeconds((s) => Math.max(s, data.elapsedSeconds ?? 0));
             // Appended rather than replaced: the delta is a fragment of a sentence, and the UI
             // shows the live tail of the whole trace.
             if (type === 'reasoning') {
@@ -177,10 +190,6 @@ export const useStoryboarder = () => {
                 return { ...current, [index]: (current[index] ?? '') + data.delta };
               });
             }
-            // Replaced wholesale, because the parser re-reads the entire trace each time — that
-            // is how the model changing its mind becomes a correction on screen rather than a
-            // second contradictory ghost beside the first.
-            if (type === 'ghost') setGhostBeats(data.beats ?? []);
             if (type === 'frame' && !data.error) {
               setFrames((current) => [...current, data]);
             }
@@ -200,9 +209,10 @@ export const useStoryboarder = () => {
       // that broke is the wire. Reported to the visitor as still working, because it is.
       if (failure.truncated) {
         setPhase('finalising');
-        // Whatever the tier said the whole call would take, from now — generous on purpose, since
-        // the alternative to waiting is throwing away a film that is already paid for in time.
-        const budgetMs = Math.max(120_000, ((planRef.current?.estimateSeconds ?? 480) + 180) * 1000);
+        // Use the same tier-max-based budget for recovery; from now we wait for the durable copy.
+        const recoverTier = planRef.current?.tier ?? 'free';
+        const recoverMaxSeconds = LATENCY_SECONDS[recoverTier]?.max ?? LATENCY_SECONDS.free.max;
+        const budgetMs = (recoverMaxSeconds + 120) * 1000;
         const saved = await recoverAfterCut({ spec, token, deadlineMs: budgetMs });
         if (controller.signal.aborted) return;
         if (saved) {
@@ -224,6 +234,10 @@ export const useStoryboarder = () => {
 
       setError(failure.message);
     } finally {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
       setRunning(false);
       setPhase(null);
     }
@@ -353,8 +367,8 @@ export const useStoryboarder = () => {
     films,
     reasoning,
     reasoningByBeat,
-    ghostBeats,
     beatTexts,
+    events,
     sketching,
     regenerating,
     run,

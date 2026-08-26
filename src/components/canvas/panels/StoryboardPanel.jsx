@@ -37,7 +37,6 @@ import {
 const SceneViewport = lazy(() => import('../scene3d/BeatView'));
 const ViewCanvas = lazy(() => import('../scene3d/ViewCanvas'));
 const ModalViewport = lazy(() => import('../scene3d/FrameViewport'));
-const GhostViewport = lazy(() => import('../scene3d/GhostView'));
 
 /** Shot size, angle and camera move, computed here rather than trusted. */
 const derivedFacts = (scene, aspect = 16 / 9) => {
@@ -452,12 +451,11 @@ const ThinkingStream = ({ reasoning }) => {
 /**
  * A beat while it is still being thought about.
  *
- * The whole film arrives at once at the very end — measured: the structured answer does not stream
- * — so nothing here is a partial result. It is the model's own narration, parsed for the geometry
- * it has talked itself into, drawn as wireframe and corrected in place as it changes its mind.
- * That is honest about what is happening, which a progress bar never is.
+ * The whole film arrives at once at the very end — measured: the structured answer does not stream.
+ * We show the beat text and the model's live reasoning tail so the wait is legible, but we no
+ * longer draw provisional wireframes that may contradict the final geometry.
  */
-const GhostCard = ({ beatIndex, beatText, ghost, reasoning, aspect, active, castAssets }) => (
+const PlaceholderCard = ({ beatIndex, beatText, reasoning }) => (
   <div className="min-w-0 rounded-2xl border border-sky-500/20 bg-sky-500/[0.03]">
     <div className="space-y-2 p-3">
       <div className="flex items-center justify-between gap-2">
@@ -471,14 +469,9 @@ const GhostCard = ({ beatIndex, beatText, ghost, reasoning, aspect, active, cast
       )}
 
       <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-sky-500/20 bg-black/40">
-        <Suspense fallback={null}>
-          <GhostViewport beat={ghost} aspect={aspect} active={active} castAssets={castAssets} />
-        </Suspense>
-        {!ghost && (
-          <span className="absolute inset-0 flex items-center justify-center text-[10px] uppercase tracking-widest text-slate-700">
-            not yet blocked
-          </span>
-        )}
+        <span className="absolute inset-0 flex items-center justify-center text-[10px] uppercase tracking-widest text-slate-700">
+          blocking…
+        </span>
       </div>
 
       <ThinkingStream reasoning={reasoning} />
@@ -524,7 +517,7 @@ const WaitHeader = ({ stageLabel, elapsedSeconds, plan, thinking }) => {
  * instant the run starts until long after it finishes, and filling in is something that
  * happens *to* that card rather than *instead of* it.
  */
-const BeatCard = ({ index, frame, beatText, ghost, reasoning, aspect, castAssets, frameProps }) => {
+const BeatCard = ({ index, frame, beatText, reasoning, aspect, frameProps }) => {
   if (frame?.transition) return <TransitionCard frame={frame} />;
   if (frame) {
     // `sketching` and `regenerating` are per-frame maps upstream; only this frame's own busy
@@ -534,24 +527,13 @@ const BeatCard = ({ index, frame, beatText, ghost, reasoning, aspect, castAssets
       <FrameCard
         frame={frame}
         aspect={aspect}
-        castAssets={castAssets}
         sketching={Boolean(sketching?.[frame.frameId])}
         regenerating={Boolean(regenerating?.[frame.frameId])}
         {...rest}
       />
     );
   }
-  return (
-    <GhostCard
-      beatIndex={index}
-      beatText={beatText}
-      ghost={ghost}
-      reasoning={reasoning}
-      aspect={aspect}
-      castAssets={castAssets}
-      active
-    />
-  );
+  return <PlaceholderCard beatIndex={index} beatText={beatText} reasoning={reasoning} />;
 };
 
 const StoryboardPanel = ({ id, storyboarder, token, budget, status }) => {
@@ -573,7 +555,6 @@ const StoryboardPanel = ({ id, storyboarder, token, budget, status }) => {
     elapsedSeconds,
     reasoning,
     reasoningByBeat,
-    ghostBeats,
     beatTexts,
   } = storyboarder ?? {};
   const [expandedFrame, setExpandedFrame] = useState(null);
@@ -740,10 +721,8 @@ const StoryboardPanel = ({ id, storyboarder, token, budget, status }) => {
               index={index}
               frame={frame}
               beatText={beatTexts?.[index]}
-              ghost={(ghostBeats ?? []).find((b) => b.beatIndex === index)}
               reasoning={reasoningByBeat?.[index]}
               aspect={aspect}
-              castAssets={subjectAssets}
               frameProps={frameProps}
             />
           ))}
@@ -751,7 +730,7 @@ const StoryboardPanel = ({ id, storyboarder, token, budget, status }) => {
       </div>
       {/* One shared WebGL context for every tile above. Mounted only when there is geometry to
           draw, so a visitor who never generates a storyboard never pays for a renderer. */}
-      {(ordered.some((frame) => frame.scene) || (running && ghostBeats?.length > 0)) && (
+      {ordered.some((frame) => frame.scene) && (
         <Suspense fallback={null}>
           <ViewCanvas eventSource={rootRef} />
         </Suspense>

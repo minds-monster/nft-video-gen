@@ -1,4 +1,5 @@
-import { Clapperboard, Clock, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { ChevronDown, Clapperboard, Clock, Loader2 } from 'lucide-react';
 import CanvasPanel from './CanvasPanel';
 import { cn } from '../../../lib/cn';
 
@@ -41,8 +42,9 @@ const StoryboarderPanel = ({
   status,
   onOpenProducer,
 }) => {
-  const { frames, phase, running, error, spend, stageLabel, elapsedSeconds } = storyboarder ?? {};
+  const { frames, phase, running, error, spend, stageLabel, elapsedSeconds, events } = storyboarder ?? {};
   const { plan, capped, capViolations } = pipeline ?? {};
+  const [showEvents, setShowEvents] = useState(false);
   const nudgeFrame = (frames ?? []).find((f) => f.regenCount === 3);
 
   const send = () => {
@@ -164,11 +166,39 @@ const StoryboarderPanel = ({
             <Loader2 className="h-3.5 w-3.5 animate-spin text-purple-400" />
             {stageLabel ?? STAGE_LABEL[phase] ?? 'Working…'}
           </p>
-          {/* Proof of life. The number comes from the worker's own heartbeat rather than a
-              client-side timer, so it reports the call that is actually in flight. */}
+          {/* Proof of life. The client-side timer keeps climbing even if the SSE stream is quiet,
+              and the worker heartbeat corrects it if the two drift apart. */}
           <p className="pl-6 font-mono text-[10px] uppercase tracking-wider text-slate-600">
             {elapsedSeconds > 0 ? `${elapsedSeconds}s · still working` : 'starting'}
           </p>
+        </div>
+      )}
+
+      {(running || error) && events?.length > 0 && (
+        <div className="rounded-xl border border-white/10 bg-black/20 p-2 text-[10px] text-slate-500">
+          <button
+            type="button"
+            onClick={() => setShowEvents((on) => !on)}
+            className="flex w-full items-center justify-between py-1 text-slate-400 hover:text-slate-300"
+          >
+            <span className="font-semibold uppercase tracking-wider">What is happening?</span>
+            <ChevronDown className={cn('h-3 w-3 transition-transform', showEvents && 'rotate-180')} />
+          </button>
+          {showEvents && (
+            <ul className="mt-1 space-y-1 font-mono leading-relaxed">
+              {events.slice(-10).map((event, i) => (
+                <li key={i} className="truncate">
+                  <span className="text-slate-600">{event.type}</span>
+                  {' '}
+                  <span className="text-slate-500">
+                    {event.type === 'reasoning'
+                      ? String(event.data?.delta ?? '').slice(0, 60)
+                      : JSON.stringify(event.data).slice(0, 80)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 

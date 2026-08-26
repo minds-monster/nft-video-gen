@@ -22,7 +22,7 @@
 // that kills a six-beat call, but this endpoint refuses to stream under `tool_choice`, so buying
 // length that way costs the schema — malformed JSON, framing self-agreement 0.50 against 1.00.
 // The transferable rule from that round: **if a fix requires dropping a gate, the fix is wrong.**
-// Five beats with the schema intact beats six without it, which is why FREE_MAX_BEATS is 5.
+// Three beats with the schema intact beats six without it, which is why FREE_MAX_BEATS is 3.
 
 import { chat, NvidiaError } from './nvidia.js';
 
@@ -31,11 +31,12 @@ import { chat, NvidiaError } from './nvidia.js';
  * against the live /models endpoint, not assumed from a docs page. */
 export const FREE_FILM_MODEL = 'nvidia/nemotron-3-ultra-550b-a55b:free';
 
-/** Five, not six. Six beats failed on EVERY free configuration tried, and OpenRouter's failure
+/** Three, not six. Six beats failed on every free configuration tried, and OpenRouter's failure
  * was the informative one: `finish_reason: error` after 555s having spent 14,578 completion
  * tokens, all of them reasoning, with `max_tokens` at 60,000 — a provider-side TIME limit, not a
- * token budget, so raising the budget does not help. */
-export const FREE_MAX_BEATS = 5;
+ * token budget, so raising the budget does not help. The Screenwriter now emits only three beats
+ * on Zero Budget, so the cap matches the actual spec length. */
+export const FREE_MAX_BEATS = 3;
 
 const requireKey = (env) => {
   const key = env.OPENROUTER_API_KEY;
@@ -144,8 +145,9 @@ export const filmCall = async (env, {
  *     delta at 347.3s, atomically, at the very end
  *
  * So there is no partial JSON to watch assemble, and anything that claims otherwise is animating a
- * fiction. What there is instead is the model narrating its geometry in prose as it decides it —
- * see worker/reasoning-geometry.js, which turns that narration into provisional shapes.
+ * fiction. What there is instead is the model narrating its geometry in prose as it decides it.
+ * That reasoning text is forwarded to the browser so the wait is legible; it is not parsed into
+ * provisional geometry.
  *
  * `onReasoning` is called with each delta as it lands. It must never throw: a display problem must
  * not be able to kill a generation that is minutes deep and already paid for.

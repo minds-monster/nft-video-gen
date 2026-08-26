@@ -49,8 +49,84 @@ const STEPS = [
   },
 ];
 
+const generateUUID = () => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
+
 const AppShell = () => {
   const { session, openModal } = useMindChatContext();
+
+  // Initialize guest ID on mount
+  useEffect(() => {
+    if (!localStorage.getItem('guestId')) {
+      localStorage.setItem('guestId', generateUUID());
+    }
+  }, []);
+
+  const handleStartForADollar = useCallback(async () => {
+    const guestId = localStorage.getItem('guestId') || generateUUID();
+    // Ensure fallback is persisted in case localStorage was empty
+    if (!localStorage.getItem('guestId')) {
+      localStorage.setItem('guestId', guestId);
+    }
+
+    try {
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.token ? { 'Authorization': `Bearer ${session.token}` } : {}),
+        },
+        body: JSON.stringify({ guestId }),
+      });
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || 'Failed to start checkout. Please try again.');
+      }
+    } catch (err) {
+      console.error('Checkout error:', err);
+      alert('Failed to connect to checkout service.');
+    }
+  }, [session]);
+
+  // Claim guest budget once Mind connects
+  useEffect(() => {
+    if (!session?.token) return;
+    const guestId = localStorage.getItem('guestId');
+    if (!guestId) return;
+
+    const claim = async () => {
+      try {
+        const response = await fetch('/api/producer/claim-guest-budget', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.token}`,
+          },
+          body: JSON.stringify({ guestId }),
+        });
+        const data = await response.json();
+        if (data.claimed) {
+          console.log(`Successfully claimed guest budget of $${data.budget?.total}`);
+          // Regenerate guestId so future sessions don't re-claim this one
+          localStorage.setItem('guestId', generateUUID());
+        }
+      } catch (err) {
+        console.error('Failed to claim guest budget:', err);
+      }
+    };
+    claim();
+  }, [session?.token]);
+
   const composer = useCanvasComposer();
   // The other half of the canvas. useCanvasComposer owns the prompt and the cast and says
   // outright that it owns no submit behaviour; this is what that seam was left for.
@@ -231,7 +307,7 @@ const AppShell = () => {
           </div>
         </section>
 
-        <PricingSection onConnectMind={openModal} />
+        <PricingSection onConnectMind={handleStartForADollar} />
       </main>
 
       <footer inert={canvasOpen} className="relative z-20 mt-auto py-10">

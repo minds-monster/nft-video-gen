@@ -33,6 +33,7 @@ import { mindChatInit, mindChatSend, mindChatPoll } from './mind-chat.js';
 import { handleAssistantMessage, handleAssistantHistory, handleAssistantStatus } from './assistant.js';
 import { handleBudgetSet } from './budget.js';
 import { handleProducerState } from './producer-state.js';
+import { handleStripeCheckout, handleStripeWebhook, handleClaimGuestBudget } from './stripe.js';
 import {
   handleStoryboard,
   handleStoryboardSketch,
@@ -73,6 +74,9 @@ const ROUTES = {
   'GET /api/assistant/status': handleAssistantStatus,
   'POST /api/producer/budget': handleBudgetSet,
   'POST /api/producer/state': handleProducerState,
+  'POST /api/producer/claim-guest-budget': handleClaimGuestBudget,
+  'POST /api/checkout': handleStripeCheckout,
+  'POST /api/webhook/stripe': handleStripeWebhook,
   'GET /api/storyboard/plan': handleStoryboardPlan,
   'POST /api/storyboard': handleStoryboard,
   'POST /api/storyboard/beat/regenerate': handleStoryboardBeatRegenerate,

@@ -15,39 +15,32 @@ Editing starts as soon as this lands.)
 Plan doc: `/Users/adamplace/.claude/plans/we-are-ready-to-sharded-pony.md`. Adam's full round-8
 reply is in `connect-mind-brainstorm`, sent 2026-08-24T15:08Z, replied 15:12Z.
 
-### The wait is now watchable — the model thinks out loud, and the frames form as it does
+### The wait is now watchable — the model narrates its work, but nothing provisional is rendered
 
 The three-to-five minute silence is gone. What replaced it, and the measurements behind it:
 
-- **Reasoning streams from 1.8s and never stops** — a real run relayed 2,777 events / 26,384
-  characters over the whole call, and 21 ghost updates. You can watch beat 1 revise itself
-  WS → EWS → CU and subjects appear one at a time.
-- 🔑 **STREAMING NO LONGER COSTS THE SCHEMA.** Round 7 concluded this endpoint refuses to stream
-  under a forced `tool_choice`, so liveness and structure were mutually exclusive — **that was
-  measured against NVIDIA's own NIM, not OpenRouter.** Re-measured 2026-08-25: OpenRouter streams
-  the reasoning channel AND the tool-call arguments with the schema intact. The origin change made
-  for licensing and throughput dissolved the trade-off too. The same "model X FROM ORIGIN Y"
-  lesson, this time in our favour. **Re-test provider constraints after an origin change; they may
-  not be the model's constraints at all.**
+- **Reasoning streams from the free model as plain prose.** The model thinks out loud about shot
+  size, subject placement and continuity; the UI shows the live tail of that narration so the wait
+  feels like someone working rather than a silent spinner.
+- **We no longer parse provisional geometry from the reasoning.** `worker/reasoning-geometry.js`
+  and the ghost wireframes have been removed. The reasoning text is displayed as text only; it is
+  never validated, stored, compiled to H3, or shown as a frame. The real scene graph arrives
+  atomically at the very end, and that is the only geometry we trust.
 - **The structured answer does NOT stream**, and this is the fact that shaped the whole design: the
-  tool-call arguments arrive as ONE 6,358-character delta at the very end, atomically. There is no
-  partial JSON to watch assemble, and anything animating one would be animating a fiction.
-- **So the ghosts come from the PROSE.** `worker/reasoning-geometry.js` parses the model's own
-  narration — one measured trace held 41 coordinates, 7 dimensions, 6 lens lengths, 21 shot-size
-  calls, containment decisions and five self-corrections, walking the beats in order six times.
-  Those become wireframes that appear and correct themselves while it works.
-- Everything provisional is drawn as unmistakably provisional: wireframe only, no surfaces, dashed
-  camera, a "Thinking" pulse. It is never validated, stored, compiled to H3, or shown as the frame.
+  tool-call arguments arrive as ONE large delta at the very end, atomically. There is no partial
+  JSON to watch assemble.
 - **The paid path stays silent.** OpenAI bills reasoning tokens but does not return the text.
   `generateFilm` is the one place to change if a future paid model exposes summaries.
+- **Live runtime visibility is now built in.** `POST /api/storyboard` returns a durable job id; the
+  worker writes lifecycle events (`plan`, `phase`, `heartbeat`, `reasoning`, `frame`, `result`,
+  `error`) to a KV job log, and the client shows a "What is happening?" event tail plus a
+  cumulative elapsed-seconds counter. A worker heartbeat every 15s keeps the timer honest even if
+  the SSE stream is quiet.
 
-Three parser lessons, all learned from the real trace and all locked into tests:
-1. **The model coins its own shorthand** — it writes "Car", while the dossier says "sedan". Aliases
-   are learned from the trace itself; without that, the sedan's width landed on the ape.
-2. **A line naming two bands is a deliberation, not a decision.** "hFrac = 0.0267 -> EWS (0-0.25)"
-   made the ghost flip between sizes it was only comparing.
-3. **Dimensions propagate but never create.** The model muses "Car appears there" while planning a
-   beat it later moves the car out of, and "car seat height ~0.5m?" is a fact about upholstery.
+Ghosts were dropped because the cost outweighed the payoff: the parser had to track model-coined
+shorthand, deliberate comparisons between shot-size bands, and dimensions that were mused but never
+committed, and the wireframes it produced were often wrong by the time the real geometry arrived.
+The final mesh is what the visitor actually gets, and it is much better.
 
 ### The tier contract — three INDEPENDENT inputs, and never collapse them
 
@@ -62,7 +55,7 @@ because spending real money with no ceiling is what the budget exists to prevent
 also distinguishes **auto-downgrade** (paid chosen, not affordable / provider down) from "never
 chose paid", and says which in plain English.
 
-- **free** → `nvidia/nemotron-3-ultra-550b-a55b:free` **on OpenRouter**, forced tool call, 5 beats.
+- **free** → `nvidia/nemotron-3-ultra-550b-a55b:free` **on OpenRouter**, forced tool call, 3 beats.
 - **paid** → `gpt-5.6-sol` via `/v1/responses` at high effort, strict `json_schema`, 6 beats.
 
 ### What was measured this round, with numbers
@@ -115,10 +108,11 @@ invocation, `waitUntil` included, so there is nothing left to save.
 
 **The durable fix is the job + polling shape this round's plan named as its contingency and
 skipped**: `POST` returns a job id and a completed response immediately (so the hang detector never
-fires), generation continues under `waitUntil`, progress is written to KV, and the client polls —
-the same idiom `useMindConnect` already uses. Not built; it is a real change to the run path and
-the hook, and it also fixes the related gap where reopening mid-run shows an empty timeline with no
-sign anything is happening.
+fires), the long generation is handed to a Queue consumer with up to 15 minutes of wall time,
+progress is written to a KV job log, and the client reconnects to a lightweight SSE events endpoint
+or polls for status. This is now built in `worker/storyboarder.js` and `src/hooks/useStoryboarder.js`.
+It also fixes the related gap where reopening mid-run showed an empty timeline with no sign
+anything was happening.
 
 ### ⚠️ One storyboard slot per MIND, not per film (2026-08-25) — fixed
 
@@ -327,14 +321,15 @@ node --env-file-if-exists=.env --env-file-if-exists=.dev.vars scripts/probe-stor
 ### Free tier — ANSWERED, 2026-08-24
 
 **The weights are good enough. NVIDIA's hosting of them is not.** Serve
-`nemotron-3-ultra-550b-a55b` from **OpenRouter**, and cap free-tier films at **five beats**.
+`nemotron-3-ultra-550b-a55b` from **OpenRouter**, and cap free-tier films at **three beats**. The
+Screenwriter now emits only three beats on Zero Budget, so the cap matches the actual spec length.
 
-| configuration | 5 beats | 6 beats |
-|---|---|---|
-| NVIDIA Ultra, forced tool call | ✓ M3 1.00, M4 1.00, 250s — **then degraded to 504 within the session** | ✗ 504 at ~300s |
-| NVIDIA Ultra, streamed | ✓ but M3 0.50, malformed JSON | ✓ but the schema is gone |
-| NVIDIA Super | ✗ **fails the absolute floor 3/3** | — |
-| **OpenRouter Ultra, forced tool call** | **✓ M3 0.80, M4 1.00, 236s** | ✗ error at 555s |
+| configuration | 3 beats | 5 beats | 6 beats |
+|---|---|---|---|
+| NVIDIA Ultra, forced tool call | — | ✓ M3 1.00, M4 1.00, 250s — **then degraded to 504 within the session** | ✗ 504 at ~300s |
+| NVIDIA Ultra, streamed | — | ✓ but M3 0.50, malformed JSON | ✓ but the schema is gone |
+| NVIDIA Super | — | ✗ **fails the absolute floor 3/3** | — |
+| **OpenRouter Ultra, forced tool call** | **✓ ~217s (2026-08-26 probe)** | **✓ M3 0.80, M4 1.00, 236s** | ✗ error at 555s |
 
 - **OpenRouter is ~12× faster on identical weights** — 1.3s vs 16.2s on a trivial call. It also
   resolves the evaluation-only licence problem, since NVIDIA's Trial terms exclude serving real
@@ -350,7 +345,7 @@ node --env-file-if-exists=.env --env-file-if-exists=.dev.vars scripts/probe-stor
   a stream is never idle, but this endpoint refuses to stream under `tool_choice`, and the forced
   tool call was what enforced the schema. Measured cost: malformed JSON, M3 0.50 vs 1.00. See
   the `ultra-free-streamed` cell comment in the probe runner for the five failing films.
-- `MAX_BEATS` in `worker/storyboarder.js` should become **per-tier: 6 paid, 5 free.** Note the
+- `MAX_BEATS` in `worker/tier.js` is **per-tier: 6 paid, 3 free.** Note the
   paid model's only failures were also on the six-beat fixture — six subjects on a continuous
   travelling camera is the hardest thing in the fixture set for everything.
 
