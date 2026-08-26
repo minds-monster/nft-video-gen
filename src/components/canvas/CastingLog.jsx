@@ -2,7 +2,6 @@ import { ClipboardCheck, Eye, Film, ScanLine, TriangleAlert, Type } from 'lucide
 import AgentThought from './AgentThought';
 import { RevealOnce } from './RevealText';
 import { resolveNftThumb, resolveNftName } from '../../services/alchemy';
-import { SCREENWRITER } from '../../hooks/useScreenwriter';
 import { cn } from '../../lib/cn';
 
 // What the Casting Director saw — and what the Screenwriter thought — rendered as a stack of
@@ -107,8 +106,12 @@ const DossierSummary = ({ entry, state }) => {
 };
 
 /**
- * Render one persistent card for every piece that has started being read, plus a card for
- * the Screenwriter once its thought has been archived.
+ * One persistent card for every piece that has started being read.
+ *
+ * THE CASTING DIRECTOR ONLY. The Screenwriter used to be rendered here as well as in its own
+ * panel, so one agent appeared twice under two different headings — which makes a log that is
+ * supposed to answer "who did what" answer it twice, in two places, and leaves a reader
+ * checking whether they are looking at two runs or one.
  */
 const CastingLog = ({ cast, analysis, streams, thoughts }) => {
   const pieceRows = cast
@@ -120,10 +123,7 @@ const CastingLog = ({ cast, analysis, streams, thoughts }) => {
     }))
     .filter(({ state }) => state && state.status !== 'queued');
 
-  const writerStream = streams?.[SCREENWRITER];
-  const writerThought = thoughts?.[SCREENWRITER];
-
-  if (!pieceRows.length && !writerStream && !writerThought) return null;
+  if (!pieceRows.length) return null;
 
   return (
     <ul className="space-y-3">
@@ -149,35 +149,6 @@ const CastingLog = ({ cast, analysis, streams, thoughts }) => {
           </li>
         );
       })}
-
-      {writerStream && (
-        <li key={SCREENWRITER}>
-          <AgentThought
-            label="Screenwriter"
-            phase={writerStream.phase}
-            status="live"
-            reasoning={writerStream.reasoning}
-            content={writerStream.content}
-            compiling={!writerStream.reasoning?.trim() && !writerStream.content?.trim()}
-          />
-        </li>
-      )}
-
-      {writerThought && (
-        <li key={SCREENWRITER}>
-          <AgentThought
-            label="Screenwriter"
-            phase={writerThought.phase}
-            status="done"
-            reasoning={writerThought.reasoning}
-            content={writerThought.content}
-          >
-            <p className="text-xs leading-relaxed text-slate-500">
-              Draft complete. Re-open this log to read the reasoning behind the shot spec.
-            </p>
-          </AgentThought>
-        </li>
-      )}
     </ul>
   );
 };

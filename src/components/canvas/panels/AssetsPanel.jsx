@@ -24,11 +24,11 @@ const TABS = [
  *  - Directory: brand → collection → asset hierarchy
  *  - Random: a shuffled grid of individual pieces
  */
-const AssetsPanel = ({ pool, castKeys, isMock, onPreview, onBrowseCollection }) => {
+const AssetsPanel = ({ id, pool, castKeys, isMock, onPreview, onBrowseCollection }) => {
   const [view, setView] = useState(VIEWS.COLLECTIONS);
 
   return (
-    <CanvasPanel title="Assets" icon={Search}>
+    <CanvasPanel id={id} title="Assets" icon={Search}>
       <div className="mb-2 flex items-center gap-1">
         {TABS.map((tab) => (
           <button

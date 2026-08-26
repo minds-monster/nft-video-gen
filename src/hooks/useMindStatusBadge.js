@@ -6,13 +6,11 @@ import { assistantStatus, getOrCreateThreadId } from '../services/assistantChat'
 // while there's something to watch (a pending handshake or an approved session); the
 // interval is deliberately looser than the raw mind-chat poll (5s) since this is a
 // secondary indicator, not the thing carrying the actual reply.
-const POLL_MS = 6_000;
-
 export const useMindStatusBadge = ({ connectionId, token, active }) => {
   const [status, setStatus] = useState(null);
 
   useEffect(() => {
-    if (!active) return;
+    if (!active) return undefined;
     let cancelled = false;
 
     const tick = async () => {
@@ -23,15 +21,13 @@ export const useMindStatusBadge = ({ connectionId, token, active }) => {
         const result = await assistantStatus({ connectionId, token, threadId: getOrCreateThreadId() });
         if (!cancelled) setStatus(result);
       } catch {
-        // Ignore; the next tick retries.
+        // Ignore; a failed single read is silent
       }
     };
 
     tick();
-    const id = setInterval(tick, POLL_MS);
     return () => {
       cancelled = true;
-      clearInterval(id);
     };
   }, [active, connectionId, token]);
 

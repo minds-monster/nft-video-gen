@@ -8,11 +8,19 @@ import { useMindChatContext } from '../../../context/mindChat';
  * same toggle ProducerSurface gives ConnectMindModal — see
  * /Users/adamplace/.claude/plans/we-ve-made-a-lot-delegated-pizza.md.
  */
-const ProducerPanel = () => {
+const ProducerPanel = ({ id, collapsed, onToggle }) => {
   const { session, pending, openModal, messages, isInitializing, error, send, isSending } = useMindChatContext();
 
   return (
-    <CanvasPanel title="Producer" icon={MessageSquare} bodyClassName="flex flex-1 min-h-0 flex-col gap-3">
+    <CanvasPanel
+      id={id}
+      title="Producer"
+      icon={MessageSquare}
+      collapsed={collapsed}
+      onToggle={onToggle}
+      status={session ? { tone: 'done', text: session.mindName || 'connected' } : { tone: 'idle', text: 'not connected' }}
+      bodyClassName="flex flex-1 min-h-0 flex-col gap-3"
+    >
       {session ? (
         <p className="text-xs text-slate-500">
           Connected to <span className="text-slate-300">{session.mindName || 'your Mind'}</span>

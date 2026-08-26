@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, ChevronRight, Copy, PenLine, Terminal } from 'lucide-react';
+import { Check, ChevronRight, Copy, PenLine, Scissors, Terminal, Trash2 } from 'lucide-react';
 import CanvasPanel from './CanvasPanel';
 import HudCard from '../HudCard';
 import { RevealOnce } from '../RevealText';
@@ -70,10 +70,26 @@ const H3Request = ({ spec }) => {
 /**
  * The settled screenplay: title, logline, beats, and technical fields.
  */
-const ScreenplayPanel = ({ spec, cast, analysis, rewriting, live, collapsed, onCollapse, onExpand }) => {
+const FREE_MAX_BEATS = 3;
+const PAID_MAX_BEATS = 6;
+const FREE_MAX_REFERENCES = 4;
+
+const ScreenplayPanel = ({
+  id,
+  spec,
+  cast,
+  analysis,
+  rewriting,
+  live,
+  trimBeat,
+  requestTrim,
+  collapsed,
+  onToggle,
+  status,
+}) => {
   if (!spec) {
     return (
-      <CanvasPanel title="Screenplay" icon={PenLine} collapsed={collapsed} onCollapse={onCollapse} onExpand={onExpand}>
+      <CanvasPanel id={id} title="Screenplay" icon={PenLine} collapsed={collapsed} onToggle={onToggle} status={status}>
         <p className="py-6 text-center text-xs text-slate-500">
           The screenplay appears here once the Screenwriter finishes drafting.
         </p>
@@ -88,6 +104,14 @@ const ScreenplayPanel = ({ spec, cast, analysis, rewriting, live, collapsed, onC
   }
 
   const skipped = cast.filter((entry) => analysis?.[entry.key]?.status === 'failed');
+
+  const maxBeats = spec.maxBeats ?? FREE_MAX_BEATS;
+  const maxReferences = spec.maxReferences ?? FREE_MAX_REFERENCES;
+  const beatsOverCap = spec.beats.length > maxBeats;
+  const refsOverCap = (spec.referencePlan?.length ?? 0) > maxReferences;
+  const overCap = beatsOverCap || refsOverCap;
+  const tierLabel = maxBeats < PAID_MAX_BEATS ? 'Zero Budget' : 'the current tier';
+
   const technical = [
     ['World', spec.world],
     ['Staging', spec.staging],
@@ -99,7 +123,7 @@ const ScreenplayPanel = ({ spec, cast, analysis, rewriting, live, collapsed, onC
   const writerStream = live.find((stream) => stream.owner === SCREENWRITER);
 
   return (
-    <CanvasPanel title="Screenplay" icon={PenLine} collapsed={collapsed} onCollapse={onCollapse} onExpand={onExpand}>
+    <CanvasPanel id={id} title="Screenplay" icon={PenLine} collapsed={collapsed} onToggle={onToggle} status={status}>
       <div className={cn('space-y-4', rewriting && 'opacity-60')}>
         {/* User intent */}
         <HudCard
@@ -135,7 +159,7 @@ const ScreenplayPanel = ({ spec, cast, analysis, rewriting, live, collapsed, onC
             <span>{spec.ratio}</span>
             <span aria-hidden="true">·</span>
             <span>
-              {spec.referencePlan?.length ?? 0}/9 reference
+              {spec.referencePlan?.length ?? 0}/{maxReferences} reference
               {spec.referencePlan?.length === 1 ? ' slot' : ' slots'}
             </span>
           </p>
@@ -161,12 +185,41 @@ const ScreenplayPanel = ({ spec, cast, analysis, rewriting, live, collapsed, onC
 
         {/* Beats */}
         <HudCard summary="Beats">
+          {overCap && (
+            <div className="mb-3 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3">
+              <p className="text-[11px] leading-relaxed text-amber-200">
+                This screenplay is longer than {tierLabel} allows ({maxBeats} beat{maxBeats === 1 ? '' : 's'},
+                {maxReferences} reference slots). Trim it manually, or let the Screenwriter compress it.
+              </p>
+              <button
+                type="button"
+                onClick={requestTrim}
+                disabled={rewriting || !requestTrim}
+                className="mt-2 flex items-center gap-1.5 rounded-lg bg-amber-500/10 px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-amber-300 transition-colors hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Scissors className="h-3 w-3" />
+                {rewriting ? 'Trimming…' : 'Trim to fit Zero Budget'}
+              </button>
+            </div>
+          )}
+
           <ol className="space-y-3">
             {spec.beats.map((beat, index) => (
               <li key={index} className="flex gap-3">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-white/10 font-mono text-[10px] font-bold text-slate-300">
-                  {index + 1}
-                </span>
+                <div className="mt-0.5 flex shrink-0 flex-col items-center gap-1">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-md bg-white/10 font-mono text-[10px] font-bold text-slate-300">
+                    {index + 1}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => trimBeat?.(index)}
+                    disabled={spec.beats.length <= 1 || !trimBeat}
+                    title="Remove this beat"
+                    className="flex h-5 w-5 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-red-500/10 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-30"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
                 <div className="min-w-0">
                   <p>
                     <RevealOnce delay={120 + index * 60} text={beat} />
@@ -188,7 +241,9 @@ const ScreenplayPanel = ({ spec, cast, analysis, rewriting, live, collapsed, onC
             <RevealOnce delay={300} text={spec.camera} />
           </Fold>
 
-          <div className="grid gap-2 sm:grid-cols-2">
+          {/* Container query: this panel is user-resizable, so pairing these two folds must
+              depend on how wide the PANEL is, not how wide the browser is. */}
+          <div className="grid gap-2 @sm:grid-cols-2">
             <Fold label="Sound">
               <RevealOnce delay={360} text={spec.sound} />
             </Fold>

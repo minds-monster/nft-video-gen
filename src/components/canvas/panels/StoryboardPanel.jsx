@@ -2,8 +2,6 @@ import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { Camera, Clock, Film, Image as ImageIcon, Loader2, Maximize2, RefreshCw, ShieldAlert, Sparkles, X } from 'lucide-react';
 import CanvasPanel from './CanvasPanel';
 import { storyboardImageUrl } from '../../../services/swarm';
-import { useMindChatContext } from '../../../context/mindChat';
-import { useMindStatusBadge } from '../../../hooks/useMindStatusBadge';
 import { cn } from '../../../lib/cn';
 import {
   classifyCameraMove,
@@ -511,10 +509,49 @@ const WaitHeader = ({ stageLabel, elapsedSeconds, plan, thinking }) => {
   );
 };
 
-const StoryboardPanel = ({ storyboarder }) => {
-  const { session } = useMindChatContext();
-  const token = session?.token;
-  const badge = useMindStatusBadge({ token, active: Boolean(token) });
+/**
+ * One beat's slot in the timeline.
+ *
+ * THE SLOT IS STABLE; ONLY ITS CONTENTS CHANGE. The timeline used to render two entirely
+ * separate lists — a grid of ghost cards while the run was in flight, swapped wholesale for a
+ * grid of real frames the moment the result landed. Different keys, different components,
+ * every card in the grid replaced at once. If you were reading beat three when the film
+ * arrived, beat three moved out from under you and the panel jumped back to the top. Keying
+ * every beat by its index instead means a beat occupies the same position in the grid from the
+ * instant the run starts until long after it finishes, and filling in is something that
+ * happens *to* that card rather than *instead of* it.
+ */
+const BeatCard = ({ index, frame, beatText, ghost, reasoning, aspect, castAssets, frameProps }) => {
+  if (frame?.transition) return <TransitionCard frame={frame} />;
+  if (frame) {
+    // `sketching` and `regenerating` are per-frame maps upstream; only this frame's own busy
+    // flag reaches the card, so one frame regenerating never busies out its neighbours.
+    const { sketching, regenerating, ...rest } = frameProps;
+    return (
+      <FrameCard
+        frame={frame}
+        aspect={aspect}
+        castAssets={castAssets}
+        sketching={Boolean(sketching?.[frame.frameId])}
+        regenerating={Boolean(regenerating?.[frame.frameId])}
+        {...rest}
+      />
+    );
+  }
+  return (
+    <GhostCard
+      beatIndex={index}
+      beatText={beatText}
+      ghost={ghost}
+      reasoning={reasoning}
+      aspect={aspect}
+      castAssets={castAssets}
+      active
+    />
+  );
+};
+
+const StoryboardPanel = ({ id, storyboarder, token, budget, status }) => {
   const {
     frames,
     sketching,
@@ -579,7 +616,7 @@ const StoryboardPanel = ({ storyboarder }) => {
 
   if (!frames?.length && !running) {
     return (
-      <CanvasPanel title="Storyboard" icon={Film} headerAction={header}>
+      <CanvasPanel id={id} title="Storyboard" icon={Film} headerAction={header} status={status}>
         <div className="flex h-full flex-col items-center justify-center gap-3 py-8 text-center">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400">
             <Film className="h-5 w-5" />
@@ -627,14 +664,46 @@ const StoryboardPanel = ({ storyboarder }) => {
 
   const ordered = [...(frames ?? [])].sort((a, b) => a.beatIndex - b.beatIndex);
 
+  // One slot per beat, held open from the moment the run starts. A beat that has landed shows
+  // its frame; a beat that has not shows the ghost. Both live at the same index in the same
+  // list, so the timeline never re-shuffles under a reader — see BeatCard.
+  const beats = (() => {
+    const byIndex = new Map(ordered.map((frame) => [frame.beatIndex, frame]));
+    const highestFrame = ordered.length ? Math.max(...ordered.map((f) => f.beatIndex)) + 1 : 0;
+    const count = Math.max(beatTexts?.length ?? 0, highestFrame);
+    return Array.from({ length: count }, (_, index) => ({
+      index,
+      frame: byIndex.get(index) ?? null,
+    }));
+  })();
+
+  const frameProps = {
+    token,
+    nameOf,
+    showArt,
+    sketching,
+    regenerating,
+    onRegenerate: regenerateBeat,
+    onOverride: overrideBeat,
+    perRenderCap: budget?.perRender ?? null,
+    onGenerateSketch: generateSketch,
+    onExpand: setExpandedFrame,
+  };
+
   return (
     <>
       <div ref={rootRef} className="flex h-full min-h-0 flex-col">
         <CanvasPanel
+          id={id}
           title="Storyboard"
           icon={Film}
           headerAction={header}
-          bodyClassName="grid grid-cols-1 content-start gap-3 md:grid-cols-2 xl:grid-cols-3"
+          status={status}
+          /* Container queries, not viewport ones. This panel sits in a zone the user can drag
+             to any width, so `md:`/`xl:` were sizing the grid by how wide the BROWSER is —
+             three columns crammed into a 500px panel on a wide monitor, one column in a wide
+             panel on a laptop. `@container` is declared by CanvasPanel's body. */
+          bodyClassName="grid grid-cols-1 content-start gap-3 @md:grid-cols-2 @4xl:grid-cols-3"
         >
           {plan?.downgraded && (
             <p className="col-span-full rounded-lg border border-sky-500/20 bg-sky-500/5 px-3 py-2 text-[11px] leading-relaxed text-sky-200">
@@ -646,53 +715,30 @@ const StoryboardPanel = ({ storyboarder }) => {
               {plan.overCapCopy}
             </p>
           )}
-          {running && !ordered.length ? (
-            <>
-              <WaitHeader
-                stageLabel={stageLabel}
-                elapsedSeconds={elapsedSeconds}
-                plan={plan}
-                thinking={Boolean(reasoning)}
-              />
-              {/* One card per beat from the moment the run starts, so the film has a shape before
-                  it has any content, and each frame fills in as the model reasons its way there. */}
-              {(beatTexts ?? []).map((text, index) => (
-                <GhostCard
-                  key={index}
-                  beatIndex={index}
-                  beatText={text}
-                  ghost={(ghostBeats ?? []).find((b) => b.beatIndex === index)}
-                  reasoning={reasoningByBeat?.[index]}
-                  aspect={aspect}
-                  castAssets={subjectAssets}
-                  active
-                />
-              ))}
-            </>
-          ) : (
-            ordered.map((frame) =>
-              frame.transition ? (
-                <TransitionCard key={frame.frameId} frame={frame} />
-              ) : (
-                <FrameCard
-                  key={frame.frameId}
-                  frame={frame}
-                  token={token}
-                  aspect={aspect}
-                  nameOf={nameOf}
-                  castAssets={subjectAssets}
-                  showArt={showArt}
-                  sketching={Boolean(sketching?.[frame.frameId])}
-                  regenerating={Boolean(regenerating?.[frame.frameId])}
-                  onRegenerate={regenerateBeat}
-                  onOverride={overrideBeat}
-                  perRenderCap={badge?.budget?.perRender ?? null}
-                  onGenerateSketch={generateSketch}
-                  onExpand={setExpandedFrame}
-                />
-              ),
-            )
+          {running && (
+            <WaitHeader
+              stageLabel={stageLabel}
+              elapsedSeconds={elapsedSeconds}
+              plan={plan}
+              thinking={Boolean(reasoning)}
+            />
           )}
+
+          {/* One card per beat from the moment the run starts, so the film has a shape before
+              it has any content, and each frame fills in as the model reasons its way there. */}
+          {beats.map(({ index, frame }) => (
+            <BeatCard
+              key={index}
+              index={index}
+              frame={frame}
+              beatText={beatTexts?.[index]}
+              ghost={(ghostBeats ?? []).find((b) => b.beatIndex === index)}
+              reasoning={reasoningByBeat?.[index]}
+              aspect={aspect}
+              castAssets={subjectAssets}
+              frameProps={frameProps}
+            />
+          ))}
         </CanvasPanel>
       </div>
       {/* One shared WebGL context for every tile above. Mounted only when there is geometry to

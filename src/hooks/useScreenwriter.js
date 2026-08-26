@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { castPiece, forCastingWire, previsDossierReview, screenwrite } from '../services/swarm';
+import {
+  castPiece,
+  forCastingWire,
+  getStoryboardPlan,
+  previsDossierReview,
+  screenwrite,
+} from '../services/swarm';
 import { resolveNftName } from '../lib/nftMedia';
+import { useMindChatContext } from '../context/mindChat';
 
 // Where the canvas is in the pipeline. Kept as one value rather than a set of booleans so
 // an impossible state (writing AND showing a treatment) can't be represented.
@@ -18,6 +25,12 @@ const CASTING_LANES = 2;
 
 /** Slot key for the Screenwriter's own stream, alongside the per-piece ones. */
 export const SCREENWRITER = 'screenwriter';
+
+/** Hard caps, mirrored from worker/tier.js so the UI can reason about them without a Worker round-trip. */
+const FREE_MAX_BEATS = 3;
+const PAID_MAX_BEATS = 6;
+const FREE_MAX_REFERENCES = 4;
+const PAID_MAX_REFERENCES = 9;
 
 /**
  * Slot key for the Previs Supervisor, which runs BETWEEN casting and screenwriting.
@@ -76,6 +89,9 @@ const useElapsed = (running) => {
  * with it.
  */
 export const useScreenwriter = () => {
+  const { session } = useMindChatContext();
+  const token = session?.token;
+
   const [stage, setStage] = useState(STAGE.COMPOSE);
   // key -> { status: 'queued'|'casting'|'done'|'failed', dossier?, cached?, error? }
   //
@@ -112,6 +128,9 @@ export const useScreenwriter = () => {
   const castRef = useRef(null);
   const [writtenCast, setWrittenCast] = useState(null);
   const request = useRef(null);
+  // Caps that governed the last generation, so rewrites stay on the same tier rather than
+  // silently switching back to the Zero Budget default.
+  const capsRef = useRef({ maxBeats: FREE_MAX_BEATS, maxReferences: FREE_MAX_REFERENCES });
 
   const elapsed = useElapsed(stage === STAGE.WRITING || rewriting);
 
@@ -193,6 +212,7 @@ export const useScreenwriter = () => {
     abortRef.current = null;
     castRef.current = null;
     request.current = null;
+    capsRef.current = { maxBeats: FREE_MAX_BEATS, maxReferences: FREE_MAX_REFERENCES };
     setWrittenCast(null);
     setStage(STAGE.COMPOSE);
     setAnalysis({});
@@ -221,6 +241,21 @@ export const useScreenwriter = () => {
       setSpec(null);
       setError(null);
       setAnalysis(Object.fromEntries(cast.map((entry) => [entry.key, { status: 'queued' }])));
+
+      // Resolve the tier before any writing starts. A failed plan read is not fatal: the
+      // Worker will fall back to the Zero Budget baseline on its own.
+      let maxBeats = FREE_MAX_BEATS;
+      let maxReferences = FREE_MAX_REFERENCES;
+      try {
+        const resolvedPlan = token ? await getStoryboardPlan(token, 0) : null;
+        if (resolvedPlan) {
+          maxBeats = resolvedPlan.maxBeats ?? maxBeats;
+          maxReferences = resolvedPlan.tier === 'paid' ? PAID_MAX_REFERENCES : FREE_MAX_REFERENCES;
+        }
+      } catch (planError) {
+        console.warn('Could not resolve tier before screenwriting:', planError.message);
+      }
+      capsRef.current = { maxBeats, maxReferences };
 
       try {
         const dossiers = new Map();
@@ -339,7 +374,13 @@ export const useScreenwriter = () => {
         castRef.current = usable;
         setWrittenCast(usable);
         const written = await screenwrite(
-          { prompt, cast: usable.map(forWire), primaryKey: primary?.key ?? null },
+          {
+            prompt,
+            cast: usable.map(forWire),
+            primaryKey: primary?.key ?? null,
+            maxBeats,
+            maxReferences,
+          },
           { signal, onEvent: feed(SCREENWRITER) },
         );
         if (signal.aborted) return;
@@ -354,7 +395,7 @@ export const useScreenwriter = () => {
         setStage(STAGE.WRITING);
       }
     },
-    [patch, feed, settle],
+    [patch, feed, settle, token],
   );
 
   /**
@@ -376,8 +417,9 @@ export const useScreenwriter = () => {
     setRewriting(true);
     setError(null);
     try {
+      const { maxBeats, maxReferences } = capsRef.current;
       const written = await screenwrite(
-        { ...previous, cast: cast.map(forWire), note },
+        { ...previous, cast: cast.map(forWire), note, maxBeats, maxReferences },
         { signal, onEvent: feed(SCREENWRITER) },
       );
       if (signal.aborted) return;
@@ -393,6 +435,40 @@ export const useScreenwriter = () => {
       settle(SCREENWRITER);
     }
   }, [feed, settle]);
+
+  /**
+   * Manually remove one beat from the settled spec. This is the fast, client-side trim path;
+   * it does not re-call the model, so the visitor can quickly get under the tier cap.
+   */
+  const trimBeat = useCallback((index) => {
+    setSpec((current) => {
+      if (!current || !Array.isArray(current.beats)) return current;
+      const nextBeats = current.beats.filter((_, i) => i !== index);
+      if (nextBeats.length === 0) return current; // never leave the spec beatless
+      const nextTrace = (current.intentTrace ?? [])
+        .filter((t) => t.beat !== index + 1)
+        .map((t) => ({
+          ...t,
+          beat: t.beat > index + 1 ? t.beat - 1 : t.beat,
+        }));
+      return { ...current, beats: nextBeats, intentTrace: nextTrace };
+    });
+  }, []);
+
+  /**
+   * Ask the Screenwriter to compress the current spec to fit the tier cap that governed it.
+   * This is the model-assisted trim path: it keeps every cast member but rewrites the story
+   * to live inside the allowed beats and reference slots.
+   */
+  const requestTrim = useCallback(() => {
+    const { maxBeats, maxReferences } = capsRef.current;
+    const tierName = maxBeats < PAID_MAX_BEATS ? 'Zero Budget' : 'the current tier';
+    const note =
+      `Trim this to fit ${tierName}: at most ${maxBeats} beat${maxBeats === 1 ? '' : 's'} and ` +
+      `${maxReferences} reference slot${maxReferences === 1 ? '' : 's'}. Keep every cast member visible and preserve ` +
+      "the user's original idea; just compress the story.";
+    return rewrite(note);
+  }, [rewrite]);
 
   // Every active stream, as an array the HUD can map over. The first entry is still the
   // most salient one for components that only want a single slot.
@@ -413,6 +489,8 @@ export const useScreenwriter = () => {
     reset,
     backToCompose,
     showTreatment,
+    trimBeat,
+    requestTrim,
     // The cast as the Screenwriter saw it, so the treatment can resolve <Subject N> tags to
     // real artwork.
     writtenCast,

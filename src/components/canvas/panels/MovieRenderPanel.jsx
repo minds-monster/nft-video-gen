@@ -20,10 +20,16 @@ const PreviewEmpty = () => (
 );
 
 /**
- * The viewer / preview panel. Shows either the current browse preview or the cast primary.
- * When browsing a collection, the user can step prev/next and add the previewed piece to cast.
+ * The viewer. Shows either the current browse preview or the cast lead; when browsing a
+ * collection, the user can step prev/next and add the previewed piece to the cast.
+ *
+ * TITLED "VIEWER", NOT "MOVIE RENDER". It renders no movie and performs no render — it shows
+ * one NFT. Naming it after the output of the entire pipeline meant the panel promised the
+ * finished film and delivered a thumbnail, which is the kind of mismatch that makes somebody
+ * distrust every other label on the screen.
  */
 const MovieRenderPanel = ({
+  id,
   primary,
   preview,
   previewLoading,
@@ -33,8 +39,7 @@ const MovieRenderPanel = ({
   onPrev,
   onClear,
   collapsed,
-  onCollapse,
-  onExpand,
+  onToggle,
 }) => {
   const [imageFailed, setImageFailed] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
@@ -82,12 +87,17 @@ const MovieRenderPanel = ({
 
   return (
     <CanvasPanel
-      title="Movie render"
+      id={id}
+      title="Viewer"
       icon={Film}
       bodyClassName="flex flex-col gap-3"
       collapsed={collapsed}
-      onCollapse={onCollapse}
-      onExpand={onExpand}
+      onToggle={onToggle}
+      status={
+        candidate
+          ? { tone: 'idle', text: isPreview ? 'preview' : 'cast lead' }
+          : undefined
+      }
     >
       {!candidate ? (
         <PreviewEmpty />

@@ -8,14 +8,25 @@ import { cn } from '../../lib/cn';
 // One card for every agent whose thinking the user is allowed to read.
 //
 // The card is the same DOM node from the moment the agent starts until the user closes it.
-// It streams live, then auto-folds when the agent finishes. Re-opening shows clean, settled
-// text — no permanent matrix glitch.
+// It streams live, then settles IN PLACE. Re-opening shows clean, settled text — no permanent
+// matrix glitch.
+//
+// IT USED TO AUTO-FOLD THE INSTANT THE AGENT FINISHED, and it used to refuse to let you close
+// a live card. Both are backwards. The moment a stream settles is the first moment the text is
+// worth reading — it has stopped moving and stopped scrambling — and that was precisely the
+// moment the card shut itself under the reader's cursor. Meanwhile the one card you might
+// genuinely want out of the way, a long stream you have finished with, was the one nailed
+// open. Now nothing folds itself and everything can be closed: the panel moves when the user
+// moves it, and at no other time.
 
 // Two vocabularies land here, and CastingLog falls back from one to the other: the server's
 // PHASE, streamed as the agent works, and — for a piece with no stream at all, which is what a
 // warm cache hit looks like — the client's STATUS. They used to collide on `watching`, so an
 // unstarted piece announced that it was watching its film; the client's is now `casting`.
-const PHASE_LABEL = {
+//
+// Exported because useProductionPipeline names the same phases in the pipeline bar, and two
+// hand-kept copies of this map would drift the first time a phase was renamed.
+export const PHASE_LABEL = {
   // Server phases (worker/casting-director.js, worker/screenwriter.js).
   looking: 'reading the artwork',
   watching: 'watching its film',
@@ -54,8 +65,12 @@ const Header = ({ status, phaseName, label, isLive, isCompiling }) => (
       />
       <StatusDot status={status} />
       <span className="truncate font-semibold text-purple-300">{label}</span>
+      {/* Container query, not a viewport one. This card lives inside a panel the user can
+          drag to any width, so `sm:` was answering a question nobody asked — how wide the
+          BROWSER is — and hiding the phase name in a wide panel on a narrow laptop while
+          showing it in a 200px panel on a 4K display. */}
       {phaseName && (
-        <span className="hidden shrink-0 font-normal text-slate-500 sm:inline">· {phaseName}</span>
+        <span className="hidden shrink-0 font-normal text-slate-500 @sm:inline">· {phaseName}</span>
       )}
     </div>
     <div className="flex items-center gap-1.5 text-slate-500">
@@ -90,30 +105,23 @@ const AgentThought = ({
   const hasThought = Boolean(reasoning?.trim() || content?.trim());
   const isCompiling = compiling && !hasThought;
 
-  // Controlled open state so we can auto-fold on settle without remounting the card.
+  // Controlled open state. A card opens itself once, when its agent starts talking, and after
+  // that it only ever moves because somebody clicked it.
   const [open, setOpen] = useState(isLive);
-  const wasLive = useRef(isLive);
+  const openedOnStart = useRef(isLive);
 
-  // Live cards stay open.
+  // Open when a stream begins — but only the first time, so a card the reader has deliberately
+  // closed does not spring back open on the next delta.
   useEffect(() => {
-    if (isLive) setOpen(true);
+    if (isLive && !openedOnStart.current) {
+      openedOnStart.current = true;
+      setOpen(true);
+    }
+    if (!isLive) openedOnStart.current = false;
   }, [isLive]);
 
-  // Fold once when the agent finishes.
-  useEffect(() => {
-    if (wasLive.current && !isLive) {
-      setOpen(false);
-    }
-    wasLive.current = isLive;
-  }, [isLive]);
-
-  const handleToggle = (event) => {
-    if (isLive) {
-      // Ignore user attempts to close a live card; the stream must stay visible.
-      return;
-    }
-    setOpen(event.target.open);
-  };
+  // No settle handler. Settling is not an instruction to hide the result.
+  const handleToggle = (event) => setOpen(event.target.open);
 
   const summary = (
     <Header
@@ -126,9 +134,12 @@ const AgentThought = ({
   );
 
   return (
+    // Fades in without sliding. The 10px y-offset this replaces nudged every card below it
+    // downward for the length of the animation, which in a log that gains a card per cast
+    // member meant the line you were reading crept away from you several times a minute.
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
       transition={{ duration: 0.25 }}
       className={className}
     >

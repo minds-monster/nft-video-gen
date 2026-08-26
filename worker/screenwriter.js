@@ -9,6 +9,21 @@
 import { chat, jsonFrom, streamChat } from './nvidia.js';
 import { sseResponse } from './sse.js';
 import { SCREENWRITER_BRIEF, SHOT_SPEC_SCHEMA } from './rulebook.js';
+import {
+  FREE_MAX_BEATS,
+  FREE_MAX_REFERENCES,
+  PAID_MAX_BEATS,
+  PAID_MAX_REFERENCES,
+} from './tier.js';
+
+/**
+ * Default caps when the caller does not supply explicit tier limits.
+ *
+ * The project treats Zero Budget as the safe baseline: a screenplay that is not told it has
+ * paid headroom should never come back longer than the free tier can render.
+ */
+const DEFAULT_MAX_BEATS = FREE_MAX_BEATS;
+const DEFAULT_MAX_REFERENCES = FREE_MAX_REFERENCES;
 
 /** What the model is told about one cast member. Dossier first — it is the real material. */
 const castBlock = (entry) => {
@@ -30,7 +45,26 @@ const castBlock = (entry) => {
     .join('\n');
 };
 
-const userMessage = ({ prompt, cast, primaryKey, note }) =>
+const capBlock = ({ maxBeats, maxReferences, cast }) => {
+  const lines = [];
+  if (maxBeats < PAID_MAX_BEATS) {
+    lines.push(
+      `TIER CONSTRAINT: You are on Zero Budget. The finished film may contain at most ${maxBeats} beat${maxBeats === 1 ? '' : 's'}. ` +
+        'Choose the beats that best serve the user\'s line.',
+    );
+  }
+  if (maxReferences < PAID_MAX_REFERENCES) {
+    lines.push(
+      `REFERENCE CONSTRAINT: You may use at most ${maxReferences} reference slot${maxReferences === 1 ? '' : 's'}. ` +
+        (cast.length > maxReferences
+          ? `The cast has ${cast.length} pieces, so some must share a slot. Say in your notes which ones share and why.`
+          : `All ${cast.length} pieces fit; give each its own.`),
+    );
+  }
+  return lines.length ? lines.join('\n') : null;
+};
+
+const userMessage = ({ prompt, cast, primaryKey, note, maxBeats, maxReferences }) =>
   [
     'THE USER ASKED FOR, VERBATIM:',
     prompt,
@@ -43,15 +77,16 @@ const userMessage = ({ prompt, cast, primaryKey, note }) =>
         'their original line above. If the two genuinely conflict, follow the direction and ' +
         'say so in your notes.\n'
       : null,
+    capBlock({ maxBeats, maxReferences, cast }),
     `THE CAST — ${cast.length} piece${cast.length === 1 ? '' : 's'}, all of which must appear.`,
     primaryKey ? `The hero piece, which the film should be built around, is ${primaryKey}.` : null,
     '',
     cast.map(castBlock).join('\n\n'),
     '',
-    cast.length > 9
-      ? `NOTE: ${cast.length} pieces against 9 reference slots. Say in your notes which ones ` +
+    cast.length > maxReferences
+      ? `NOTE: ${cast.length} pieces against ${maxReferences} reference slots. Say in your notes which ones ` +
         'share a slot and why.'
-      : `All ${cast.length} pieces fit inside the 9 reference slots — give each its own.`,
+      : `All ${cast.length} pieces fit inside the ${maxReferences} reference slots — give each its own.`,
     '',
     'Write the shot spec.',
   ]
@@ -65,7 +100,7 @@ const userMessage = ({ prompt, cast, primaryKey, note }) =>
  * expensive failure and the least visible one: the spec reads perfectly well, and the loss
  * only surfaces as an asset missing from a render minutes and dollars later.
  */
-const validate = (spec, cast) => {
+const validate = (spec, cast, { maxBeats, maxReferences }) => {
   const missing = SHOT_SPEC_SCHEMA.required.filter((field) => spec?.[field] === undefined);
   if (missing.length) throw new Error(`Shot spec missing fields: ${missing.join(', ')}`);
   if (!Array.isArray(spec.beats) || !spec.beats.length) throw new Error('Shot spec has no beats');
@@ -74,7 +109,12 @@ const validate = (spec, cast) => {
   const dropped = cast.filter((entry) => !planned.has(entry.key)).map((entry) => entry.key);
   if (dropped.length) throw new Error(`Shot spec left cast members unreferenced: ${dropped.join(', ')}`);
 
-  if (spec.referencePlan.length > 9) throw new Error('Shot spec plans more than 9 reference slots');
+  if (spec.beats.length > maxBeats) {
+    throw new Error(`Shot spec has ${spec.beats.length} beats; tier allows ${maxBeats}.`);
+  }
+  if (spec.referencePlan.length > maxReferences) {
+    throw new Error(`Shot spec plans ${spec.referencePlan.length} reference slots; tier allows ${maxReferences}.`);
+  }
 
   // Cast keys are database identifiers — chain, contract, token id. They are useful for
   // routing references to slots and actively harmful in prose, because H3 renders text it
@@ -99,6 +139,13 @@ const validate = (spec, cast) => {
  * to the structured call as the writer's own draft, so watching it is watching real work
  * rather than a loading animation with a model attached.
  */
+const constrainedSchema = (maxBeats, maxReferences) => {
+  const schema = JSON.parse(JSON.stringify(SHOT_SPEC_SCHEMA));
+  schema.properties.beats.maxItems = maxBeats;
+  schema.properties.referencePlan.maxItems = maxReferences;
+  return schema;
+};
+
 const draftRequest = (env, payload) => ({
   model: env.SCREENWRITER_MODEL,
   messages: [
@@ -133,7 +180,7 @@ const request = (env, payload, draft) => ({
       function: {
         name: 'emit_shot_spec',
         description: 'Return the completed shot spec.',
-        parameters: SHOT_SPEC_SCHEMA,
+        parameters: constrainedSchema(payload.maxBeats, payload.maxReferences),
       },
     },
   ],
@@ -154,6 +201,8 @@ const request = (env, payload, draft) => ({
   max_tokens: 32768,
 });
 
+const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || min));
+
 export const screenwrite = async (httpRequest, env) => {
   const payload = await httpRequest.json();
   const { prompt, cast, note } = payload;
@@ -172,6 +221,16 @@ export const screenwrite = async (httpRequest, env) => {
     );
   }
 
+  // The UI resolves the tier before writing and passes explicit caps. If something calls this
+  // endpoint without them, fall back to the safe Zero Budget baseline rather than the schema's
+  // absolute maximum.
+  payload.maxBeats = clamp(payload.maxBeats ?? DEFAULT_MAX_BEATS, 1, PAID_MAX_BEATS);
+  payload.maxReferences = clamp(
+    payload.maxReferences ?? DEFAULT_MAX_REFERENCES,
+    1,
+    PAID_MAX_REFERENCES,
+  );
+
   return sseResponse(async (emit) => {
     // ---- 1. the draft, streamed ----------------------------------------------------
     await emit('phase', { phase: 'drafting' });
@@ -188,10 +247,12 @@ export const screenwrite = async (httpRequest, env) => {
 
     // ---- 2. the spec ----------------------------------------------------------------
     await emit('phase', { phase: 'formalising' });
+    const caps = { maxBeats: payload.maxBeats, maxReferences: payload.maxReferences };
+
     let spec;
     try {
       const completion = await chat(env, request(env, payload, draft));
-      spec = validate(jsonFrom(completion), cast);
+      spec = validate(jsonFrom(completion), cast, caps);
     } catch (error) {
       // One repair attempt, with the complaint fed back in. Cheaper than failing the run,
       // and the failures worth repairing (a dropped cast member, a leaked key) are exactly
@@ -199,16 +260,21 @@ export const screenwrite = async (httpRequest, env) => {
       console.warn('Screenwriter first pass rejected:', error.message);
       const retry = request(env, payload, draft);
       const wasTruncated = error.message?.includes('Expected JSON');
+      const wasCapViolation = error.message?.includes('tier allows');
       retry.messages.push({
         role: 'user',
         content: wasTruncated
           ? 'Your previous spec was cut off before the JSON could close. Write the same ' +
             'spec more concisely — shorter world, grade, guard and notes — and return the ' +
             'complete JSON object.'
-          : `Your previous spec was rejected: ${error.message}\n\n` +
-            'Fix precisely that and return the whole spec again.',
+          : wasCapViolation
+            ? `Your previous spec was rejected: ${error.message}\n\n` +
+              `Respect the tier hard cap: at most ${payload.maxBeats} beat${payload.maxBeats === 1 ? '' : 's'} and ` +
+              `${payload.maxReferences} reference slot${payload.maxReferences === 1 ? '' : 's'}. Fix precisely that and return the whole spec again.`
+            : `Your previous spec was rejected: ${error.message}\n\n` +
+              'Fix precisely that and return the whole spec again.',
       });
-      spec = validate(jsonFrom(await chat(env, retry)), cast);
+      spec = validate(jsonFrom(await chat(env, retry)), cast, caps);
     }
 
     await emit('result', {
@@ -222,6 +288,9 @@ export const screenwrite = async (httpRequest, env) => {
       draft,
       ...spec,
       model: env.SCREENWRITER_MODEL,
+      // Carried so the UI knows which cap governed the generation and can warn or offer trim.
+      maxBeats: payload.maxBeats,
+      maxReferences: payload.maxReferences,
     });
   });
 };

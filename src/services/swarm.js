@@ -303,9 +303,12 @@ export const checkHealth = async () => {
  *
  * `note` is direction for a rewrite — it never replaces the prompt, which stays pinned in
  * the UI as the thing the film is answerable to.
+ *
+ * `maxBeats` and `maxReferences` come from the resolved tier; when omitted the Worker falls
+ * back to the Zero Budget baseline.
  */
-export const screenwrite = ({ prompt, cast, primaryKey, note }, options) =>
-  stream('/api/screenwriter', { prompt, cast, primaryKey, note }, options);
+export const screenwrite = ({ prompt, cast, primaryKey, note, maxBeats, maxReferences }, options) =>
+  stream('/api/screenwriter', { prompt, cast, primaryKey, note, maxBeats, maxReferences }, options);
 
 /** Cast wire shape for the Previs Supervisor — dossier plus the same stripped `nft` shape
  * forCastingWire already produces (not the full raw object): the review never looks at

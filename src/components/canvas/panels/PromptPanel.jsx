@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { AlertTriangle, Loader2, Send, Sparkles } from 'lucide-react';
+import { AlertTriangle, Loader2, Lock, Send, Sparkles } from 'lucide-react';
 import CanvasPanel from './CanvasPanel';
 import PromptSuggestions from './PromptSuggestions';
 import { cn } from '../../../lib/cn';
@@ -13,6 +13,7 @@ const TEXTAREA_MAX = 260;
  * warning. The auto-grow behaviour and keyboard handling are self-contained here.
  */
 const PromptPanel = ({
+  id,
   prompt,
   setPrompt,
   onLaunch,
@@ -20,7 +21,9 @@ const PromptPanel = ({
   busy,
   workerOk = true,
   readOnly = false,
-  headerAction,
+  onBackToCompose,
+  collapsed,
+  onToggle,
 }) => {
   const textareaRef = useRef(null);
 
@@ -50,13 +53,61 @@ const PromptPanel = ({
     textareaRef.current?.focus();
   };
 
+  // Why the Send button is dead, said on the button itself. A disabled control with no
+  // explanation is the fastest way to make somebody think the app is broken.
+  const disabledReason = !ready
+    ? readOnly
+      ? 'The prompt is locked while the crew works — use “Back to compose” to edit it.'
+      : !workerOk
+        ? 'The agent worker is not reachable.'
+        : !prompt.trim()
+          ? 'Describe your film first.'
+          : 'Add at least one piece to the cast.'
+    : undefined;
+
   return (
     <CanvasPanel
+      id={id}
       title="Prompt"
       icon={Sparkles}
+      collapsed={collapsed}
+      onToggle={onToggle}
+      status={readOnly ? { tone: 'done', text: 'locked' } : undefined}
       bodyClassName="flex flex-col gap-3"
-      headerAction={headerAction}
+      headerAction={
+        readOnly && onBackToCompose ? (
+          <button
+            type="button"
+            onClick={onBackToCompose}
+            className="shrink-0 font-mono text-[9px] uppercase tracking-widest text-purple-300 transition-colors hover:text-white"
+          >
+            Back to compose
+          </button>
+        ) : undefined
+      }
     >
+      {/* THE LOCK, EXPLAINED. Once the run starts, the prompt, the cast and the Send button all
+          go dead together; the only cue used to be a text link in the panel header, so anybody
+          who tried to change their mind mid-run got silence from three controls at once. */}
+      {readOnly && (
+        <p className="flex items-start gap-2 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-[11px] leading-relaxed text-slate-400">
+          <Lock className="mt-0.5 h-3 w-3 shrink-0 text-slate-500" />
+          <span>
+            Locked while the crew works.{' '}
+            {onBackToCompose && (
+              <button
+                type="button"
+                onClick={onBackToCompose}
+                className="text-purple-300 underline underline-offset-2 transition-colors hover:text-white"
+              >
+                Back to compose
+              </button>
+            )}{' '}
+            to edit the prompt and cast. Your draft is kept.
+          </span>
+        </p>
+      )}
+
       <div className="flex items-start gap-3">
         <Sparkles className="mt-2 h-5 w-5 shrink-0 text-purple-400" />
         <textarea
@@ -83,6 +134,7 @@ const PromptPanel = ({
           onClick={submit}
           disabled={!ready}
           aria-label="Generate"
+          title={disabledReason ?? 'Generate'}
           className={cn(
             'flex shrink-0 items-center justify-center rounded-xl p-3 text-white shadow-lg transition-colors',
             'bg-purple-600 hover:bg-purple-500',

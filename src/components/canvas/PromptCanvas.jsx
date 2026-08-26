@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { Loader2, Send, Sparkles, X } from 'lucide-react';
-import { Group, Panel, Separator, usePanelRef } from 'react-resizable-panels';
+import { Eye, Loader2, Search, Send, Sparkles, X } from 'lucide-react';
+import { Group, Panel, Separator, useDefaultLayout, useGroupRef, usePanelRef } from 'react-resizable-panels';
 import HudFrame from './HudFrame';
 import ContractDock from './ContractDock';
 import AssetPicker from './AssetPicker';
+import PipelineBar from './PipelineBar';
+import ZoneStub from './ZoneStub';
 import PromptPanel from './panels/PromptPanel';
 import AssetsPanel from './panels/AssetsPanel';
 import CastPanel from './panels/CastPanel';
@@ -15,9 +17,13 @@ import ScreenwriterPanel from './panels/ScreenwriterPanel';
 import ScreenplayPanel from './panels/ScreenplayPanel';
 import StoryboarderPanel from './panels/StoryboarderPanel';
 import ProducerPanel from './panels/ProducerPanel';
+import { PANEL_STRIP_HEIGHT } from './panels/CanvasPanel';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
+import { useMindChatContext } from '../../context/mindChat';
+import { useMindStatusBadge } from '../../hooks/useMindStatusBadge';
+import { STATE, useProductionPipeline } from '../../hooks/useProductionPipeline';
 import { checkHealth } from '../../services/swarm';
 import { STAGE } from '../../hooks/useScreenwriter';
 import { cn } from '../../lib/cn';
@@ -31,6 +37,42 @@ const EXPANDED_RADIUS = 14; // = --radius-3xl
 const GLASS = 'rgba(18, 10, 26, 0.55)';
 const SOLID = 'rgb(9, 4, 15)';
 
+/** Width of a collapsed side zone. Matches ZoneStub's own constant. */
+const ZONE_STUB = 44;
+
+/** Resize hit target, per Apple's accessibility guidance (20pt fine / 28pt coarse).
+ *  The separator LOOKS 8px wide; this is how big it actually is to a pointer. */
+const RESIZE_TARGET = { fine: 24, coarse: 32 };
+
+/** Every panel that can be collapsed, and which side zone it lives in.
+ *
+ * The zone matters for focus: clicking "Read" in the pipeline bar while the right rail is
+ * collapsed has to open the rail before it can open the panel, or the scroll lands on
+ * nothing. */
+const PANEL_ZONE = {
+  assets: 'leftZone',
+  cast: 'leftZone',
+  prompt: null,
+  viewer: null,
+  storyboard: null,
+  castingDirector: 'rightZone',
+  writersRoom: 'rightZone',
+  screenplay: 'rightZone',
+  storyboarder: 'rightZone',
+  producer: 'rightZone',
+};
+
+const COLLAPSE_KEY = 'canvas-collapsed';
+const LAYOUT_KEYS = ['canvas-zones', 'canvas-left', 'canvas-centre', 'canvas-right'];
+
+const readCollapsed = () => {
+  try {
+    return JSON.parse(localStorage.getItem(COLLAPSE_KEY) ?? '{}') ?? {};
+  } catch {
+    return {};
+  }
+};
+
 /**
  * The prompt composer — the hero's text box and the neural canvas, as a single element.
  *
@@ -38,7 +80,8 @@ const SOLID = 'rgb(9, 4, 15)';
  * so the box genuinely expands rather than being swapped for an overlay.
  *
  * The expanded interior is organised like Final Cut Pro: three resizable, collapsible zones
- * (browser left, viewer/timeline centre, inspector right), each containing the relevant panel.
+ * (browser left, viewer/timeline centre, inspector right), each containing the relevant panel,
+ * under a pipeline bar that says which agent is working and what happens next.
  */
 const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder }) => {
   const {
@@ -86,6 +129,15 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder }) => {
   const shellRef = useRef(null);
   const reduceMotion = useReducedMotion();
   const wide = useMediaQuery('(min-width: 768px)');
+
+  // Hoisted out of StoryboardPanel and StoryboarderPanel, which each ran their own independent
+  // 6-second poll of the same endpoint. One poll, one budget, passed down.
+  const { session } = useMindChatContext();
+  const token = session?.token;
+  const badge = useMindStatusBadge({ token, active: Boolean(token) && open });
+  const budget = badge?.budget;
+
+  const pipeline = useProductionPipeline({ composer, screenwriter, storyboarder, token, budget });
 
   const [workerOk, setWorkerOk] = useState(true);
   useEffect(() => {
@@ -173,41 +225,189 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder }) => {
 
   const ready = Boolean(prompt.trim()) && Boolean(primary) && composing && workerOk;
 
-  // Collapse state for every panel that can yield space to something else on the canvas —
-  // the four right-rail inspector panels, plus the movie-render viewer in the center zone.
-  // `CanvasPanel`'s collapsed/onCollapse/onExpand only toggle content visibility; the
-  // panelRef.collapse()/.expand() calls are what actually shrink/restore the outer
-  // react-resizable-panels Panel's allocated height. Both must move together, or the
-  // panel would either hide its content while still holding its full height, or shrink
-  // without the header chevron reflecting it.
+  // --------------------------------------------------------------------------- layout state
+  //
+  // COLLAPSE HAS ONE SOURCE OF TRUTH: react-resizable-panels' own `isCollapsed()`. `collapsed`
+  // below is a mirror of it, refreshed from `onResize`, never set by hand. The version this
+  // replaces kept a parallel React flag that only moved when the chevron was clicked — so a
+  // panel dragged past its minimum collapsed in the library while the UI still believed it was
+  // open, rendering a full header and a scrollable body inside a 35px box with no expand
+  // affordance rendered at all. That state had no way out.
+  //
+  // MIN AND COLLAPSED SIZES ARE IN PIXELS, not percent. Numbers are pixels to this library.
+  // A five-panel rail at `minSize="10"` puts the snap cliff at a tenth of whatever the rail
+  // height happens to be, which changes every time a sibling moves — so the distance you had
+  // to learn was never the same twice. In pixels it is fixed and learnable, and `collapsedSize`
+  // can match the strip's real height exactly.
+  const zonesRef = useGroupRef();
+  const leftGroupRef = useGroupRef();
+  const centreGroupRef = useGroupRef();
+  const rightGroupRef = useGroupRef();
+
+  const leftZoneRef = usePanelRef();
+  const rightZoneRef = usePanelRef();
+  const promptRef = usePanelRef();
+  const viewerRef = usePanelRef();
   const castingDirectorRef = usePanelRef();
-  const screenwriterRef = usePanelRef();
+  const writersRoomRef = usePanelRef();
   const screenplayRef = usePanelRef();
   const storyboarderRef = usePanelRef();
-  // Center-zone: lets the movie-render viewer yield room to the storyboard timeline once
-  // there's something worth looking at there — see the storyboard fidelity post-mortem.
-  const movieRenderRef = usePanelRef();
-  const [panelCollapsed, setPanelCollapsed] = useState({
-    castingDirector: false,
-    screenwriter: false,
-    screenplay: false,
-    storyboarder: false,
-    movieRender: false,
-  });
-  const panelRefsByKey = {
-    castingDirector: castingDirectorRef,
-    screenwriter: screenwriterRef,
-    screenplay: screenplayRef,
-    storyboarder: storyboarderRef,
-    movieRender: movieRenderRef,
-  };
-  const collapsePanel = (key) => {
-    panelRefsByKey[key].current?.collapse();
-    setPanelCollapsed((prev) => ({ ...prev, [key]: true }));
-  };
-  const expandPanel = (key) => {
-    panelRefsByKey[key].current?.expand();
-    setPanelCollapsed((prev) => ({ ...prev, [key]: false }));
+  const producerRef = usePanelRef();
+
+  const panelRefs = useMemo(
+    () => ({
+      leftZone: leftZoneRef,
+      rightZone: rightZoneRef,
+      prompt: promptRef,
+      viewer: viewerRef,
+      castingDirector: castingDirectorRef,
+      writersRoom: writersRoomRef,
+      screenplay: screenplayRef,
+      storyboarder: storyboarderRef,
+      producer: producerRef,
+    }),
+    [
+      leftZoneRef,
+      rightZoneRef,
+      promptRef,
+      viewerRef,
+      castingDirectorRef,
+      writersRoomRef,
+      screenplayRef,
+      storyboarderRef,
+      producerRef,
+    ],
+  );
+
+  const [collapsed, setCollapsed] = useState(readCollapsed);
+
+  const syncCollapsed = useCallback((key) => {
+    setCollapsed((current) => {
+      const next = Boolean(panelRefs[key]?.current?.isCollapsed());
+      if (current[key] === next) return current;
+      const updated = { ...current, [key]: next };
+      try {
+        localStorage.setItem(COLLAPSE_KEY, JSON.stringify(updated));
+      } catch {
+        // Private mode, quota, a browser that has opinions. Losing the memory of which panels
+        // were shut is not worth failing a resize over.
+      }
+      return updated;
+    });
+    // panelRefs is stable; the ref objects it holds are the mutable part.
+  }, [panelRefs]);
+
+  const togglePanel = useCallback(
+    (key) => {
+      const handle = panelRefs[key]?.current;
+      if (!handle) return;
+      // No setState here on purpose. `collapse()`/`expand()` fire `onResize`, which calls
+      // `syncCollapsed`, which reads the library back. One direction of flow, so the chevron
+      // and a drag cannot produce different results.
+      if (handle.isCollapsed()) handle.expand();
+      else handle.collapse();
+    },
+    [panelRefs],
+  );
+
+  /** Open a panel and put it on screen. What a pipeline-bar click actually does.
+   *
+   * Two-phase, because a collapsed side zone does not render its children at all — expanding
+   * the zone is a React state change, so the panel this is trying to reach does not exist yet
+   * at the moment of the click. Phase one opens the zone; the effect below picks it up once
+   * the panel has actually mounted. */
+  const [pendingFocus, setPendingFocus] = useState(null);
+
+  const focusPanel = useCallback(
+    (key) => {
+      const zone = PANEL_ZONE[key];
+      if (zone && panelRefs[zone]?.current?.isCollapsed()) panelRefs[zone].current.expand();
+      setPendingFocus({ key, at: Date.now() });
+    },
+    [panelRefs],
+  );
+
+  useEffect(() => {
+    if (!pendingFocus) return undefined;
+    const key = pendingFocus.key;
+    const id = requestAnimationFrame(() => {
+      const handle = panelRefs[key]?.current;
+      if (handle?.isCollapsed()) handle.expand();
+      const element = document.getElementById(`canvas-panel-${key}`);
+      // Give a remounting zone one more frame before giving up, rather than silently
+      // scrolling nowhere.
+      if (!element && Date.now() - pendingFocus.at < 400) {
+        setPendingFocus({ key, at: pendingFocus.at });
+        return;
+      }
+      element?.scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' });
+      setPendingFocus(null);
+    });
+    return () => cancelAnimationFrame(id);
+  }, [pendingFocus, panelRefs, reduceMotion]);
+
+  // Restore the collapse map once the panels exist. Sizes are restored by `useDefaultLayout`
+  // below; collapse is a separate fact the library does not store for us.
+  const restored = useRef(false);
+  useEffect(() => {
+    if (!open) {
+      restored.current = false;
+      return;
+    }
+    if (restored.current) return;
+    restored.current = true;
+    const wanted = readCollapsed();
+    requestAnimationFrame(() => {
+      for (const [key, value] of Object.entries(wanted)) {
+        const handle = panelRefs[key]?.current;
+        if (!handle) continue;
+        if (value && !handle.isCollapsed()) handle.collapse();
+        else if (!value && handle.isCollapsed()) handle.expand();
+      }
+    });
+  }, [open, panelRefs]);
+
+  // Layout memory, using the library's own persistence hook rather than a hand-rolled one.
+  const zonesLayout = useDefaultLayout({ id: 'canvas-zones', storage: localStorage, onlySaveAfterUserInteractions: true });
+  const leftLayout = useDefaultLayout({ id: 'canvas-left', storage: localStorage, onlySaveAfterUserInteractions: true });
+  const centreLayout = useDefaultLayout({ id: 'canvas-centre', storage: localStorage, onlySaveAfterUserInteractions: true });
+  const rightLayout = useDefaultLayout({ id: 'canvas-right', storage: localStorage, onlySaveAfterUserInteractions: true });
+
+  const resetLayout = useCallback(() => {
+    try {
+      for (const key of LAYOUT_KEYS) localStorage.removeItem(key);
+      localStorage.removeItem(COLLAPSE_KEY);
+    } catch {
+      // See syncCollapsed.
+    }
+    for (const ref of Object.values(panelRefs)) {
+      if (ref.current?.isCollapsed()) ref.current.expand();
+    }
+    zonesRef.current?.setLayout({ leftZone: 18, centreZone: 55, rightZone: 27 });
+    leftGroupRef.current?.setLayout({ assets: 55, cast: 45 });
+    centreGroupRef.current?.setLayout({ prompt: 14, viewer: 30, storyboard: 56 });
+    rightGroupRef.current?.setLayout({
+      castingDirector: 22,
+      writersRoom: 18,
+      screenplay: 30,
+      storyboarder: 16,
+      producer: 14,
+    });
+  }, [panelRefs, zonesRef, leftGroupRef, centreGroupRef, rightGroupRef]);
+
+  const status = pipeline.panelStatus;
+  const zoneBusy = useCallback(
+    (keys) => keys.some((key) => status[key]?.tone === 'running'),
+    [status],
+  );
+  const zoneFailed = useCallback(
+    (keys) => keys.some((key) => status[key]?.tone === STATE.FAILED),
+    [status],
+  );
+
+  const handleProps = {
+    className: 'canvas-resize-handle',
+    title: 'Drag to resize · double-click to reset',
   };
 
   if (!target) return null;
@@ -273,30 +473,15 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder }) => {
         {open && <HudFrame sweep={!reduceMotion} />}
 
         {open && (
-          <>
-            <p className="pointer-events-none absolute left-5 top-4 z-10 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.25em] md:left-8 md:top-6">
-              <span
-                className={cn(
-                  'h-1.5 w-1.5 rounded-full',
-                  composing ? 'bg-emerald-400' : 'animate-pulse bg-purple-400',
-                )}
-              />
-              <span className={cn(composing ? 'text-slate-600' : 'text-purple-300/80')}>
-                Neural canvas
-              </span>
-              {!composing && <span className="text-slate-700">· telemetry live</span>}
-            </p>
-
-            <button
-              type="button"
-              onClick={closeCanvas}
-              aria-label="Close the composer"
-              className="absolute right-4 top-4 z-10 flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-slate-500 transition-colors hover:bg-white/10 hover:text-white md:right-6 md:top-6"
-            >
-              <span className="font-mono text-[10px] uppercase tracking-widest">Esc</span>
-              <X className="h-3.5 w-3.5" />
-            </button>
-          </>
+          <button
+            type="button"
+            onClick={closeCanvas}
+            aria-label="Close the composer"
+            className="absolute right-3 top-2.5 z-20 flex items-center gap-1.5 rounded-full px-2 py-1 text-slate-500 transition-colors hover:bg-white/10 hover:text-white md:right-5"
+          >
+            <span className="font-mono text-[10px] uppercase tracking-widest">Esc</span>
+            <X className="h-3.5 w-3.5" />
+          </button>
         )}
 
         {!open ? (
@@ -333,64 +518,136 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder }) => {
             </div>
           </div>
         ) : (
-          <div className="relative flex h-full flex-col pt-14 md:pt-16">
-            <Group orientation="horizontal" className="flex-1">
+          /* THE INTERIOR IS SIZED TO THE TARGET, NOT TO THE ANIMATING SHELL.
+             The shell spring-animates from the 68px collapsed bar up to full screen, and the
+             panel tree used to mount inside it on the very first frame — i.e. into a box 68px
+             tall. Every pixel `minSize` in this layout is violated at 68px, and a collapsible
+             panel below its minimum collapses, so half the canvas snapped shut before it had
+             ever been seen and stayed that way, because collapse is sticky. It also meant the
+             initial layout was computed against a group of nearly zero size, which drops every
+             constraint (see `ve()` in the library) and hands out equal shares instead of the
+             defaults.
+             Pinning the interior to the known target dimensions means the panels mount at
+             their final size on frame one. The shell still animates; the content inside it no
+             longer reflows nine panels sixty times on the way. */
+          <div
+            className="relative flex flex-col"
+            style={{ width: target.width, height: target.height }}
+          >
+            {/* The run, always on screen, above everything it describes. */}
+            <div className="relative z-10 pr-16 md:pr-20">
+              <PipelineBar
+                steps={pipeline.steps}
+                onFocusPanel={focusPanel}
+                composing={composing}
+                onReset={resetLayout}
+              />
+            </div>
+
+            <Group
+              orientation="horizontal"
+              groupRef={zonesRef}
+              resizeTargetMinimumSize={RESIZE_TARGET}
+              defaultLayout={zonesLayout.defaultLayout}
+              onLayoutChanged={zonesLayout.onLayoutChanged}
+              className="min-h-0 flex-1"
+            >
               {/* Left zone: Assets + Cast */}
               <Panel
+                id="leftZone"
+                panelRef={leftZoneRef}
                 defaultSize="18"
-                minSize="8"
+                minSize={180}
                 maxSize="35"
                 collapsible
+                collapsedSize={ZONE_STUB}
+                onResize={() => syncCollapsed('leftZone')}
                 className="flex flex-col"
               >
-                <Group orientation="vertical" className="flex-1">
-                  <Panel defaultSize="55" minSize="15" className="flex flex-col">
-                    <AssetsPanel
-                      pool={pool}
-                      castKeys={castKeys}
-                      isMock={isMock}
-                      onAdd={addAsset}
-                      onPreview={setPreviewCandidate}
-                      onBrowseCollection={browseCollection}
-                    />
-                  </Panel>
-                  <Separator className="canvas-resize-handle" />
-                  <Panel defaultSize="45" minSize="15" className="flex flex-col">
-                    <CastPanel
-                      cast={cast}
-                      primaryKey={primaryKey}
-                      setPrimary={setPrimary}
-                      removeAsset={removeAsset}
-                      openPicker={openPicker}
-                      loading={poolLoading && cast.length === 0}
-                      full={cast.length >= 7}
-                      analysis={screenwriter?.analysis}
-                      readOnly={!composing}
-                    />
-                  </Panel>
-                </Group>
-
-                <div className="shrink-0 border-t border-white/10 px-3 py-2">
-                  <ContractDock
-                    onResolve={resolveContract}
-                    resolving={resolving}
-                    error={resolveError}
-                    onReshuffle={reshuffle}
+                {collapsed.leftZone ? (
+                  <ZoneStub
+                    label="Assets"
+                    icon={Search}
+                    side="left"
+                    running={zoneBusy(['assets', 'cast'])}
+                    onExpand={() => togglePanel('leftZone')}
                   />
-                </div>
+                ) : (
+                  <>
+                    <Group
+                      orientation="vertical"
+                      groupRef={leftGroupRef}
+                      resizeTargetMinimumSize={RESIZE_TARGET}
+                      defaultLayout={leftLayout.defaultLayout}
+                      onLayoutChanged={leftLayout.onLayoutChanged}
+                      className="min-h-0 flex-1"
+                    >
+                      <Panel id="assets" defaultSize="55" minSize={120} className="flex flex-col">
+                        <AssetsPanel
+                          id="canvas-panel-assets"
+                          pool={pool}
+                          castKeys={castKeys}
+                          isMock={isMock}
+                          onAdd={addAsset}
+                          onPreview={setPreviewCandidate}
+                          onBrowseCollection={browseCollection}
+                        />
+                      </Panel>
+                      <Separator {...handleProps} />
+                      <Panel id="cast" defaultSize="45" minSize={120} className="flex flex-col">
+                        <CastPanel
+                          id="canvas-panel-cast"
+                          cast={cast}
+                          primaryKey={primaryKey}
+                          setPrimary={setPrimary}
+                          removeAsset={removeAsset}
+                          openPicker={openPicker}
+                          loading={poolLoading && cast.length === 0}
+                          full={cast.length >= 7}
+                          analysis={screenwriter?.analysis}
+                          readOnly={!composing}
+                          status={status.cast}
+                        />
+                      </Panel>
+                    </Group>
+
+                    <div className="shrink-0 border-t border-white/10 px-3 py-2">
+                      <ContractDock
+                        onResolve={resolveContract}
+                        resolving={resolving}
+                        error={resolveError}
+                        onReshuffle={reshuffle}
+                      />
+                    </div>
+                  </>
+                )}
               </Panel>
 
-              <Separator className="canvas-resize-handle" />
+              <Separator {...handleProps} />
 
-              {/* Center zone: Prompt + Movie render + Storyboard */}
-              <Panel
-                defaultSize="55"
-                minSize="30"
-                className="flex flex-col"
-              >
-                <Group orientation="vertical" className="flex-1">
-                  <Panel defaultSize="14" minSize="10" maxSize="25" className="flex flex-col">
+              {/* Center zone: Prompt + Viewer + Storyboard */}
+              <Panel id="centreZone" defaultSize="55" minSize="30" className="flex flex-col">
+                <Group
+                  orientation="vertical"
+                  groupRef={centreGroupRef}
+                  resizeTargetMinimumSize={RESIZE_TARGET}
+                  defaultLayout={centreLayout.defaultLayout}
+                  onLayoutChanged={centreLayout.onLayoutChanged}
+                  className="min-h-0 flex-1"
+                >
+                  <Panel
+                    id="prompt"
+                    panelRef={promptRef}
+                    defaultSize="14"
+                    minSize={110}
+                    maxSize="30"
+                    collapsible
+                    collapsedSize={PANEL_STRIP_HEIGHT}
+                    onResize={() => syncCollapsed('prompt')}
+                    className="flex flex-col"
+                  >
                     <PromptPanel
+                      id="canvas-panel-prompt"
                       prompt={prompt}
                       setPrompt={setPrompt}
                       onLaunch={launch}
@@ -398,29 +655,24 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder }) => {
                       busy={resolving || screenwriter?.isWriting}
                       workerOk={workerOk}
                       readOnly={!composing}
-                      headerAction={
-                        !composing ? (
-                          <button
-                            type="button"
-                            onClick={screenwriter?.backToCompose}
-                            className="font-mono text-[9px] uppercase tracking-widest text-purple-300 transition-colors hover:text-white"
-                          >
-                            Back to compose
-                          </button>
-                        ) : undefined
-                      }
+                      onBackToCompose={screenwriter?.backToCompose}
+                      collapsed={collapsed.prompt}
+                      onToggle={() => togglePanel('prompt')}
                     />
                   </Panel>
-                  <Separator className="canvas-resize-handle" />
+                  <Separator {...handleProps} />
                   <Panel
+                    id="viewer"
+                    panelRef={viewerRef}
                     defaultSize="30"
-                    minSize="15"
+                    minSize={150}
                     collapsible
-                    collapsedSize="4"
-                    panelRef={movieRenderRef}
+                    collapsedSize={PANEL_STRIP_HEIGHT}
+                    onResize={() => syncCollapsed('viewer')}
                     className="flex flex-col"
                   >
                     <MovieRenderPanel
+                      id="canvas-panel-viewer"
                       primary={primary}
                       preview={preview}
                       previewLoading={previewLoading}
@@ -429,108 +681,165 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder }) => {
                       onNext={browseNext}
                       onPrev={browsePrev}
                       onClear={clearPreview}
-                      collapsed={panelCollapsed.movieRender}
-                      onCollapse={() => collapsePanel('movieRender')}
-                      onExpand={() => expandPanel('movieRender')}
+                      collapsed={collapsed.viewer}
+                      onToggle={() => togglePanel('viewer')}
                     />
                   </Panel>
-                  <Separator className="canvas-resize-handle" />
-                  <Panel defaultSize="56" minSize="15" className="flex flex-col">
-                    <StoryboardPanel storyboarder={storyboarder} />
+                  <Separator {...handleProps} />
+                  <Panel id="storyboard" defaultSize="56" minSize={180} className="flex flex-col">
+                    <StoryboardPanel
+                      id="canvas-panel-storyboard"
+                      storyboarder={storyboarder}
+                      token={token}
+                      budget={budget}
+                      status={status.storyboard}
+                    />
                   </Panel>
                 </Group>
               </Panel>
 
-              <Separator className="canvas-resize-handle" />
+              <Separator {...handleProps} />
 
               {/* Right zone: agent inspector panels */}
               <Panel
+                id="rightZone"
+                panelRef={rightZoneRef}
                 defaultSize="27"
-                minSize="10"
+                minSize={240}
                 maxSize="45"
                 collapsible
+                collapsedSize={ZONE_STUB}
+                onResize={() => syncCollapsed('rightZone')}
                 className="flex flex-col"
               >
-                <Group orientation="vertical" className="flex-1">
-                  <Panel
-                    defaultSize="22"
-                    minSize="10"
-                    collapsible
-                    collapsedSize="4"
-                    panelRef={castingDirectorRef}
-                    className="flex flex-col"
+                {collapsed.rightZone ? (
+                  <ZoneStub
+                    label="Agents"
+                    icon={Eye}
+                    side="right"
+                    running={zoneBusy(['castingDirector', 'writersRoom', 'screenplay', 'storyboarder'])}
+                    failed={zoneFailed(['castingDirector', 'writersRoom', 'screenplay', 'storyboarder'])}
+                    onExpand={() => togglePanel('rightZone')}
+                  />
+                ) : (
+                  <Group
+                    orientation="vertical"
+                    groupRef={rightGroupRef}
+                    resizeTargetMinimumSize={RESIZE_TARGET}
+                    defaultLayout={rightLayout.defaultLayout}
+                    onLayoutChanged={rightLayout.onLayoutChanged}
+                    className="min-h-0 flex-1"
                   >
-                    <CastingDirectorPanel
-                      cast={cast}
-                      analysis={screenwriter?.analysis}
-                      streams={screenwriter?.streams}
-                      thoughts={screenwriter?.thoughts}
-                      collapsed={panelCollapsed.castingDirector}
-                      onCollapse={() => collapsePanel('castingDirector')}
-                      onExpand={() => expandPanel('castingDirector')}
-                    />
-                  </Panel>
-                  <Separator className="canvas-resize-handle" />
-                  <Panel
-                    defaultSize="18"
-                    minSize="10"
-                    collapsible
-                    collapsedSize="4"
-                    panelRef={screenwriterRef}
-                    className="flex flex-col"
-                  >
-                    <ScreenwriterPanel
-                      live={screenwriter?.live ?? []}
-                      thoughts={screenwriter?.thoughts ?? {}}
-                      error={screenwriter?.error ?? null}
-                      collapsed={panelCollapsed.screenwriter}
-                      onCollapse={() => collapsePanel('screenwriter')}
-                      onExpand={() => expandPanel('screenwriter')}
-                    />
-                  </Panel>
-                  <Separator className="canvas-resize-handle" />
-                  <Panel
-                    defaultSize="30"
-                    minSize="10"
-                    collapsible
-                    collapsedSize="4"
-                    panelRef={screenplayRef}
-                    className="flex flex-col"
-                  >
-                    <ScreenplayPanel
-                      spec={screenwriter?.spec}
-                      cast={cast}
-                      analysis={screenwriter?.analysis}
-                      rewriting={screenwriter?.rewriting}
-                      live={screenwriter?.live ?? []}
-                      collapsed={panelCollapsed.screenplay}
-                      onCollapse={() => collapsePanel('screenplay')}
-                      onExpand={() => expandPanel('screenplay')}
-                    />
-                  </Panel>
-                  <Separator className="canvas-resize-handle" />
-                  <Panel
-                    defaultSize="12"
-                    minSize="8"
-                    collapsible
-                    collapsedSize="4"
-                    panelRef={storyboarderRef}
-                    className="flex flex-col"
-                  >
-                    <StoryboarderPanel
-                      spec={screenwriter?.spec}
-                      cast={screenwriter?.writtenCast}
-                      storyboarder={storyboarder}
-                      collapsed={panelCollapsed.storyboarder}
-                      onCollapse={() => collapsePanel('storyboarder')}
-                      onExpand={() => expandPanel('storyboarder')}
-                    />
-                  </Panel>
-                  <Separator className="canvas-resize-handle" />
-                  <Panel defaultSize="18" minSize="10" className="flex flex-col">
-                    <ProducerPanel />
-                  </Panel>
-                </Group>
+                    <Panel
+                      id="castingDirector"
+                      panelRef={castingDirectorRef}
+                      defaultSize="22"
+                      minSize={104}
+                      collapsible
+                      collapsedSize={PANEL_STRIP_HEIGHT}
+                      onResize={() => syncCollapsed('castingDirector')}
+                      className="flex flex-col"
+                    >
+                      <CastingDirectorPanel
+                        id="canvas-panel-castingDirector"
+                        cast={cast}
+                        analysis={screenwriter?.analysis}
+                        streams={screenwriter?.streams}
+                        thoughts={screenwriter?.thoughts}
+                        collapsed={collapsed.castingDirector}
+                        onToggle={() => togglePanel('castingDirector')}
+                        status={status.castingDirector}
+                      />
+                    </Panel>
+                    <Separator {...handleProps} />
+                    <Panel
+                      id="writersRoom"
+                      panelRef={writersRoomRef}
+                      defaultSize="18"
+                      minSize={104}
+                      collapsible
+                      collapsedSize={PANEL_STRIP_HEIGHT}
+                      onResize={() => syncCollapsed('writersRoom')}
+                      className="flex flex-col"
+                    >
+                      <ScreenwriterPanel
+                        id="canvas-panel-writersRoom"
+                        live={screenwriter?.live ?? []}
+                        thoughts={screenwriter?.thoughts ?? {}}
+                        error={screenwriter?.error ?? null}
+                        collapsed={collapsed.writersRoom}
+                        onToggle={() => togglePanel('writersRoom')}
+                        status={status.writersRoom}
+                      />
+                    </Panel>
+                    <Separator {...handleProps} />
+                    <Panel
+                      id="screenplay"
+                      panelRef={screenplayRef}
+                      defaultSize="30"
+                      minSize={104}
+                      collapsible
+                      collapsedSize={PANEL_STRIP_HEIGHT}
+                      onResize={() => syncCollapsed('screenplay')}
+                      className="flex flex-col"
+                    >
+                      <ScreenplayPanel
+                        id="canvas-panel-screenplay"
+                        spec={screenwriter?.spec}
+                        cast={cast}
+                        analysis={screenwriter?.analysis}
+                        rewriting={screenwriter?.rewriting}
+                        live={screenwriter?.live ?? []}
+                        trimBeat={screenwriter?.trimBeat}
+                        requestTrim={screenwriter?.requestTrim}
+                        collapsed={collapsed.screenplay}
+                        onToggle={() => togglePanel('screenplay')}
+                        status={status.screenplay}
+                      />
+                    </Panel>
+                    <Separator {...handleProps} />
+                    <Panel
+                      id="storyboarder"
+                      panelRef={storyboarderRef}
+                      defaultSize="16"
+                      minSize={104}
+                      collapsible
+                      collapsedSize={PANEL_STRIP_HEIGHT}
+                      onResize={() => syncCollapsed('storyboarder')}
+                      className="flex flex-col"
+                    >
+                      <StoryboarderPanel
+                        id="canvas-panel-storyboarder"
+                        spec={screenwriter?.spec}
+                        cast={screenwriter?.writtenCast}
+                        storyboarder={storyboarder}
+                        pipeline={pipeline}
+                        token={token}
+                        budget={budget}
+                        collapsed={collapsed.storyboarder}
+                        onToggle={() => togglePanel('storyboarder')}
+                        status={status.storyboarder}
+                      />
+                    </Panel>
+                    <Separator {...handleProps} />
+                    <Panel
+                      id="producer"
+                      panelRef={producerRef}
+                      defaultSize="14"
+                      minSize={104}
+                      collapsible
+                      collapsedSize={PANEL_STRIP_HEIGHT}
+                      onResize={() => syncCollapsed('producer')}
+                      className="flex flex-col"
+                    >
+                      <ProducerPanel
+                        id="canvas-panel-producer"
+                        collapsed={collapsed.producer}
+                        onToggle={() => togglePanel('producer')}
+                      />
+                    </Panel>
+                  </Group>
+                )}
               </Panel>
             </Group>
 
