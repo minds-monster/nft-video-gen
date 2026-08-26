@@ -130,7 +130,7 @@ const RefusedFrame = ({ frame, onRegenerate, onOverride, busy }) => {
 
 /** A [CUT TO BLACK]-style beat — no blocking, no image, nothing to generate. */
 const TransitionCard = ({ frame }) => (
-  <div className="flex aspect-video flex-col items-center justify-center gap-2 rounded-2xl border border-white/10 bg-black p-4 text-center">
+  <div className="flex aspect-video min-w-0 flex-col items-center justify-center gap-2 rounded-2xl border border-white/10 bg-black p-4 text-center">
     <span className="rounded-full bg-black/70 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-purple-300">
       Beat {frame.beatIndex + 1} · Transition
     </span>
@@ -206,8 +206,11 @@ const FrameCard = ({
   // the overflow here silently cut the derived-facts row and the sketch form off the bottom of
   // every card — a clip with no scrollbar and no error, which is exactly the kind of bug that
   // survives a screenshot review, because the card still looks finished.
+  // `min-w-0` because these are grid items: a grid track is `minmax(auto, 1fr)`, so without
+  // it the card's widest indivisible child sets a floor and three columns stop being equal —
+  // they blow the panel out sideways instead of compressing.
   return (
-    <div className="rounded-2xl border border-white/10 bg-black/20">
+    <div className="min-w-0 rounded-2xl border border-white/10 bg-black/20">
       <div className="space-y-2 p-3">
         <div className="flex items-center justify-between gap-2">
           <span className="rounded-full bg-purple-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-purple-300">
@@ -455,7 +458,7 @@ const ThinkingStream = ({ reasoning }) => {
  * That is honest about what is happening, which a progress bar never is.
  */
 const GhostCard = ({ beatIndex, beatText, ghost, reasoning, aspect, active, castAssets }) => (
-  <div className="rounded-2xl border border-sky-500/20 bg-sky-500/[0.03]">
+  <div className="min-w-0 rounded-2xl border border-sky-500/20 bg-sky-500/[0.03]">
     <div className="space-y-2 p-3">
       <div className="flex items-center justify-between gap-2">
         <span className="rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-sky-300">
@@ -699,11 +702,16 @@ const StoryboardPanel = ({ id, storyboarder, token, budget, status }) => {
           icon={Film}
           headerAction={header}
           status={status}
-          /* Container queries, not viewport ones. This panel sits in a zone the user can drag
-             to any width, so `md:`/`xl:` were sizing the grid by how wide the BROWSER is —
-             three columns crammed into a 500px panel on a wide monitor, one column in a wide
-             panel on a laptop. `@container` is declared by CanvasPanel's body. */
-          bodyClassName="grid grid-cols-1 content-start gap-3 @md:grid-cols-2 @4xl:grid-cols-3"
+          /* THREE TO A ROW, ALWAYS. A storyboard is read as a contact sheet: the unit is the
+             row, and holding the row at three keeps the beat you are looking at in the context
+             of the two either side of it no matter how the panel is sized. Vertical space is
+             what decides how MUCH you see — one row, two, or the whole film — which is the
+             axis you actually control by dragging the panel or scrolling it.
+             Deliberately not responsive. Breakpoints here (of either kind) mean the film
+             re-flows into a different shape every time the zone is resized, so the beat you
+             had your eye on moves to another row — the same class of "it shifted while I was
+             reading it" this pass exists to remove. Cards get narrower instead. */
+          bodyClassName="grid grid-cols-3 content-start gap-3"
         >
           {plan?.downgraded && (
             <p className="col-span-full rounded-lg border border-sky-500/20 bg-sky-500/5 px-3 py-2 text-[11px] leading-relaxed text-sky-200">
