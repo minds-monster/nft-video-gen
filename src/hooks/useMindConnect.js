@@ -14,6 +14,17 @@ const POLL_INTERVAL_MS = 2_000;
 // itself expires, so these two numbers have to move together.
 const POLL_TIMEOUT_MS = 30 * 60 * 1000;
 
+const generateUUID = () => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
+
 // Connect-flow state, kept separate from the chat itself (useMindChat) — this owns
 // "do we have a session," the chat hook owns "what does that session let us say."
 export const useMindConnect = () => {
@@ -97,5 +108,67 @@ export const useMindConnect = () => {
     setState('idle');
   }, [state]);
 
-  return { session, state, error, pending, connect, disconnect, isModalOpen, openModal, closeModal };
+  // Initialize guest ID on mount
+  useEffect(() => {
+    if (!localStorage.getItem('guestId')) {
+      localStorage.setItem('guestId', generateUUID());
+    }
+  }, []);
+
+  const checkout = useCallback(async (quantity = 1) => {
+    const guestId = localStorage.getItem('guestId') || generateUUID();
+    if (!localStorage.getItem('guestId')) {
+      localStorage.setItem('guestId', guestId);
+    }
+
+    try {
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.token ? { 'Authorization': `Bearer ${session.token}` } : {}),
+        },
+        body: JSON.stringify({ guestId, quantity }),
+      });
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || 'Failed to start checkout. Please try again.');
+      }
+    } catch (err) {
+      console.error('Checkout error:', err);
+      alert('Failed to connect to checkout service.');
+    }
+  }, [session]);
+
+  // Claim guest budget once Mind connects
+  useEffect(() => {
+    if (!session?.token) return;
+    const guestId = localStorage.getItem('guestId');
+    if (!guestId) return;
+
+    const claim = async () => {
+      try {
+        const response = await fetch('/api/producer/claim-guest-budget', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.token}`,
+          },
+          body: JSON.stringify({ guestId }),
+        });
+        const data = await response.json();
+        if (data.claimed) {
+          console.log(`Successfully claimed guest budget of $${data.budget?.total}`);
+          localStorage.setItem('guestId', generateUUID()); // Reset for future actions
+        }
+      } catch (err) {
+        console.error('Failed to claim guest budget:', err);
+      }
+    };
+    claim();
+  }, [session?.token]);
+
+  return { session, state, error, pending, connect, disconnect, isModalOpen, openModal, closeModal, checkout };
 };

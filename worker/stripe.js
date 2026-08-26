@@ -39,6 +39,8 @@ export async function handleStripeCheckout(request, env) {
         };
     }
 
+    const quantity = Math.max(1, Math.min(1000, Number(body.quantity) || 1));
+
     try {
         const checkoutSession = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
@@ -48,11 +50,16 @@ export async function handleStripeCheckout(request, env) {
                         currency: 'usd',
                         product_data: {
                             name: 'Minds Monster Video Budget Top-up',
-                            description: 'Budget for high-quality video generation on GPT-5.6-Sol',
+                            description: 'Credits for high-quality video generation on GPT-5.6-Sol ($1.00 per credit)',
                         },
                         unit_amount: 100, // $1.00 in cents
                     },
-                    quantity: 1,
+                    quantity: quantity,
+                    adjustable_quantity: {
+                        enabled: true,
+                        minimum: 1,
+                        maximum: 1000,
+                    },
                 },
             ],
             mode: 'payment',

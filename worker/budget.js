@@ -141,12 +141,17 @@ export async function handleBudgetSet(request, env) {
   if (!session) return json({ error: 'unauthorized' }, 401);
 
   const body = await request.json().catch(() => ({}));
-  const total = body.total === '' || body.total == null ? null : Number(body.total);
   const perRender = body.perRender === '' || body.perRender == null ? null : Number(body.perRender);
   const paidTier = body.paidTier == null ? null : Boolean(body.paidTier);
 
   try {
-    const record = await setBudget(env, session.mindId, { total, perRender, paidTier });
+    const existing = await getBudget(env, session.mindId);
+    // Ignore any total parameter in request body to prevent manual credits increase
+    const record = await setBudget(env, session.mindId, {
+      total: existing?.total ?? null,
+      perRender,
+      paidTier,
+    });
     return json({ budget: record });
   } catch (err) {
     if (err.status === 400) return json({ error: 'invalid_budget' }, 400);
