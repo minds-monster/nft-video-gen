@@ -775,6 +775,7 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder, director
                       take={viewedTake}
                       takeIndex={viewedTakeIndex}
                       onJudge={director?.judge}
+                      onRemember={director?.remember}
                       onAdd={addPreviewToCast}
                       onNext={browseNext}
                       onPrev={browsePrev}

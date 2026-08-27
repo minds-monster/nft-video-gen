@@ -4,6 +4,8 @@ import StoryboardPanel from './StoryboardPanel';
 import DailiesPanel from './DailiesPanel';
 import ScreenTestsPanel from './ScreenTestsPanel';
 import { cn } from '../../../lib/cn';
+import { useRecallAudit } from '../../../hooks/useRecallAudit';
+import { useMindChatContext } from '../../../context/mindChat';
 
 /**
  * The centre slot, and which view of the film is in it.
@@ -61,6 +63,11 @@ const TimelinePanel = ({
   onPreviewTake,
 }) => {
   const [view, setView] = useState('dailies');
+  // Owned here rather than by DailiesPanel: switching tabs unmounts the body, and a Mind that is
+  // mid-way through answering the memory check should not be forgotten for looking at a
+  // storyboard.
+  const { session } = useMindChatContext();
+  const recall = useRecallAudit({ token, films: director?.films ?? [] });
 
   const views = [
     { id: 'dailies', label: 'Dailies', count: (director?.finalTakes ?? []).length || null },
@@ -92,6 +99,12 @@ const TimelinePanel = ({
         budget={budget}
         status={status}
         tabs={tabs}
+        // Opening a past film brings back its footage too. A production and its storyboard share
+        // a filmId by construction (worker/film-id.js), so this is one id handed to two hooks.
+        onOpenFilm={(sessionToken, filmId) => {
+          storyboarder?.openFilm?.(sessionToken, filmId);
+          director?.openProduction?.({ token: sessionToken, filmId });
+        }}
       />
     );
   }
@@ -100,10 +113,13 @@ const TimelinePanel = ({
     <DailiesPanel
       id={id}
       director={director}
+      token={token}
       status={status}
       tabs={tabs}
       activeTakeId={activeTakeId}
       onPreviewTake={onPreviewTake}
+      recall={recall}
+      mindName={session?.mindName}
     />
   );
 };

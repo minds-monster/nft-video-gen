@@ -26,12 +26,13 @@ import { requireSession } from './mind-chat.js';
 import { castingStills, fetchImageAsDataUri } from './casting-director.js';
 import { compileSceneToH3 } from './scene.js';
 import { filmIdFor } from './film-id.js';
-import { loadStoryboard } from './storyboarder.js';
+import { listFilms, loadStoryboard } from './storyboarder.js';
 import { assessRisks } from './director-risks.js';
 import { preflightReferences } from './reference-preflight.js';
 import { LATENCY_SECONDS, checkH3Params, priceUsd } from './minimax.js';
-import { DEFAULT_MODE, MODES, closeEnvelope, getEnvelope, openEnvelope, recordDecision } from './render-budget.js';
-import { loadJob, loadProduction, resumeAfterApproval, saveJob, startTake, startAssessment, enqueue } from './director-job.js';
+import { DEFAULT_MODE, MODES, closeEnvelope, getEnvelope, listEnvelopes, openEnvelope, recordDecision, spentOnFilm } from './render-budget.js';
+import { getSpend } from './budget.js';
+import { loadJob, loadProduction, rememberTake, resumeAfterApproval, saveJob, startTake, startAssessment, enqueue } from './director-job.js';
 import { applyRevisions } from './director-agent.js';
 import { serveSignedMedia, signedMediaUrl } from './signed-media.js';
 import { streamJobEvents } from './job-events.js';
@@ -424,12 +425,65 @@ export async function handleDirectorJobEvents(request, env, ctx) {
   });
 }
 
-/** GET /api/director?filmId= — the production: its money, and every take shot against it. */
+/**
+ * Every production this Mind has opened, reconstructed with no client spec.
+ *
+ * This exists because filmId is a hash of the screenplay and the screenplay is pure client
+ * state: a returning visitor has no way to name the film they already paid to shoot. The
+ * `productions:` index (written on every openEnvelope) is the spec-free way back in — the same
+ * recovery the Storyboarder ships as `?films=1`, which the Director never inherited until now.
+ */
+async function listProductions(env, mindId, requestUrl) {
+  const [envelopes, boards, spend] = await Promise.all([
+    listEnvelopes(env, mindId),
+    listFilms(env, mindId).catch(() => []),
+    getSpend(env, mindId),
+  ]);
+  const loglines = new Map(boards.map((film) => [film.filmId, film.logline ?? null]));
+
+  const newest = [...envelopes].sort((a, b) => (b.openedAt ?? 0) - (a.openedAt ?? 0)).slice(0, 10);
+  return Promise.all(
+    newest.map(async (envelope) => {
+      const production = await loadProduction(env, mindId, envelope.filmId);
+      const takes = production.takes ?? [];
+      const ready = takes.filter((take) => take.status === 'ready' && take.kind !== 'screen-test');
+      const poster = [...ready].reverse().find((take) => take.r2Key);
+      return {
+        filmId: envelope.filmId,
+        logline: loglines.get(envelope.filmId) ?? null,
+        mode: envelope.mode,
+        allowanceUsd: envelope.allowanceUsd ?? null,
+        spentUsd: spentOnFilm(spend, envelope.filmId),
+        openedAt: envelope.openedAt ?? null,
+        closedAt: envelope.closedAt ?? null,
+        takeCount: takes.length,
+        readyTakes: ready.length,
+        screenTests: takes.filter((take) => take.kind === 'screen-test').length,
+        lastTakeAt: takes.reduce((last, take) => Math.max(last, take.settledAt ?? 0), 0) || null,
+        ipfsCount: takes.filter((take) => take.ipfs?.cid).length,
+        // Every identifier the Mind was given for this film, so its recall can be checked
+        // against the record whichever one it quotes back.
+        takeIds: ready.map((take) => take.takeId),
+        cids: ready.map((take) => take.ipfs?.cid).filter(Boolean),
+        posterUrl: poster
+          ? await signedMediaUrl(env, mindId, { path: '/api/director/media', key: poster.r2Key, requestUrl })
+          : null,
+      };
+    }),
+  );
+}
+
+/** GET /api/director?filmId= — the production: its money, and every take shot against it.
+ *  GET /api/director?films=1 — every production this Mind has, spec-free (see listProductions). */
 export async function handleDirectorGet(request, env) {
   const session = await requireSession(request, env);
   if (!session) return json({ error: 'unauthorized' }, 401);
 
-  const filmId = new URL(request.url).searchParams.get('filmId');
+  const { searchParams } = new URL(request.url);
+  const filmId = searchParams.get('filmId');
+  if (!filmId && searchParams.has('films')) {
+    return json({ films: await listProductions(env, session.mindId, request.url) });
+  }
   if (!filmId) return json({ error: 'film_id_required' }, 400);
 
   const [production, envelope] = await Promise.all([
@@ -458,6 +512,30 @@ export const handleDirectorMedia = (request, env) =>
     prefixFor: (mindId) => `director/${mindId}/`,
     contentType: (key) => (key.endsWith('.mp4') ? 'video/mp4' : 'image/jpeg'),
   });
+
+/** POST /api/director/remember — pin an existing take and put it in the Mind's filmography. */
+export async function handleDirectorRemember(request, env) {
+  const session = await requireSession(request, env);
+  if (!session) return json({ error: 'unauthorized' }, 401);
+
+  const { filmId, takeId } = await request.json().catch(() => ({}));
+  if (!filmId || !takeId) return json({ error: 'film_and_take_required' }, 400);
+
+  // The logline is read here rather than in the job, because the storyboard module reaches
+  // the job module through the connection path and the job must not import it back.
+  const storyboard = await loadStoryboard(env, session.mindId, filmId).catch(() => null);
+  try {
+    const result = await rememberTake(env, session.mindId, {
+      filmId,
+      takeId,
+      origin: new URL(request.url).origin,
+      logline: storyboard?.logline ?? null,
+    });
+    return json(result, 202);
+  } catch (error) {
+    return json({ error: error.message }, error.status ?? 500);
+  }
+}
 
 /** POST /api/director/close — settle the production and release whatever is left. */
 export async function handleDirectorClose(request, env) {

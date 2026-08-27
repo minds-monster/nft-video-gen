@@ -43,6 +43,7 @@ import {
   handleDirectorGet,
   handleDirectorMedia,
   handleDirectorClose,
+  handleDirectorRemember,
   handleDirectorTest,
   handleDirectorVerdict,
   handleDirectorBrief,
@@ -99,6 +100,9 @@ const ROUTES = {
   'POST /api/director/start': handleDirectorStart,
   'POST /api/director/approve': handleDirectorApprove,
   'POST /api/director/close': handleDirectorClose,
+  // Pin an existing take and put it in the Mind's filmography — for footage shot before the
+  // filmography existed, or a Mind that needs reminding.
+  'POST /api/director/remember': handleDirectorRemember,
   'POST /api/director/test': handleDirectorTest,
   'POST /api/director/verdict': handleDirectorVerdict,
   'POST /api/director/brief': handleDirectorBrief,
@@ -159,6 +163,9 @@ export default {
         // line here. It lives in .dev.vars locally and `wrangler secret put MINIMAX_API_KEY` in
         // production; until this round it existed only in .env for the build-time scripts.
         hasMinimaxKey: Boolean(env.MINIMAX_API_KEY),
+        // The pinning key. Missing it means finished takes still reach the Mind's filmography, but
+        // with a 7-day link and no permanent ipfs:// address — degraded, not dead.
+        hasPinataKey: Boolean(env.PINATA_JWT),
         castingModel: env.CASTING_MODEL,
         screenwriterModel: env.SCREENWRITER_MODEL,
         storyboarderModel: env.STORYBOARDER_MODEL ?? 'gpt-5.6-sol (default)',

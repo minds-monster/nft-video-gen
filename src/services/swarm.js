@@ -537,6 +537,27 @@ export const getDirectorProduction = async (token, filmId) => {
   return response.json();
 };
 
+/** Every production this Mind has opened, with no spec needed — the Director's twin of
+ * getStoryboardFilms, and what brings a returning visitor's dailies back after a reload. */
+export const getDirectorFilms = async (token) => {
+  const response = await fetch('/api/director?films=1', { headers: { Authorization: `Bearer ${token}` } });
+  if (!response.ok) throw new Error(`Director films fetch failed: ${response.status}`);
+  return response.json();
+};
+
+/** Pin an existing take to IPFS and put it in the Mind's filmography. Queued: the CID arrives on
+ * the production record a few seconds later, so re-read it rather than expecting it here. */
+export const rememberDirectorTake = async ({ filmId, takeId }, token) => {
+  const response = await fetch('/api/director/remember', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filmId, takeId }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.error ?? `Remember failed: ${response.status}`);
+  return payload;
+};
+
 /** Settle up and release whatever is left. */
 export const closeDirectorProduction = async ({ filmId, reason }, token) => {
   const response = await fetch('/api/director/close', {

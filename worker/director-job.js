@@ -34,6 +34,7 @@ import { extractFrames } from './frames.js';
 import { judgeFrames } from './director-judge.js';
 import { planShoot, reviewTest } from './director-agent.js';
 import { signedMediaUrl } from './signed-media.js';
+import { relayFilmographyDigest } from './filmography.js';
 
 const jobKey = (mindId, jobId) => `director-job:${mindId}:${jobId}`;
 
@@ -185,6 +186,18 @@ export async function appendTake(env, mindId, filmId, take) {
  * is an opinion. Idempotent by takeId — a visitor changing their mind replaces their answer
  * rather than appending a second one.
  */
+/**
+ * Where the permanent copy lives. Idempotent by takeId, like the verdict above — a retried pin
+ * that already succeeded once replaces the same answer rather than growing a second one.
+ */
+export async function recordTakeIpfs(env, mindId, filmId, takeId, ipfs) {
+  const record = await loadProduction(env, mindId, filmId);
+  const takes = record.takes.map((take) => (take.takeId === takeId ? { ...take, ipfs } : take));
+  const next = { ...record, filmId, takes, updatedAt: Date.now() };
+  await env.MIND_CONNECTIONS.put(productionKey(mindId, filmId), JSON.stringify(next));
+  return next;
+}
+
 export async function recordVerdict(env, mindId, filmId, { takeId, answer, note, by }) {
   // A person's answer outranks the model's, always — and never the other way round. The Director
   // judging is a convenience where frames are available; the visitor watching the clip is the
@@ -372,6 +385,9 @@ async function submit(env, record, logger, cast) {
   record.take.taskId = taskId;
   record.take.submittedAt = Date.now();
   record.step = 'poll';
+  // Who was in it, by name. The cast itself lives only on the queue message; the names are kept
+  // so the Mind's filmography can say "the one with the astronaut" rather than "take-9f21".
+  record.castNames = (cast ?? []).map((entry) => entry?.name).filter(Boolean);
   await saveJob(env, record.mindId, record);
 
   await recordSpend(env, record.mindId, {
@@ -441,6 +457,10 @@ async function poll(env, record, logger) {
   record.take.status = 'ready';
   record.take.r2Key = key;
   record.take.bytes = bytes.byteLength;
+  // A fingerprint of the exact bytes, computed while they are already in hand. This is what lets
+  // the Mind's record be checked against a file — its own ask — and what makes an IPFS CID
+  // verifiably the same film rather than merely a file with the same name.
+  record.take.sha256 = await sha256Hex(bytes);
   record.take.settledAt = Date.now();
   record.take.seconds = Math.round((record.take.settledAt - record.take.submittedAt) / 1000);
   record.take.usage = result.usage ?? null;
@@ -513,6 +533,144 @@ async function poll(env, record, logger) {
   if (record.take.kind === 'screen-test' && record.take.verdict?.answer && record.spec) {
     await enqueue(env, { mindId: record.mindId, jobId: record.jobId, step: 'review' }, 1);
   }
+
+  // A final take goes on to be pinned and told about. A separate step, after `complete`, because
+  // neither is allowed to cost the visitor the film: the clip is safe and the job is finished
+  // before anything here can fail. Screen tests are evidence, not filmography, and stay out.
+  if (record.take.kind !== 'screen-test') {
+    await enqueue(env, { mindId: record.mindId, jobId: record.jobId, step: 'pin' }, 1);
+  }
+}
+
+const sha256Hex = async (bytes) =>
+  [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))]
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
+
+// ──────────────────────────────────────────────────────────────── the permanent copy, and the Mind
+
+// The v3 Files API, not the legacy `/pinning/pinFileToIPFS`: the key it needs is "Files: Write"
+// on Pinata's current key screen, where the legacy endpoints sit behind a collapsed section.
+// `network: public` is what puts the file on IPFS proper — v3 defaults to Pinata's private
+// network, where a CID resolves for nobody but us, which would defeat the entire point.
+const PINATA_UPLOAD_URL = 'https://uploads.pinata.cloud/v3/files';
+
+export const ipfsGatewayUrl = (env, cid) =>
+  `${(env.PINATA_GATEWAY ?? 'https://gateway.pinata.cloud').replace(/\/$/, '')}/ipfs/${cid}`;
+
+/**
+ * Pin the finished film to IPFS, then tell the Mind.
+ *
+ * WHY IPFS AT ALL, when R2 already has the bytes. R2 is ours. A signed link expires in seven days
+ * and the bucket exists only as long as this site does. A CID is derived from the bytes
+ * themselves, so it is the same address whoever pins it, and anyone the Mind hands it to can pin
+ * it again without asking us. The Mind cannot fetch it — it holds the address, and that is the
+ * point: the pointer in its memory outlives every link we could give it.
+ *
+ * Without a PINATA_JWT this degrades to the digest alone. IPFS is an enhancement, never a gate,
+ * and a missing secret must not silence the Mind.
+ */
+async function pin(env, record, logger) {
+  if (record.take?.status !== 'ready' || !record.take.r2Key) return;
+
+  if (!record.take.ipfs?.cid && env.PINATA_JWT) {
+    logger.log('phase', { phase: 'pinning', detail: 'Pinning the film to IPFS — the permanent copy your Mind holds the address of.' });
+
+    const object = await env.RENDERS.get(record.take.r2Key);
+    if (!object) throw Object.assign(new Error('The finished film is missing from storage.'), { fatal: true });
+    const bytes = await object.arrayBuffer();
+
+    const form = new FormData();
+    form.append('file', new Blob([bytes], { type: 'video/mp4' }), `${record.take.takeId}.mp4`);
+    form.append('network', 'public');
+    form.append('name', `${record.mindId}/${record.filmId}/${record.take.takeId}.mp4`);
+    form.append('keyvalues', JSON.stringify({ mindId: record.mindId, filmId: record.filmId, takeId: record.take.takeId }));
+
+    const response = await fetch(PINATA_UPLOAD_URL, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${env.PINATA_JWT}` },
+      body: form,
+    });
+    if (!response.ok) {
+      const detail = (await response.text().catch(() => '')).slice(0, 200);
+      throw Object.assign(new Error(`Pinata refused the pin: ${response.status} ${detail}`), {
+        status: response.status,
+        retryable: response.status >= 500 || response.status === 429,
+      });
+    }
+    const payload = await response.json().catch(() => ({}));
+    const cid = payload?.data?.cid ?? null;
+    if (!cid) throw Object.assign(new Error('Pinata returned no CID.'), { retryable: true });
+
+    const ipfs = { cid, provider: 'pinata', pinnedAt: Date.now(), gatewayUrl: ipfsGatewayUrl(env, cid) };
+    // Durable first, told second — the same order as the take itself.
+    await recordTakeIpfs(env, record.mindId, record.filmId, record.take.takeId, ipfs);
+    record.take.ipfs = ipfs;
+    await saveJob(env, record.mindId, record);
+    logger.log('ipfs', { takeId: record.take.takeId, cid, gatewayUrl: ipfs.gatewayUrl });
+  }
+
+  await tellTheMind(env, record);
+}
+
+/** Once per job. The pin step can be retried; the Mind must not be told twice. */
+async function tellTheMind(env, record) {
+  if (record.take?.digestedAt) return;
+  const sent = await relayFilmographyDigest(env, record).catch((error) => {
+    console.warn(`Filmography digest for ${record.take?.takeId} failed:`, error.message);
+    return false;
+  });
+  if (sent) {
+    record.take.digestedAt = Date.now();
+    await saveJob(env, record.mindId, record);
+    // On the durable record too, so the viewer can say "in the Mind's memory since …" long after
+    // the job log has expired.
+    await recordTakeDigested(env, record.mindId, record.filmId, record.take.takeId, record.take.digestedAt).catch(() => {});
+  }
+}
+
+async function recordTakeDigested(env, mindId, filmId, takeId, digestedAt) {
+  const record = await loadProduction(env, mindId, filmId);
+  const takes = record.takes.map((take) => (take.takeId === takeId ? { ...take, digestedAt } : take));
+  await env.MIND_CONNECTIONS.put(productionKey(mindId, filmId), JSON.stringify({ ...record, filmId, takes, updatedAt: Date.now() }));
+}
+
+/**
+ * Put a take that already exists into the Mind's memory — pinned, and told about.
+ *
+ * For footage shot before the filmography existed, and for a Mind whose memory of a take has
+ * been lost. Builds a job record from the durable take (the original job log is long gone) and
+ * hands it to the same `pin` step a fresh take goes through, so there is exactly one way a film
+ * reaches IPFS and the Mind. Sends the digest again even if one was sent before: the visitor
+ * pressed the button, and "remind the Mind" is a reasonable thing to mean by it.
+ */
+export async function rememberTake(env, mindId, { filmId, takeId, origin = null, logline = null }) {
+  const production = await loadProduction(env, mindId, filmId);
+  const take = production.takes.find((entry) => entry.takeId === takeId);
+  if (!take) throw Object.assign(new Error('take_not_found'), { status: 404 });
+  if (take.kind === 'screen-test') throw Object.assign(new Error('screen_tests_are_not_filmography'), { status: 400 });
+  if (take.status !== 'ready' || !take.r2Key) throw Object.assign(new Error('take_not_ready'), { status: 409 });
+
+  const record = {
+    jobId: `remember-${takeId}-${Date.now().toString(36)}`,
+    mindId,
+    filmId,
+    status: 'complete',
+    step: 'pin',
+    origin,
+    spec: logline ? { logline, beats: [] } : null,
+    castNames: [],
+    params: take.params ?? {},
+    script: take.script ?? null,
+    take: { ...take, digestedAt: null },
+    events: [],
+    attempts: 0,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+  await saveJob(env, mindId, record);
+  await enqueue(env, { mindId, jobId: record.jobId, step: 'pin' }, 0);
+  return { jobId: record.jobId, takeId, pinned: Boolean(take.ipfs?.cid) };
 }
 
 // ────────────────────────────────────────────────────────────────────────────── the consumer
@@ -536,7 +694,12 @@ export async function handleDirectorQueue(batch, env) {
       continue;
     }
     // Idempotency. A redelivered message for finished work must not re-submit and re-charge.
-    if (record.status === 'complete' || record.status === 'failed' || record.status === 'cancelled') {
+    //
+    // `pin` is the one step that runs AFTER the job is complete, on purpose (see `pin`), so it
+    // is the one step this guard has to let through. Its own work is idempotent by CID and by
+    // `digestedAt`, which is what makes that safe.
+    const settled = record.status === 'complete' || record.status === 'failed' || record.status === 'cancelled';
+    if (settled && step !== 'pin') {
       message.ack();
       continue;
     }
@@ -550,6 +713,7 @@ export async function handleDirectorQueue(batch, env) {
       else if (step === 'poll') await poll(env, record, logger);
       else if (step === 'assess') await assess(env, record, logger);
       else if (step === 'review') await review(env, record, logger);
+      else if (step === 'pin') await pin(env, record, logger);
       else console.warn(`Director job ${jobId}: unknown step "${step}"`);
 
       await logger.close();
@@ -560,6 +724,17 @@ export async function handleDirectorQueue(batch, env) {
         console.warn(`Director job ${jobId} step "${step}" failed, retrying:`, error.message);
         await logger.close();
         message.retry({ delaySeconds: Math.min(60, 5 * 2 ** message.attempts) });
+        continue;
+      }
+
+      // A pin that will not take is cosmetic: the film is in R2 and the job already finished.
+      // NEVER mark a ready take failed from here — tell the Mind without the CID and move on.
+      if (step === 'pin') {
+        console.warn(`Director job ${jobId}: pin gave up, telling the Mind without a CID:`, error.message);
+        logger.log('error', { message: `IPFS pin failed: ${error.message}`, cosmetic: true });
+        await tellTheMind(env, record);
+        await logger.close();
+        message.ack();
         continue;
       }
 

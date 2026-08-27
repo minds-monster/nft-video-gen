@@ -594,7 +594,7 @@ const BeatCard = ({ index, frame, beatText, reasoning, shotPlan, status, aspect,
   return <PlaceholderCard beatIndex={index} beatText={beatText} reasoning={reasoning} shotPlan={shotPlan} status={status} />;
 };
 
-const StoryboardPanel = ({ id, storyboarder, token, budget, status, tabs }) => {
+const StoryboardPanel = ({ id, storyboarder, token, budget, status, tabs, onOpenFilm }) => {
   const {
     frames,
     sketching,
@@ -693,7 +693,7 @@ const StoryboardPanel = ({ id, storyboarder, token, budget, status, tabs }) => {
                   <li key={film.filmId}>
                     <button
                       type="button"
-                      onClick={() => openFilm(token, film.filmId)}
+                      onClick={() => (onOpenFilm ?? openFilm)(token, film.filmId)}
                       className="flex w-full items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-left text-xs text-slate-300 transition-colors hover:border-purple-500/40 hover:bg-purple-500/5"
                     >
                       <span className="min-w-0 flex-1 truncate">{film.logline ?? 'Untitled film'}</span>

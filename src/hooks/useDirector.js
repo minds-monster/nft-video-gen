@@ -3,12 +3,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   approveDirectorTake,
   closeDirectorProduction,
+  getDirectorFilms,
   getDirectorJobStatus,
   getDirectorPlan,
   getDirectorProduction,
   assessFilm,
   runScreenTest,
   recordScreenTestVerdict,
+  rememberDirectorTake,
   saveDirectorBrief,
   startDirectorTake,
   streamDirectorJobEvents,
@@ -48,6 +50,7 @@ export function useDirector() {
   const [plan, setPlan] = useState(null);
   const [planning, setPlanning] = useState(false);
   const [production, setProduction] = useState(null);
+  const [films, setFilms] = useState([]);
   const [job, setJob] = useState(null);
   const [phase, setPhase] = useState(null);
   const [elapsedSeconds, setElapsed] = useState(0);
@@ -103,6 +106,34 @@ export function useDirector() {
       return null;
     }
   }, []);
+
+  /** Every production this Mind has, spec-free. Empty is the correct answer for a first visit. */
+  const loadFilms = useCallback(async (token) => {
+    if (!token) return [];
+    try {
+      const next = await getDirectorFilms(token);
+      setFilms(next.films ?? []);
+      return next.films ?? [];
+    } catch {
+      return [];
+    }
+  }, []);
+
+  /**
+   * Open a production by id alone — the way back in when the tab has no spec.
+   *
+   * Sets the context as well as the state, because `judge` and `settle` read the film they act on
+   * from contextRef rather than from props; a production merely loaded would play but not accept a
+   * verdict.
+   */
+  const openProduction = useCallback(
+    async ({ token, filmId }) => {
+      if (!token || !filmId) return null;
+      contextRef.current = { ...contextRef.current, token, filmId };
+      return loadProduction({ token, filmId });
+    },
+    [loadProduction],
+  );
 
   /**
    * The cheap fallback. Polls the job record until it settles or the clock runs out.
@@ -319,6 +350,30 @@ export function useDirector() {
     [follow, job?.jobId, loadProduction, plan?.params],
   );
 
+  /**
+   * Put a take into the Mind's memory: pinned to IPFS, told about in the Producer conversation.
+   * The work is queued, so the production is re-read a couple of times afterwards to pick up
+   * the CID and the "remembered" mark as they land.
+   */
+  const remember = useCallback(
+    async ({ takeId }) => {
+      const { token, filmId } = contextRef.current;
+      if (!token || !filmId || !takeId) return null;
+      setError(null);
+      try {
+        const result = await rememberDirectorTake({ filmId, takeId }, token);
+        for (const delay of [6000, 15000, 30000]) {
+          setTimeout(() => loadProduction({ token, filmId }), delay);
+        }
+        return result;
+      } catch (failure) {
+        setError(failure.message);
+        return null;
+      }
+    },
+    [loadProduction],
+  );
+
   const settle = useCallback(
     async ({ token, filmId, reason = 'delivered' }) => {
       try {
@@ -352,6 +407,9 @@ export function useDirector() {
     setAllowance,
     loadPlan,
     loadProduction,
+    films,
+    loadFilms,
+    openProduction,
     shoot,
     assess,
     thinking,
@@ -363,6 +421,7 @@ export function useDirector() {
     brief: plan?.brief ?? null,
     runTest,
     judge,
+    remember,
     decide,
     settle,
     // Split by what they are for, because the timeline shows them in different places: a Screen

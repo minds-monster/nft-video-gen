@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Download, FileText } from 'lucide-react';
+import { ArrowLeft, Brain, Copy, Download, FileText, Link2, Loader2 } from 'lucide-react';
 
 import { cn } from '../../../lib/cn';
 import { ANSWER_TONE } from '../../../lib/takeTone';
@@ -22,23 +22,53 @@ const duration = (seconds) => {
   return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
 };
 
-const TakeView = ({ take, index, onJudge, onClear }) => {
+const TakeView = ({ take, index, onJudge, onRemember, onClear }) => {
   const [showScript, setShowScript] = useState(false);
+  // "Remembering" is queued server-side; this is only the button's own state while the CID and
+  // the remembered mark make their way back onto the take.
+  const [remembering, setRemembering] = useState(false);
+  // Playback prefers our copy (fast, signed, close). The IPFS gateway is the fallback for when
+  // the signed link has expired or the bucket is gone — which is exactly what the CID is for.
+  const [useGateway, setUseGateway] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const isTest = take.kind === 'screen-test';
   const answered = take.verdict?.answer;
   const title = isTest ? (take.question ?? 'An unnamed test') : `Take ${index}`;
+  const cid = take.ipfs?.cid ?? null;
+  const gatewayUrl = take.ipfs?.gatewayUrl ?? (cid ? `https://gateway.pinata.cloud/ipfs/${cid}` : null);
+  const src = useGateway && gatewayUrl ? gatewayUrl : take.url;
+
+  const canRemember = !isTest && take.status === 'ready' && Boolean(onRemember);
+  const remembered = take.digestedAt ? new Date(take.digestedAt) : null;
+  const remember = async () => {
+    setRemembering(true);
+    await onRemember?.({ takeId: take.takeId });
+    // Long enough for the queue to pin and tell the Mind; the hook re-reads the take meanwhile.
+    setTimeout(() => setRemembering(false), 20000);
+  };
+
+  const copyCid = () => {
+    navigator.clipboard?.writeText(`ipfs://${cid}`).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }).catch(() => {});
+  };
 
   return (
     <>
       <div className="relative mx-auto flex min-h-0 w-full max-w-full flex-1 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-black/40">
         <div className="relative max-h-full max-w-full" style={{ aspectRatio: '16/9' }}>
-          {take.url ? (
+          {src ? (
             <video
-              src={take.url}
+              key={src}
+              src={src}
               // Same reason as the NFT branch: the autoPlay attribute alone is unreliable, so
               // kick playback off once the media is actually ready.
               onCanPlay={(event) => event.currentTarget.play().catch(() => {})}
+              onError={() => {
+                if (!useGateway && gatewayUrl) setUseGateway(true);
+              }}
               controls
               autoPlay
               loop
@@ -143,6 +173,68 @@ const TakeView = ({ take, index, onJudge, onClear }) => {
             <span className="font-mono text-[9px] text-slate-700">task {take.taskId}</span>
           )}
         </div>
+
+        {/* The Mind's memory of this take. A take shot before the filmography existed has no
+            digest and no CID; this is how it gets both — and how a Mind that has lost the
+            thread is reminded. */}
+        {canRemember && (
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={remember}
+              disabled={remembering}
+              className={cn(
+                'flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold transition-colors',
+                remembered
+                  ? 'bg-black/40 text-slate-400 hover:text-slate-200'
+                  : 'bg-purple-500/15 text-purple-300 hover:bg-purple-500/25 hover:text-purple-200',
+                remembering && 'opacity-60',
+              )}
+            >
+              {remembering ? <Loader2 className="h-3 w-3 animate-spin" /> : <Brain className="h-3 w-3" />}
+              {remembering
+                ? cid ? 'Telling your Mind…' : 'Pinning and telling your Mind…'
+                : remembered ? 'Remind your Mind' : 'Put this in your Mind’s memory'}
+            </button>
+            {remembered && !remembering && (
+              <span className="font-mono text-[9px] uppercase tracking-wider text-emerald-400/80">
+                In your Mind’s memory since {remembered.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* The permanent address. Shown as the Mind was given it — ipfs://<cid> — because this is
+            the one line that outlives our links, our bucket and this site; the gateway link is
+            merely the way a browser reads it today. */}
+        {cid && (
+          <div className="mt-2 flex flex-wrap items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-2 py-1.5">
+            <Link2 className="h-3 w-3 shrink-0 text-emerald-400" />
+            <span className="font-mono text-[9px] uppercase tracking-widest text-emerald-400/80">Permanent copy</span>
+            <a
+              href={gatewayUrl}
+              target="_blank"
+              rel="noreferrer"
+              title={gatewayUrl}
+              className="min-w-0 flex-1 truncate font-mono text-[10px] text-slate-300 hover:text-white"
+            >
+              ipfs://{cid}
+            </a>
+            <button
+              type="button"
+              onClick={copyCid}
+              className="flex items-center gap-1 rounded-full bg-black/40 px-2 py-0.5 text-[9px] uppercase tracking-wider text-slate-500 transition-colors hover:text-slate-300"
+            >
+              <Copy className="h-3 w-3" />
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+            {take.sha256 && (
+              <span className="w-full truncate font-mono text-[9px] text-slate-700" title={take.sha256}>
+                sha256 {take.sha256}
+              </span>
+            )}
+          </div>
+        )}
 
         {showScript && (
           <pre className="scrollbar-subtle mt-2 max-h-48 overflow-auto whitespace-pre-wrap rounded-xl border border-white/10 bg-black/40 p-2 font-mono text-[10px] leading-relaxed text-slate-400">

@@ -91,6 +91,27 @@ const AppShell = () => {
     loadFilms(session.token);
   }, [session?.token, loadFilms]);
 
+  // The Director's productions come back the same way — and the newest one that has footage is
+  // opened outright, because a returning visitor's dailies were never lost, only unaddressed:
+  // filmId is a hash of the screenplay and the screenplay lives nowhere but this tab.
+  //
+  // Only when the tab has no spec of its own. The storyboard note above is the reason: pulling
+  // the Mind's LAST film into a tab that is mid-way through a different one is the exact
+  // leak this app already refused once.
+  const { loadFilms: loadProductions, openProduction } = director;
+  useEffect(() => {
+    if (!session?.token || screenwriter.spec) return;
+    let cancelled = false;
+    loadProductions(session.token).then((films) => {
+      if (cancelled) return;
+      const newest = films.find((film) => film.takeCount > 0);
+      if (newest) openProduction({ token: session.token, filmId: newest.filmId });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.token, screenwriter.spec, loadProductions, openProduction]);
+
   // Publish how far this visitor has actually got, for the Producer briefing.
   //
   // Connecting a Mind is optional and frequently late: a visitor can arrive holding a cast,

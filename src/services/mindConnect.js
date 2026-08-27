@@ -6,13 +6,18 @@ const SESSION_KEY = 'mindSession';
 
 export const getStoredSession = () => {
   try {
-    const raw = sessionStorage.getItem(SESSION_KEY);
+    // localStorage, not sessionStorage: the token is HMAC-signed and valid for 7 days
+    // (worker/connect.js), so a connection should survive a closed tab the way the visitor's
+    // guestId already does. A session minted before this change is promoted once.
+    const raw = localStorage.getItem(SESSION_KEY) ?? sessionStorage.getItem(SESSION_KEY);
     if (!raw) return null;
     const session = JSON.parse(raw);
     if (!session.token || !session.expiresAt || session.expiresAt < Date.now()) {
+      localStorage.removeItem(SESSION_KEY);
       sessionStorage.removeItem(SESSION_KEY);
       return null;
     }
+    if (!localStorage.getItem(SESSION_KEY)) storeSession(session);
     return session;
   } catch {
     return null;
@@ -20,10 +25,11 @@ export const getStoredSession = () => {
 };
 
 export const storeSession = (session) => {
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
 };
 
 export const clearSession = () => {
+  localStorage.removeItem(SESSION_KEY);
   sessionStorage.removeItem(SESSION_KEY);
 };
 

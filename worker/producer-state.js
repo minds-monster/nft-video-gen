@@ -147,7 +147,23 @@ export async function collectProductionState(env, mindId) {
   const screenTests = shots.filter((shot) => shot.kind === 'screen-test');
   const finalTakes = shots.filter((shot) => shot.kind !== 'screen-test');
 
+  // The filmography, as far as the greeting needs it: the Mind's own record is the digests in
+  // its conversation, this is the "welcome back, here is what happened" bundle its own design
+  // asked for — one summary on reconnect, never a firehose of backdated notices. Newest three
+  // finished takes, with the permanent address where one exists.
+  const filmography = finalTakes
+    .filter((take) => take.status === 'ready')
+    .slice(-3)
+    .map((take) => ({
+      takeId: take.takeId,
+      filmId: newest?.filmId ?? null,
+      costUsd: take.costUsd ?? null,
+      settledAt: take.settledAt ?? null,
+      cid: take.ipfs?.cid ?? null,
+    }));
+
   return {
+    filmography,
     isReturning: num(sessionCount?.count) > 1,
     sessionCount: num(sessionCount?.count),
     hasCast: (snapshot?.castCount ?? 0) > 0,
@@ -251,6 +267,16 @@ export function renderStateBlock(state) {
       lines.push(
         `${state.screenTestCount - state.screenTestsAnswered} screen test(s) are shot but unjudged — ` +
           'money spent and nothing learned yet, which is worth nudging.',
+      );
+    }
+    for (const take of state.filmography ?? []) {
+      const when = take.settledAt ? new Date(take.settledAt).toISOString().slice(0, 10) : null;
+      lines.push(
+        `Filmography: take ${take.takeId}${take.filmId ? ` of film ${take.filmId}` : ''}` +
+          (take.costUsd != null ? `, ${money(take.costUsd)}` : '') +
+          (when ? `, delivered ${when}` : '') +
+          (take.cid ? `, permanent copy at ipfs://${take.cid}` : '') +
+          '. Your [Filmography] messages in this conversation are your record of it.',
       );
     }
   } else if (state.budgetSet) {

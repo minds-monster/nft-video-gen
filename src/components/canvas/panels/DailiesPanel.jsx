@@ -2,6 +2,7 @@ import { Clapperboard } from 'lucide-react';
 
 import CanvasPanel from './CanvasPanel';
 import TakeTile from './TakeTile';
+import RecallCard from './RecallCard';
 
 /**
  * The takes. Every render this production has paid for, in the order they were shot.
@@ -21,9 +22,17 @@ import TakeTile from './TakeTile';
 
 const money = (value) => (value == null ? null : `$${Number(value).toFixed(2)}`);
 
-const DailiesPanel = ({ id, director, status, tabs, activeTakeId, onPreviewTake }) => {
+const when = (ms) =>
+  ms ? new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : null;
+
+const DailiesPanel = ({ id, director, token, status, tabs, activeTakeId, onPreviewTake, recall, mindName }) => {
   const takes = director?.finalTakes ?? [];
   const envelope = director?.envelope ?? null;
+  // Productions with footage that this tab is not looking at. The list needs no spec, which is
+  // the whole point: filmId is a hash of a screenplay this tab may never have seen.
+  const earlier = (director?.films ?? []).filter(
+    (film) => film.takeCount > 0 && film.filmId !== director?.production?.filmId,
+  );
 
   const header = (
     <div className="flex items-center gap-2">
@@ -51,6 +60,39 @@ const DailiesPanel = ({ id, director, status, tabs, activeTakeId, onPreviewTake 
               that produced it.
             </p>
           </div>
+
+          {/* Past productions — the same recovery the Storyboard offers, for the same reason: a
+              reload leaves the tab with no spec, and the footage a visitor paid for must not
+              need the screenplay regenerated (to a different hash) before it can be seen. */}
+          {earlier.length > 0 && token && (
+            <div className="mx-auto w-full max-w-sm text-left">
+              <p className="mb-2 text-center text-[10px] uppercase tracking-widest text-slate-600">
+                Your earlier productions
+              </p>
+              <ul className="space-y-1">
+                {earlier.map((film) => (
+                  <li key={film.filmId}>
+                    <button
+                      type="button"
+                      onClick={() => director?.openProduction?.({ token, filmId: film.filmId })}
+                      className="flex w-full items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-left text-xs text-slate-300 transition-colors hover:border-purple-500/40 hover:bg-purple-500/5"
+                    >
+                      <span className="min-w-0 flex-1 truncate">
+                        {film.logline ?? `Film ${film.filmId}`}
+                      </span>
+                      <span className="shrink-0 font-mono text-[10px] uppercase tracking-wider text-slate-600">
+                        {film.readyTakes} {film.readyTakes === 1 ? 'take' : 'takes'}
+                        {film.spentUsd ? ` · ${money(film.spentUsd)}` : ''}
+                        {when(film.lastTakeAt) ? ` · ${when(film.lastTakeAt)}` : ''}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {token && <RecallCard recall={recall} mindName={mindName} className="mx-auto w-full max-w-sm" />}
         </div>
       </CanvasPanel>
     );
@@ -67,6 +109,8 @@ const DailiesPanel = ({ id, director, status, tabs, activeTakeId, onPreviewTake 
       // rhythm as you tab between them.
       bodyClassName="grid grid-cols-3 content-start gap-3"
     >
+      {/* The memory check sits above the footage it is about, full width in the grid. */}
+      {token && <RecallCard recall={recall} mindName={mindName} className="col-span-3" />}
       {takes.map((take, index) => (
         <TakeTile
           key={take.takeId}

@@ -46,6 +46,7 @@ const MovieRenderPanel = ({
   take,
   takeIndex,
   onJudge,
+  onRemember,
   onAdd,
   onNext,
   onPrev,
@@ -117,7 +118,7 @@ const MovieRenderPanel = ({
       }
     >
       {take ? (
-        <TakeView take={take} index={takeIndex} onJudge={onJudge} onClear={onClear} />
+        <TakeView take={take} index={takeIndex} onJudge={onJudge} onRemember={onRemember} onClear={onClear} />
       ) : !candidate ? (
         <PreviewEmpty />
       ) : (
