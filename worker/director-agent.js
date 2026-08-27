@@ -24,15 +24,25 @@
 // paid reasoning tier here would be spending money to decide how to spend money.
 
 import { chat, jsonFrom } from './nvidia.js';
+import { priceUsd } from './minimax.js';
+import { MOTION_TEST } from './director-risks.js';
 import { DIRECTOR_BRIEF, REVIEW_BRIEF, REVISABLE_BLOCKS, REVISION_SCHEMA, SHOOTING_PLAN_SCHEMA } from './director-brief.js';
 
-/** The film, as the Director reads it. Deliberately compact — this call decides, it does not draw. */
-const filmSummary = (spec, brief) =>
+/** The film, as the Director reads it. Deliberately compact — this call decides, it does not draw.
+ *
+ * THE VISITOR'S PROMPT IS HERE VERBATIM, and it is the most important line. The spec is what the
+ * Screenwriter made of the prompt; the prompt is what the visitor is paying for. The gap between
+ * them — "literally transform" become "gives way to" — is where the Hollywood film was lost, and
+ * a Director that only ever read the spec had no way to see it. */
+const filmSummary = (spec, brief, prompt = null) =>
   [
+    prompt ? `THE VISITOR'S PROMPT, VERBATIM: "${String(prompt).trim()}"` : null,
+    prompt ? '' : null,
     `Title: ${spec.title ?? 'untitled'}`,
     spec.logline ? `Logline: ${spec.logline}` : null,
     `Length: ${spec.duration}s at ${spec.resolution}, ${spec.ratio}`,
     `World: ${spec.world ?? '(none)'}`,
+    spec.staging ? `Staging: ${spec.staging}` : null,
     spec.continuity ? `Continuity: ${spec.continuity}` : 'Continuity: not stated.',
     spec.guard ? `Guard: ${spec.guard}` : 'Guard: not stated.',
     `Camera: ${spec.camera ?? '(none)'}`,
@@ -40,13 +50,84 @@ const filmSummary = (spec, brief) =>
     'Beats, in order:',
     ...(spec.beats ?? []).map((beat, index) => `  ${index + 1}. ${beat}`),
     '',
+    spec.notes ? `The Screenwriter's own notes: ${spec.notes}` : null,
     brief?.intent ? `What the visitor said they want: ${brief.intent}` : null,
     brief?.mustHold?.length
       ? `They specifically asked that these survive into the render: ${brief.mustHold.join('; ')}.`
       : null,
   ]
-    .filter(Boolean)
+    .filter((line) => line !== null)
     .join('\n');
+
+/** A demand's id as the model wrote it, or as its question implies. */
+const slugOf = (demand) =>
+  String(demand?.id || demand?.question || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40);
+
+/**
+ * The model's demands, made safe to spend on.
+ *
+ * Same discipline as the register filter below, applied to what the model is ALLOWED to invent:
+ * a demand with no rehearsal text renders nothing worth judging; a beat the film does not have is
+ * a hallucination; a beat the register already rehearses is a duplicate charge. And the price is
+ * never the model's — it is computed from the parameters, like every other charge in this file.
+ */
+const demandsOf = (data, spec, risks) => {
+  const beatCount = spec?.beats?.length ?? 0;
+  const referencePlan = spec?.referencePlan ?? [];
+  const rehearsedByRegister = new Set(
+    risks.flatMap((risk) => (risk.test?.focus === 'rehearsal' ? risk.test.beats ?? [] : [])),
+  );
+  const kept = [];
+  const dropped = [];
+  const seen = new Set();
+
+  for (const raw of data?.demands ?? []) {
+    const id = slugOf(raw);
+    const question = String(raw?.question ?? '').trim();
+    const direction = String(raw?.direction ?? '').trim();
+    const beats = (Array.isArray(raw?.beats) ? raw.beats : []).filter(Number.isInteger);
+    const subjects = (Array.isArray(raw?.subjects) ? raw.subjects : []).filter(Number.isInteger);
+
+    const reason = !id || !question
+      ? 'unnamed'
+      : !direction
+        ? 'no rehearsal text'
+        : beats.some((n) => n < 1 || n > beatCount)
+          ? 'names a beat the film does not have'
+          : beats.some((n) => rehearsedByRegister.has(n))
+            ? 'the register already rehearses that beat'
+            : seen.has(id)
+              ? 'duplicate'
+              : null;
+    if (reason) {
+      dropped.push({ id: id || '(unnamed)', reason });
+      continue;
+    }
+    seen.add(id);
+
+    const refKeys = subjects
+      .map((n) => referencePlan[n - 1]?.key)
+      .filter(Boolean);
+    kept.push({
+      id,
+      question,
+      why: String(raw?.why ?? '').trim(),
+      beats,
+      subjects,
+      direction,
+      onHeld: String(raw?.onHeld ?? '').trim() || null,
+      onFailed: String(raw?.onFailed ?? '').trim() || null,
+      refKeys: refKeys.length ? refKeys.slice(0, 3) : referencePlan.slice(0, 3).map((slot) => slot.key),
+      params: MOTION_TEST,
+      estUsd: priceUsd(MOTION_TEST) ?? 0,
+    });
+  }
+  return { demands: kept.slice(0, 4), droppedDemands: dropped };
+};
 
 /** The register, as text. `elevatedBy` is surfaced because it is the visitor's own words. */
 const registerText = (risks) =>
@@ -91,11 +172,12 @@ const call = async (env, { system, user, schema, name, signal, onReasoning }) =>
  * at $30 — and because a model told only "be sparing" will be sparing in a way that has no
  * relationship to what the visitor can actually afford.
  */
-export async function planShoot(env, { spec, risks, brief, finalUsd, remainingUsd, signal, onReasoning }) {
+export async function planShoot(env, { spec, risks, brief, prompt = null, finalUsd, remainingUsd, signal, onReasoning }) {
   const testable = risks.filter((risk) => risk.test);
+  const rehearsalUsd = priceUsd(MOTION_TEST) ?? 0;
 
   const user = [
-    filmSummary(spec, brief),
+    filmSummary(spec, brief, prompt),
     '',
     'THE MEASURED REGISTER FOR THIS FILM:',
     registerText(risks),
@@ -108,9 +190,11 @@ export async function planShoot(env, { spec, risks, brief, finalUsd, remainingUs
     testable.length
       ? `  Settling every testable hazard would cost $${testable.reduce((sum, r) => sum + r.estUsd, 0).toFixed(2)} on top.`
       : '  Nothing in the register is settled by rendering.',
+    `  A rehearsal of one beat — six seconds at 768P, inside the real film — costs $${rehearsalUsd.toFixed(2)}.`,
     '',
-    'Choose which hazards to buy answers to. Remember that the final render has to be affordable',
-    'after whatever you spend on tests.',
+    'Choose which register hazards to buy answers to, and name every DEMAND in the prompt that',
+    'needs a rehearsal before this film is shot. Remember that the final render has to be',
+    'affordable after whatever you spend on tests.',
   ].join('\n');
 
   const { data, usage } = await call(env, {
@@ -138,14 +222,17 @@ export async function planShoot(env, { spec, risks, brief, finalUsd, remainingUs
     (fix) => byId.has(fix.riskId) && REVISABLE_BLOCKS.includes(fix.block) && typeof fix.text === 'string' && fix.text.trim(),
   );
 
+  const { demands, droppedDemands } = demandsOf(data, spec, risks);
+
   return {
     reading: data?.reading ?? '',
     tests,
     fixes,
     skip: (data?.skip ?? []).filter((entry) => byId.has(entry.riskId)),
-    ownConcern: data?.ownConcern ?? null,
+    demands,
     plan: data?.plan ?? '',
     dropped: (data?.tests ?? []).filter((entry) => !byId.get(entry.riskId)?.test).map((entry) => entry.riskId),
+    droppedDemands,
     usage,
   };
 }
@@ -156,22 +243,32 @@ export async function planShoot(env, { spec, risks, brief, finalUsd, remainingUs
  * The verdict may have come from a person or from the frame judge. Which one is stated, because
  * they carry different weight: a visitor watched the whole clip; the judge saw eight stills.
  */
-export async function reviewTest(env, { spec, question, verdict, riskMeasured, signal, onReasoning }) {
+export async function reviewTest(
+  env,
+  { spec, question, verdict, riskMeasured, prompt = null, direction = null, priorVerdicts = [], signal, onReasoning },
+) {
   const user = [
-    filmSummary(spec, null),
+    filmSummary(spec, null, prompt),
     '',
     'THE TEST YOU ASKED FOR:',
     `  Question: ${question}`,
     riskMeasured ? `  Why it was worth asking: ${riskMeasured}` : null,
+    direction ? `  What the rehearsal was told to render: ${direction}` : null,
     '',
     'THE RESULT:',
     `  Answer: ${verdict.answer}`,
     verdict.note ? `  What was seen: ${verdict.note}` : null,
     `  Judged by: ${verdict.by === 'visitor' ? 'the visitor, who watched the whole clip' : 'the frame judge, which saw eight stills sampled evenly across it'}`,
+    priorVerdicts.length ? '' : null,
+    priorVerdicts.length ? 'EARLIER TESTS ON THIS FILM:' : null,
+    ...priorVerdicts.map(
+      (prior) => `  - "${prior.question}" → ${prior.answer}${prior.note ? ` (${prior.note})` : ''}`,
+    ),
     '',
-    'Decide what this means for the film, and whether one named block of the script should change.',
+    'Decide what this means for the film, whether one named block of the script should change,',
+    'and whether this question has to be asked again before the film is shot.',
   ]
-    .filter(Boolean)
+    .filter((line) => line !== null)
     .join('\n');
 
   const { data, usage } = await call(env, {
@@ -193,6 +290,8 @@ export async function reviewTest(env, { spec, question, verdict, riskMeasured, s
     finding: data?.finding ?? '',
     revision,
     readyToShoot: Boolean(data?.readyToShoot),
+    // A held test is settled by definition; a re-test only ever follows a failure or a doubt.
+    retest: verdict.answer !== 'held' && Boolean(data?.retest),
     suppressedRevision: verdict.answer === 'held' && Boolean(data?.revision),
     usage,
   };

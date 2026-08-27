@@ -122,6 +122,13 @@ const TakeView = ({ take, index, onJudge, onRemember, onClear }) => {
           </p>
         )}
 
+        {isTest && take.retest && (
+          <p className="mt-1 rounded-xl border border-amber-400/20 bg-amber-500/5 px-2 py-1.5 text-[10px] leading-relaxed text-amber-200/80">
+            The Director read this back and asked for the question to be run again against the
+            revised script.
+          </p>
+        )}
+
         {isTest && !answered && take.status === 'ready' && (
           <div className="mt-2">
             <p className="mb-1 font-mono text-[9px] uppercase tracking-widest text-slate-600">

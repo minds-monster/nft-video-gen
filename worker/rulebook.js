@@ -128,7 +128,15 @@ export const H3_RULES = `Hard rules. Each one cost a failed render to learn.
     silhouette survive at any framing; facial identity only survives when the head is a
     large part of the reference. So when a dossier reports framing that is not close on the
     head, say in the beat what the face must look like AND note in your notes that the piece
-    wants a head crop. Never assume a reference slot alone protects a face.`;
+    wants a head crop. Never assume a reference slot alone protects a face.
+
+12. TRANSFORMATIONS GET FAKED. Asked to make one thing physically become another, H3 begins
+    the change and then crossfades or superimposes the second thing over the first. Measured
+    on a sign whose letters were to inflate into a brain: the letters swelled, then a brain
+    faded in on top of them. If a beat says transform, morph, turn into, melt into or inflate
+    into, state the mechanism as a physical constraint — "the letters themselves are the
+    material that becomes the brain; nothing fades in, nothing is overlaid, no second object
+    appears" — AND rehearse that beat before paying for the film.`;
 
 /** Legal parameter ranges, so the Screenwriter cannot emit a request that 400s. */
 export const H3_LIMITS = `Parameters: duration is an integer from 4 to 15 seconds. Resolution

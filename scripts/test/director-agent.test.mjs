@@ -128,6 +128,91 @@ test('an invented skip is dropped too', async () => {
   assert.deepEqual((await planShoot(env, { spec: spec(), risks, finalUsd: 0.48, remainingUsd: 6 })).skip, []);
 });
 
+// -------------------------------------------------------------------------------- demands
+
+const demand = (over = {}) => ({
+  id: 'letters-become-brain',
+  question: 'Do the letters physically become the brain?',
+  why: 'the prompt says literally',
+  beats: [2],
+  subjects: [1],
+  direction: 'The letters are rubber that inflates and fuses into one mass, which folds into the ridges of a brain. Nothing fades in.',
+  onHeld: 'shoot the film',
+  onFailed: 'split the change across two beats',
+  ...over,
+});
+
+const brainSpec = () =>
+  spec({
+    beats: ['the camera closes on the letters', 'the letters inflate and become a brain'],
+    referencePlan: [{ key: 'sign', role: 'prop', crop: '' }],
+  });
+
+test('a demand is kept, priced from the parameters, and bound to its subjects\' references', async () => {
+  stub({ reading: 'x', tests: [], skip: [], fixes: [], demands: [demand()], plan: 'p' });
+  const result = await planShoot(env, { spec: brainSpec(), risks: [], finalUsd: 0.72, remainingUsd: 6 });
+  assert.equal(result.demands.length, 1);
+  const kept = result.demands[0];
+  assert.equal(kept.id, 'letters-become-brain');
+  assert.equal(kept.estUsd, 0.48, 'the price comes from MOTION_TEST, never from the model');
+  assert.deepEqual(kept.refKeys, ['sign'], '<Subject 1> resolves to the first reference slot');
+  assert.match(kept.direction, /rubber that inflates/);
+  assert.deepEqual(result.droppedDemands, []);
+});
+
+test('a demand with no rehearsal text is dropped and recorded — a question with nothing to render', async () => {
+  stub({ reading: 'x', tests: [], skip: [], fixes: [], demands: [demand({ direction: '' })], plan: 'p' });
+  const result = await planShoot(env, { spec: brainSpec(), risks: [], finalUsd: 0.72, remainingUsd: 6 });
+  assert.deepEqual(result.demands, []);
+  assert.equal(result.droppedDemands[0].reason, 'no rehearsal text');
+});
+
+test('a demand naming a beat the film does not have is a hallucination', async () => {
+  stub({ reading: 'x', tests: [], skip: [], fixes: [], demands: [demand({ beats: [7] })], plan: 'p' });
+  const result = await planShoot(env, { spec: brainSpec(), risks: [], finalUsd: 0.72, remainingUsd: 6 });
+  assert.deepEqual(result.demands, []);
+  assert.match(result.droppedDemands[0].reason, /beat the film does not have/);
+});
+
+test('a demand on a beat the register already rehearses is a duplicate charge, and dropped', async () => {
+  const registerRehearsal = {
+    id: 'transformation-faked:2',
+    severity: 'hazard',
+    what: 'beat 2 asks one thing to become another',
+    measured: 'measured on the Hollywood sign',
+    estUsd: 0.48,
+    test: { question: 'q?', focus: 'rehearsal', beats: [2], refKeys: ['sign'] },
+  };
+  stub({ reading: 'x', tests: [], skip: [], fixes: [], demands: [demand()], plan: 'p' });
+  const result = await planShoot(env, { spec: brainSpec(), risks: [registerRehearsal], finalUsd: 0.72, remainingUsd: 6 });
+  assert.deepEqual(result.demands, []);
+  assert.match(result.droppedDemands[0].reason, /register already rehearses/);
+});
+
+test('demands are capped at four and a repeated id counts once', async () => {
+  const many = ['a', 'b', 'c', 'd', 'e', 'a'].map((id) => demand({ id, beats: [1] }));
+  stub({ reading: 'x', tests: [], skip: [], fixes: [], demands: many, plan: 'p' });
+  const result = await planShoot(env, { spec: brainSpec(), risks: [], finalUsd: 0.72, remainingUsd: 6 });
+  assert.deepEqual(result.demands.map((d) => d.id), ['a', 'b', 'c', 'd']);
+  assert.equal(result.droppedDemands.find((d) => d.id === 'a')?.reason, 'duplicate');
+});
+
+test('the Director is shown the visitor\'s prompt verbatim', async () => {
+  let sent = null;
+  globalThis.fetch = async (url, init) => {
+    sent = JSON.parse(init.body);
+    return new Response(
+      JSON.stringify({ choices: [{ message: { tool_calls: [{ function: { arguments: JSON.stringify({ reading: 'x', tests: [], skip: [], fixes: [], demands: [], plan: 'p' }) } }] } }] }),
+      { status: 200 },
+    );
+  };
+  const prompt = 'The Hollywood letters literally transform into an enormous white pulsating brain';
+  await planShoot(env, { spec: brainSpec(), risks: [], prompt, finalUsd: 0.72, remainingUsd: 6 });
+  const user = sent.messages.find((m) => m.role === 'user').content;
+  assert.match(user, /THE VISITOR'S PROMPT, VERBATIM: "The Hollywood letters literally transform/);
+  assert.match(sent.messages.find((m) => m.role === 'system').content, /THE PROMPT IS THE OTHER SOURCE OF HAZARDS/);
+});
+
 // -------------------------------------------------------------------------------- reviewing
 
 test('a test that HELD never yields a revision, even when the model proposes one', async () => {
@@ -164,6 +249,51 @@ test('a test that FAILED yields the revision, on a named block', async () => {
   assert.ok(REVISABLE_BLOCKS.includes(result.revision.block));
   assert.match(result.finding, /came back wrong/);
   assert.equal(result.readyToShoot, false);
+});
+
+test('a failed test can ask to be run again, and a held one never does', async () => {
+  stub({
+    settled: true,
+    finding: 'It dissolved.',
+    revision: { block: 'continuity', text: 'The letters are the material that becomes the brain; nothing fades in.', why: 're-mechanised' },
+    readyToShoot: false,
+    retest: true,
+  });
+  const failed = await reviewTest(env, {
+    spec: spec(),
+    question: 'Does beat 2 physically happen?',
+    verdict: { answer: 'failed', by: 'visitor' },
+    direction: 'The letters inflate...',
+    priorVerdicts: [{ question: 'Does the face survive?', answer: 'held', note: null }],
+  });
+  assert.equal(failed.retest, true);
+
+  stub({ settled: true, finding: 'Held.', revision: null, readyToShoot: true, retest: true });
+  const held = await reviewTest(env, { spec: spec(), question: 'q?', verdict: { answer: 'held', by: 'visitor' } });
+  assert.equal(held.retest, false, 'a held test is settled by definition');
+});
+
+test('the review is shown the rehearsal text and every earlier verdict on the film', async () => {
+  let sent = null;
+  globalThis.fetch = async (url, init) => {
+    sent = JSON.parse(init.body);
+    return new Response(
+      JSON.stringify({ choices: [{ message: { tool_calls: [{ function: { arguments: JSON.stringify({ settled: true, finding: 'f', revision: null, readyToShoot: true, retest: false }) } }] } }] }),
+      { status: 200 },
+    );
+  };
+  await reviewTest(env, {
+    spec: spec(),
+    question: 'q?',
+    verdict: { answer: 'failed', by: 'visitor' },
+    prompt: 'letters become a brain',
+    direction: 'The letters are rubber.',
+    priorVerdicts: [{ question: 'Does the face survive?', answer: 'held', note: 'clearly' }],
+  });
+  const user = sent.messages.find((m) => m.role === 'user').content;
+  assert.match(user, /What the rehearsal was told to render: The letters are rubber\./);
+  assert.match(user, /EARLIER TESTS ON THIS FILM:\n  - "Does the face survive\?" → held \(clearly\)/);
+  assert.match(user, /PROMPT, VERBATIM: "letters become a brain"/);
 });
 
 test('an unclear result can still revise, because ambiguity is a finding', async () => {

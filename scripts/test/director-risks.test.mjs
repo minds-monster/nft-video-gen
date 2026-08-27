@@ -324,6 +324,73 @@ test('every other fixture is shootable', () => {
   }
 });
 
+// ------------------------------------------------------------------------- rule 12
+
+test('a beat that asks one thing to become another is a rehearsal, six seconds long, in the real film', () => {
+  // The Hollywood-sign film. This is the hazard that went unnamed, and the reason rule 12 exists.
+  const result = assessRisks({
+    spec: spec({
+      beats: [
+        'the camera closes on the white letters of the sign',
+        'the letters inflate like balloons and morph into an enormous white pulsating brain',
+      ],
+    }),
+    cast: cast(),
+  });
+  const risk = result.risks.find((r) => r.id === 'transformation-faked:2');
+  assert.ok(risk, 'the beat is named by number');
+  assert.equal(risk.rule, 12);
+  assert.equal(risk.test.focus, 'rehearsal');
+  assert.deepEqual(risk.test.params, MOTION_TEST, 'a transformation needs two beats of time');
+  assert.deepEqual(risk.test.beats, [2]);
+  assert.match(risk.what, /morph into an enormous white pulsating brain/, 'and quotes the clause');
+  assert.match(risk.measured, /faded in on top/);
+  assert.equal(risk.estUsd, 0.48);
+});
+
+test('the visitor\'s own transformation verb fires the rule when the Screenwriter softened it', () => {
+  const result = assessRisks({
+    spec: spec({ beats: ['the letters swell and a brain is revealed'] }),
+    cast: cast(),
+    prompt: 'The Hollywood letters literally transform into an enormous white pulsating brain',
+  });
+  const risk = result.risks.find((r) => r.id === 'transformation-faked:prompt');
+  assert.ok(risk, 'the prompt is a source of hazards too');
+  assert.deepEqual(risk.test.beats, [], 'no single beat to name, so the rehearsal renders the opening beats');
+});
+
+test('a beat that already names the transformation is not ALSO raised from the prompt', () => {
+  const result = assessRisks({
+    spec: spec({ beats: ['the letters morph into a brain'] }),
+    cast: cast(),
+    prompt: 'the letters transform into a brain',
+  });
+  assert.deepEqual(
+    ids(result).filter((id) => id.startsWith('transformation-faked')),
+    ['transformation-faked:1'],
+  );
+});
+
+test('a camera move that "becomes" a view is not a transformation', () => {
+  // scripts/launch-prompts.mjs, verbatim: the hero's own closing beat.
+  const result = assessRisks({
+    spec: spec({ beats: ['the camera rises until the grid becomes a distant aerial view.'] }),
+    cast: cast(),
+  });
+  assert.deepEqual(ids(result).filter((id) => id.startsWith('transformation-faked')), []);
+});
+
+test('the fixtures raise no transformation, so rule 12 is not noise on ordinary films', () => {
+  for (const fixture of FIXTURES) {
+    const result = assessRisks({ spec: fixture.spec, cast: fixture.cast ?? [] });
+    assert.deepEqual(
+      ids(result).filter((id) => id.startsWith('transformation-faked')),
+      [],
+      `${fixture.id} has no transformation`,
+    );
+  }
+});
+
 test('every risk cites something measured, because a risk that cannot is judgement', () => {
   const result = assessRisks({
     spec: spec({ beats: ['the Lamborghini Revuelto stands still'], grade: 'No text anywhere.' }),

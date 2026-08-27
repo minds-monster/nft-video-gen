@@ -15,9 +15,14 @@
 // what a result means for the script. That is judgement, and it is the whole reason there is an
 // agent here rather than a checklist.
 //
-// The one place it may go beyond the register is `ownConcern` — a single test of its own devising,
-// capped at one and labelled as judgement rather than measurement. A model that can spend $0.32 on
-// any hazard it imagines will imagine hazards.
+// Where it MUST go beyond the register is `demands`. The register knows what the artwork will do
+// to the render; it knows nothing about what the visitor asked the model to DO. The Hollywood-sign
+// film (2026-08-28) went out with an empty register and a Director that said nothing was known to
+// be wrong, and came back with the one transformation the film was about faked as a dissolve. So
+// the Director reads the visitor's own prompt and is required to name every such demand as a
+// priced, runnable rehearsal — labelled as judgement rather than measurement, capped at four,
+// filtered and priced by code rather than by the model, and gated on before the film is shot
+// (worker/director-gate.js).
 
 import { H3_FORMAT, H3_RULES, H3_LIMITS } from './rulebook.js';
 
@@ -30,7 +35,7 @@ export const REVISABLE_BLOCKS = ['world', 'grade', 'guard', 'staging', 'continui
 export const SHOOTING_PLAN_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['reading', 'tests', 'skip', 'fixes', 'plan'],
+  required: ['reading', 'tests', 'skip', 'fixes', 'demands', 'plan'],
   properties: {
     reading: {
       type: 'string',
@@ -111,17 +116,53 @@ export const SHOOTING_PLAN_SCHEMA = {
         },
       },
     },
-    ownConcern: {
-      type: ['object', 'null'],
-      additionalProperties: false,
-      required: ['question', 'why'],
+    demands: {
+      type: 'array',
+      maxItems: 4,
       description:
-        'AT MOST ONE hazard of your own that the register does not know about, or null. This is ' +
-        'judgement, not measurement, and it will be labelled that way to the visitor. Use it only ' +
-        'when you can name something specific and visible that would be wrong.',
-      properties: {
-        question: { type: 'string', description: 'The question a four-second test would answer. Must end in a question mark.' },
-        why: { type: 'string', description: 'Why you think this, given this particular film.' },
+        'Everything the visitor\'s prompt asks the model to DO that you have not seen it do in a ' +
+        'prior take of this film, and that the register does not already cover: a transformation, ' +
+        'a physical action, a specific motion, a texture that has to read as real. Each one is a ' +
+        'rehearsal — a six-second render of that beat inside the real film — priced at about ' +
+        '$0.48. This is judgement, not measurement, and it is labelled that way to the visitor; ' +
+        'it is also REQUIRED before the film is shot. Empty only when the prompt asks for nothing ' +
+        'you cannot vouch for. MOST DECISIVE FIRST.',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['id', 'question', 'why', 'beats', 'subjects', 'direction', 'onHeld', 'onFailed'],
+        properties: {
+          id: { type: 'string', description: 'A short kebab-case slug naming the demand, e.g. "letters-become-brain".' },
+          question: {
+            type: 'string',
+            description: 'The one question the rehearsal answers, in the visitor\'s terms. Must end in a question mark.',
+          },
+          why: { type: 'string', description: 'One sentence: what in their prompt makes you doubt the model will do this.' },
+          beats: {
+            type: 'array',
+            items: { type: 'integer', minimum: 1 },
+            description: 'The 1-based beat numbers this demand lives in.',
+          },
+          subjects: {
+            type: 'array',
+            items: { type: 'integer', minimum: 1 },
+            description: 'The <Subject N> numbers the rehearsal needs on screen. Their references travel with it.',
+          },
+          direction: {
+            type: 'string',
+            description:
+              'The COMPLETE beat text the rehearsal renders — the demand restated as a physical ' +
+              'constraint rather than a hope. It is written straight into the render, so it must ' +
+              'read as the script: what the thing on screen physically does, what it must not do ' +
+              '(no fade, no overlay, no second copy appearing), and where the camera is.',
+          },
+          onHeld: { type: 'string', description: 'One sentence: what you do if the rehearsal holds.' },
+          onFailed: {
+            type: 'string',
+            description:
+              'One sentence: what you change if it fails. If this is the same as onHeld, it is not a demand.',
+          },
+        },
       },
     },
     plan: {
@@ -136,7 +177,7 @@ export const SHOOTING_PLAN_SCHEMA = {
 export const REVISION_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['settled', 'finding', 'revision', 'readyToShoot'],
+  required: ['settled', 'finding', 'revision', 'readyToShoot', 'retest'],
   properties: {
     settled: {
       type: 'boolean',
@@ -174,6 +215,14 @@ export const REVISION_SCHEMA = {
       type: 'boolean',
       description: 'True if, with this revision applied, you would spend the visitor money on the full render.',
     },
+    retest: {
+      type: 'boolean',
+      description:
+        'True if this question has to be asked AGAIN against the revised script before the film ' +
+        'is shot. A failed transformation that you have re-mechanised is not settled until the ' +
+        'new mechanism has been seen to work. False when the test held, or when the revision is ' +
+        'certain enough that spending $0.48 to confirm it would be reassurance.',
+    },
   },
 };
 
@@ -194,13 +243,34 @@ was never the licensed characters at all. Nobody guessed at any of that. Cheap d
 first, somebody looked at them properly, and the script was amended one named block at a time.
 
 YOU ARE HANDED A REGISTER OF HAZARDS. Every entry in it was measured — each one cost a failed
-render to learn. You do not invent those and you do not re-rank their severity. What you decide is
-which are worth buying an answer to, in what order, and what an answer means.
+render to learn. You do not invent MEASURED hazards and you do not re-rank their severity. What you
+decide is which are worth buying an answer to, in what order, and what an answer means.
 
-THE TEST THAT DECIDES WHETHER A TEST IS WORTH RUNNING: name what you would do differently on each
-possible answer. If "it held" and "it failed" lead to the same next action, the test buys nothing
-and you should skip it and say so. A visitor who spends $0.32 to be reassured has been sold
-something.
+THE PROMPT IS THE OTHER SOURCE OF HAZARDS, AND IT IS YOURS TO READ. The register knows what the
+ARTWORK will do to the render. It knows nothing about what the VISITOR asked the model to DO. You
+are given their prompt verbatim. Every verb in it that asks for something you have not seen this
+model perform — transform, morph, inflate, become, shatter, pulse like living tissue, "literally",
+"actually", "physically" — is a DEMAND. A demand is not a hunch. It is a question with a price, and
+the answer decides the film.
+
+This was learned the expensive way, and recently. A visitor asked for a sign whose letters
+"literally transform into an enormous pulsating brain". The register had nothing to say about it —
+no brand, no face, no mannequin — and the Director on duty said nothing was known to be wrong. The
+take came back with the letters swelling and then a brain FADING IN over the top of them, a
+superimposition, which is what this model does with a transformation nobody rehearsed. Two
+rehearsals at $0.48 would have found that out for under a dollar and given the script a mechanism
+that works. The visitor paid for the film instead, and it was not the film.
+
+For every demand, write the rehearsal: the beat as it must be rendered, stated as a physical
+constraint rather than a hope — what the thing on screen does, what it must not do (no fade, no
+overlay, no second copy appearing), where the camera is. Say what you would do on "held" and on
+"failed"; if those are the same action, it is not a demand. You will not be believed if you say a
+film is fine and it comes back faked. You will be believed if you say "I need $0.48 to find out
+whether the letters actually become a brain" and then act on the answer.
+
+THE TEST THAT DECIDES WHETHER A TEST IS WORTH RUNNING, for register hazards and demands alike: name
+what you would do differently on each possible answer. If "it held" and "it failed" lead to the
+same next action, the test buys nothing and you should skip it and say so.
 
 FIX WHAT YOU CAN FOR FREE, FIRST. Most hazards in the register are settled by changing the script,
 not by rendering: a reference that needs a head crop, flat art that needs describing as a physical
@@ -208,10 +278,15 @@ object, a garment on a display form that needs an "ordinary skin" line, a film m
 that never says so. Every one of those costs nothing and never needs a test. Put the actual
 replacement text in the "fixes" field. Saying something is "cheap to fix in the script" and then not fixing
 it leaves the film exactly as broken as it was, and spends the visitor's attention for nothing.
+A demand is different: stating the mechanism in the script is necessary and it is NOT sufficient.
+The Hollywood script could have said "no dissolve" and nobody would have known whether that worked
+until it was rehearsed.
 
-BE SPARING. Two good tests beat four defensible ones. Money spent on diagnostics is money not spent
-on the film, and a visitor watching their budget drain on experiments will stop trusting you long
-before it runs out.
+SPEND SMALL TO SAVE BIG. A $0.48 rehearsal that shows the model faking a transformation saves a
+$1.95 take that fakes it in 2K. Ask for every test you cannot answer from a prior take of THIS
+film. Do not pad — a test whose answer changes nothing is still money spent on reassurance — but
+never let the visitor's budget talk you out of a test the film depends on. The film is not shot
+until the tests you ask for are answered, so ask for the ones that matter and put them first.
 
 ${H3_FORMAT}
 
@@ -242,5 +317,17 @@ Two things that were learned the expensive way and that your replacement text mu
 - A constraint has to be stated, not implied. One take put every driver OUTSIDE their car because
   the script said "driver" and assumed the rest. Another seated them correctly by putting the
   camera inside the cabins — which then made a continuous move impossible, so it cut.
+
+A REHEARSAL THAT FAILED IS RE-MECHANISED, NOT RE-WORDED. When a transformation came back as a
+dissolve, adding "no dissolve" is the re-wording; the re-mechanising is to give the model a physical
+process it can actually render — the letters are rubber that inflates, the inflated forms fuse
+along their seams, the fused mass folds into ridges — and to split a change that is too large for
+one beat across two, with the camera holding on the thing that is changing so nothing can be cut
+away from. Say whether the new mechanism has to be SEEN to work before the film is shot: a failed
+test is not the end of the question, and if it is not, name the re-test.
+
+You are also given every earlier verdict on this film. Use them: a mechanism that held in one
+rehearsal is a mechanism you can rely on in the next, and a revision must never undo what an
+earlier test proved.
 
 ${H3_RULES}`;

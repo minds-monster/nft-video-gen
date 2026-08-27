@@ -307,7 +307,12 @@ export const useProductionPipeline = ({ composer, screenwriter, storyboarder, di
     const takes = director?.takes ?? [];
     const shooting = Boolean(director?.running);
     const directorPlan = director?.plan ?? null;
-    const readyToShoot = Boolean(spec?.beats?.length && token && directorPlan?.ready);
+    // AND the gate: read by the Director, every asked test answered (worker/director-gate.js).
+    // `ready` alone is legality; a legal request for a film nobody rehearsed is what the last
+    // two films were.
+    const gate = directorPlan?.gate ?? null;
+    const owed = gate?.outstanding?.length ?? 0;
+    const readyToShoot = Boolean(spec?.beats?.length && token && directorPlan?.ready && gate?.cleared);
     // Everything the free read needs, and nothing more. It wants the screenplay and a Mind —
     // deliberately NOT `writtenCast`, and deliberately not a storyboard.
     const canRead = Boolean(
@@ -345,9 +350,13 @@ export const useProductionPipeline = ({ composer, screenwriter, storyboarder, di
             ? `${takes.length} take${takes.length === 1 ? '' : 's'} shot`
             : directorPlan?.blocking?.length
               ? 'MiniMax would reject this as written'
-              : directorPlan
-                ? `~$${(directorPlan.estimate?.finalUsd ?? 0).toFixed(2)} a take`
-                : 'the Director shoots the film',
+              : owed
+                ? `${owed} screen test${owed === 1 ? '' : 's'} the Director asked for`
+                : gate?.unread && directorPlan
+                  ? 'not yet read by the Director'
+                  : directorPlan
+                    ? `~$${(directorPlan.estimate?.finalUsd ?? 0).toFixed(2)} a take`
+                    : 'the Director shoots the film',
       short: shooting
         ? 'rendering'
         : director?.awaitingApproval
@@ -356,7 +365,9 @@ export const useProductionPipeline = ({ composer, screenwriter, storyboarder, di
             ? `${takes.length} take${takes.length === 1 ? '' : 's'}`
             : readyToShoot
               ? 'ready'
-              : null,
+              : owed
+                ? 'tests owed'
+                : null,
       elapsed: shooting ? (director?.elapsedSeconds ?? 0) : null,
       error: director?.error ?? null,
       // THE RUN'S PRIMARY CTA, MOVED HERE FROM BLOCK — and it is the FREE half of the Director's
@@ -377,17 +388,26 @@ export const useProductionPipeline = ({ composer, screenwriter, storyboarder, di
       // for the entire casting and writing phase. A permanently-dead button at the head of the
       // bar teaches people the bar is not worth reading. Before the spec exists this is a plain
       // chip like any other idle step, which is what Block did correctly for a year.
+      //
+      // AND THE SAME RULE FOR THE TESTS. Once the Director has read the film and asked for
+      // rehearsals, the bar names them and their price and points at the panel; it does not
+      // spend on them itself, for exactly the reason above. A plan that exists but has not been
+      // READ (priced only) still gets the free read as its CTA — pricing is not reading.
       action:
         shooting || director?.awaitingApproval || takes.length || !spec?.beats?.length
           ? null
-          : directorPlan
+          : directorPlan && !gate?.unread
             ? {
-                label: 'Open the Director',
+                label: owed
+                  ? `Run ${owed} test${owed === 1 ? '' : 's'} · $${(gate?.outstandingUsd ?? 0).toFixed(2)}`
+                  : 'Open the Director',
                 disabled: false,
                 reason: null,
                 hint: directorPlan.blocking?.length
                   ? 'the Director flagged something first'
-                  : `~$${(directorPlan.estimate?.finalUsd ?? 0).toFixed(2)} a take`,
+                  : owed
+                    ? 'the Director asked for these before the film is shot'
+                    : `~$${(directorPlan.estimate?.finalUsd ?? 0).toFixed(2)} a take`,
                 // The bar owns panel focus, not this hook — `focusPanel` asks for it rather than
                 // reaching for a callback the pipeline has no business holding.
                 focusPanel: true,

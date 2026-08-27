@@ -59,6 +59,31 @@ const IDENTIFIER_PATTERNS = [
   { pattern: /\btoken\s*#?\d+\b/gi, what: 'a token id' },
 ];
 
+/**
+ * Rule 12. The verbs that ask one thing to physically become another.
+ *
+ * Deliberately NOT bare "become": scripts/launch-prompts.mjs legitimately says the shot "becomes
+ * a distant aerial view", which is a camera move, not a transformation. Softer phrasings the
+ * regex misses are the Director's job — it reads the visitor's prompt and names them as demands
+ * (worker/director-brief.js). This catches the unambiguous ones without a model in the loop, so
+ * a known failure never depends on a model noticing it.
+ */
+export const TRANSFORMATION_VERBS =
+  /\b(transforms?|transforming|morphs?|morphing|mutates?|mutating|metamorphos\w*|turn(?:s|ing)? into|melts? into|melting into|inflates? into|inflating into|reshapes? (?:itself |themselves )?into|dissolves? into|dissolving into)\b/i;
+
+/** The clause around a transformation verb, so the hazard quotes what was actually written. */
+const transformationClause = (text) => {
+  const source = String(text ?? '');
+  const match = TRANSFORMATION_VERBS.exec(source);
+  if (!match) return null;
+  const start = Math.max(0, match.index - 60);
+  const end = Math.min(source.length, match.index + match[0].length + 60);
+  let clause = source.slice(start, end).trim();
+  if (start > 0) clause = `…${clause.replace(/^\S*\s/, '')}`;
+  if (end < source.length) clause = `${clause.replace(/\s\S*$/, '')}…`;
+  return clause;
+};
+
 const uniq = (values) => [...new Set(values.filter(Boolean))];
 
 /** Words, lowercased, in order. Numbers and punctuation are separators. */
@@ -241,7 +266,7 @@ const elevatedBy = (risk, mustHold = []) => {
  * be asked to spend in — and because the top of the list is what the Director will act on if it
  * only gets to act once.
  */
-export const assessRisks = ({ spec, cast = [], preflight = null, mustHold = [] } = {}) => {
+export const assessRisks = ({ spec, cast = [], preflight = null, mustHold = [], prompt = null, intent = null } = {}) => {
   const risks = [];
   const prose = proseOf(spec);
   const referencePlan = spec?.referencePlan ?? [];
@@ -350,6 +375,67 @@ export const assessRisks = ({ spec, cast = [], preflight = null, mustHold = [] }
         focus: 'continuity',
       },
     });
+  }
+
+  // ── Rule 12. TRANSFORMATIONS GET FAKED. ────────────────────────────────────────────────────
+  //
+  // The lesson of the Hollywood-sign film (2026-08-28): the letters were to inflate and morph
+  // into a brain, the letters swelled, and then a brain FADED IN over them. Nobody had rehearsed
+  // the one thing the film was about. This is the first hazard in the register that comes from
+  // what the visitor ASKED FOR rather than from the artwork, and it is the reason the test it
+  // proposes is a rehearsal of the real beat rather than a stripped studio shot.
+  //
+  // Beat indices are 1-based here and everywhere a test names a beat, matching `intentTrace`.
+  const TRANSFORMATION_MEASURED =
+    'Measured on a sign whose letters were to inflate and morph into an enormous brain: the ' +
+    'letters swelled, then a brain faded in on top of them as a superimposition. H3 begins a ' +
+    'transformation and then cheats the rest with a dissolve unless the mechanism is stated ' +
+    'as a physical constraint AND the beat is rehearsed first.';
+  const transformationRefKeys = referencePlan.slice(0, 3).map((slot) => slot.key);
+  let transformationFound = false;
+  beats.forEach((beat, index) => {
+    const clause = transformationClause(beat);
+    if (!clause) return;
+    transformationFound = true;
+    add({
+      id: `transformation-faked:${index + 1}`,
+      rule: 12,
+      severity: 'hazard',
+      what: `Beat ${index + 1} asks one thing to become another ("${clause}"). H3 fakes this with a dissolve unless it is rehearsed and constrained.`,
+      evidence: { beat: index + 1, clause },
+      measured: TRANSFORMATION_MEASURED,
+      fix: 'rewrite-then-test',
+      test: {
+        question: `Does the change in beat ${index + 1} physically happen on screen, or does the second thing fade in over the first?`,
+        params: MOTION_TEST,
+        refKeys: transformationRefKeys,
+        focus: 'rehearsal',
+        beats: [index + 1],
+      },
+    });
+  });
+  // The visitor's own words, when the Screenwriter softened them. "Literally transform" that
+  // became "gives way to" in the beats is still a transformation the visitor is paying for.
+  if (!transformationFound) {
+    const asked = transformationClause(prompt) ?? transformationClause(intent);
+    if (asked) {
+      add({
+        id: 'transformation-faked:prompt',
+        rule: 12,
+        severity: 'hazard',
+        what: `The visitor asked for one thing to become another ("${asked}"), and the beats no longer say so. H3 fakes this with a dissolve unless it is rehearsed and constrained.`,
+        evidence: { beat: null, clause: asked },
+        measured: TRANSFORMATION_MEASURED,
+        fix: 'rewrite-then-test',
+        test: {
+          question: 'Does the transformation the visitor asked for physically happen on screen, or does the second thing fade in over the first?',
+          params: MOTION_TEST,
+          refKeys: transformationRefKeys,
+          focus: 'rehearsal',
+          beats: [],
+        },
+      });
+    }
   }
 
   // ── Per-piece hazards, straight off the dossier enums. ─────────────────────────────────────

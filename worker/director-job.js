@@ -77,6 +77,12 @@ export async function createJob(
     // What the screenplay record pinned beside the film carries (see `pinScreenplay`): the prompt
     // from the visitor's saved draft, the cast by asset key, and the cast by name for the digest.
     prompt = null, castRefs = null, castNames = null,
+    // A rehearsal's own beat text (worker/screen-test.js), read back by the review step so the
+    // Director knows what the test was told to render, not only what it asked.
+    direction = null,
+    // The visitor shooting past the Director's outstanding tests (worker/director-gate.js). On
+    // the take rather than the job, because it is part of what the take IS.
+    override = null,
   },
 ) {
   const record = {
@@ -95,6 +101,7 @@ export async function createJob(
     finalUsd,
     remainingUsd,
     riskMeasured,
+    direction,
     prompt,
     castRefs,
     castNames: castNames ?? [],
@@ -112,6 +119,7 @@ export async function createJob(
       riskId,
       costUsd,
       status: 'pending',
+      ...(override ? { override } : {}),
     },
     events: [],
     attempts: 0,
@@ -204,6 +212,19 @@ export async function recordTakeIpfs(env, mindId, filmId, takeId, ipfs) {
   return next;
 }
 
+/**
+ * The Director, reading a test back, said the question has to be asked again. On the take, like
+ * the verdict, so the gate (worker/director-gate.js) can see it — and cleared by the next test
+ * against the same question superseding this one, not by editing it away.
+ */
+export async function recordTakeRetest(env, mindId, filmId, takeId, retest) {
+  const record = await loadProduction(env, mindId, filmId);
+  const takes = record.takes.map((take) => (take.takeId === takeId ? { ...take, retest } : take));
+  const next = { ...record, filmId, takes, updatedAt: Date.now() };
+  await env.MIND_CONNECTIONS.put(productionKey(mindId, filmId), JSON.stringify(next));
+  return next;
+}
+
 export async function recordVerdict(env, mindId, filmId, { takeId, answer, note, by }) {
   // A person's answer outranks the model's, always — and never the other way round. The Director
   // judging is a convenience where frames are available; the visitor watching the clip is the
@@ -261,6 +282,7 @@ async function assess(env, record, logger) {
     spec: record.spec,
     risks: record.risks ?? [],
     brief: record.brief ?? null,
+    prompt: record.prompt ?? null,
     finalUsd: record.finalUsd ?? 0,
     remainingUsd: record.remainingUsd ?? null,
     onReasoning: (text) => {
@@ -272,6 +294,11 @@ async function assess(env, record, logger) {
     // A hallucinated risk id is filtered rather than charged. Recorded so a model that keeps
     // inventing hazards is visible in the log rather than merely absent from the bill.
     console.warn(`Director proposed unknown risks: ${plan.dropped.join(', ')}`);
+  }
+  if (plan.droppedDemands.length) {
+    console.warn(
+      `Director demands dropped: ${plan.droppedDemands.map((d) => `${d.id} (${d.reason})`).join(', ')}`,
+    );
   }
 
   logger.log('reading', { reading: plan.reading, plan: plan.plan });
@@ -298,7 +325,20 @@ async function assess(env, record, logger) {
     });
   }
   for (const skipped of plan.skip) logger.log('skipped', skipped);
-  if (plan.ownConcern) logger.log('own-concern', plan.ownConcern);
+  // The Director's own asks. Logged one by one, like the register tests above, because "I need
+  // $0.48 to find out whether the letters actually become a brain" is the line the visitor is
+  // waiting to read — and the one the Hollywood film never got.
+  for (const demand of plan.demands) {
+    logger.log('demand', {
+      riskId: `demand:${demand.id}`,
+      question: demand.question,
+      why: demand.why,
+      estUsd: demand.estUsd,
+    });
+  }
+
+  const registerUsd = plan.tests.reduce((sum, t) => sum + (t.risk?.estUsd ?? 0), 0);
+  const demandUsd = plan.demands.reduce((sum, d) => sum + (d.estUsd ?? 0), 0);
 
   await saveShootingPlan(env, record.mindId, record.filmId, {
     reading: plan.reading,
@@ -311,12 +351,14 @@ async function assess(env, record, logger) {
       estUsd: test.risk?.estUsd ?? 0,
     })),
     skip: plan.skip,
-    ownConcern: plan.ownConcern,
-    totalTestUsd: Math.round(plan.tests.reduce((sum, t) => sum + (t.risk?.estUsd ?? 0), 0) * 100) / 100,
+    // Whole objects, because the test endpoint rebuilds the rehearsal from them: the direction
+    // is the script, and a demand without it is a question with nothing to render.
+    demands: plan.demands,
+    totalTestUsd: Math.round((registerUsd + demandUsd) * 100) / 100,
     at: Date.now(),
   });
 
-  logger.log('result', { tests: plan.tests.length, reading: plan.reading });
+  logger.log('result', { tests: plan.tests.length, demands: plan.demands.length, reading: plan.reading });
   await logger.setStatus('complete');
 }
 
@@ -336,11 +378,21 @@ async function review(env, record, logger) {
 
   logger.log('phase', { phase: 'reviewing', detail: 'Reading the test back against the film.' });
 
+  // Every earlier answer on this film, so a revision builds on what the tests already proved
+  // rather than re-deciding it. The current take is excluded: it is the one being read.
+  const production = await loadProduction(env, record.mindId, record.filmId).catch(() => null);
+  const priorVerdicts = (production?.takes ?? [])
+    .filter((entry) => entry.kind === 'screen-test' && entry.verdict?.answer && entry.takeId !== take.takeId)
+    .map((entry) => ({ question: entry.question, answer: entry.verdict.answer, note: entry.verdict.note ?? null }));
+
   const result = await reviewTest(env, {
     spec: record.spec,
     question: take.question,
     verdict: take.verdict,
     riskMeasured: record.riskMeasured ?? null,
+    prompt: record.prompt ?? null,
+    direction: record.direction ?? null,
+    priorVerdicts,
     onReasoning: (text) => {
       if (text) logger.log('reasoning', { delta: text });
     },
@@ -350,6 +402,7 @@ async function review(env, record, logger) {
     finding: result.finding,
     settled: result.settled,
     readyToShoot: result.readyToShoot,
+    retest: result.retest,
     suppressedRevision: result.suppressedRevision,
   });
 
@@ -362,7 +415,15 @@ async function review(env, record, logger) {
     logger.log('revision', result.revision);
   }
 
-  logger.log('result', { finding: result.finding, revised: Boolean(result.revision) });
+  // Written on the durable take, where the gate reads it. A re-test the Director asked for and
+  // nothing recorded would be a gate that opened on a question still unanswered.
+  if (result.retest) {
+    await recordTakeRetest(env, record.mindId, record.filmId, take.takeId, true);
+    record.take.retest = true;
+    logger.log('retest', { takeId: take.takeId, question: take.question });
+  }
+
+  logger.log('result', { finding: result.finding, revised: Boolean(result.revision), retest: result.retest });
   await logger.setStatus('complete');
 }
 
@@ -522,6 +583,10 @@ async function poll(env, record, logger) {
     // the reason is one line: "a good render is worthless if we can't repeat it."
     script: record.script,
     refKeys: record.refKeys,
+    // The job that shot it, so a verdict given from another tab — or after this one is closed —
+    // can still reach the review step (handleDirectorVerdict). Best-effort: the job log expires
+    // in a day, the take does not.
+    jobId: record.jobId,
   });
 
   logger.log('take', {
@@ -861,6 +926,7 @@ export async function startTake(
     // What the screenplay record pinned beside the film carries (see `pinScreenplay`): the prompt
     // from the visitor's saved draft, the cast by asset key, and the cast by name for the digest.
     prompt = null, castRefs = null, castNames = null,
+    direction = null, override = null,
   },
 ) {
   const costUsd = priceUsd(params) ?? 0;
@@ -900,6 +966,8 @@ export async function startTake(
     prompt,
     castRefs,
     castNames,
+    direction,
+    override,
     status: needsApproval ? 'awaiting-approval' : 'queued',
     step: 'submit',
   });
@@ -932,7 +1000,7 @@ export { getEnvelope };
  * that you can watch the Director decide how to spend your money; a spinner followed by a
  * finished list would be a different, weaker product.
  */
-export async function startAssessment(env, mindId, { filmId, spec, risks, brief, finalUsd, remainingUsd }) {
+export async function startAssessment(env, mindId, { filmId, spec, risks, brief, prompt = null, finalUsd, remainingUsd }) {
   const record = await createJob(env, mindId, {
     filmId,
     script: null,
@@ -946,6 +1014,7 @@ export async function startAssessment(env, mindId, { filmId, spec, risks, brief,
     spec,
     risks,
     brief,
+    prompt,
     finalUsd,
     remainingUsd,
   });

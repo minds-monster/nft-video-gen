@@ -26,6 +26,7 @@ import { getBudget, getSpend } from './budget.js';
 import { resolveTier } from './tier.js';
 import { listFilms, loadStoryboard } from './storyboarder.js';
 import { loadProduction } from './director-job.js';
+import { testGate } from './director-gate.js';
 import { getEnvelope } from './render-budget.js';
 import { loadDraft } from './draft.js';
 
@@ -165,6 +166,9 @@ export async function collectProductionState(env, mindId) {
   const shots = production?.takes ?? [];
   const screenTests = shots.filter((shot) => shot.kind === 'screen-test');
   const finalTakes = shots.filter((shot) => shot.kind !== 'screen-test');
+  // What the Director asked for and is still owed — the same computation the Shoot button
+  // refuses on (worker/director-gate.js), so the Mind and the panel never disagree about it.
+  const gate = production ? testGate(production.shootingPlan ?? null, shots) : null;
 
   // The filmography, as far as the greeting needs it: the Mind's own record is the digests in
   // its conversation, this is the "welcome back, here is what happened" bundle its own design
@@ -212,6 +216,11 @@ export async function collectProductionState(env, mindId) {
     renderClosed: Boolean(envelope?.closedAt),
     screenTestCount: screenTests.length,
     screenTestsAnswered: screenTests.filter((test) => test.verdict?.answer).length,
+    directorRead: Boolean(gate && !gate.unread),
+    testsAsked: gate?.asked?.length ?? 0,
+    testsOutstanding: gate?.outstanding?.length ?? 0,
+    testsOutstandingUsd: gate?.outstandingUsd ?? 0,
+    outstandingQuestions: (gate?.outstanding ?? []).map((test) => str(test.question, 160)).filter(Boolean).slice(0, 4),
     takeCount: finalTakes.length,
     takesReady: finalTakes.filter((take) => take.status === 'ready').length,
     takesFailed: finalTakes.filter((take) => take.status === 'failed' || take.status === 'unsettled').length,
@@ -314,6 +323,21 @@ export function renderStateBlock(state) {
     }
   } else if (state.budgetSet) {
     lines.push('Director: nothing rendered yet. Rendering is available and costs real money per second of footage.');
+  }
+
+  // The Director's outstanding asks. Stated whenever there are any, whether or not anything has
+  // rendered yet — a visitor asking "shall I shoot it?" with tests owed must hear no, and why.
+  if (state.testsOutstanding > 0) {
+    lines.push(
+      `The Director read the screenplay and asked for ${state.testsAsked} screen test${state.testsAsked === 1 ? '' : 's'}; ` +
+        `${state.testsOutstanding} ${state.testsOutstanding === 1 ? 'is' : 'are'} still unanswered` +
+        (state.testsOutstandingUsd ? ` (${money(state.testsOutstandingUsd)} to run)` : '') +
+        `. The film must NOT be shot until they are answered — if they ask to shoot, say so and name the questions` +
+        (state.outstandingQuestions?.length ? `: ${state.outstandingQuestions.map((q) => `"${q}"`).join('; ')}` : '') +
+        '.',
+    );
+  } else if (state.directorRead && state.testsAsked > 0 && (state.takeCount || state.screenTestCount)) {
+    lines.push('Every screen test the Director asked for has been answered; the film may be shot.');
   }
 
   if (state.logline) lines.push(`Their logline, in their words: "${state.logline}"`);
