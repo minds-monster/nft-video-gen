@@ -331,6 +331,9 @@ export async function handleDirectorStart(request, env) {
       refKeys: (spec.referencePlan ?? []).map((slot) => slot.key),
       cast,
       origin: new URL(request.url).origin,
+      // Carried for the filmography digest, which names the film by its logline. The screen-test
+      // path has always passed it; a final take without it reached the Mind as a bare hash.
+      spec: revised,
     });
 
     return json({

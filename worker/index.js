@@ -29,6 +29,7 @@ import {
   handleDirectorGet,
   handleDirectorMedia,
   handleDirectorClose,
+  handleDirectorRemember,
   handleDirectorTest,
   handleDirectorVerdict,
   handleDirectorBrief,
@@ -99,6 +100,9 @@ const ROUTES = {
   'POST /api/director/start': handleDirectorStart,
   'POST /api/director/approve': handleDirectorApprove,
   'POST /api/director/close': handleDirectorClose,
+  // Pin an existing take and put it in the Mind's filmography — for footage shot before the
+  // filmography existed, or a Mind that needs reminding.
+  'POST /api/director/remember': handleDirectorRemember,
   'POST /api/director/test': handleDirectorTest,
   'POST /api/director/verdict': handleDirectorVerdict,
   'POST /api/director/brief': handleDirectorBrief,
