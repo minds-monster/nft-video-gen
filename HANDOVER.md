@@ -98,7 +98,7 @@ open list, owner stats show the first-action bucket.
 - `handleSubscribe` moved out of `worker/index.js` into `worker/subscribe.js` with a rate limit —
   it accepted unlimited anonymous writes into the namespace that holds every budget.
 - **"Contact us" on the front page** (`src/components/SupportSection.jsx`, under Pricing, `#support`):
-  Feedback / Support / Bug reports, email + message required, one line about reply time. Kept
+  Feature request / Support / Bug reports, email + message required, one line about reply time. Kept
   deliberately plain BY THE OWNER'S DECISION — an earlier draft named the Mind, stated the cadence and
   the cost, and offered "speak to a human"; the owner read that as predictive programming ("looks
   like we're expecting things to fail") and as an invitation to abuse. The urgent flag and the

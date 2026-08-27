@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bug, LifeBuoy, MessageSquare } from 'lucide-react';
+import { Bug, LifeBuoy, Sparkles } from 'lucide-react';
 import SupportForm from './SupportForm';
 
 // Contact us, under Pricing. Deliberately plain: three reasons someone might write, one form,
@@ -9,9 +9,9 @@ import SupportForm from './SupportForm';
 
 const REASONS = [
   {
-    icon: MessageSquare,
-    title: 'Feedback',
-    body: 'What worked, what did not, what you would like to see next. It shapes what we build.',
+    icon: Sparkles,
+    title: 'Feature request',
+    body: 'Got an idea for something the swarm should be able to do? A new agent, a style, a shortcut, a whole new way to make a film — tell us. The best ones get built.',
   },
   {
     icon: LifeBuoy,
