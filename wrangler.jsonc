@@ -24,9 +24,34 @@
 		"directory": "./dist",
 		"not_found_handling": "single-page-application",
 		"run_worker_first": [
-			"/api/*"
+			"/api/*",
+			// `wrangler dev --test-scheduled` fires the cron via GET /__scheduled. Without this
+			// the asset router answers it with index.html and the cron never runs locally.
+			"/__scheduled",
+			"/cdn-cgi/*"
 		]
 	},
+	// Workers have no background timer, and the support watcher has to NOTICE a Mind's
+	// [auto-replied] marker to email the visitor. Two schedules, matched by string in
+	// worker/index.js `scheduled` — rename one here and the other side stops running:
+	//   */5  worker/support-sync.js — re-derive open tickets, relay unrelayed replies
+	//   03:00 worker/analytics.js rollupDay for yesterday + the owner Mind snapshot
+	"triggers": {
+		"crons": [
+			"*/5 * * * *",
+			"0 3 * * *"
+		]
+	},
+	// Site analytics. Analytics Engine rather than KV counters, because a KV counter under
+	// real traffic loses most of its increments (60s edge-cached reads, ~1 write/s per key).
+	// writeDataPoint is not a subrequest and never contends; the nightly cron rolls each day
+	// into one KV key for long-term retention. See worker/analytics.js.
+	"analytics_engine_datasets": [
+		{
+			"binding": "ANALYTICS",
+			"dataset": "minds_monster_events"
+		}
+	],
 	// The Casting Director's dossier cache. A dossier describes artwork that can never change, so
 	// entries are written without a TTL — this is a permanent store keyed by
 	// assetKey(chain, address, tokenId), not an expiring cache.
@@ -43,6 +68,13 @@
 	//     scoped to that one thread only (see worker/assistant.js's privacy note).
 	// No session data lives here either way — sessions are self-verifying HMAC tokens,
 	// see worker/session.js.
+	//
+	// Support and the owner area (worker/support.js has the full key inventory):
+	//   - `support:ticket|derived|open|index|visitor|email|emailed:*` — tickets, no TTL.
+	//   - `rl:<scope>:<id>:<window>` — public-route rate limits, worker/rate-limit.js.
+	//   - `metrics:rollup:<day>` — one analytics record per day, 400-day TTL.
+	//   - `owner:mind-snapshot` — the support Mind's cognition/skills, refreshed nightly.
+	//   - `briefed:support:<mindId>` — the support briefing's once-ever flag.
 	"kv_namespaces": [
 		{
 			"binding": "DOSSIERS"
@@ -207,6 +239,16 @@
 		// The split is still worth it at 1 — the shot plan lands in ~25s with real per-beat facts,
 		// the timeline fills in beat by beat, and one bad response costs one beat instead of the
 		// whole film. Raise this when the route stops shedding; re-measure first, do not assume.
-		"FREE_STORYBOARD_BEAT_CONCURRENCY": "1"
+		"FREE_STORYBOARD_BEAT_CONCURRENCY": "1",
+		// Support. The Mind that receives tickets (Adam's, by his own design — see
+		// worker/support-briefing.js); a var so the role can move without a code change. The
+		// sender must be on a domain Resend has verified (SPF/DKIM DNS on minds.monster), and
+		// OWNER_NOTIFY_EMAIL is where a visitor's "speak to a human" goes. SITE_ORIGIN builds
+		// the signed ticket links in emails the cron sends, where there is no request URL.
+		"SUPPORT_MIND_ID": "240b453e-f36b-1410-8466-00039ce7df11",
+		"SUPPORT_FROM": "minds.monster Support <support@minds.monster>",
+		"OWNER_NOTIFY_EMAIL": "adam@munerate.com",
+		"SITE_ORIGIN": "https://minds.monster",
+		"ANALYTICS_DATASET": "minds_monster_events"
 	}
 }

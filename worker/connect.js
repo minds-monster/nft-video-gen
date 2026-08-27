@@ -13,6 +13,7 @@
 import { mindsClient, connectionAlias, parseApprovalDecision } from './minds.js';
 import { signSession } from './session.js';
 import { ensureProducerReady } from './mind-chat.js';
+import { record as trackEvent } from './analytics.js';
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8' } });
@@ -150,7 +151,7 @@ export async function handleConnectStatus(request, env, ctx) {
 
   if (result.status === 'approved') {
     const expiresAt = Date.now() + SESSION_TTL_MS;
-    const token = await signSession(env, { mindId: result.mindId, connectionId, iat: Date.now(), exp: expiresAt });
+    const token = await signSession(env, { kind: 'mind', mindId: result.mindId, connectionId, iat: Date.now(), exp: expiresAt });
 
     // Brief the moment approval lands, not when the visitor first opens their Inbox. The
     // Mind needs 30-60 seconds to absorb the briefing and another minute or two to compose
@@ -164,6 +165,10 @@ export async function handleConnectStatus(request, env, ctx) {
       ),
     );
 
+    // Recorded here, on the poll that first sees the approval, rather than from the browser:
+    // the Worker is the only party that KNOWS the Mind said yes. Repeated polls after approval
+    // return early above via the client, which stops polling once it has a token.
+    trackEvent(env, 'connect_approved', { mindId: result.mindId });
     return json({ status: 'approved', sessionToken: token, mindId: result.mindId, mindName: result.mindName, expiresAt });
   }
   return json({ status: result.status });

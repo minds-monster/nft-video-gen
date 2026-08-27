@@ -1,5 +1,7 @@
 import Stripe from 'stripe';
 import { requireSession } from './session.js';
+// Aliased: the webhook builds a local `record` (the budget row) that would shadow a bare import.
+import { record as trackEvent } from './analytics.js';
 
 const json = (data, status = 200) =>
     new Response(JSON.stringify(data), {
@@ -140,6 +142,7 @@ export async function handleStripeWebhook(request, env) {
             await env.MIND_CONNECTIONS.put(processedKey, 'true', { expirationTtl: 30 * 24 * 60 * 60 }); // Expire in 30 days
 
             console.log(`Successfully credited $${dollarsPaid} to mind:${mindId}. New total: $${newTotal}`);
+            trackEvent(env, 'budget_topup', { mindId, value: dollarsPaid });
         } catch (dbError) {
             console.error('Failed to write new budget to KV during webhook processing:', dbError);
             return json({ error: 'Database write failed' }, 500);

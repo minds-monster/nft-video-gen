@@ -108,7 +108,8 @@ const StoryboarderPanel = ({
           <p className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-[11px] leading-relaxed text-amber-200/90">
             <span className="font-semibold">Beta.</span> Blocks every shot in 3D, and takes
             several minutes longer than shooting straight from the screenplay. The Director does
-            not need it — this is for seeing the scene before you spend on it.
+            not demand it — this is an advanced, experimental feature for blocking the scene before
+            you spend on it.
           </p>
           <button
             type="button"

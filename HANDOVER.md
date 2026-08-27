@@ -2,9 +2,137 @@
 
 > **Next round is scoped in `HANDOVER-ROUND9.md`** — making the cast real in the previz
 > (proportioned primitives vs billboard impostors vs image-to-3D meshes), with the measured
-> resource inventory behind it. Rounds 1-8 are built and live. **Round 11 (below) corrects three claims in the round-8 section**
+> resource inventory behind it. Rounds 1-8 are built and live. Round 13 (support + owner area) is the newest section. **Round 11 (below) corrects three claims in the round-8 section**
 > that turned out to be false in production — read it before trusting any free-tier latency figure
 > in this document.
+
+## Start here — ROUND 13: SUPPORT, THE OWNER AREA, AND ANALYTICS (2026-08-27)
+
+A visitor who needs help can now tell Adam; the website owner can see every ticket's state,
+whether the reply actually went out, and the site's own numbers — at `/#/owner`. 302 tests pass
+(230 at the start of the round). Designed WITH Adam's Mind first, as every round is: his answer in
+`connect-mind-brainstorm` (asked 05:34Z, answered 05:39Z) is the wire contract, verbatim in
+`src/lib/support-markers.js` and `worker/support-briefing.js`.
+
+### 🔴 The findings that matter
+
+**1. THE SITE CANNOT SEE EMAIL.** `listConversations()` returns only threads the builder key's own
+human is party to (88 conversations, every one a site-made alias). A customer emailing
+`adam@hellominds.ai` creates a thread the site can never read — so an email-based support form
+would have left the owner area blind. Every ticket is a builder-API conversation, alias
+`support-<ticketId>`, and the Mind NEVER emails visitors: it replies in-thread under
+`[auto-replied …]` and the site sends the email from `support@minds.monster`. Adam's design, for
+identity coherence, deliverability and an audit trail the site owns.
+
+**2. EVERY TOKEN WAS A VISITOR TOKEN.** All 28 `requireSession` callers do `if (!session) return
+401` then use `session.mindId`. An owner token signed with the same secret would have reached
+`setBudget(env, undefined)`. `worker/session.js` now carries a `kind` claim (`mind` | `owner` |
+`support-reply`); `requireSession` insists on `mind` AND a string `mindId`; legacy kind-less
+tokens still pass as `mind`. `scripts/test/session-kinds.test.mjs` pins every cross-rejection.
+
+🔑 A signature says "we issued this". It never says what for.
+
+**3. KV COUNTERS WOULD HAVE UNDERCOUNTED BY AN ORDER OF MAGNITUDE.** 60-second edge-cached reads
+plus ~1 write/s per key means every colo keeps reading a stale N and writing N+1. Analytics is
+Workers Analytics Engine (`env.ANALYTICS.writeDataPoint`, no subrequest, no contention); the
+03:00 cron rolls each day into ONE KV key (`metrics:rollup:<day>`, 400-day TTL) for retention.
+Uniques are an HMAC of guestId under the secret AND the day — countable within a day, unlinkable
+across days.
+
+**4. WORKERS HAVE NO BACKGROUND TIMER, and the site must NOTICE `[auto-replied]`.** Two Cron
+Triggers in `wrangler.jsonc`: `*/5` runs `worker/support-sync.js` (re-derive open tickets, relay
+unrelayed replies, idempotent per reply fingerprint like `stripe_processed:`); `0 3` runs the
+analytics rollup and refreshes the Mind snapshot. `/__scheduled` and `/cdn-cgi/*` were added to
+`run_worker_first`, or the asset router answers the local cron trigger with index.html.
+
+**5. MARKERS FAIL OPEN.** A Mind row with no parseable marker still counts as a reply (state
+`replied-unmarked`, pinned in the owner list) because NOTHING IS EMAILED for it — only
+`[auto-replied]` and `[steward-forwarded]` relay — and the owner must see that. Rows the site
+writes (the ticket, a visitor follow-up, an owner `[steward-note]`) all arrive as
+`senderType === 1`, so `classifyRow` tells them apart by content, never by sender.
+
+**6. THE CLIENT LIBRARY'S `getLatestHistoryFingerprint` RETURNS THE OLDEST ROW.** `/histories`
+is newest-first; the helper takes the LAST row of the page. So it never changes once one row
+exists, and the sync's "unchanged, skip" check compared two constants — found live when Adam's
+`[seen]` and reply sat in the thread while the derived state stayed `received`. The sync now
+probes `getHistory(alias, { limit: 1 })` itself. Do not use that helper anywhere.
+
+**7. A MIND PUTS MARKERS WHERE IT LIKES.** Adam's first live reply was a prose preamble, then
+`[auto-replied]` with its letter, then `[resolved]` — in ONE message, not first-line. Fail-open
+would have shown `replied-unmarked` and emailed nothing. `parseMarkers` now honours a marker on
+any line, several per message, each body running to the next marker, the preamble kept as an
+"aside" row for the owner. His real message is a fixture in `scripts/test/support-markers.test.mjs`.
+
+🔑 The contract is what he committed to. The parser is what he actually does.
+
+**Verified live** (2026-08-27 06:35–07:05Z, ticket `a45ec771`): briefing sent once into
+`support-briefing`, ticket opened, cron derived it, Adam `[seen]` at +2m44s, replied and resolved
+in one message, relay attempted and logged `unconfigured` (no Resend key yet), ticket left the
+open list, owner stats show the first-action bucket.
+
+### What is built
+
+- **Intake** `POST /api/support` (`worker/support.js`): honeypot, KV rate limits
+  (`worker/rate-limit.js` — in-memory Maps reset per isolate, useless on a public form), visitor
+  identity = HMAC(email), the sixth ticket in an hour merges into the open one, Adam's per-ticket
+  briefing header (`Ticket/Visitor/Returning/Prior-Tickets/Plan/Budget-Set/Recent-Films/Urgent/
+  Human-Requested/Page/From`), a receipt email with a signed 30-day reply link
+  (`#/support/<id>/<token>`), and the briefing sent once ever into `support-briefing`.
+- **"Speak to a human"** on the form, the ticket page and every email: still opens the alias (audit
+  trail whole) tagged `Human-Requested: yes`, which Adam leaves alone; pinned in the owner list;
+  emails `OWNER_NOTIFY_EMAIL` via `ctx.waitUntil` so a slow mailer never fails a ticket.
+- **Production-vs-support routing guard** (`src/components/SupportForm.jsx`): a connected visitor
+  whose message says film/storyboard/cast/beat/render is ASKED whether it belongs with their
+  Producer — never silently re-routed. Adam called this load-bearing.
+- **Owner area** `/#/owner` (`src/owner/`, lazy chunk, 30 kB): passphrase login
+  (`OWNER_PASSPHRASE`, constant-time compare, KV rate limit, 12h owner-kind token); **Support** —
+  Adam's aggregates first (open by state, SLA breaches, time-to-first-action histogram, escalation
+  and reopen rates, cost as a BAND never a number), then the list of STATES with no body text, the
+  thread one click deeper with every row labelled, the email log, and a `[steward-note]` composer;
+  **Overview** — every event today/7d/30d with sparklines plus lifetime seeds from `connects:`,
+  `budget:`, `productions:`, `subscriber:`; **Mind** — balance, 30-day cognition, spend by tool,
+  skills, Producer-conversation liveness, cached nightly.
+- **Mailer** `worker/email.js` — Resend over fetch. No key = replies are still measured, shown as
+  "not emailed — mailer unconfigured", and sent the moment a key exists (the `unconfigured`
+  marker is retried; `failed` leaves no marker and retries next run).
+- `handleSubscribe` moved out of `worker/index.js` into `worker/subscribe.js` with a rate limit —
+  it accepted unlimited anonymous writes into the namespace that holds every budget.
+- **"Contact us" on the front page** (`src/components/SupportSection.jsx`, under Pricing, `#support`):
+  Feedback / Support / Bug reports, email + message required, one line about reply time. Kept
+  deliberately plain BY THE OWNER'S DECISION — an earlier draft named the Mind, stated the cadence and
+  the cost, and offered "speak to a human"; the owner read that as predictive programming ("looks
+  like we're expecting things to fail") and as an invitation to abuse. The urgent flag and the
+  human-requested path still exist in the API and the owner area; no visitor control reaches them.
+- Hash routing (`src/hooks/useHashRoute.js`) — the site's first router, and the smallest one that
+  works: `#/owner…`, `#/support` (the modal), `#/support/<id>/<token>` (the ticket page).
+
+### Before it works in production
+
+```
+wrangler secret put OWNER_PASSPHRASE     # 12+ chars; the owner login
+wrangler secret put RESEND_API_KEY       # + Resend's SPF/DKIM DNS for support@minds.monster
+wrangler secret put CF_ACCOUNT_ID        # Overview live reads and the nightly rollup
+wrangler secret put CF_ANALYTICS_TOKEN   # an API token with Account Analytics: Read
+```
+`/api/health` reports each as `hasOwnerPassphrase`, `hasResendKey`, `hasAnalyticsRead`,
+`hasAnalyticsBinding`, `hasSupportMind`. The Analytics Engine dataset and the two crons are
+created by the first `wrangler deploy` of this `wrangler.jsonc`. Local cron:
+`wrangler dev --test-scheduled` then `curl 'http://localhost:8789/__scheduled?cron=*/5+*+*+*+*'`.
+
+### Deferred, by the user's decision (phase 2, designed for)
+
+FAQ pre-filter via the existing assistant before a ticket opens; a self-service tasks page; a
+per-day support cognition budget with a visible pause; duplicate-complaint auto-reply (today a
+follow-up on an open ticket returns its state instead, which covers the common case).
+
+### Adam's pins, for whoever touches this next
+
+Builder-API per ticket, not email · visitor email from the site, never from him · five first-line
+markers, fail-open · escalation is a marker plus HIS channel to the steward (`c0204b3e…`) — the site
+never mediates it · aggregates with click-into-full, no drafts, no PII beyond the routing email ·
+SLA copy "seen within 4h, replied within 8h" · "[seen] matters more than [auto-replied]".
+
+---
 
 ## Start here — ROUND 12: THE DIRECTOR SHOOTS (2026-08-27)
 

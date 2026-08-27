@@ -1,11 +1,21 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react';
 import { MotionConfig } from 'framer-motion';
 import { MousePointerClick, Sparkles, Stamp } from 'lucide-react';
+import { useHashRoute } from './hooks/useHashRoute';
+import { track } from './services/analytics';
+import { SupportModal } from './components/SupportForm';
+
+// Two pages that are not the marketing shell, both lazy so they never reach the visitor
+// bundle: the owner area (private, behind a passphrase) and a visitor's ticket page (reached
+// from the link in a support email).
+const OwnerArea = lazy(() => import('./owner/OwnerArea.jsx'));
+const SupportTicketPage = lazy(() => import('./components/SupportTicketPage.jsx'));
 import HeroSection from './components/HeroSection';
 import FeaturedMarquee from './components/FeaturedMarquee';
 import PromptCanvas from './components/canvas/PromptCanvas';
 import ConnectMindModal from './components/ConnectMindModal';
 import PricingSection from './components/PricingSection';
+import SupportSection from './components/SupportSection';
 import SwarmDiagram from './components/SwarmDiagram';
 import CheckoutModal from './components/CheckoutModal';
 import MindChatProvider from './context/MindChatContext';
@@ -54,6 +64,13 @@ const STEPS = [
 const AppShell = () => {
   const { session, openModal, checkout } = useMindChatContext();
   const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
+  const route = useHashRoute();
+
+  // One page_view per page, where a page is a hash route — the anchors on the home page
+  // (#pricing etc.) all count as '/'.
+  useEffect(() => {
+    track('page_view');
+  }, [route.path]);
 
   const composer = useCanvasComposer();
   // The other half of the canvas. useCanvasComposer owns the prompt and the cast and says
@@ -153,6 +170,22 @@ const AppShell = () => {
     openCanvas();
   };
 
+  // The routes that replace the shell entirely. Hooks above have all run, so this is safe.
+  if (route.segments[0] === 'owner') {
+    return (
+      <Suspense fallback={<div className="min-h-screen bg-slate-950" />}>
+        <OwnerArea route={route} />
+      </Suspense>
+    );
+  }
+  if (route.segments[0] === 'support' && route.segments[1] && route.segments[2]) {
+    return (
+      <Suspense fallback={<div className="min-h-screen bg-slate-950" />}>
+        <SupportTicketPage ticketId={route.segments[1]} token={route.segments.slice(2).join('/')} />
+      </Suspense>
+    );
+  }
+  const supportOpen = route.path === '/support';
 
   return (
     <div className="relative flex min-h-screen flex-col bg-slate-950 font-sans text-slate-50">
@@ -194,6 +227,9 @@ const AppShell = () => {
             </a>
             <a href="#pricing" className="transition-colors hover:text-white">
               Pricing
+            </a>
+            <a href="#support" className="transition-colors hover:text-white">
+              Support
             </a>
           </nav>
 
@@ -264,6 +300,7 @@ const AppShell = () => {
         </section>
 
         <PricingSection onConnectMind={() => setCheckoutModalOpen(true)} />
+        <SupportSection />
       </main>
 
       <footer inert={canvasOpen} className="relative z-20 mt-auto py-10">
@@ -274,9 +311,15 @@ const AppShell = () => {
           </p>
           <p>
             Powered by <span className="text-purple-400"><a href="https://www.munerate.com">Munerate</a></span>
+            {' · '}
+            <a href="#support" className="text-slate-400 transition-colors hover:text-white">
+              Support
+            </a>
           </p>
         </div>
       </footer>
+
+      <SupportModal open={supportOpen} onClose={() => route.navigate('/')} />
 
       {/* Both overlays sit at z-50. They're never both open in practice, and rendering
           the canvas first means the Studio wins any overlap during exit animations. */}

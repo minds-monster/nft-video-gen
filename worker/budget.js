@@ -10,6 +10,9 @@
 
 import { requireSession } from './mind-chat.js';
 import { tokenCostUsd } from './openai.js';
+// Aliased: handleBudgetSet already has a local `record` (the budget row), and a bare `record`
+// import would be silently shadowed by it at the one call site that matters.
+import { record as trackEvent } from './analytics.js';
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8' } });
@@ -161,6 +164,7 @@ export async function handleBudgetSet(request, env) {
       perRender,
       paidTier,
     });
+    trackEvent(env, 'budget_set', { mindId: session.mindId, value: record.perRender ?? 1 });
     return json({ budget: record });
   } catch (err) {
     if (err.status === 400) return json({ error: 'invalid_budget' }, 400);

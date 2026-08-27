@@ -40,6 +40,7 @@ import { buildScreenTest, VERDICTS } from './screen-test.js';
 import { parseBrief } from '../src/lib/directorBrief.js';
 import { recordVerdict } from './director-job.js';
 import { h3Params, h3ScriptFrom, h3Script } from '../src/lib/h3Script.js';
+import { record as trackEvent } from './analytics.js';
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8' } });
@@ -547,6 +548,8 @@ export async function handleDirectorClose(request, env) {
 
   const envelope = await closeEnvelope(env, session.mindId, filmId, { reason });
   if (!envelope) return json({ error: 'not_found' }, 404);
+  // A delivered film is the one outcome the whole site exists for; counted where it is closed.
+  if (reason === 'delivered') trackEvent(env, 'film_shot', { mindId: session.mindId, value: envelope.spentUsd ?? 1 });
   return json({ envelope });
 }
 

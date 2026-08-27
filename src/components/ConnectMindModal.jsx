@@ -4,6 +4,7 @@ import { Check, ChevronDown, Copy, Loader2, LogOut, Sparkles, X } from 'lucide-r
 import { useMindChatContext } from '../context/mindChat';
 import ProducerSurface from './ProducerSurface';
 import MindIdChip from './MindIdChip';
+import { track } from '../services/analytics';
 
 // Adam's own words, from actually living on the receiving end of a cold connect request —
 // see /Users/adamplace/.claude/plans/we-ve-been-blocked-in-binary-whale.md ("Result:
@@ -125,6 +126,7 @@ const ConnectMindModal = () => {
     event.preventDefault();
     const trimmed = mindId.trim();
     if (!trimmed || state === 'pending') return;
+    track('connect_init');
     connect(trimmed);
   };
 
@@ -178,6 +180,10 @@ const ConnectMindModal = () => {
                 Mind
               </a>{' '}
               in as the producer — it oversees the production and helps you manage the budget via the Producer Inbox.
+              {' '}
+              <a href="#support" onClick={closeModal} className="text-slate-400 underline decoration-white/20 underline-offset-4 transition-colors hover:text-white">
+                Need help?
+              </a>
             </p>
 
             <div className="mt-6 flex min-h-0 flex-1 flex-col gap-4">

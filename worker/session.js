@@ -58,7 +58,38 @@ export async function verifySession(env, token) {
 }
 
 /**
- * The bearer-token half of the same concern: pull a session off a request, or null.
+ * Every token this Worker mints is signed with the SAME secret, so the signature alone says
+ * "we issued this" and nothing about WHAT it authorises. The `kind` claim is what does.
+ *
+ *   mind          — a visitor's Connect Mind session; carries `mindId`. The default when the
+ *                   claim is absent, because every 7-day token issued before kinds existed has
+ *                   no `kind` and must keep working until it expires.
+ *   owner         — the website owner, minted by worker/owner-auth.js. Carries no mindId.
+ *   support-reply — a visitor's signed reply link on one support ticket (worker/support.js).
+ *
+ * All 28 visitor handlers do `if (!session) return 401` and then use `session.mindId`, so
+ * a gate that only checked the signature would hand an owner token to `setBudget(env,
+ * undefined)`. Each gate below asserts its own kind; a valid signature is never enough.
+ */
+export const SESSION_KINDS = Object.freeze({ mind: 'mind', owner: 'owner', supportReply: 'support-reply' });
+
+export const bearerToken = (request) => {
+  const auth = request.headers.get('authorization');
+  return auth?.startsWith('Bearer ') ? auth.slice(7) : null;
+};
+
+/** Verify a bearer token and insist on one `kind`. Null on any mismatch, never a reason. */
+export async function requireKind(request, env, kind) {
+  const token = bearerToken(request);
+  if (!token) return null;
+  const payload = await verifySession(env, token);
+  if (!payload) return null;
+  if ((payload.kind ?? SESSION_KINDS.mind) !== kind) return null;
+  return payload;
+}
+
+/**
+ * The bearer-token half of the same concern: pull a VISITOR session off a request, or null.
  *
  * Lives here rather than in worker/mind-chat.js — where it used to — because
  * worker/producer-state.js needs it too, and importing it from mind-chat.js created a
@@ -66,8 +97,10 @@ export async function verifySession(env, token) {
  * mind-chat.js re-exports it so every existing caller keeps working unchanged.
  */
 export async function requireSession(request, env) {
-  const auth = request.headers.get('authorization');
-  const token = auth?.startsWith('Bearer ') ? auth.slice(7) : null;
-  if (!token) return null;
-  return verifySession(env, token);
+  const payload = await requireKind(request, env, SESSION_KINDS.mind);
+  if (!payload) return null;
+  // A mind session without a mindId is not a session — it is the exact shape every visitor
+  // handler would otherwise write `budget:undefined` with.
+  if (typeof payload.mindId !== 'string' || !payload.mindId) return null;
+  return payload;
 }

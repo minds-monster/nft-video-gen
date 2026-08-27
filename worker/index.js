@@ -12,21 +12,7 @@ import { castPiece } from './casting-director.js';
 import { handleCastArt, handleCastList } from './cast-art.js';
 import { handleCastMesh, handleCastMeshGenerate } from './mesh.js';
 import { screenwrite } from './screenwriter.js';
-
-async function handleSubscribe(request, env) {
-  try {
-    const { email } = await request.json();
-    if (!email || !email.includes('@')) {
-      return json({ error: 'Invalid email address' }, 400);
-    }
-    if (env.MIND_CONNECTIONS) {
-      await env.MIND_CONNECTIONS.put(`subscriber:${email.trim().toLowerCase()}`, new Date().toISOString());
-    }
-    return json({ success: true });
-  } catch (error) {
-    return json({ error: error.message }, 500);
-  }
-}
+import { handleSubscribe } from './subscribe.js';
 import { handlePrevisDossierReview } from './previs-supervisor.js';
 import { handleConnectInit, handleConnectStatus } from './connect.js';
 import { mindChatInit, mindChatSend, mindChatPoll } from './mind-chat.js';
@@ -43,7 +29,6 @@ import {
   handleDirectorGet,
   handleDirectorMedia,
   handleDirectorClose,
-  handleDirectorRemember,
   handleDirectorTest,
   handleDirectorVerdict,
   handleDirectorBrief,
@@ -62,6 +47,20 @@ import {
   handleStoryboardJobEvents,
   handleStoryboardQueue,
 } from './storyboarder.js';
+import { handleSupportSubmit, handleSupportReply, handleSupportTicket } from './support.js';
+import { syncOpenTickets } from './support-sync.js';
+import { handleOwnerLogin, isOwnerConfigured } from './owner-auth.js';
+import {
+  handleOwnerSupportList,
+  handleOwnerSupportStats,
+  handleOwnerSupportGet,
+  handleOwnerSupportNote,
+  handleOwnerOverview,
+  handleOwnerMind,
+  refreshMindSnapshot,
+} from './owner.js';
+import { handleAnalyticsEvent, rollupDay, dayOf, isAnalyticsReadable } from './analytics.js';
+import { isMailerConfigured } from './email.js';
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), {
@@ -100,9 +99,6 @@ const ROUTES = {
   'POST /api/director/start': handleDirectorStart,
   'POST /api/director/approve': handleDirectorApprove,
   'POST /api/director/close': handleDirectorClose,
-  // Pin an existing take and put it in the Mind's filmography — for footage shot before the
-  // filmography existed, or a Mind that needs reminding.
-  'POST /api/director/remember': handleDirectorRemember,
   'POST /api/director/test': handleDirectorTest,
   'POST /api/director/verdict': handleDirectorVerdict,
   'POST /api/director/brief': handleDirectorBrief,
@@ -124,7 +120,25 @@ const ROUTES = {
   'GET /api/cast/mesh': handleCastMesh,
   'POST /api/cast/mesh': handleCastMeshGenerate,
   'POST /api/subscribe': handleSubscribe,
+  // Support — public intake and the visitor's own signed view of one ticket. See worker/support.js.
+  'POST /api/support': handleSupportSubmit,
+  'POST /api/support/reply': handleSupportReply,
+  'GET /api/support/ticket': handleSupportTicket,
+  // Analytics — a closed allowlist of browser events; everything else is recorded server-side.
+  'POST /api/analytics/event': handleAnalyticsEvent,
+  // The owner area. Every route below the login asserts an owner-kind token (worker/owner-auth.js).
+  'POST /api/owner/login': handleOwnerLogin,
+  'GET /api/owner/support': handleOwnerSupportList,
+  // Flat rather than /api/owner/support/stats, so the id branch below can never mistake it for a ticket.
+  'GET /api/owner/support-stats': handleOwnerSupportStats,
+  'GET /api/owner/overview': handleOwnerOverview,
+  'GET /api/owner/mind': handleOwnerMind,
 };
+
+// The two cron expressions in wrangler.jsonc, matched by string. A cron that is not one of
+// these runs nothing, loudly — a silent no-op is how a renamed schedule stops the emails.
+const CRON_SYNC = '*/5 * * * *';
+const CRON_NIGHTLY = '0 3 * * *';
 
 export default {
   async queue(batch, env, ctx) {
@@ -133,6 +147,27 @@ export default {
     // storyboard job and would ack it — losing a paid render silently.
     if (batch.queue === 'director-jobs') return handleDirectorQueue(batch, env, ctx);
     return handleStoryboardQueue(batch, env, ctx);
+  },
+
+  // Workers have no background timer. The support watcher (worker/support-sync.js) and the
+  // analytics rollup (worker/analytics.js) run here, on the schedules in wrangler.jsonc.
+  async scheduled(controller, env, ctx) {
+    const cron = controller?.cron ?? CRON_SYNC;
+    if (cron === CRON_SYNC) {
+      const summary = await syncOpenTickets(env);
+      console.log('support sync:', JSON.stringify(summary));
+      return;
+    }
+    if (cron === CRON_NIGHTLY) {
+      const yesterday = dayOf(new Date(Date.now() - 86_400_000));
+      const rollup = isAnalyticsReadable(env)
+        ? await rollupDay(env, yesterday).catch((error) => ({ error: error?.message ?? String(error) }))
+        : { skipped: 'analytics_not_readable' };
+      console.log('analytics rollup:', yesterday, JSON.stringify(rollup));
+      ctx?.waitUntil?.(refreshMindSnapshot(env).catch((error) => console.warn('mind snapshot failed:', error?.message ?? error)));
+      return;
+    }
+    console.warn(`scheduled: no job for cron "${cron}"`);
   },
 
   async fetch(request, env, ctx) {
@@ -166,6 +201,14 @@ export default {
         // The pinning key. Missing it means finished takes still reach the Mind's filmography, but
         // with a 7-day link and no permanent ipfs:// address — degraded, not dead.
         hasPinataKey: Boolean(env.PINATA_JWT),
+        // Support and the owner area. Each missing piece degrades one thing, visibly, rather than
+        // failing the whole: no passphrase = no owner login; no mailer = replies measured but not
+        // delivered; no analytics read token = the overview shows only lifetime seeds.
+        hasOwnerPassphrase: isOwnerConfigured(env),
+        hasResendKey: isMailerConfigured(env),
+        hasSupportMind: Boolean(env.SUPPORT_MIND_ID),
+        hasAnalyticsBinding: Boolean(env.ANALYTICS?.writeDataPoint),
+        hasAnalyticsRead: isAnalyticsReadable(env),
         castingModel: env.CASTING_MODEL,
         screenwriterModel: env.SCREENWRITER_MODEL,
         storyboarderModel: env.STORYBOARDER_MODEL ?? 'gpt-5.6-sol (default)',
@@ -193,6 +236,22 @@ export default {
           return handleStoryboardJobEvents(request, env, ctx);
         }
         return handleStoryboardJobStatus(request, env);
+      }
+      return json({ error: `No route for ${request.method} ${pathname}` }, 404);
+    }
+
+    // /api/owner/support/<ticketId>[/note] — the one owner path with an id segment.
+    if (pathname.startsWith('/api/owner/support/')) {
+      const parts = pathname.split('/');
+      const ticketId = parts[4];
+      if (ticketId && /^[a-z0-9]{4,16}$/i.test(ticketId)) {
+        try {
+          if (request.method === 'GET' && !parts[5]) return await handleOwnerSupportGet(request, env, ticketId);
+          if (request.method === 'POST' && parts[5] === 'note') return await handleOwnerSupportNote(request, env, ticketId);
+        } catch (error) {
+          console.error(`${request.method} ${pathname} failed:`, error);
+          return failure(error);
+        }
       }
       return json({ error: `No route for ${request.method} ${pathname}` }, 404);
     }

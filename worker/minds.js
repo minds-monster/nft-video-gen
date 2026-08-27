@@ -6,6 +6,9 @@ import { createMindsClient } from '@animocabrands/minds-client-lib';
 
 let client = null;
 export const mindsClient = (env) => {
+  // The test seam: scripts/test/*.test.mjs hand the support and owner handlers a fake client
+  // through env rather than the network. Never set in wrangler.jsonc or .dev.vars.
+  if (env.__mindsClient) return env.__mindsClient;
   if (!env.MINDS_BUILDER_API_KEY) return null;
   client ??= createMindsClient({ builderApiKey: env.MINDS_BUILDER_API_KEY });
   return client;

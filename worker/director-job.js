@@ -542,7 +542,7 @@ async function poll(env, record, logger) {
   }
 }
 
-const sha256Hex = async (bytes) =>
+export const sha256Hex = async (bytes) =>
   [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))]
     .map((byte) => byte.toString(16).padStart(2, '0'))
     .join('');

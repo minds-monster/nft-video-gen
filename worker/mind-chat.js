@@ -334,7 +334,7 @@ const lastSendAt = new Map();
 const heuristicSubject = (text) =>
   text.replace(/\s+/g, ' ').trim().split(/(?<=[.!?])\s/)[0].slice(0, SUBJECT_MAX).trim() || 'Message';
 
-async function generateSubject(env, text) {
+export async function generateSubject(env, text) {
   if (!env.ASSISTANT_API_KEY || !env.ASSISTANT_MODEL) return heuristicSubject(text);
   try {
     const response = await chat(env, {
