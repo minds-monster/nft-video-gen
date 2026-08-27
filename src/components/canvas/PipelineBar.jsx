@@ -5,8 +5,8 @@ import { cn } from '../../lib/cn';
 /**
  * The run, across the top, always.
  *
- * Cast → Read → Review → Write → Block. One chip per step, each saying what that agent is
- * doing right now and how long it has been doing it. The step holding the run pulses; a step
+ * Cast → Read → Review → Write → Block → Shoot. One chip per step, each saying what that agent
+ * is doing right now and how long it has been doing it. The step holding the run pulses; a step
  * that failed goes amber HERE, whether or not the panel it belongs to is open, collapsed, or
  * scrolled a thousand pixels away — which is the whole point, since every error in this canvas
  * previously had exactly one mount point and vanished with its panel.
@@ -14,9 +14,14 @@ import { cn } from '../../lib/cn';
  * Clicking a chip expands and scrolls to the panel that owns it, so the bar is navigation as
  * well as status: "what is happening" and "show me" are the same gesture.
  *
- * The Block chip is also the run's primary CTA. It used to be a button inside a 100px panel in
- * the fourth slot of a five-panel rail, with nothing anywhere pointing at it — the single most
- * important action in the product, hidden in the least prominent square inch of it.
+ * WHICH STEP CARRIES THE CTA IS A PRODUCT DECISION, NOT A LAYOUT ONE. It used to be Block, and
+ * that made the Storyboarder look like the thing you do after the Screenwriter. It is not — the
+ * Director shoots from the screenplay and never needed blocked geometry. Block is now an opt-in
+ * marked Beta, and the CTA belongs to Shoot, whose first move is free.
+ *
+ * The bar renders whichever step hands it an `action`; it does not know or care which one that
+ * is. Same for the Beta pill, which follows `step.beta`. Nothing here is keyed to a step id, so
+ * moving the CTA again is a change in useProductionPipeline and nowhere else.
  */
 
 const DOT = {
@@ -77,6 +82,14 @@ const StepChip = ({ step, onFocus }) => {
       >
         {step.label}
       </span>
+      {/* Beta rides next to the step NAME rather than in the detail, because the detail is the
+          first thing dropped when the bar runs out of room — and "this part is unfinished" is
+          not a nicety to drop at narrow widths. */}
+      {step.beta && (
+        <span className="shrink-0 rounded bg-amber-400/10 px-1 py-px font-mono text-[8px] uppercase tracking-[0.15em] text-amber-300/80">
+          Beta
+        </span>
+      )}
       {/* The detail is the first thing to go when the bar runs out of room — the step name
           and its state are what must survive at any width. */}
       <span className="hidden min-w-0 truncate text-[10px] text-slate-600 lg:inline">
@@ -91,12 +104,19 @@ const StepChip = ({ step, onFocus }) => {
   );
 };
 
-/** The Block step when it is ready to fire: a real button carrying tier, cost and time. */
-const BlockAction = ({ action, onFocus, panel }) => (
+/** Whichever step is currently the run's next move: a real button carrying cost and time.
+ *
+ * Named for the JOB rather than the step, since which step owns it is not this component's
+ * business — it was `BlockAction` while Block held the CTA, and renaming it when the CTA moved to
+ * Shoot is the difference between a name that describes the code and a name that describes its
+ * history. */
+const StepAction = ({ action, onFocus, panel }) => (
   <div className="flex min-w-0 items-center gap-2">
     <button
       type="button"
-      onClick={action.disabled ? () => onFocus(panel) : action.onClick}
+      // Three ways to be clicked, in priority order: a disabled action explains itself by opening
+      // its panel, a `focusPanel` action IS "go look", and everything else does its own work.
+      onClick={action.disabled || action.focusPanel ? () => onFocus(panel) : action.onClick}
       title={action.reason ?? action.hint ?? undefined}
       className={cn(
         'sticker sticker-hover flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors',
@@ -124,7 +144,12 @@ const BlockAction = ({ action, onFocus, panel }) => (
 );
 
 const PipelineBar = ({ steps, onFocusPanel, composing, onReset }) => {
-  const blockStep = steps[steps.length - 1];
+  // ANY step running, not the last one in the array. This was `steps[steps.length - 1]` named
+  // `blockStep`, written when Block genuinely was last; Shoot was appended afterwards and the
+  // spinner silently started tracking a different step than its name claimed. A positional index
+  // into a list that grows is a bug waiting for the next step to be added — which is exactly what
+  // happened, and would have happened again.
+  const busy = steps.some((step) => step.state === STATE.RUNNING);
 
   return (
     <div className="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-white/10 px-3 py-1.5 md:px-5">
@@ -138,14 +163,14 @@ const PipelineBar = ({ steps, onFocusPanel, composing, onReset }) => {
             <ChevronRight aria-hidden="true" className="h-3 w-3 shrink-0 text-slate-800" />
           )}
           {step.action ? (
-            <BlockAction action={step.action} onFocus={onFocusPanel} panel={step.panel} />
+            <StepAction action={step.action} onFocus={onFocusPanel} panel={step.panel} />
           ) : (
             <StepChip step={step} onFocus={onFocusPanel} />
           )}
         </div>
       ))}
 
-      {blockStep?.state === STATE.RUNNING && (
+      {busy && (
         <Loader2 className="ml-1 hidden h-3 w-3 shrink-0 animate-spin text-purple-400 md:block" />
       )}
 

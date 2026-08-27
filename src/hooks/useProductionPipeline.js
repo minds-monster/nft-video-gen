@@ -229,8 +229,11 @@ export const useProductionPipeline = ({ composer, screenwriter, storyboarder, di
     else if (frames.length) blockState = STATE.DONE;
     else if (spec) blockState = STATE.READY;
 
-    // The reason a disabled button is disabled, said out loud. A dead control with no
-    // explanation is the single most common way this canvas stopped a visitor cold.
+    // The reason the Storyboarder cannot run, said out loud. It used to explain a disabled
+    // button; now that the button has moved into the panel it explains the CHIP instead, via
+    // `detail` below — because the reason still has to reach whoever goes looking for the
+    // opt-in, and a step that silently refuses is the single most common way this canvas
+    // stopped a visitor cold.
     let blockedReason = null;
     if (blockState === STATE.READY) {
       if (!token) blockedReason = 'Connect your Mind to enable the Storyboarder.';
@@ -259,9 +262,13 @@ export const useProductionPipeline = ({ composer, screenwriter, storyboarder, di
         ? (storyboarder?.stageLabel ?? STAGE_LABEL[storyboarder?.phase] ?? 'working')
         : frames.length
           ? `${frames.length} beat${frames.length === 1 ? '' : 's'} blocked`
-          : blockState === STATE.READY
-            ? (planSummary ?? 'ready to block')
-            : 'the Storyboarder blocks each shot',
+          : blockedReason
+            ? blockedReason
+            : blockState === STATE.READY
+              // "optional" is the operative word and it goes first. Somebody reading this chip
+              // needs to know they can ignore it before they need to know what it costs.
+              ? `optional · ${planSummary ?? 'blocks each shot in 3D'}`
+              : 'the Storyboarder blocks each shot',
       short: running
         ? 'blocking'
         : frames.length
@@ -271,19 +278,23 @@ export const useProductionPipeline = ({ composer, screenwriter, storyboarder, di
             : null,
       elapsed: running ? (storyboarder?.elapsedSeconds ?? 0) : null,
       error: boardError,
-      action:
-        blockState === STATE.READY
-          ? {
-              label: capped ? 'Scene exceeds tier limits' : 'Send to Storyboarder',
-              disabled: Boolean(blockedReason),
-              reason: blockedReason,
-              hint: planSummary,
-              onClick: () => {
-                if (blockedReason || !spec || !writtenCast?.length || !token) return;
-                storyboarder.run({ spec, cast: writtenCast, token });
-              },
-            }
-          : null,
+      // OPT-IN, AND THEREFORE NOT A CTA. This step used to carry the run's primary button —
+      // "Send to Storyboarder" appeared in the pipeline bar the moment a spec existed, so the
+      // Storyboarder read as the thing you do after the Screenwriter. It is not: the Director
+      // shoots from the SPEC and never needed blocked geometry (see readyToShoot below), so the
+      // bar was advertising a detour as the main road.
+      //
+      // Round 11 measured what that detour costs — the split path is 1.8-3x slower than shooting
+      // straight through and spends ~5x the daily free-model quota — against a real gain in shot
+      // variety and framing accuracy. That is a trade worth OFFERING and not worth DEFAULTING,
+      // which is exactly what an opt-in is. The step keeps its state, detail, elapsed and errors;
+      // it just stops being the button. Starting a run is now a deliberate click on the
+      // Storyboarder's own panel.
+      action: null,
+      // Rendered by the bar rather than special-cased there by step id: `beta` earns the badge,
+      // `optional` says this step can be skipped without the run being incomplete.
+      beta: true,
+      optional: true,
     };
 
     // ── Shoot ────────────────────────────────────────────────────────────────────────────
@@ -297,6 +308,11 @@ export const useProductionPipeline = ({ composer, screenwriter, storyboarder, di
     const shooting = Boolean(director?.running);
     const directorPlan = director?.plan ?? null;
     const readyToShoot = Boolean(spec?.beats?.length && token && directorPlan?.ready);
+    // Everything the free read needs, and nothing more. It wants the screenplay and a Mind —
+    // deliberately NOT `writtenCast`, and deliberately not a storyboard.
+    const canRead = Boolean(
+      spec?.beats?.length && token && !director?.planning && !shooting,
+    );
 
     const shootState = shooting
       ? STATE.RUNNING
@@ -308,7 +324,13 @@ export const useProductionPipeline = ({ composer, screenwriter, storyboarder, di
             ? STATE.READY
             : readyToShoot
               ? STATE.READY
-              : STATE.IDLE;
+              : canRead
+                // Ready to be READ, which is the run's actual next move once the screenplay
+                // exists. Without this the Shoot chip sat idle until a plan appeared, and the
+                // only thing that made a plan appear was a button inside a panel nobody was
+                // pointed at — so the run looked finished when it had barely started.
+                ? STATE.READY
+                : STATE.IDLE;
 
     const shootStep = {
       id: STEP.SHOOT,
@@ -337,7 +359,57 @@ export const useProductionPipeline = ({ composer, screenwriter, storyboarder, di
               : null,
       elapsed: shooting ? (director?.elapsedSeconds ?? 0) : null,
       error: director?.error ?? null,
-      action: null,
+      // THE RUN'S PRIMARY CTA, MOVED HERE FROM BLOCK — and it is the FREE half of the Director's
+      // two-step flow, not the paid one.
+      //
+      // `assess` reads the screenplay and prices the shoot; `shoot` spends the money. Wiring the
+      // bar to `shoot` would put a spending action in the most-clicked control in the product,
+      // one click from a screenplay finishing. DirectorPanel already makes this call for its own
+      // buttons — "Free, so it is never behind the money gate, and offered before Shoot" — and
+      // the bar has no business disagreeing with the panel about the order of those two.
+      //
+      // So the bar gets you read and priced; the panel is where you decide to pay. Once a plan
+      // exists the CTA stops competing with the Shoot button and just points at it.
+      //
+      // NO ACTION UNTIL THERE IS A SCREENPLAY TO READ. The first cut of this offered the button
+      // from the moment the canvas loaded, disabled, reading "Waiting for the screenplay" — so a
+      // visitor who had not yet picked a piece was looking at the run's primary CTA, greyed out,
+      // for the entire casting and writing phase. A permanently-dead button at the head of the
+      // bar teaches people the bar is not worth reading. Before the spec exists this is a plain
+      // chip like any other idle step, which is what Block did correctly for a year.
+      action:
+        shooting || director?.awaitingApproval || takes.length || !spec?.beats?.length
+          ? null
+          : directorPlan
+            ? {
+                label: 'Open the Director',
+                disabled: false,
+                reason: null,
+                hint: directorPlan.blocking?.length
+                  ? 'the Director flagged something first'
+                  : `~$${(directorPlan.estimate?.finalUsd ?? 0).toFixed(2)} a take`,
+                // The bar owns panel focus, not this hook — `focusPanel` asks for it rather than
+                // reaching for a callback the pipeline has no business holding.
+                focusPanel: true,
+                onClick: null,
+              }
+            : {
+                label: director?.planning ? 'The Director is reading it' : 'Have the Director read it',
+                disabled: !canRead,
+                // Every disabled path names its own reason. `canRead` has three ways to be
+                // false and a dead control that explains none of them is the single most
+                // common way this canvas has stopped people cold.
+                reason: director?.planning
+                  ? 'Reading the screenplay…'
+                  : !token
+                    ? 'Connect your Mind to enable the Director.'
+                    : null,
+                hint: 'free — reads the screenplay and prices the shoot',
+                onClick: () => {
+                  if (!canRead) return;
+                  director.assess({ spec, cast: screenwriter?.writtenCast ?? composer?.cast ?? [], token });
+                },
+              },
     };
 
     return [castStep, readStep, reviewStep, writeStep, blockStep, shootStep];

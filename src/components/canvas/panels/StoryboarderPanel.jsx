@@ -55,7 +55,10 @@ const StoryboarderPanel = ({
   const shell = (children) => (
     <CanvasPanel
       id={id}
-      title="Storyboarder"
+      // CanvasPanel renders `title` in the open header AND in the collapsed strip, so putting
+      // Beta here covers both states — a collapsed panel is exactly where an unfinished feature
+      // would otherwise lose its label.
+      title="Storyboarder (Beta)"
       icon={Clapperboard}
       collapsed={collapsed}
       onToggle={onToggle}
@@ -72,8 +75,9 @@ const StoryboarderPanel = ({
           <Clapperboard className="h-5 w-5" />
         </span>
         <p className="mx-auto max-w-xs text-xs leading-relaxed text-slate-500">
-          Once the Screenwriter finishes a shot spec, send it here to block it into a
-          shot-by-shot technical spec.
+          Optional. Once the Screenwriter finishes a shot spec you can block it into a
+          shot-by-shot technical spec here — or skip it and let the Director shoot the
+          screenplay directly.
         </p>
       </div>,
     );
@@ -91,6 +95,21 @@ const StoryboarderPanel = ({
     <div className="space-y-3">
       {!frames?.length && !running && (
         <>
+          {/* THE OPT-IN, and the caveat comes BEFORE the button rather than under it.
+              This is the last surface a visitor sees before committing several minutes, and the
+              honest facts about that commitment are: it is slower than not doing it, and not
+              doing it costs them nothing downstream. Round 11 measured the first (1.8-3x slower
+              than shooting straight from the screenplay) and the pipeline has always been true
+              about the second — the Director reads the screenplay, never the geometry.
+
+              Deliberately not a pitch. The gains are real (better shot variety, framing that
+              matches the geometry) but a visitor who wanted those went looking for this panel;
+              a visitor who did not is owed the reason to walk away, up front. */}
+          <p className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-[11px] leading-relaxed text-amber-200/90">
+            <span className="font-semibold">Beta.</span> Blocks every shot in 3D, and takes
+            several minutes longer than shooting straight from the screenplay. The Director does
+            not need it — this is for seeing the scene before you spend on it.
+          </p>
           <button
             type="button"
             onClick={send}
@@ -98,7 +117,7 @@ const StoryboarderPanel = ({
             title={capped ? 'This scene is too long for the current tier' : undefined}
             className="sticker sticker-hover w-full rounded-xl bg-purple-600 px-4 py-2 text-xs font-semibold text-white hover:bg-purple-500 disabled:cursor-not-allowed disabled:bg-purple-600/40"
           >
-            {capped ? 'Scene exceeds Zero Budget limits' : 'Send to Storyboarder'}
+            {capped ? 'Scene exceeds Zero Budget limits' : 'Try the Storyboarder (Beta)'}
           </button>
           {capped && (
             <p className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-[11px] leading-relaxed text-amber-200">

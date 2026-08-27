@@ -665,7 +665,7 @@ const StoryboardPanel = ({ id, storyboarder, token, budget, status, tabs }) => {
 
   if (!frames?.length && !running) {
     return (
-      <CanvasPanel id={id} title="Storyboard" icon={Film} headerAction={header} status={status}>
+      <CanvasPanel id={id} title="Storyboard (Beta)" icon={Film} headerAction={header} status={status}>
         <div className="flex h-full flex-col items-center justify-center gap-3 py-8 text-center">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400">
             <Film className="h-5 w-5" />
@@ -744,7 +744,7 @@ const StoryboardPanel = ({ id, storyboarder, token, budget, status, tabs }) => {
       <div ref={rootRef} className="flex h-full min-h-0 flex-col">
         <CanvasPanel
           id={id}
-          title="Storyboard"
+          title="Storyboard (Beta)"
           icon={Film}
           headerAction={header}
           status={status}

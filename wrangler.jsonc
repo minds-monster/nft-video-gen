@@ -175,20 +175,27 @@
 		// round 7's rule is that if a fix requires dropping a gate, the fix is wrong, and cheaper
 		// reasoning that fails the floor is exactly that.
 		"FREE_STORYBOARD_REASONING": "",
-		// ⚠ NOT YET VERIFIED — DO NOT DEPLOY THIS AS "1" WITHOUT READING THIS NOTE.
-		//
 		// "1" runs the plan-then-parallel-beats path in worker/film-plan.js; "0" reverts to the
-		// single whole-film call. The split is measured good on latency-to-first-signal (26.8s vs
-		// 408s), on plan adherence (2/2) and on per-beat failure isolation — but the gate that was
-		// supposed to clear it has NOT run: probe-storyboard-geometry.mjs scored zero split films
-		// on 2026-08-26 because the day's free quota ran out first. Shot variety against round 7's
-		// c1 baseline (3.1 distinct bands / 0.26 MWS share) is therefore still unmeasured.
+		// single whole-film call.
 		//
-		// AND IT HAS A COST NOTHING ELSE IN THIS FILE HAS: a split film is one request PER BEAT
-		// plus one for the plan, so it consumes the daily free-model allowance 4-7x faster than a
-		// whole-film call. At the 50/day free-tier cap that is roughly 12 films a day across every
-		// visitor, against ~50. At 1000/day (10 credits) it is irrelevant. Check which tier the
-		// account is on before turning this on.
+		// THE VARIETY GATE PASSED (run 20260826T180432Z, 20 films, 4 cells, all on OpenRouter so
+		// the origin matches production). Against the same model and origin running a whole film
+		// in one call: 4.00 mean distinct shot bands vs 3.67, and framing self-agreement of 1.00
+		// vs 0.75 — both clear of round 7's c1 benchmark of 3.1. The clearest single demonstration
+		// is Super on cut-to-black, which collapsed to WS/MWS/MWS/MWS whole-film and returned four
+		// distinct bands under the split. Deciding shot sizes in a separate pass is what removes
+		// the collapse.
+		//
+		// IT IS STILL A TRADE, NOT A WIN, and that is why the feature is opt-in and marked Beta in
+		// the UI rather than being the default path. The split is 1.8-3x slower (mean 1030s vs
+		// 348s), makes ~5.5 calls per film instead of 1, and burns ~3x the tokens. Its mean latency
+		// EXCEEDS the 12-minute FILM_BUDGET_MS guard in worker/storyboarder.js, so some films the
+		// probe completed would be truncated in production. Those costs now land only on visitors
+		// who deliberately chose the path.
+		//
+		// Quota: a split film is one request per beat plus one for the plan. Immaterial at the
+		// 1000/day allowance this account is now on; it would be ~12 films a day across ALL
+		// visitors at the 50/day free-tier cap. Check the tier before assuming headroom.
 		"FREE_STORYBOARD_SPLIT": "1",
 		// How many beats the split may have in flight at once. NOT a tuning knob for our own
 		// throughput — a property of the provider, and measured rather than chosen. On 2026-08-26
