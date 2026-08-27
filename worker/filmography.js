@@ -21,6 +21,7 @@ import { mindsClient, chatAlias } from './minds.js';
 import { signedMediaUrl } from './signed-media.js';
 
 export const FILMOGRAPHY_TAG = '[Filmography]';
+export const SCREENPLAY_TAG = '[Screenplay]';
 
 // System events, not visitor chat — same debounce the Storyboarder's digests use, and for the
 // same reason: best-effort, isolate-scoped, enough to stop a retry storm doubling a message.
@@ -28,6 +29,14 @@ const lastDigestAt = new Map();
 const DIGEST_MIN_INTERVAL_MS = 5_000;
 
 const money = (value) => (value == null ? null : `$${Number(value).toFixed(2)}`);
+
+/** One line of the visitor's own words, whitespace collapsed, cut with an ellipsis. */
+const excerpt = (text, max) => {
+  if (typeof text !== 'string') return null;
+  const flat = text.replace(/\s+/g, ' ').trim();
+  if (!flat) return null;
+  return flat.length > max ? `${flat.slice(0, max - 1).trimEnd()}…` : flat;
+};
 
 /** The message body. Pure, so the shape can be read (and tested) without a Mind on the line. */
 export function filmographyDigest(record, { watchUrl = null } = {}) {
@@ -44,17 +53,78 @@ export function filmographyDigest(record, { watchUrl = null } = {}) {
   ];
   if (beats) lines.push(`Screenplay: ${beats} beat${beats === 1 ? '' : 's'}.`);
   if (record.castNames?.length) lines.push(`Cast: ${record.castNames.join(', ')}.`);
+  const prompt = excerpt(record.prompt, 160);
+  if (prompt) lines.push(`Prompt, in the visitor's words: "${prompt}"`);
   if (watchUrl) lines.push(`Watch (link valid 7 days): ${watchUrl}`);
   if (take.ipfs?.cid) {
     lines.push(`Permanent record: ipfs://${take.ipfs.cid}${take.ipfs.gatewayUrl ? ` — ${take.ipfs.gatewayUrl}` : ''}`);
+  }
+  // The screenplay, pinned next to the film: the prompt, every beat, and the cast by asset key.
+  // Small, so it costs nothing to keep, and it is the half of the record a film alone cannot
+  // carry — what was ASKED for, not only what came out.
+  if (take.ipfs?.screenplayCid) {
+    lines.push(
+      `Screenplay record: ipfs://${take.ipfs.screenplayCid}${take.ipfs.screenplayGatewayUrl ? ` — ${take.ipfs.screenplayGatewayUrl}` : ''}`,
+    );
   }
   if (take.sha256) lines.push(`File SHA-256: ${take.sha256}`);
   lines.push(
     '',
     'This is part of your filmography. If asked what you have produced here, this message is your record — ' +
-      'quote the film, the take id and the permanent ipfs:// address.',
+      'quote the film, the take id and the permanent ipfs:// address' +
+      (take.ipfs?.screenplayCid ? ', and the screenplay record beside it' : '') +
+      '.',
   );
   return lines.join('\n');
+}
+
+/**
+ * The Mind's record of a film that exists only as a screenplay so far.
+ *
+ * Sent once per film, the moment a screenplay settles on the Worker (worker/draft.js) — well
+ * before any money moves. WHY TELL THE MIND ABOUT UNFINISHED WORK: the visitor asked for it
+ * outright after losing a finished screenplay to a page reload on the way to pay for it
+ * (2026-08-27) — "could this be something that the mind also remembers?" A screenplay the Mind
+ * has been told about is one it can bring up, ask after, and recognise when the take arrives.
+ */
+export function screenplayDigest({ filmId, spec, prompt = null, castNames = [] }) {
+  const logline = spec?.logline ?? null;
+  const beats = spec?.beats?.length ?? 0;
+  const lines = [
+    `${SCREENPLAY_TAG} A screenplay has been written for your production.`,
+    logline ? `Film: "${logline}" (film ${filmId})` : `Film: ${filmId}`,
+  ];
+  if (beats) lines.push(`Screenplay: ${beats} beat${beats === 1 ? '' : 's'}${spec?.duration ? `, about ${spec.duration}s` : ''}.`);
+  if (castNames?.length) lines.push(`Cast: ${castNames.join(', ')}.`);
+  const words = excerpt(prompt, 200);
+  if (words) lines.push(`Prompt, in the visitor's words: "${words}"`);
+  lines.push(
+    '',
+    'This is a film in progress: written, not yet shot, and nothing has been paid for. If asked what is being ' +
+      'made here, quote the logline and the film id. A [Filmography] message will follow when a take is delivered.',
+  );
+  return lines.join('\n');
+}
+
+// One per Mind per minute, not the filmography's five seconds: a trim followed by a rewrite is two
+// new film ids in under a minute, and the Mind should hear about the one that stuck. Exported so a
+// test can clear it between cases.
+export const lastScreenplayDigestAt = new Map();
+const SCREENPLAY_MIN_INTERVAL_MS = 60_000;
+
+/** Tell the Mind about a screenplay. Returns true only when the message actually went. */
+export async function relayScreenplayDigest(env, mindId, { filmId, spec, prompt = null, castNames = [] }) {
+  const client = mindsClient(env);
+  if (!client) return false;
+
+  const now = Date.now();
+  if (now - (lastScreenplayDigestAt.get(mindId) ?? 0) < SCREENPLAY_MIN_INTERVAL_MS) return false;
+  lastScreenplayDigestAt.set(mindId, now);
+
+  const alias = chatAlias(mindId);
+  await client.ensureConversation(alias, mindId);
+  await client.sendMessage({ alias, messageText: screenplayDigest({ filmId, spec, prompt, castNames }) });
+  return true;
 }
 
 /**

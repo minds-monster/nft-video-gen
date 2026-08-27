@@ -34,7 +34,7 @@ const CACHE_CONTROL = 'public, max-age=31536000, immutable';
 
 // Matches src/lib/assetKey.js: `chain:address:tokenId`. Token ids are decimal strings that can
 // run to 78 digits, hence the generous tail.
-const ASSET_KEY = /^[a-z0-9-]{1,32}:0x[a-fA-F0-9]{40}:[A-Za-z0-9_-]{1,96}$/;
+export const ASSET_KEY = /^[a-z0-9-]{1,32}:0x[a-fA-F0-9]{40}:[A-Za-z0-9_-]{1,96}$/;
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8' } });

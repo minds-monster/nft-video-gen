@@ -74,6 +74,9 @@ export async function createJob(
     // consumer has no request to re-read them from and the spec is pure client state — nothing
     // server-side stores it.
     spec = null, risks = null, brief = null, finalUsd = 0, remainingUsd = null, riskMeasured = null,
+    // What the screenplay record pinned beside the film carries (see `pinScreenplay`): the prompt
+    // from the visitor's saved draft, the cast by asset key, and the cast by name for the digest.
+    prompt = null, castRefs = null, castNames = null,
   },
 ) {
   const record = {
@@ -92,6 +95,9 @@ export async function createJob(
     finalUsd,
     remainingUsd,
     riskMeasured,
+    prompt,
+    castRefs,
+    castNames: castNames ?? [],
     // A Screen Test and a final take are the same machinery — same submit, same poll, same
     // mirror — and differ only in what they are FOR. Keeping them one code path is what makes a
     // test cheap to add; keeping `question` on the record is what makes it worth having run.
@@ -387,7 +393,8 @@ async function submit(env, record, logger, cast) {
   record.step = 'poll';
   // Who was in it, by name. The cast itself lives only on the queue message; the names are kept
   // so the Mind's filmography can say "the one with the astronaut" rather than "take-9f21".
-  record.castNames = (cast ?? []).map((entry) => entry?.name).filter(Boolean);
+  const names = (cast ?? []).map((entry) => entry?.name).filter(Boolean);
+  if (names.length) record.castNames = names;
   await saveJob(env, record.mindId, record);
 
   await recordSpend(env, record.mindId, {
@@ -542,6 +549,27 @@ async function poll(env, record, logger) {
   }
 }
 
+/**
+ * The cast as a public record: on-chain identity, display name, collection, and one still. This is
+ * what the screenplay document names each <Subject N> by, so anyone holding the record can find
+ * the actual piece — the asset key is `chain:address:tokenId` (src/lib/assetKey.js).
+ */
+export const castRefsFrom = (cast = []) =>
+  (Array.isArray(cast) ? cast : [])
+    .map((entry) => {
+      const [chain = null, address = null, tokenId = null] = String(entry?.key ?? '').split(':');
+      return {
+        key: entry?.key ?? null,
+        chain,
+        address,
+        tokenId,
+        name: entry?.name ?? null,
+        collection: entry?.collectionName ?? null,
+        image: castingStills(entry?.nft)[0] ?? null,
+      };
+    })
+    .filter((ref) => ref.key);
+
 export const sha256Hex = async (bytes) =>
   [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))]
     .map((byte) => byte.toString(16).padStart(2, '0'))
@@ -558,8 +586,49 @@ const PINATA_UPLOAD_URL = 'https://uploads.pinata.cloud/v3/files';
 export const ipfsGatewayUrl = (env, cid) =>
   `${(env.PINATA_GATEWAY ?? 'https://gateway.pinata.cloud').replace(/\/$/, '')}/ipfs/${cid}`;
 
+/** One file to Pinata's v3 Files API, on the public network. */
+async function uploadToPinata(env, { blob, filename, name, keyvalues }) {
+  const form = new FormData();
+  form.append('file', blob, filename);
+  form.append('network', 'public');
+  form.append('name', name);
+  form.append('keyvalues', JSON.stringify(keyvalues));
+
+  const response = await fetch(PINATA_UPLOAD_URL, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${env.PINATA_JWT}` },
+    body: form,
+  });
+  if (!response.ok) {
+    const detail = (await response.text().catch(() => '')).slice(0, 200);
+    throw Object.assign(new Error(`Pinata refused the pin: ${response.status} ${detail}`), {
+      status: response.status,
+      retryable: response.status >= 500 || response.status === 429,
+    });
+  }
+  const payload = await response.json().catch(() => ({}));
+  const cid = payload?.data?.cid ?? null;
+  if (!cid) throw Object.assign(new Error('Pinata returned no CID.'), { retryable: true });
+  return { cid, gatewayUrl: ipfsGatewayUrl(env, cid) };
+}
+
 /**
- * Pin the finished film to IPFS, then tell the Mind.
+ * The screenplay as a public document: what was asked for, what was written, and who was in it.
+ * No mindId in the body — that stays in Pinata's own name/keyvalues, as it does for the film.
+ */
+export const screenplayDocument = (record, { now = Date.now() } = {}) => ({
+  version: 1,
+  filmId: record.filmId,
+  takeId: record.take?.takeId ?? null,
+  prompt: record.prompt ?? null,
+  spec: record.spec ?? null,
+  cast: record.castRefs ?? [],
+  film: record.take?.ipfs?.cid ? { cid: record.take.ipfs.cid, sha256: record.take.sha256 ?? null } : null,
+  createdAt: new Date(now).toISOString(),
+});
+
+/**
+ * Pin the finished film to IPFS, then the screenplay beside it, then tell the Mind.
  *
  * WHY IPFS AT ALL, when R2 already has the bytes. R2 is ours. A signed link expires in seven days
  * and the bucket exists only as long as this site does. A CID is derived from the bytes
@@ -580,37 +649,51 @@ async function pin(env, record, logger) {
     if (!object) throw Object.assign(new Error('The finished film is missing from storage.'), { fatal: true });
     const bytes = await object.arrayBuffer();
 
-    const form = new FormData();
-    form.append('file', new Blob([bytes], { type: 'video/mp4' }), `${record.take.takeId}.mp4`);
-    form.append('network', 'public');
-    form.append('name', `${record.mindId}/${record.filmId}/${record.take.takeId}.mp4`);
-    form.append('keyvalues', JSON.stringify({ mindId: record.mindId, filmId: record.filmId, takeId: record.take.takeId }));
-
-    const response = await fetch(PINATA_UPLOAD_URL, {
-      method: 'POST',
-      headers: { authorization: `Bearer ${env.PINATA_JWT}` },
-      body: form,
+    const { cid, gatewayUrl } = await uploadToPinata(env, {
+      blob: new Blob([bytes], { type: 'video/mp4' }),
+      filename: `${record.take.takeId}.mp4`,
+      name: `${record.mindId}/${record.filmId}/${record.take.takeId}.mp4`,
+      keyvalues: { mindId: record.mindId, filmId: record.filmId, takeId: record.take.takeId },
     });
-    if (!response.ok) {
-      const detail = (await response.text().catch(() => '')).slice(0, 200);
-      throw Object.assign(new Error(`Pinata refused the pin: ${response.status} ${detail}`), {
-        status: response.status,
-        retryable: response.status >= 500 || response.status === 429,
-      });
-    }
-    const payload = await response.json().catch(() => ({}));
-    const cid = payload?.data?.cid ?? null;
-    if (!cid) throw Object.assign(new Error('Pinata returned no CID.'), { retryable: true });
 
-    const ipfs = { cid, provider: 'pinata', pinnedAt: Date.now(), gatewayUrl: ipfsGatewayUrl(env, cid) };
+    const ipfs = { ...(record.take.ipfs ?? {}), cid, provider: 'pinata', pinnedAt: Date.now(), gatewayUrl };
     // Durable first, told second — the same order as the take itself.
     await recordTakeIpfs(env, record.mindId, record.filmId, record.take.takeId, ipfs);
     record.take.ipfs = ipfs;
     await saveJob(env, record.mindId, record);
-    logger.log('ipfs', { takeId: record.take.takeId, cid, gatewayUrl: ipfs.gatewayUrl });
+    logger.log('ipfs', { takeId: record.take.takeId, cid, gatewayUrl });
   }
 
+  await pinScreenplay(env, record, logger);
   await tellTheMind(env, record);
+}
+
+/**
+ * The screenplay, pinned next to the film.
+ *
+ * The film alone is half a record: it shows what came out, not what was asked for. The prompt,
+ * the beats and the cast by asset key are a few KB, so they go up as one JSON document and the
+ * Mind is given both addresses. Best-effort throughout — a screenplay that will not pin is
+ * cosmetic and must never delay telling the Mind about a film that did.
+ */
+async function pinScreenplay(env, record, logger) {
+  if (!env.PINATA_JWT || record.take?.ipfs?.screenplayCid || !record.spec?.beats?.length) return;
+  try {
+    const { cid, gatewayUrl } = await uploadToPinata(env, {
+      blob: new Blob([JSON.stringify(screenplayDocument(record), null, 2)], { type: 'application/json' }),
+      filename: `${record.take.takeId}.screenplay.json`,
+      name: `${record.mindId}/${record.filmId}/${record.take.takeId}.screenplay.json`,
+      keyvalues: { mindId: record.mindId, filmId: record.filmId, takeId: record.take.takeId, kind: 'screenplay' },
+    });
+    const ipfs = { ...(record.take.ipfs ?? {}), screenplayCid: cid, screenplayGatewayUrl: gatewayUrl, screenplayPinnedAt: Date.now() };
+    await recordTakeIpfs(env, record.mindId, record.filmId, record.take.takeId, ipfs);
+    record.take.ipfs = ipfs;
+    await saveJob(env, record.mindId, record);
+    logger.log('ipfs', { takeId: record.take.takeId, screenplayCid: cid, gatewayUrl });
+  } catch (error) {
+    console.warn(`Screenplay pin for ${record.take?.takeId} failed:`, error.message);
+    logger.log('error', { message: `Screenplay pin failed: ${error.message}`, cosmetic: true });
+  }
 }
 
 /** Once per job. The pin step can be retried; the Mind must not be told twice. */
@@ -644,7 +727,11 @@ async function recordTakeDigested(env, mindId, filmId, takeId, digestedAt) {
  * reaches IPFS and the Mind. Sends the digest again even if one was sent before: the visitor
  * pressed the button, and "remind the Mind" is a reasonable thing to mean by it.
  */
-export async function rememberTake(env, mindId, { filmId, takeId, origin = null, logline = null }) {
+export async function rememberTake(
+  env,
+  mindId,
+  { filmId, takeId, origin = null, logline = null, spec = null, prompt = null, castRefs = null, castNames = null },
+) {
   const production = await loadProduction(env, mindId, filmId);
   const take = production.takes.find((entry) => entry.takeId === takeId);
   if (!take) throw Object.assign(new Error('take_not_found'), { status: 404 });
@@ -658,8 +745,12 @@ export async function rememberTake(env, mindId, { filmId, takeId, origin = null,
     status: 'complete',
     step: 'pin',
     origin,
-    spec: logline ? { logline, beats: [] } : null,
-    castNames: [],
+    // The whole screenplay when the visitor's draft is still this film (worker/draft.js), so the
+    // record pinned beside the take carries it; the logline alone otherwise.
+    spec: spec?.beats?.length ? spec : logline ? { logline, beats: [] } : null,
+    prompt,
+    castRefs,
+    castNames: castNames ?? (castRefs ?? []).map((ref) => ref.name).filter(Boolean),
     params: take.params ?? {},
     script: take.script ?? null,
     take: { ...take, digestedAt: null },
@@ -767,6 +858,9 @@ export async function startTake(
   {
     filmId, script, params, refKeys, cast, kind = 'take', question = null, riskId = null, origin = null,
     spec = null, risks = null, brief = null, finalUsd = 0, remainingUsd = null, riskMeasured = null,
+    // What the screenplay record pinned beside the film carries (see `pinScreenplay`): the prompt
+    // from the visitor's saved draft, the cast by asset key, and the cast by name for the digest.
+    prompt = null, castRefs = null, castNames = null,
   },
 ) {
   const costUsd = priceUsd(params) ?? 0;
@@ -803,6 +897,9 @@ export async function startTake(
     finalUsd,
     remainingUsd,
     riskMeasured,
+    prompt,
+    castRefs,
+    castNames,
     status: needsApproval ? 'awaiting-approval' : 'queued',
     step: 'submit',
   });

@@ -19,6 +19,7 @@ import { mindChatInit, mindChatSend, mindChatPoll } from './mind-chat.js';
 import { handleAssistantMessage, handleAssistantHistory, handleAssistantStatus } from './assistant.js';
 import { handleBudgetSet } from './budget.js';
 import { handleProducerState } from './producer-state.js';
+import { handleDraftGet, handleDraftPut, handleDraftDelete } from './draft.js';
 import { handleStripeCheckout, handleStripeWebhook, handleClaimGuestBudget } from './stripe.js';
 import {
   handleDirectorPlan,
@@ -90,6 +91,11 @@ const ROUTES = {
   'GET /api/assistant/status': handleAssistantStatus,
   'POST /api/producer/budget': handleBudgetSet,
   'POST /api/producer/state': handleProducerState,
+  // The visitor's draft — prompt, cast, screenplay — kept for a connected Mind so it survives the
+  // Stripe round-trip, a cleared browser and a second device. See worker/draft.js.
+  'GET /api/draft': handleDraftGet,
+  'PUT /api/draft': handleDraftPut,
+  'DELETE /api/draft': handleDraftDelete,
   'POST /api/producer/claim-guest-budget': handleClaimGuestBudget,
   'POST /api/checkout': handleStripeCheckout,
   'POST /api/webhook/stripe': handleStripeWebhook,

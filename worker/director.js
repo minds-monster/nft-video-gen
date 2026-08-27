@@ -32,7 +32,8 @@ import { preflightReferences } from './reference-preflight.js';
 import { LATENCY_SECONDS, checkH3Params, priceUsd } from './minimax.js';
 import { DEFAULT_MODE, MODES, closeEnvelope, getEnvelope, listEnvelopes, openEnvelope, recordDecision, spentOnFilm } from './render-budget.js';
 import { getSpend } from './budget.js';
-import { loadJob, loadProduction, rememberTake, resumeAfterApproval, saveJob, startTake, startAssessment, enqueue } from './director-job.js';
+import { castRefsFrom, loadJob, loadProduction, rememberTake, resumeAfterApproval, saveJob, startTake, startAssessment, enqueue } from './director-job.js';
+import { draftCastForWire, loadDraft } from './draft.js';
 import { applyRevisions } from './director-agent.js';
 import { serveSignedMedia, signedMediaUrl } from './signed-media.js';
 import { streamJobEvents } from './job-events.js';
@@ -322,6 +323,14 @@ export async function handleDirectorStart(request, env) {
 
   const finalUsd = priceUsd(params) ?? 0;
 
+  // The prompt lives in the visitor's saved draft (worker/draft.js), never in this request: it is
+  // read here so the screenplay record pinned beside the finished film can carry what was ASKED
+  // for. Only when the draft is this film — a visitor mid-way through a second screenplay must
+  // not have its prompt attached to the first.
+  const draft = await loadDraft(env, session.mindId).catch(() => null);
+  const prompt = draft?.filmId === filmId ? draft.prompt : null;
+  const castRefs = castRefsFrom(cast);
+
   try {
     await openEnvelope(env, session.mindId, { filmId, mode, allowanceUsd, finalUsd });
     const { record, verdict } = await startTake(env, session.mindId, {
@@ -334,6 +343,9 @@ export async function handleDirectorStart(request, env) {
       // Carried for the filmography digest, which names the film by its logline. The screen-test
       // path has always passed it; a final take without it reached the Mind as a bare hash.
       spec: revised,
+      prompt,
+      castRefs,
+      castNames: castRefs.map((ref) => ref.name).filter(Boolean),
     });
 
     return json({
@@ -468,7 +480,7 @@ async function listProductions(env, mindId, requestUrl) {
         // Every identifier the Mind was given for this film, so its recall can be checked
         // against the record whichever one it quotes back.
         takeIds: ready.map((take) => take.takeId),
-        cids: ready.map((take) => take.ipfs?.cid).filter(Boolean),
+        cids: ready.flatMap((take) => [take.ipfs?.cid, take.ipfs?.screenplayCid]).filter(Boolean),
         posterUrl: poster
           ? await signedMediaUrl(env, mindId, { path: '/api/director/media', key: poster.r2Key, requestUrl })
           : null,
@@ -527,13 +539,33 @@ export async function handleDirectorRemember(request, env) {
 
   // The logline is read here rather than in the job, because the storyboard module reaches
   // the job module through the connection path and the job must not import it back.
-  const storyboard = await loadStoryboard(env, session.mindId, filmId).catch(() => null);
+  //
+  // The screenplay itself comes from the visitor's saved draft when it is this film — that is
+  // the only place the prompt exists — and the cast falls back to the storyboard's subject
+  // assets, which name every piece by asset key, for a film whose draft has since moved on.
+  const [storyboard, draft] = await Promise.all([
+    loadStoryboard(env, session.mindId, filmId).catch(() => null),
+    loadDraft(env, session.mindId).catch(() => null),
+  ]);
+  const sameFilm = draft?.filmId === filmId;
+  const castRefs = castRefsFrom(
+    sameFilm
+      ? draftCastForWire(draft)
+      : Object.values(storyboard?.subjectAssets ?? {}).map((asset) => ({
+          key: asset.assetKey,
+          name: asset.name ?? null,
+          collectionName: asset.collectionName ?? null,
+        })),
+  );
   try {
     const result = await rememberTake(env, session.mindId, {
       filmId,
       takeId,
       origin: new URL(request.url).origin,
       logline: storyboard?.logline ?? null,
+      spec: sameFilm ? draft.spec : null,
+      prompt: sameFilm ? draft.prompt : null,
+      castRefs,
     });
     return json(result, 202);
   } catch (error) {
@@ -590,6 +622,7 @@ export async function handleDirectorTest(request, env) {
   }
 
   const filmId = filmIdForBrief;
+  const castRefs = castRefsFrom(cast);
   try {
     await openEnvelope(env, session.mindId, { filmId, mode, allowanceUsd, finalUsd: priceUsd(h3Params(spec)) ?? 0 });
     const { record, verdict } = await startTake(env, session.mindId, {
@@ -602,6 +635,8 @@ export async function handleDirectorTest(request, env) {
       question: test.question,
       riskId: risk.id,
       origin: new URL(request.url).origin,
+      castRefs,
+      castNames: castRefs.map((ref) => ref.name).filter(Boolean),
       // The review step reads these back. Carried on the job because a Queue consumer has no
       // request to re-derive them from, and the spec exists only in the visitor's browser.
       spec: applyRevisions(spec, (await loadProduction(env, session.mindId, filmIdForBrief).catch(() => null))?.revisions ?? []),

@@ -41,6 +41,7 @@ export const NETWORKS = {
   "abstract-mainnet": Network.ABSTRACT_MAINNET,
   "berachain-mainnet": Network.BERACHAIN_MAINNET,
   "anime-mainnet": Network.ANIME_MAINNET,
+  "zora-mainnet": Network.ZORA_MAINNET,
   "story-mainnet": Network.STORY_MAINNET,
 };
 
@@ -69,6 +70,7 @@ export const CHAIN_LABELS = {
   "berachain-mainnet": "Berachain",
   "anime-mainnet": "Anime",
   "story-mainnet": "Story",
+  "zora-mainnet": "Zora",
   "robinhood-mainnet": "Robinhood",
 };
 
@@ -85,6 +87,7 @@ export const SEARCH_CHAINS = [
   "polygon-mainnet",
   "arb-mainnet",
   "opt-mainnet",
+  "zora-mainnet",
   "robinhood-mainnet",
 ];
 

@@ -131,6 +131,9 @@ export const useScreenwriter = () => {
   // Caps that governed the last generation, so rewrites stay on the same tier rather than
   // silently switching back to the Zero Budget default.
   const capsRef = useRef({ maxBeats: FREE_MAX_BEATS, maxReferences: FREE_MAX_REFERENCES });
+  // The same caps as state, so the draft that persists them (src/hooks/useDraftPersistence.js)
+  // re-runs when they change. The ref stays the thing `rewrite` reads.
+  const [caps, setCaps] = useState(capsRef.current);
 
   const elapsed = useElapsed(stage === STAGE.WRITING || rewriting);
 
@@ -213,6 +216,7 @@ export const useScreenwriter = () => {
     castRef.current = null;
     request.current = null;
     capsRef.current = { maxBeats: FREE_MAX_BEATS, maxReferences: FREE_MAX_REFERENCES };
+    setCaps(capsRef.current);
     setWrittenCast(null);
     setStage(STAGE.COMPOSE);
     setAnalysis({});
@@ -221,6 +225,35 @@ export const useScreenwriter = () => {
     setRewriting(false);
     setStreams({});
     setThoughts({});
+  }, []);
+
+  /**
+   * Put a saved draft back (src/lib/draftStore.js), as if the run that produced it had just
+   * finished. Both refs are repopulated on purpose: `rewrite` and `requestTrim` read
+   * `request.current` and `castRef.current` and silently do nothing without them, which would
+   * turn a restored treatment into one the visitor can look at but not iterate on.
+   */
+  const restore = useCallback(({ prompt, primaryKey = null, spec: savedSpec = null, writtenCast: savedCast = null, caps: savedCaps = null, stage: savedStage = STAGE.COMPOSE }) => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    request.current = typeof prompt === 'string' ? { prompt, primaryKey } : null;
+    capsRef.current = savedCaps?.maxBeats
+      ? { maxBeats: savedCaps.maxBeats, maxReferences: savedCaps.maxReferences ?? FREE_MAX_REFERENCES }
+      : { maxBeats: FREE_MAX_BEATS, maxReferences: FREE_MAX_REFERENCES };
+    setCaps(capsRef.current);
+    const usable = Array.isArray(savedCast) && savedCast.length ? savedCast : null;
+    castRef.current = usable;
+    setWrittenCast(usable);
+    // The Casting Director's log shows every piece as read — its dossier is right there, and a
+    // dossier that survived a page load was cached by the Worker long before that.
+    setAnalysis(Object.fromEntries((usable ?? []).map((entry) => [entry.key, { status: 'done', dossier: entry.dossier, cached: true }])));
+    const hasSpec = Boolean(savedSpec?.beats?.length);
+    setSpec(hasSpec ? savedSpec : null);
+    setError(null);
+    setRewriting(false);
+    setStreams({});
+    setThoughts({});
+    setStage(hasSpec && savedStage === STAGE.TREATMENT ? STAGE.TREATMENT : STAGE.COMPOSE);
   }, []);
 
   /** Back to the composer without throwing away the treatment — the user may return to it. */
@@ -256,6 +289,7 @@ export const useScreenwriter = () => {
         console.warn('Could not resolve tier before screenwriting:', planError.message);
       }
       capsRef.current = { maxBeats, maxReferences };
+      setCaps(capsRef.current);
 
       try {
         const dossiers = new Map();
@@ -487,6 +521,8 @@ export const useScreenwriter = () => {
     launch,
     rewrite,
     reset,
+    restore,
+    caps,
     backToCompose,
     showTreatment,
     trimBeat,

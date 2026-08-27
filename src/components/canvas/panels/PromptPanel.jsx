@@ -22,6 +22,11 @@ const PromptPanel = ({
   workerOk = true,
   readOnly = false,
   onBackToCompose,
+  // "New film": clear the prompt, the cast and the screenplay. Offered whenever there is
+  // something to clear, because a draft now survives page loads (src/lib/draftStore.js) and a
+  // visitor who wants to start over needs a way to say so that is not "close the tab".
+  onStartFresh,
+  canStartFresh = false,
   collapsed,
   onToggle,
 }) => {
@@ -75,14 +80,28 @@ const PromptPanel = ({
       status={readOnly ? { tone: 'done', text: 'locked' } : undefined}
       bodyClassName="flex flex-col gap-3"
       headerAction={
-        readOnly && onBackToCompose ? (
-          <button
-            type="button"
-            onClick={onBackToCompose}
-            className="shrink-0 font-mono text-[9px] uppercase tracking-widest text-purple-300 transition-colors hover:text-white"
-          >
-            Back to compose
-          </button>
+        (readOnly && onBackToCompose) || (canStartFresh && onStartFresh) ? (
+          <span className="flex shrink-0 items-center gap-3">
+            {readOnly && onBackToCompose && (
+              <button
+                type="button"
+                onClick={onBackToCompose}
+                className="shrink-0 font-mono text-[9px] uppercase tracking-widest text-purple-300 transition-colors hover:text-white"
+              >
+                Back to compose
+              </button>
+            )}
+            {canStartFresh && onStartFresh && (
+              <button
+                type="button"
+                onClick={onStartFresh}
+                title="Clear the prompt, cast and screenplay and start over"
+                className="shrink-0 font-mono text-[9px] uppercase tracking-widest text-slate-400 transition-colors hover:text-white"
+              >
+                New film
+              </button>
+            )}
+          </span>
         ) : undefined
       }
     >

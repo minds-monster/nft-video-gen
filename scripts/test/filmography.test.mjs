@@ -62,3 +62,51 @@ test('a Mind that quotes the digest back verbatim is fully recalled', () => {
   ]);
   assert.equal(audit.agrees, true);
 });
+
+// ─────────────────────────────────────────────────────── the screenplay, beside the film
+
+import { screenplayDigest, SCREENPLAY_TAG } from '../../worker/filmography.js';
+
+const SCREENPLAY_CID = 'bafkreiabcdefghijklmnopqrstuvwxyz234567abcdefghijklmnop';
+
+test('the prompt and the screenplay record get lines of their own, when there are any', () => {
+  const text = filmographyDigest({
+    ...record,
+    prompt: '  A heist at dawn,\n told from the ape’s point of view.  ',
+    take: { ...record.take, ipfs: { ...record.take.ipfs, screenplayCid: SCREENPLAY_CID, screenplayGatewayUrl: `https://gateway.pinata.cloud/ipfs/${SCREENPLAY_CID}` } },
+  });
+  const lines = text.split('\n');
+  assert.ok(lines.includes('Prompt, in the visitor\'s words: "A heist at dawn, told from the ape’s point of view."'));
+  assert.ok(lines.some((l) => l.startsWith(`Screenplay record: ipfs://${SCREENPLAY_CID} — https://gateway`)));
+  assert.ok(text.endsWith('and the screenplay record beside it.'));
+
+  const without = filmographyDigest(record);
+  assert.equal(without.includes('Prompt'), false);
+  assert.equal(without.includes('Screenplay record'), false);
+  assert.ok(without.endsWith('permanent ipfs:// address.'));
+});
+
+test('a Mind that quotes only the screenplay record is still credited with the film', () => {
+  const audit = auditRecall(`<p>I wrote one: ipfs://${SCREENPLAY_CID}</p>`, [
+    { filmId: 'a1b2c3d4', logline: record.spec.logline, takeIds: ['take-9f21ab04'], cids: [record.take.ipfs.cid, SCREENPLAY_CID] },
+  ]);
+  assert.equal(audit.rows[0].recalled, true);
+  assert.deepEqual(audit.rows[0].matchedBy, ['ipfs cid']);
+  assert.equal(audit.agrees, true);
+});
+
+test('the screenplay digest is a system notice with the film’s identity on its own line', () => {
+  const text = screenplayDigest({ filmId: 'a1b2c3d4', spec: record.spec, prompt: 'Rob the Louvre.', castNames: ['Bored Ape #1234'] });
+  const lines = text.split('\n');
+  assert.ok(lines[0].startsWith(SCREENPLAY_TAG));
+  assert.ok(lines.includes('Film: "A bored ape robs the Louvre at dawn" (film a1b2c3d4)'));
+  assert.ok(lines.includes('Screenplay: 3 beats.'));
+  assert.ok(lines.includes('Cast: Bored Ape #1234.'));
+  assert.ok(lines.includes('Prompt, in the visitor\'s words: "Rob the Louvre."'));
+  assert.equal(parseMail(text).kind, 'system');
+  assert.equal(text.includes('paid'), true, 'says plainly that nothing has been spent');
+
+  const bare = screenplayDigest({ filmId: 'a1b2c3d4', spec: { logline: 'x', beats: [] } });
+  assert.equal(bare.includes('Cast:'), false);
+  assert.equal(bare.includes('Prompt'), false);
+});

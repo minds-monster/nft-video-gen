@@ -26,6 +26,7 @@ const CHAIN_SLUGS = {
   flow: 'flow-mainnet',
   abstract: 'abstract-mainnet',
   berachain: 'berachain-mainnet',
+  zora: 'zora-mainnet',
 };
 
 // Explorers put the chain in the hostname rather than the path.
@@ -36,6 +37,8 @@ const HOST_CHAINS = {
   'arbiscan.io': 'arb-mainnet',
   'optimistic.etherscan.io': 'opt-mainnet',
   'apescan.io': 'apechain-mainnet',
+  'explorer.zora.energy': 'zora-mainnet',
+  'zorascan.xyz': 'zora-mainnet',
 };
 
 // Token ids are decimal in practice, but ERC-1155 ids are often written as hex.

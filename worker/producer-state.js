@@ -27,6 +27,7 @@ import { resolveTier } from './tier.js';
 import { listFilms, loadStoryboard } from './storyboarder.js';
 import { loadProduction } from './director-job.js';
 import { getEnvelope } from './render-budget.js';
+import { loadDraft } from './draft.js';
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8' } });
@@ -115,13 +116,31 @@ export async function recordConnect(env, mindId) {
  * path and a KV hiccup must degrade the greeting rather than break the connect.
  */
 export async function collectProductionState(env, mindId) {
-  const [snapshot, budget, spend, films, sessionCount] = await Promise.all([
+  const [snapshot, budget, spend, films, sessionCount, savedDraft] = await Promise.all([
     getSnapshot(env, mindId).catch(() => null),
     getBudget(env, mindId).catch(() => null),
     getSpend(env, mindId).catch(() => null),
     listFilms(env, mindId).catch(() => []),
     env.MIND_CONNECTIONS.get(connectsKey(mindId), 'json').catch(() => null),
+    loadDraft(env, mindId).catch(() => null),
   ]);
+
+  // The screenplay itself, when the browser has saved one (worker/draft.js). Unlike the snapshot
+  // above — counts and names, posted live — this is the work, kept for a week, and it is what lets
+  // the Mind know there is a film in progress even when the tab that wrote it is long closed.
+  const draft = savedDraft?.spec?.beats?.length
+    ? {
+        filmId: savedDraft.filmId ?? null,
+        logline: str(savedDraft.spec.logline, MAX_LOGLINE),
+        beatCount: num(savedDraft.spec.beats.length, 100),
+        castNames: (savedDraft.writtenCast ?? savedDraft.cast ?? [])
+          .map((entry) => str(entry?.name ?? entry?.nft?.name ?? entry?.nft?.title, MAX_NAME))
+          .filter(Boolean)
+          .slice(0, MAX_NAMES),
+        promptExcerpt: str(savedDraft.prompt, 160),
+        savedAt: savedDraft.savedAt ?? null,
+      }
+    : null;
 
   const tier = await resolveTier(env, mindId, snapshot?.beatCount ?? 0).catch(() => null);
   const newest = films?.[0] ?? null;
@@ -160,10 +179,12 @@ export async function collectProductionState(env, mindId) {
       costUsd: take.costUsd ?? null,
       settledAt: take.settledAt ?? null,
       cid: take.ipfs?.cid ?? null,
+      screenplayCid: take.ipfs?.screenplayCid ?? null,
     }));
 
   return {
     filmography,
+    draft,
     isReturning: num(sessionCount?.count) > 1,
     sessionCount: num(sessionCount?.count),
     hasCast: (snapshot?.castCount ?? 0) > 0,
@@ -171,9 +192,9 @@ export async function collectProductionState(env, mindId) {
     castNames: snapshot?.castNames ?? [],
     primaryName: snapshot?.primaryName ?? null,
     hasPrompt: Boolean(snapshot?.hasPrompt),
-    hasScreenplay: snapshot?.screenplayStage === 'treatment' && (snapshot?.beatCount ?? 0) > 0,
-    beatCount: snapshot?.beatCount ?? 0,
-    logline: snapshot?.logline ?? newest?.logline ?? null,
+    hasScreenplay: (snapshot?.screenplayStage === 'treatment' && (snapshot?.beatCount ?? 0) > 0) || Boolean(draft),
+    beatCount: snapshot?.beatCount || draft?.beatCount || 0,
+    logline: snapshot?.logline ?? draft?.logline ?? newest?.logline ?? null,
     hasStoryboard: Boolean(newest?.frames),
     storyboardFrames: newest?.frames ?? 0,
     filmCount: films?.length ?? 0,
@@ -227,6 +248,17 @@ export function renderStateBlock(state) {
 
   if (state.hasScreenplay) {
     lines.push(`Screenplay: written, ${state.beatCount} beat${state.beatCount === 1 ? '' : 's'}.`);
+    if (state.draft) {
+      const saved = state.draft.savedAt ? new Date(state.draft.savedAt).toISOString().slice(0, 10) : null;
+      lines.push(
+        `Screenplay in progress: ${state.draft.logline ? `"${state.draft.logline}"` : 'untitled'}` +
+          (state.draft.filmId ? ` (film ${state.draft.filmId})` : '') +
+          `, ${state.draft.beatCount} beat${state.draft.beatCount === 1 ? '' : 's'}` +
+          (state.draft.castNames?.length ? `, cast: ${state.draft.castNames.join(', ')}` : '') +
+          (saved ? `, last saved ${saved}` : '') +
+          '. Your [Screenplay] message in this conversation is your record of it.',
+      );
+    }
   } else if (state.hasPrompt) {
     lines.push('Screenplay: not written yet, but they have a prompt in progress.');
   } else {
@@ -276,6 +308,7 @@ export function renderStateBlock(state) {
           (take.costUsd != null ? `, ${money(take.costUsd)}` : '') +
           (when ? `, delivered ${when}` : '') +
           (take.cid ? `, permanent copy at ipfs://${take.cid}` : '') +
+          (take.screenplayCid ? `, screenplay at ipfs://${take.screenplayCid}` : '') +
           '. Your [Filmography] messages in this conversation are your record of it.',
       );
     }
