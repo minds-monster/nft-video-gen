@@ -39,7 +39,7 @@ export async function handleStripeCheckout(request, env) {
         };
     }
 
-    const quantity = Math.max(1, Math.min(1000, Number(body.quantity) || 1));
+    const amount = Math.max(1, Math.min(1000, Number(body.amount) || Number(body.quantity) || 1));
 
     try {
         const checkoutSession = await stripe.checkout.sessions.create({
@@ -49,17 +49,12 @@ export async function handleStripeCheckout(request, env) {
                     price_data: {
                         currency: 'usd',
                         product_data: {
-                            name: 'Minds Monster Video Budget Top-up',
-                            description: 'Credits for high-quality video generation on GPT-5.6-Sol ($1.00 per credit)',
+                            name: 'minds.MONSTER Video Budget Top-up',
+                            description: 'Budget for high-quality video generation',
                         },
-                        unit_amount: 100, // $1.00 in cents
+                        unit_amount: Math.round(amount * 100), // dynamic amount in cents
                     },
-                    quantity: quantity,
-                    adjustable_quantity: {
-                        enabled: true,
-                        minimum: 1,
-                        maximum: 1000,
-                    },
+                    quantity: 1,
                 },
             ],
             mode: 'payment',
@@ -103,12 +98,27 @@ export async function handleStripeWebhook(request, env) {
     // Handle the checkout.session.completed event
     if (event.type === 'checkout.session.completed') {
         const checkoutSession = event.data.object;
+        const sessionId = checkoutSession.id;
         const mindId = checkoutSession.client_reference_id;
         const amountTotalCents = checkoutSession.amount_total;
 
         if (!mindId) {
             console.warn('Webhook received checkout session without client_reference_id (mindId)');
             return json({ received: true });
+        }
+
+        const processedKey = `stripe_processed:${sessionId}`;
+
+        try {
+            // Check if this checkout session has already been processed to ensure idempotency
+            const alreadyProcessed = await env.MIND_CONNECTIONS.get(processedKey);
+            if (alreadyProcessed) {
+                console.log(`Webhook checkout session ${sessionId} already processed. Skipping duplicate credit.`);
+                return json({ received: true });
+            }
+        } catch (checkError) {
+            console.error('Failed to check payment status in KV:', checkError);
+            return json({ error: 'Database check failed' }, 500);
         }
 
         const dollarsPaid = amountTotalCents / 100;
@@ -127,6 +137,8 @@ export async function handleStripeWebhook(request, env) {
             };
 
             await env.MIND_CONNECTIONS.put(budgetKey, JSON.stringify(record));
+            await env.MIND_CONNECTIONS.put(processedKey, 'true', { expirationTtl: 30 * 24 * 60 * 60 }); // Expire in 30 days
+
             console.log(`Successfully credited $${dollarsPaid} to mind:${mindId}. New total: $${newTotal}`);
         } catch (dbError) {
             console.error('Failed to write new budget to KV during webhook processing:', dbError);

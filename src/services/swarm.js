@@ -139,21 +139,32 @@ export const stream = async (path, body, { signal, onEvent, headers, retries = 0
  * transient wire problem, not a lost film. Reconnects carry the last event index received, so
  * the visitor picks up where they left off without duplicate narration.
  */
-export const streamStoryboardJobEvents = async (jobId, token, { signal, onEvent, lastEvent = 0, deadlineMs = null } = {}) => {
+/**
+ * Follow one long-running job's event log, reconnecting across drops.
+ *
+ * `basePath` and `label` are the only things that differ between agents, so they are the only
+ * things parameterised. The Director needs exactly this loop — including the reconnect that
+ * carries `lastEvent` forward, which is what stops a dropped stream replaying narration a
+ * visitor has already read.
+ */
+export const streamJobEvents = async (
+  basePath,
+  jobId,
+  token,
+  { signal, onEvent, lastEvent = 0, deadlineMs = null, label = 'The job' } = {},
+) => {
   let currentLastEvent = lastEvent;
   const startedAt = Date.now();
 
   for (let attempt = 0; ; attempt += 1) {
     if (signal?.aborted) throw new Error('Aborted');
     if (deadlineMs != null && Date.now() - startedAt >= deadlineMs) {
-      const error = new Error(
-        `The Storyboarder did not finish within ${Math.round(deadlineMs / 1000)} seconds.`,
-      );
+      const error = new Error(`${label} did not finish within ${Math.round(deadlineMs / 1000)} seconds.`);
       error.truncated = true;
       throw error;
     }
 
-    const path = `/api/storyboard/job/${encodeURIComponent(jobId)}/events?lastEvent=${currentLastEvent}`;
+    const path = `${basePath}/${encodeURIComponent(jobId)}/events?lastEvent=${currentLastEvent}`;
     try {
       const response = await fetch(path, {
         method: 'GET',
@@ -222,6 +233,16 @@ export const streamStoryboardJobEvents = async (jobId, token, { signal, onEvent,
     }
   }
 };
+
+/** The Storyboarder's own name for the shared stream above. */
+export const streamStoryboardJobEvents = (jobId, token, options = {}) =>
+  streamJobEvents('/api/storyboard/job', jobId, token, { label: 'The Storyboarder', ...options });
+
+/** The Director's. A render is minutes of silence followed by one answer, so the reconnect
+ * matters more here than anywhere else — a visitor who closes the tab must not lose a clip that
+ * has already been paid for. */
+export const streamDirectorJobEvents = (jobId, token, options = {}) =>
+  streamJobEvents('/api/director/job', jobId, token, { label: 'The Director', ...options });
 
 /**
  * Dossier for one piece, streaming the Casting Director's reasoning as it looks.
@@ -455,3 +476,125 @@ export const getStoryboardFilms = async (token) => {
  * own note on why auth here is a query param instead of a header. */
 export const storyboardImageUrl = (token, key) =>
   `/api/storyboard/image?key=${encodeURIComponent(key)}&token=${encodeURIComponent(token)}`;
+
+// ────────────────────────────────────────────────────────────────────────────────── director
+
+/** What would be sent, what it would cost, and what is already wrong with it. Spends nothing. */
+export const getDirectorPlan = async ({ spec, cast, preflight = false }, token) => {
+  const response = await fetch('/api/director/plan', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ spec, cast: cast.map(forStoryboardWire), preflight }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw Object.assign(new Error(payload.detail ?? payload.error ?? 'Plan failed'), payload);
+  return payload;
+};
+
+/** Open the production and shoot. Returns a job that is either queued or parked for approval —
+ * in `ask` mode it is parked every single time, which is the mode working, not failing. */
+export const startDirectorTake = async ({ spec, cast, mode, allowanceUsd }, token) => {
+  const response = await fetch('/api/director/start', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ spec, cast: cast.map(forStoryboardWire), mode, allowanceUsd }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw Object.assign(new Error(payload.detail ?? payload.error ?? 'Could not start'), payload);
+  return payload;
+};
+
+/** The click `ask` mode is built around. The cast rides along because nothing server-side
+ * stores it — the queue message is the only place it exists. */
+export const approveDirectorTake = async ({ jobId, approved, cast }, token) => {
+  const response = await fetch('/api/director/approve', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ jobId, approved, cast: (cast ?? []).map(forStoryboardWire) }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.error ?? `Approval failed: ${response.status}`);
+  return payload;
+};
+
+/** Cheap status poll, and the fallback when a stream drops. */
+export const getDirectorJobStatus = async (token, jobId) => {
+  const response = await fetch(`/api/director/job/${encodeURIComponent(jobId)}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.error ?? `Job status failed: ${response.status}`);
+  return payload;
+};
+
+/** The production: its money, and every take shot against it. Playback URLs are signed fresh
+ * on every read rather than stored, so they never outlive the session that asked. */
+export const getDirectorProduction = async (token, filmId) => {
+  const response = await fetch(`/api/director?filmId=${encodeURIComponent(filmId)}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error(`Production fetch failed: ${response.status}`);
+  return response.json();
+};
+
+/** Settle up and release whatever is left. */
+export const closeDirectorProduction = async ({ filmId, reason }, token) => {
+  const response = await fetch('/api/director/close', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filmId, reason }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.error ?? `Close failed: ${response.status}`);
+  return payload;
+};
+
+/** Buy an answer to one named hazard. Returns a job like any other shot — it may be parked for
+ * approval, which in `ask` mode it always is. */
+export const runScreenTest = async ({ spec, cast, riskId, mode, allowanceUsd }, token) => {
+  const response = await fetch('/api/director/test', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ spec, cast: cast.map(forStoryboardWire), riskId, mode, allowanceUsd }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw Object.assign(new Error(payload.detail ?? payload.error ?? 'Could not run the test'), payload);
+  return payload;
+};
+
+/** What the visitor saw. The judge is a person, deliberately — see handleDirectorVerdict. */
+export const recordScreenTestVerdict = async ({ filmId, takeId, answer, note, jobId }, token) => {
+  const response = await fetch('/api/director/verdict', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filmId, takeId, answer, note, jobId }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.detail ?? payload.error ?? 'Could not record that');
+  return payload;
+};
+
+/** Accept a scope the assistant proposed. The assistant itself cannot call this — the visitor
+ * pressing a button is the only path, which is the whole boundary of its authority. */
+export const saveDirectorBrief = async ({ filmId, brief }, token) => {
+  const response = await fetch('/api/director/brief', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filmId, brief }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.detail ?? payload.error ?? 'Could not save that scope');
+  return payload;
+};
+
+/** Ask the Director to read the film and say what is worth paying to find out. Spends nothing. */
+export const assessFilm = async ({ spec, cast }, token) => {
+  const response = await fetch('/api/director/assess', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ spec, cast: cast.map(forStoryboardWire) }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.detail ?? payload.error ?? 'Could not assess');
+  return payload;
+};

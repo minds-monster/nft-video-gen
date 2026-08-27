@@ -94,15 +94,24 @@ export async function getSpend(env, mindId) {
 /**
  * Append one real spend event and persist it.
  *
- * `kind` distinguishes 'image' (gpt-image-2, priced per image) from 'llm' (priced per token).
+ * `kind` distinguishes 'image' (gpt-image-2, priced per image) from 'llm' (priced per token) and
+ * 'video' (MiniMax, priced per second of footage — see worker/minimax.js's `priceUsd`).
  * `failed` marks a call that cost money and produced nothing usable — a beat that breached the
  * floor and could not be repaired. Those are recorded rather than swallowed, because Adam's
  * question is the one a visitor eventually asks: "why did my budget run out faster than the
  * beats I can see?" A failed beat that spent real tokens must show up in the answer.
  */
-export async function recordSpend(env, mindId, { amountUsd, kind = 'image', model, usage, frameId, beatIndex, failed = false }) {
+export async function recordSpend(
+  env,
+  mindId,
+  { amountUsd, kind = 'image', model, usage, frameId, beatIndex, failed = false, filmId = null, testId = null },
+) {
   const current = await getSpend(env, mindId);
-  const event = { kind, model, usage, amountUsd, frameId, beatIndex, failed, at: Date.now() };
+  // `filmId` is what makes a per-film budget possible WITHOUT a second ledger. worker/render-
+  // budget.js derives a production's spend by filtering these events, rather than keeping its own
+  // running total — so the two views cannot disagree, and there is nothing to reconcile. Same
+  // reasoning as the read-time rule above: a number stored in two places eventually differs.
+  const event = { kind, model, usage, amountUsd, frameId, beatIndex, failed, filmId, testId, at: Date.now() };
   const all = [...current.events, event];
   const kept = all.slice(-MAX_SPEND_EVENTS);
   // Anything trimmed off the tail keeps counting toward the total; it just stops being legible

@@ -25,6 +25,8 @@ import { requireSession } from './session.js';
 import { getBudget, getSpend } from './budget.js';
 import { resolveTier } from './tier.js';
 import { listFilms, loadStoryboard } from './storyboarder.js';
+import { loadProduction } from './director-job.js';
+import { getEnvelope } from './render-budget.js';
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8' } });
@@ -132,6 +134,19 @@ export async function collectProductionState(env, mindId) {
     (frame) => frame.status === 'failed' || frame.status === 'dropped',
   ).length;
 
+  // The Director's half. Read for the same film as the storyboard above, because a production and
+  // its storyboard share a filmId by construction (worker/film-id.js) — no client bookkeeping.
+  //
+  // This is what stops the Producer and the assistant discussing a render that has already
+  // happened as though it were hypothetical. The briefing used to state outright that the render
+  // step did not exist; it does now, and a Mind still saying otherwise is worse than one saying
+  // nothing.
+  const production = newest ? await loadProduction(env, mindId, newest.filmId).catch(() => null) : null;
+  const envelope = newest ? await getEnvelope(env, mindId, newest.filmId).catch(() => null) : null;
+  const shots = production?.takes ?? [];
+  const screenTests = shots.filter((shot) => shot.kind === 'screen-test');
+  const finalTakes = shots.filter((shot) => shot.kind !== 'screen-test');
+
   return {
     isReturning: num(sessionCount?.count) > 1,
     sessionCount: num(sessionCount?.count),
@@ -154,6 +169,15 @@ export async function collectProductionState(env, mindId) {
     budgetPerRender: budget?.perRender ?? null,
     spentUsd: spend?.totalSpent ?? 0,
     failedFrames,
+    renderMode: envelope?.mode ?? null,
+    renderAllowanceUsd: envelope?.allowanceUsd ?? null,
+    renderSpentUsd: envelope?.spentUsd ?? 0,
+    renderClosed: Boolean(envelope?.closedAt),
+    screenTestCount: screenTests.length,
+    screenTestsAnswered: screenTests.filter((test) => test.verdict?.answer).length,
+    takeCount: finalTakes.length,
+    takesReady: finalTakes.filter((take) => take.status === 'ready').length,
+    takesFailed: finalTakes.filter((take) => take.status === 'failed' || take.status === 'unsettled').length,
     timezone: snapshot?.timezone ?? null,
     snapshotAgeMs: snapshot?.updatedAt ? Date.now() - snapshot.updatedAt : null,
   };
@@ -200,6 +224,37 @@ export function renderStateBlock(state) {
     if (state.failedFrames) lines.push(`${state.failedFrames} shot(s) failed or were dropped — worth offering to look at.`);
   } else {
     lines.push('Storyboard: none yet.');
+  }
+
+  // The Director. Only spoken about when something has actually happened — an absent line is
+  // honest, and "no renders yet" is noise a Mind then has to decide whether to mention.
+  if (state.takeCount || state.screenTestCount) {
+    const parts = [];
+    if (state.takeCount) {
+      parts.push(
+        `${state.takesReady} finished take${state.takesReady === 1 ? '' : 's'}` +
+          (state.takesFailed ? ` and ${state.takesFailed} that failed` : ''),
+      );
+    }
+    if (state.screenTestCount) {
+      parts.push(
+        `${state.screenTestCount} screen test${state.screenTestCount === 1 ? '' : 's'}, ` +
+          `${state.screenTestsAnswered} of them judged`,
+      );
+    }
+    lines.push(
+      `Director: ${parts.join('; ')}. ${money(state.renderSpentUsd)} spent on rendering so far` +
+        (state.renderAllowanceUsd ? ` against ${money(state.renderAllowanceUsd)} set aside for this film` : '') +
+        `. THIS IS REAL FOOTAGE THAT REAL MONEY PAID FOR — never describe rendering as unavailable or hypothetical.`,
+    );
+    if (state.screenTestCount > state.screenTestsAnswered) {
+      lines.push(
+        `${state.screenTestCount - state.screenTestsAnswered} screen test(s) are shot but unjudged — ` +
+          'money spent and nothing learned yet, which is worth nudging.',
+      );
+    }
+  } else if (state.budgetSet) {
+    lines.push('Director: nothing rendered yet. Rendering is available and costs real money per second of footage.');
   }
 
   if (state.logline) lines.push(`Their logline, in their words: "${state.logline}"`);

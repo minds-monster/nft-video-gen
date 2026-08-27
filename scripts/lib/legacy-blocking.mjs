@@ -55,16 +55,42 @@ const extractTemplate = (src, name) => {
   throw new Error(`Unterminated template while extracting ${name} from ${SOURCE}.`);
 };
 
-const src = readFileSync(SOURCE, 'utf8');
+/**
+ * EXTRACTED LAZILY, and that change is worth explaining because eager extraction had already
+ * cost more than it protected.
+ *
+ * The design is right: read the control's schema out of worker/storyboarder.js at run time so
+ * c0 is EXACTLY today's request and cannot drift into a fossil. But it ran at MODULE LOAD, and
+ * `BLOCKING_SCHEMA` was deleted from the worker at some point in rounds 9-10 — so importing this
+ * file threw, and importing it is the first thing probe-storyboard-geometry.mjs does. The whole
+ * geometry probe, which is this project's main quality gate, has therefore been unrunnable for
+ * several rounds, and nothing said so: it fails before it can print a usage line.
+ *
+ * 🔑 A guard that fires at import time takes down every caller, including the ones that do not
+ * use the thing it guards. The failure is now raised where the legacy control is actually
+ * REQUESTED — still loud, still impossible to measure the wrong thing through, but no longer
+ * able to disable four unrelated cells by existing.
+ */
+let cachedSrc = null;
+const src = () => (cachedSrc ??= readFileSync(SOURCE, 'utf8'));
+
+const lazy = (build) => {
+  let value;
+  let built = false;
+  return () => {
+    if (!built) { value = build(); built = true; }
+    return value;
+  };
+};
 
 // eslint-disable-next-line no-new-func
-export const BLOCKING_SCHEMA = new Function(`return (${extractObjectLiteral(src, 'BLOCKING_SCHEMA')});`)();
+export const blockingSchema = lazy(() => new Function(`return (${extractObjectLiteral(src(), 'BLOCKING_SCHEMA')});`)());
 
 // eslint-disable-next-line no-new-func
-export const BLOCKING_BRIEF = new Function(
+export const blockingBrief = lazy(() => new Function(
   'H3_FORMAT',
-  `return (${extractTemplate(src, 'BLOCKING_BRIEF')});`,
-)(H3_FORMAT);
+  `return (${extractTemplate(src(), 'BLOCKING_BRIEF')});`,
+)(H3_FORMAT));
 
 /** Today's per-beat request parameters, from blockingRequest (worker/storyboarder.js:220-232).
  * Numbers rather than extraction: they are three scalars, and a mis-parse would be silent. */
@@ -122,10 +148,10 @@ export const buildLegacyFilmMessage = (spec, cast) => {
 
 /** c1 needs a container for many beats where production's schema describes exactly one. The
  * wrapper adds nothing else — the per-beat schema inside is untouched. */
-export const LEGACY_FILM_SCHEMA = {
+export const legacyFilmSchema = lazy(() => ({
   type: 'object',
   properties: {
-    beats: { type: 'array', items: BLOCKING_SCHEMA },
+    beats: { type: 'array', items: blockingSchema() },
   },
   required: ['beats'],
-};
+}));

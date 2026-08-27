@@ -52,19 +52,39 @@ const description = ({ grade, world, continuity, camera, beats, guard }) =>
  * Subject definitions sit above the three fields, unlabelled — that is the shape P8 sent and
  * H3 accepted, and critically none of this scaffolding leaked into the rendered picture.
  */
-export const h3Script = (spec) => {
-  if (!spec) return '';
-
+/**
+ * The three named fields, plus the subject definitions, as the string H3 actually receives.
+ *
+ * Split out from `h3Script` because there are now TWO ways to arrive at those fields and only
+ * one wire format. `h3Script` below derives them from a Screenwriter spec; worker/scene.js's
+ * `compileSceneToH3` derives them from a blocked storyboard's geometry. Both must serialise
+ * identically or the Director's preview stops describing what the Director sends — and a preview
+ * that can drift from the request is exactly the lie this file's header warns about.
+ *
+ * Subject definitions sit above the three fields, unlabelled — that is the shape P8 sent and H3
+ * accepted, and critically none of this scaffolding leaked into the rendered picture.
+ */
+export const h3ScriptFrom = ({ staging, description, soundscape, music }) => {
   const blocks = [];
-  if (spec.staging?.trim()) blocks.push(spec.staging.trim());
+  if (staging?.trim()) blocks.push(staging.trim());
 
-  blocks.push(`integrated_multimodal_description: ${description(spec)}`);
-  blocks.push(`overall_soundscape: ${spec.sound?.trim() || 'N/A'}`);
+  blocks.push(`integrated_multimodal_description: ${description ?? ''}`);
+  blocks.push(`overall_soundscape: ${soundscape?.trim() || 'N/A'}`);
   // "N/A" is a documented legal value here, and a deliberate one: a film that should be
   // scored only by its own diegetic sound has to be able to say so.
-  blocks.push(`non_diegetic_music: ${spec.music?.trim() || 'N/A'}`);
+  blocks.push(`non_diegetic_music: ${music?.trim() || 'N/A'}`);
 
   return blocks.join('\n\n');
+};
+
+export const h3Script = (spec) => {
+  if (!spec) return '';
+  return h3ScriptFrom({
+    staging: spec.staging,
+    description: description(spec),
+    soundscape: spec.sound,
+    music: spec.music,
+  });
 };
 
 /** The render parameters that travel with the script, ready for createH3Task. */

@@ -11,7 +11,9 @@ import PromptPanel from './panels/PromptPanel';
 import AssetsPanel from './panels/AssetsPanel';
 import CastPanel from './panels/CastPanel';
 import MovieRenderPanel from './panels/MovieRenderPanel';
-import StoryboardPanel from './panels/StoryboardPanel';
+import TimelinePanel from './panels/TimelinePanel';
+import DirectorPanel from './panels/DirectorPanel';
+import { filmIdFor } from '../../../worker/film-id.js';
 import CastingDirectorPanel from './panels/CastingDirectorPanel';
 import ScreenwriterPanel from './panels/ScreenwriterPanel';
 import ScreenplayPanel from './panels/ScreenplayPanel';
@@ -52,6 +54,7 @@ const RESIZE_TARGET = { fine: 24, coarse: 32 };
 const PANEL_ZONE = {
   assets: 'leftZone',
   cast: 'leftZone',
+  director: 'leftZone',
   prompt: null,
   viewer: null,
   storyboard: null,
@@ -63,7 +66,13 @@ const PANEL_ZONE = {
 };
 
 const COLLAPSE_KEY = 'canvas-collapsed';
-const LAYOUT_KEYS = ['canvas-zones', 'canvas-left', 'canvas-centre', 'canvas-right'];
+// ⚠️ VERSIONED, and the suffix is load-bearing. `useDefaultLayout` restores a saved layout by
+// id, and a rail that gained a panel cannot be described by a layout written before it existed —
+// a returning visitor would restore `{ assets, cast }` into a group of three and get a Director
+// panel with no height at all, permanently, with no affordance to find it. Bump the suffix of any
+// group whose PANELS change; leaving it alone is what makes the new panel invisible to exactly
+// the people who have used the product before.
+const LAYOUT_KEYS = ['canvas-zones', 'canvas-left-v2', 'canvas-centre', 'canvas-right'];
 
 const readCollapsed = () => {
   try {
@@ -83,7 +92,7 @@ const readCollapsed = () => {
  * (browser left, viewer/timeline centre, inspector right), each containing the relevant panel,
  * under a pipeline bar that says which agent is working and what happens next.
  */
-const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder }) => {
+const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder, director }) => {
   const {
     open,
     openCanvas,
@@ -137,7 +146,34 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder }) => {
   const badge = useMindStatusBadge({ token, active: Boolean(token) && open });
   const budget = badge?.budget;
 
-  const pipeline = useProductionPipeline({ composer, screenwriter, storyboarder, token, budget });
+  const pipeline = useProductionPipeline({ composer, screenwriter, storyboarder, director, token, budget });
+
+  // The Director prices the film as soon as there IS one, and again whenever the budget moves —
+  // the same cadence useProductionPipeline already uses for the Storyboarder's tier plan. Free by
+  // default: `preflight` (which fetches every reference to measure it) is left for the moment the
+  // visitor is actually about to spend.
+  const spec = screenwriter?.spec ?? null;
+  const loadDirectorPlan = director?.loadPlan;
+  const loadDirectorProduction = director?.loadProduction;
+  useEffect(() => {
+    if (!token || !spec?.beats?.length) return;
+    loadDirectorPlan?.({ spec, cast, token });
+  }, [token, spec, cast, budget?.total, loadDirectorPlan]);
+
+  useEffect(() => {
+    if (!token || !spec?.beats?.length) return;
+    loadDirectorProduction?.({ token, filmId: filmIdFor(spec) });
+  }, [token, spec, loadDirectorProduction]);
+
+  // The assistant proposes a scope inside its own reply; this is the button that accepts one.
+  // Built here because this is the only place that has BOTH the screenplay (which decides the
+  // film id) and the session — the chat itself has neither, and giving it either would be giving
+  // the assistant a way to act rather than a way to suggest.
+  const acceptBrief = director?.acceptBrief;
+  const onAcceptBrief = useCallback(
+    (brief) => acceptBrief?.({ brief, spec, cast, token }),
+    [acceptBrief, spec, cast, token],
+  );
 
   const [workerOk, setWorkerOk] = useState(true);
   useEffect(() => {
@@ -252,6 +288,7 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder }) => {
   const writersRoomRef = usePanelRef();
   const screenplayRef = usePanelRef();
   const storyboarderRef = usePanelRef();
+  const directorRef = usePanelRef();
   const producerRef = usePanelRef();
 
   const panelRefs = useMemo(
@@ -265,6 +302,7 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder }) => {
       screenplay: screenplayRef,
       storyboarder: storyboarderRef,
       producer: producerRef,
+      director: directorRef,
     }),
     [
       leftZoneRef,
@@ -276,6 +314,7 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder }) => {
       screenplayRef,
       storyboarderRef,
       producerRef,
+      directorRef,
     ],
   );
 
@@ -369,7 +408,7 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder }) => {
 
   // Layout memory, using the library's own persistence hook rather than a hand-rolled one.
   const zonesLayout = useDefaultLayout({ id: 'canvas-zones', storage: localStorage, onlySaveAfterUserInteractions: true });
-  const leftLayout = useDefaultLayout({ id: 'canvas-left', storage: localStorage, onlySaveAfterUserInteractions: true });
+  const leftLayout = useDefaultLayout({ id: 'canvas-left-v2', storage: localStorage, onlySaveAfterUserInteractions: true });
   const centreLayout = useDefaultLayout({ id: 'canvas-centre', storage: localStorage, onlySaveAfterUserInteractions: true });
   const rightLayout = useDefaultLayout({ id: 'canvas-right', storage: localStorage, onlySaveAfterUserInteractions: true });
 
@@ -384,7 +423,7 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder }) => {
       if (ref.current?.isCollapsed()) ref.current.expand();
     }
     zonesRef.current?.setLayout({ leftZone: 18, centreZone: 55, rightZone: 27 });
-    leftGroupRef.current?.setLayout({ assets: 55, cast: 45 });
+    leftGroupRef.current?.setLayout({ assets: 40, cast: 28, director: 32 });
     centreGroupRef.current?.setLayout({ prompt: 14, viewer: 30, storyboard: 56 });
     rightGroupRef.current?.setLayout({
       castingDirector: 22,
@@ -569,7 +608,7 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder }) => {
                     label="Assets"
                     icon={Search}
                     side="left"
-                    running={zoneBusy(['assets', 'cast'])}
+                    running={zoneBusy(['assets', 'cast', 'director'])}
                     onExpand={() => togglePanel('leftZone')}
                   />
                 ) : (
@@ -607,6 +646,29 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder }) => {
                           analysis={screenwriter?.analysis}
                           readOnly={!composing}
                           status={status.cast}
+                        />
+                      </Panel>
+                      <Separator {...handleProps} />
+                      <Panel
+                        id="director"
+                        panelRef={directorRef}
+                        defaultSize="32"
+                        minSize={120}
+                        collapsible
+                        collapsedSize={PANEL_STRIP_HEIGHT}
+                        onResize={() => syncCollapsed('director')}
+                        className="flex flex-col"
+                      >
+                        <DirectorPanel
+                          id="canvas-panel-director"
+                          director={director}
+                          spec={screenwriter?.spec}
+                          cast={cast}
+                          token={token}
+                          collapsed={collapsed.director}
+                          onToggle={() => togglePanel('director')}
+                          status={status.director}
+                          onShoot={director?.shoot}
                         />
                       </Panel>
                     </Group>
@@ -687,9 +749,10 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder }) => {
                   </Panel>
                   <Separator {...handleProps} />
                   <Panel id="storyboard" defaultSize="56" minSize={180} className="flex flex-col">
-                    <StoryboardPanel
+                    <TimelinePanel
                       id="canvas-panel-storyboard"
                       storyboarder={storyboarder}
+                      director={director}
                       token={token}
                       budget={budget}
                       status={status.storyboard}
@@ -834,6 +897,8 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder }) => {
                       className="flex flex-col"
                     >
                       <ProducerPanel
+                        onAcceptBrief={onAcceptBrief}
+                        acceptedBriefAt={director?.brief?.acceptedAt ?? 0}
                         id="canvas-panel-producer"
                         collapsed={collapsed.producer}
                         onToggle={() => togglePanel('producer')}

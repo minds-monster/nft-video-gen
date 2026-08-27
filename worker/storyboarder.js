@@ -52,8 +52,17 @@ import {
   validateScene,
 } from './scene.js';
 import { castingStills, fetchImageAsDataUri } from './casting-director.js';
-import { verifySession, signSession } from './session.js';
+import { serveSignedMedia, signedMediaUrl } from './signed-media.js';
+import { streamJobEvents } from './job-events.js';
+import { createJobLogger as makeJobLogger } from './job-log.js';
 import { H3_FORMAT } from './rulebook.js';
+import {
+  FILM_PLAN_SCHEMA,
+  buildPlanBrief,
+  buildPlanUserMessage,
+  buildBeatUserMessage,
+  planAdherence,
+} from './film-plan.js';
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8' } });
@@ -133,76 +142,11 @@ export async function createStoryboardJob(env, mindId, { plan, filmId }) {
   return { jobId, record };
 }
 
-/** Append-only event log. Progress narration is best-effort; losing a reasoning delta is
- * acceptable, losing the final result is not, so terminal events flush synchronously.
- *
- * All writes are serialised through one promise chain so a status update cannot race with a
- * pending-event flush and overwrite events. */
-function createJobLogger(env, mindId, jobId) {
-  let pending = [];
-  let flushTimer = null;
-  let closed = false;
-  let queue = Promise.resolve();
-
-  const enqueue = (fn) => {
-    queue = queue.then(fn).catch(() => {});
-    return queue;
-  };
-
-  const flush = async () => {
-    if (!pending.length) return;
-    if (flushTimer) {
-      clearTimeout(flushTimer);
-      flushTimer = null;
-    }
-    const batch = pending.splice(0);
-    try {
-      const record = await loadStoryboardJob(env, mindId, jobId);
-      if (!record) {
-        console.warn(`Storyboard job ${jobId} disappeared while flushing events`);
-        return;
-      }
-      record.events.push(...batch);
-      await saveStoryboardJob(env, mindId, record);
-    } catch (error) {
-      console.warn('Failed to flush storyboard job events:', error.message);
-      // Dropped progress narration is better than crashing the film.
-    }
-  };
-
-  const scheduleFlush = () => {
-    if (closed || flushTimer) return;
-    flushTimer = setTimeout(() => {
-      flushTimer = null;
-      enqueue(flush);
-    }, 250);
-  };
-
-  return {
-    log: (type, data) => {
-      if (closed) return;
-      pending.push({ type, data, at: Date.now() });
-      scheduleFlush();
-    },
-    flush: () => enqueue(flush),
-    setStatus: (status, extra = {}) =>
-      enqueue(async () => {
-        const record = await loadStoryboardJob(env, mindId, jobId);
-        if (!record) return;
-        record.status = status;
-        Object.assign(record, extra);
-        await saveStoryboardJob(env, mindId, record);
-      }),
-    close: () => {
-      closed = true;
-      if (flushTimer) {
-        clearTimeout(flushTimer);
-        flushTimer = null;
-      }
-      return enqueue(flush);
-    },
-  };
-}
+/** The storyboard's own name for the shared job log — see worker/job-log.js. Kept as a wrapper
+ * rather than a re-export so the `(env, mindId, record)` signature every existing caller and test
+ * uses stays exactly as it was. */
+export const createJobLogger = (env, mindId, record) =>
+  makeJobLogger({ record, save: (updated) => saveStoryboardJob(env, mindId, updated) });
 
 const emptyStoryboard = () => ({ frames: [], createdAt: Date.now() });
 
@@ -342,14 +286,13 @@ async function maybeRelayThreshold(env, mindId, spend, budget) {
 }
 
 /** A signed, scoped link to one frame's sketch image — see the round-2/3 plan notes on why
- * this is a URL, not a binary attachment. */
-async function signedImageUrl(env, mindId, key, requestUrl) {
-  const token = await signSession(env, { mindId, exp: Date.now() + IMAGE_LINK_TTL_MS });
-  const url = new URL('/api/storyboard/image', requestUrl);
-  url.searchParams.set('key', key);
-  url.searchParams.set('token', token);
-  return url.toString();
-}
+ * this is a URL, not a binary attachment.
+ *
+ * The mechanism now lives in worker/signed-media.js, because the Director needs exactly the same
+ * thing for video and an authorisation check that exists twice is one that will eventually be
+ * tightened once. This stays as the storyboard's own name for it. */
+const signedImageUrl = (env, mindId, key, requestUrl) =>
+  signedMediaUrl(env, mindId, { path: '/api/storyboard/image', key, requestUrl, ttlMs: IMAGE_LINK_TTL_MS });
 
 // ─────────────────────────────────────────────────────────── whole-film scene generation
 //
@@ -403,7 +346,7 @@ const withHeartbeat = async (emit, phase, work) => {
  * `onReasoning` is honoured only where a raw reasoning channel exists — the free path. OpenAI
  * bills reasoning tokens but does not return the text, so the paid path stays silent until it
  * answers. If a future paid model exposes summaries, this is the one place that needs to change. */
-async function generateFilm(env, plan, { system, user, signal, onReasoning }) {
+async function generateFilm(env, plan, { system, user, signal, onReasoning, retries, onDegraded }) {
   if (plan.tier === 'paid') {
     const result = await respond(env, {
       model: plan.model,
@@ -420,7 +363,7 @@ async function generateFilm(env, plan, { system, user, signal, onReasoning }) {
   // needless 400 risk on an endpoint that has already rejected `guided_json`.
   const schema = toStrictSchema(SCENE_SCHEMA);
   if (!onReasoning) {
-    return filmCall(env, { system, user, schema, signal });
+    return filmCall(env, { system, user, schema, signal, ...(retries != null ? { retries } : {}) });
   }
   try {
     return await streamFilmCall(env, { system, user, schema, signal, onReasoning });
@@ -430,11 +373,278 @@ async function generateFilm(env, plan, { system, user, signal, onReasoning }) {
     // reasoning animation.
     const retryable = error?.status === 429 || error?.status >= 500 || error?.retryable;
     if (retryable && !signal?.aborted) {
+      // SAY THAT WE DEGRADED. This fallback worked so well that nobody noticed the path it
+      // falls back FROM had stopped working entirely: measured 2026-08-26, `stream: true`
+      // returns a 502 within a second on every attempt, so free visitors had been getting a
+      // silent spinner instead of the reasoning narration the whole wait surface was built
+      // around — for an unknown number of days, with no signal anywhere that it was happening.
+      //
+      // 🔑 A silent fallback hides the failure of the thing it falls back from. Anything that
+      // degrades gracefully has to announce that it did, or the graceful degradation becomes
+      // the reason the outage is invisible.
       console.warn('Storyboarder streaming call failed, falling back to non-streamed call:', error.message);
-      return filmCall(env, { system, user, schema, signal });
+      await onDegraded?.({ from: 'streamed', to: 'non-streamed', reason: error.message, status: error?.status ?? null });
+      return filmCall(env, { system, user, schema, signal, ...(retries != null ? { retries } : {}) });
     }
     throw error;
   }
+}
+
+
+/** Free-tier default. Flip `FREE_STORYBOARD_SPLIT` to "0" in wrangler.jsonc to fall back to the
+ * single whole-film call without a code change — the same re-pointability rationale as
+ * `FREE_STORYBOARD_MODEL`, and the escape hatch if the grader ever finds the split regressing
+ * shot variety toward round 7's c0 baseline. */
+/**
+ * Per-call deadlines, and they are not belt-and-braces — without them the split is strictly
+ * MORE dangerous than the single call it replaces.
+ *
+ * `fetch` inside a Worker has no client-side timeout. One upstream connection that stalls and
+ * never answers will sit there until the Queue consumer's 15-minute wall clock kills the whole
+ * invocation, taking the finished beats with it. The single-call path carried that exposure
+ * once; a split film carries it four times, and `Promise.all` means ANY one of them stalling
+ * holds all the others hostage.
+ *
+ * Measured reason to expect exactly that (2026-08-26): three concurrent trivial calls to this
+ * route returned in 1.0s, 1.4s and 14.7s, and the 1.0s one was a `502 Service temporarily
+ * overloaded` — the provider sheds load under concurrency rather than queueing politely. A
+ * 14x spread on a trivial call is a strong hint that a film-sized call can hang outright.
+ *
+ * So each call gets a budget, and a beat that overruns it fails as one beat. The rest of the
+ * film is unaffected, which is the whole advantage of having split it up.
+ */
+const PLAN_CALL_TIMEOUT_MS = 120_000;
+const BEAT_CALL_TIMEOUT_MS = 420_000;
+
+/**
+ * A budget for the WHOLE split, not just for each call in it — and without this the per-call
+ * deadlines above are actively dangerous rather than merely insufficient.
+ *
+ * The arithmetic: at concurrency 1 (which is where the provider currently puts us) three beats
+ * at 420s each is 21 minutes. The Queue consumer has FIFTEEN. So a film that hit its per-call
+ * ceilings would be killed by the runtime partway through — losing every beat that had already
+ * succeeded, because nothing is saved until the validation pass runs. The per-call deadlines
+ * would have made the failure LOOK bounded while the real bound was somewhere else entirely.
+ *
+ * So the film gets its own clock and the beats share it: each call is given whatever is left,
+ * and a beat with nothing left fails immediately instead of starting work that cannot finish.
+ * Twelve minutes leaves the Queue three to save the storyboard, emit the frames and write the
+ * digest — a film that comes back with one refused beat is worth far more than a film that was
+ * complete at the moment the runtime killed it.
+ */
+const FILM_BUDGET_MS = 12 * 60_000;
+
+/**
+ * HOW MANY BEATS MAY BE IN FLIGHT AT ONCE — and the measured answer today is ONE.
+ *
+ * The parallelism was the headline reason to split the film up, and it does not currently
+ * work. Three measurements on 2026-08-26, each one narrowing it further:
+ *   - three concurrent TRIVIAL calls returned 1.0s / 1.4s / 14.7s, and the 1.0s one was a
+ *     `502 Service temporarily overloaded` — shed, not served;
+ *   - three concurrent FILM-sized calls shed a whole beat, and it stayed shed through a retry;
+ *   - **at concurrency TWO, a beat was still shed — through three attempts.**
+ * A single film-sized call, meanwhile, succeeds (354s), and a single trivial call succeeds in
+ * 4.5s. So this route serves one film-sized request at a time and refuses the rest.
+ *
+ * Defaulting to 1 is therefore not caution, it is the measurement. Setting it to 2 or 3 today
+ * does not buy latency — it buys refused beats, which cost the visitor an entire shot.
+ *
+ * 🔑 THE SPLIT IS STILL WORTH IT AT CONCURRENCY 1, and this is the part worth holding on to:
+ * the speed win was never the only reason for it. The shot plan lands in ~22-27s carrying real
+ * per-beat facts, the timeline fills in beat by beat instead of everything appearing at the
+ * end, and one bad response costs one beat rather than the whole film. All of that survives
+ * with the parallelism switched entirely off. The wait surface does not depend on the
+ * optimisation working, which is why it is still honest when the optimisation does not.
+ *
+ * A var because this is a property of the PROVIDER on a given day, not of our code — the same
+ * reason FREE_STORYBOARD_MODEL is one. When the route stops shedding, raising this is a config
+ * change and the latency win is there waiting. Re-measure before raising it; do not assume.
+ */
+const beatConcurrency = (env) => {
+  const n = Number(env.FREE_STORYBOARD_BEAT_CONCURRENCY ?? 1);
+  return Number.isFinite(n) && n >= 1 ? Math.floor(n) : 1;
+};
+
+/**
+ * Run `worker` over `items` with at most `limit` in flight, preserving input order in the
+ * result. Deliberately not Promise.all with a semaphore library — this is six lines, and the
+ * ordering guarantee is load-bearing: beats are addressed by index everywhere downstream.
+ */
+const mapPooled = async (items, limit, worker) => {
+  const results = new Array(items.length);
+  let next = 0;
+  const runner = async () => {
+    for (;;) {
+      const index = next;
+      next += 1;
+      if (index >= items.length) return;
+      results[index] = await worker(items[index], index);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, runner));
+  return results;
+};
+
+const splitEnabled = (env, plan) =>
+  plan.tier === 'free' && (env.FREE_STORYBOARD_SPLIT ?? '1') !== '0';
+
+/**
+ * The split path: one cheap plan call, then every beat drawn in parallel.
+ *
+ * TWO THINGS THIS BUYS, and the second is the one Adam asked for.
+ *
+ * Time: a three-beat film is one ~216s call today (non-streamed; the streamed path is worse).
+ * Here it is a ~15s plan plus three concurrent ~71s beats — measured units, not estimates
+ * (assets/probes/storyboarder-timing/20260826T153434Z.json). Call it ~90s.
+ *
+ * A WAIT SURFACE MADE OF FACTS. The plan lands in about fifteen seconds and it is real: this
+ * beat is an EWS on the ape, that one is a CU, this one tracks. Every one of those is emitted to
+ * the browser the moment it exists, so three cards fill in with three different true answers
+ * long before any geometry is ready — and then each card resolves on its own as its own call
+ * returns, rather than all three appearing at once at the end.
+ *
+ * That matters because the surface it replaces is GONE. The streamed reasoning narration this
+ * repo built the wait around does not run: the provider bounces `stream: true` with a 502 in
+ * under a second (measured 2026-08-26, both attempts), and `generateFilm` silently falls back to
+ * the non-streamed call. So a visitor today gets a spinner and a 15-second heartbeat for three
+ * to six minutes. Staggered per-beat truth is not a nicer version of the narration; it is the
+ * only wait surface that currently exists.
+ *
+ * Nothing here is invented to fill the gap. If the plan call fails, the beats are still drawn —
+ * the caller falls back to the whole-film path — and the cards stay empty rather than being
+ * given something made up to look busy.
+ */
+export async function generateFilmSplit(env, plan, { spec, cast, beats, emit }) {
+  const usage = { promptTokens: 0, completionTokens: 0, reasoningTokens: 0 };
+  const addUsage = (u) => {
+    usage.promptTokens += u?.promptTokens ?? 0;
+    usage.completionTokens += u?.completionTokens ?? 0;
+    usage.reasoningTokens += u?.reasoningTokens ?? 0;
+  };
+
+  const cappedSpec = { ...spec, beats };
+  const filmDeadlineAt = Date.now() + FILM_BUDGET_MS;
+  const budgetLeft = () => filmDeadlineAt - Date.now();
+  // No 'planning' phase emitted here: runStoryboardJob already emitted one before the
+  // draft-resume check, and two identical phase events make the client's stage flicker back to a
+  // stage it has already left.
+  const planStartedAt = Date.now();
+  const planResult = await withHeartbeat(emit, 'planning', () =>
+    filmCall(env, {
+      model: plan.model,
+      system: buildPlanBrief(),
+      user: buildPlanUserMessage(cappedSpec, cast),
+      schema: toStrictSchema(FILM_PLAN_SCHEMA),
+      toolName: 'emit_plan',
+      // NOT a small ceiling, and the first version of this line got it exactly backwards.
+      //
+      // It was 4096, on the reasoning that "a small answer needs a small ceiling" — leave it at
+      // the film-sized 32k and the model treats this as the big call and thinks for as long as
+      // it would have anyway. That rationale sounds right and is wrong about what the parameter
+      // does. `max_tokens` caps the WHOLE completion, and on this model 60-75% of a completion
+      // is reasoning. So a tight ceiling does not discourage thinking; the model thinks exactly
+      // as much as it was going to, runs out of budget mid-thought, and the answer is truncated
+      // before it is ever emitted.
+      //
+      // Measured 2026-08-26: 4096 was enough for a 3-beat film and produced
+      // `finish_reason=length after 4096 tokens` on a 5-beat one — a plan call that cost the
+      // full reasoning time and returned nothing, which then took the whole split down with it.
+      //
+      // 🔑 To buy less thinking you have to ask for less thinking (`reasoning`, see
+      // worker/openrouter.js). A token ceiling only decides whether you get to keep the answer
+      // the thinking paid for.
+      maxTokens: 16384,
+      retries: 1,
+      signal: AbortSignal.timeout(Math.min(PLAN_CALL_TIMEOUT_MS, budgetLeft())),
+    }),
+  );
+  addUsage(planResult.usage);
+  const filmPlan = planResult.data;
+  console.log(`[Storyboarder] plan call finished in ${Date.now() - planStartedAt}ms: ${(filmPlan?.beats ?? []).map((b) => b.framing).join('/')}`);
+
+  // The honest wireframe signal. One event per beat, each carrying what was actually decided for
+  // it — emitted before any geometry exists, which is the whole point.
+  for (const entry of filmPlan?.beats ?? []) {
+    await emit('beat-plan', {
+      beatIndex: entry.beatIndex,
+      framing: entry.framing,
+      principalSubject: entry.principalSubject,
+      motion: entry.motion,
+      intent: entry.intent,
+    });
+  }
+  await emit('phase', { phase: 'drafting', planned: (filmPlan?.beats ?? []).length });
+
+  // The beats, overlapped up to the concurrency the provider will actually serve. They are
+  // independent by construction — each is given the whole shot list and asked for its own beat,
+  // so no call waits on another's ANSWER; the only thing bounding them is how many in-flight
+  // requests this route tolerates before it starts shedding. See beatConcurrency.
+  const drawn = await withHeartbeat(emit, 'drafting', () =>
+    mapPooled(beats, beatConcurrency(env), async (beatText, beatIndex) => {
+      if (isTransitionBeat(beatText)) return { beatIndex, beat: null, transition: true };
+      const startedAt = Date.now();
+      let attempts = 0;
+      // Refuse to start what cannot finish. A beat begun with thirty seconds left does not
+      // produce a beat — it produces a runtime kill that takes the finished beats with it.
+      if (budgetLeft() <= 30_000) {
+        const error = `The film ran out of time before beat ${beatIndex + 1} could be blocked.`;
+        console.warn(`[Storyboarder] beat ${beatIndex + 1} skipped: out of budget`);
+        await emit('beat-drawn', { beatIndex, framing: null, failed: true, error, attempts: 0 });
+        return { beatIndex, beat: null, error };
+      }
+      try {
+        const result = await filmCall(env, {
+          model: plan.model,
+          system: buildBrief(H3_FORMAT, COORDINATE_CONTRACT_V2),
+          user: buildBeatUserMessage(cappedSpec, cast, beatIndex, filmPlan),
+          schema: toStrictSchema(SCENE_SCHEMA),
+          toolName: 'emit_film',
+          // Two retries, not one. A 502 from this route under concurrency is a shed request,
+          // which is exactly the transient a retry ladder exists for — and a beat lost to it
+          // costs the visitor a whole refused beat. The attempts are reported below rather
+          // than absorbed, so the latency they cost stays attributable.
+          retries: 2,
+          signal: AbortSignal.timeout(Math.min(BEAT_CALL_TIMEOUT_MS, budgetLeft())),
+          // Counted per upstream ATTEMPT, not per soft error. A 429 arrives as a real HTTP
+          // status with no `softError` on it, so counting only soft errors would miss exactly
+          // the rate-limit retries this tier hits most — and undercounting attempts is how the
+          // retry latency became invisible in the first place.
+          onMeta: () => { attempts += 1; },
+        });
+        const beat = (result.data?.beats ?? []).find((b) => b.beatIndex === beatIndex)
+          ?? result.data?.beats?.[0]
+          ?? null;
+        console.log(`[Storyboarder] beat ${beatIndex + 1} drawn in ${Date.now() - startedAt}ms`);
+        // Told the moment it is true, per beat. This is what makes the timeline fill in
+        // piecemeal instead of everything appearing at once at the end.
+        await emit('beat-drawn', { beatIndex, framing: beat?.framing ?? null, ms: Date.now() - startedAt, attempts });
+        return { beatIndex, beat, usage: result.usage, sceneScaleNote: result.data?.sceneScaleNote, aspect: result.data?.aspect };
+      } catch (error) {
+        // ONE BEAT FAILING IS NOT THE FILM FAILING, and this is a property the single-call path
+        // never had: there, one bad response lost everything. Here the beat comes back with no
+        // geometry, validation refuses it by the normal route, and the visitor gets the rest of
+        // the film plus an honest note about the one that did not make it.
+        console.warn(`[Storyboarder] beat ${beatIndex + 1} failed:`, error.message);
+        await emit('beat-drawn', { beatIndex, framing: null, failed: true, error: error.message, attempts });
+        return { beatIndex, beat: null, error: error.message };
+      }
+    }),
+  );
+
+  for (const d of drawn) addUsage(d.usage);
+
+  return {
+    data: {
+      units: 'metres',
+      aspect: drawn.find((d) => d.aspect)?.aspect ?? 16 / 9,
+      sceneScaleNote: filmPlan?.sceneScaleNote ?? drawn.find((d) => d.sceneScaleNote)?.sceneScaleNote ?? null,
+      beats: drawn.map((d) => d.beat).filter(Boolean),
+    },
+    filmPlan,
+    usage,
+    model: plan.model,
+    costUsd: 0,
+  };
 }
 
 /**
@@ -523,7 +733,7 @@ const subjectNamesFrom = (spec, castByKey) =>
  * rather than silently shipping a broken fix — otherwise "we repaired it" becomes a claim nobody
  * ever verifies, which is worse than not repairing at all.
  */
-async function repairBeat(env, plan, { spec, cast, beatIndex, beatText, broken, violations, signal }) {
+async function repairBeat(env, plan, { spec, cast, beatIndex, beatText, broken, violations, signal, retries }) {
   const system = buildBrief(H3_FORMAT, COORDINATE_CONTRACT_V2);
   // The film header (world, staging, cast) minus its closing instruction, then the beat itself.
   //
@@ -549,7 +759,7 @@ async function repairBeat(env, plan, { spec, cast, beatIndex, beatText, broken, 
     `containing exactly this one beat, with beatIndex ${beatIndex}.`,
   ].join('\n');
 
-  const { data, usage, model } = await generateFilm(env, plan, { system, user, signal });
+  const { data, usage, model } = await generateFilm(env, plan, { system, user, signal, retries });
   const repaired = (data.beats ?? []).find((b) => b.beatIndex === beatIndex) ?? data.beats?.[0] ?? null;
   return { repaired, usage, model };
 }
@@ -582,8 +792,11 @@ const transitionFrame = (beatIndex, beatText) => ({
  * kill it. Progress is written to a KV job log; the client reads it via GET
  * /api/storyboard/job/:jobId/events.
  */
-async function runStoryboardJob(env, { mindId, spec, cast, plan, jobId }) {
-  const logger = createJobLogger(env, mindId, jobId);
+async function runStoryboardJob(env, { mindId, spec, cast, plan, jobId, record }) {
+  // The record is passed IN rather than re-read, because the logger now owns it in memory for
+  // the life of the job and never reads it back — see createJobLogger. The Queue consumer has
+  // already loaded it to check the status, so this is the same read, used instead of repeated.
+  const logger = createJobLogger(env, mindId, record ?? { jobId, mindId, plan, status: "running", events: [] });
   const emit = async (type, data) => {
     logger.log(type, data);
     if (type === 'result' || type === 'error') {
@@ -617,6 +830,9 @@ async function runStoryboardJob(env, { mindId, spec, cast, plan, jobId }) {
     let usage;
     let model;
     let activePlan = plan;
+    // The shot list the split path decided, kept so the storyboard can record whether the
+    // geometry pass actually honoured it — see planAdherence. Null on the whole-film path.
+    let filmPlanUsed = null;
 
     // A GENERATION THIS RUN DOES NOT HAVE TO PAY FOR AGAIN. If a previous attempt got the model's
     // answer and then died before saving a storyboard — a killed invocation, a crash in the repair
@@ -629,6 +845,7 @@ async function runStoryboardJob(env, { mindId, spec, cast, plan, jobId }) {
       film = draft.film;
       usage = draft.usage;
       model = draft.model;
+      filmPlanUsed = draft.filmPlan ?? null;
       if (draft.tier && draft.tier !== activePlan.tier) activePlan = { ...activePlan, tier: draft.tier };
       await emit('phase', { phase: 'drafting', resumed: true });
     }
@@ -636,21 +853,48 @@ async function runStoryboardJob(env, { mindId, spec, cast, plan, jobId }) {
     try {
       // Skipped entirely on a resumed draft — the previous attempt already did this.
       if (!film) {
-        const relay = activePlan.tier === 'free'
-          ? reasoningRelay(emit, { maxBeats: beats.length })
-          : undefined;
         console.log(`[Storyboarder ${jobId}] calling model ${activePlan.model} for ${beats.length} beat(s)`);
         const callStartedAt = Date.now();
-        const result = await withHeartbeat(emit, 'drafting', () => {
-          return emit('phase', { phase: 'drafting' }).then(() =>
-            generateFilm(env, activePlan, { system, user, onReasoning: relay }),
-          );
-        });
+        let result;
+
+        if (splitEnabled(env, activePlan)) {
+          // The plan-then-parallel-beats path. It emits its own phases as it goes, because the
+          // whole reason it exists is that the wait has stages a visitor can see.
+          try {
+            result = await generateFilmSplit(env, activePlan, { spec: cappedSpec, cast, beats, emit });
+            filmPlanUsed = result.filmPlan ?? null;
+          } catch (splitError) {
+            // THE SPLIT IS AN OPTIMISATION, NOT A DEPENDENCY. If the plan call fails there is
+            // still a perfectly good whole-film path that has been in production for a round,
+            // and a visitor should get a slower film rather than no film. Logged loudly, since
+            // a split that quietly never runs would make its own measurements meaningless.
+            console.warn(`[Storyboarder ${jobId}] split path failed, falling back to the whole-film call:`, splitError.message);
+            await emit('phase', { phase: 'drafting', fellBackToWholeFilm: true });
+            result = await withHeartbeat(emit, 'drafting', () =>
+              generateFilm(env, activePlan, { system, user }),
+            );
+          }
+        } else {
+          const relay = activePlan.tier === 'free'
+            ? reasoningRelay(emit, { maxBeats: beats.length })
+            : undefined;
+          result = await withHeartbeat(emit, 'drafting', () => {
+            return emit('phase', { phase: 'drafting' }).then(() =>
+              generateFilm(env, activePlan, {
+                system,
+                user,
+                onReasoning: relay,
+                onDegraded: (detail) => emit('degraded', detail),
+              }),
+            );
+          });
+        }
+
         console.log(`[Storyboarder ${jobId}] model call finished in ${Date.now() - callStartedAt}ms, returned ${result.data?.beats?.length ?? 0} beat(s)`);
         film = result.data;
         usage = result.usage;
         model = result.model;
-        await saveDraft(env, mindId, filmId, { film, usage, model, tier: activePlan.tier });
+        await saveDraft(env, mindId, filmId, { film, usage, model, tier: activePlan.tier, filmPlan: filmPlanUsed });
       }
     } catch (error) {
       // THE PAID PROVIDER BEING UNAVAILABLE IS NOT THE VISITOR'S PROBLEM TO ABSORB.
@@ -732,76 +976,136 @@ async function runStoryboardJob(env, { mindId, spec, cast, plan, jobId }) {
       subjectNames: subjectNamesFrom(spec, castByKey),
       // What each subject IS, and what it came from — see subjectAssetsFrom.
       subjectAssets: subjectAssetsFrom(spec, castByKey),
+      // The shot list the plan pass decided, kept with the record. A refused beat is far
+      // easier to read next to what it was MEANT to be, and a returning visitor can see the
+      // film's intended shape without the plan being re-derived from geometry that failed.
+      filmPlan: filmPlanUsed,
       // Which film this is. Without it a second film silently overwrites the first.
       filmId,
       logline: spec.logline ?? null,
       createdAt: Date.now(),
     };
-    let repairsUsed = 0;
     const repaired = [];
     const refused = [];
 
-    for (let beatIndex = 0; beatIndex < usableBeats.length; beatIndex += 1) {
-      const beatText = usableBeats[beatIndex];
+    // PASS ONE: validate everything, deterministically and for free. No model calls here, so the
+    // whole film's verdict is known before a single repair is commissioned — which is what makes
+    // the repairs schedulable as a set rather than discovered one at a time.
+    const verdicts = usableBeats.map((beatText, beatIndex) => {
+      if (isTransitionBeat(beatText)) return { beatIndex, beatText, transition: true };
+      const scene = byIndex.get(beatIndex) ?? null;
+      const violations = scene
+        ? floorViolations(scene, profiles)
+        : [{ code: 'missing-beat', severity: 'floor', detail: 'The model returned no geometry for this beat.' }];
+      return { beatIndex, beatText, transition: false, scene, violations, attempts: 1 };
+    });
 
-      if (isTransitionBeat(beatText)) {
+    // PASS TWO: the repairs, IN PARALLEL.
+    //
+    // They used to run strictly one after another, inside the validation loop. Three repairs on a
+    // route that answers in ~100-150s is five to seven minutes of wall clock spent on work that
+    // has no reason to be sequential: round 7 measured these failures landing on DIFFERENT beats
+    // each run rather than compounding on one, so no repair depends on the outcome of another.
+    // Serialising them was incidental to where the code sat, not a property of the problem.
+    //
+    // The ceiling of three per film is unchanged and is NOT timidity — a film needing four
+    // repairs is a film with something else wrong with it, and spending more calls on it hides
+    // that rather than fixing it. Parallel repairs make the ceiling cheaper to hit, not higher.
+    const needsRepair = verdicts.filter((v) => !v.transition && v.scene && v.violations.length).slice(0, 3);
+
+    if (needsRepair.length) {
+      await emit('phase', {
+        phase: 'validating',
+        repairing: true,
+        beatIndexes: needsRepair.map((v) => v.beatIndex),
+      });
+      // POOLED, NOT Promise.all — and this had to be corrected after the fact, which is the
+      // instructive part. The beat path was bounded to one in flight because this route was
+      // measured shedding concurrent film-sized requests with a 502; the repair path was left
+      // firing three at once, against the same route, for the same size of call. Parallelising
+      // repairs is only a win where the provider will actually serve them, and the same
+      // measurement governs both.
+      //
+      // Repairs share the film's clock too. A repair that starts with no budget left is a
+      // runtime kill that discards every beat already validated.
+      const repairDeadlineAt = Date.now() + Math.min(FILM_BUDGET_MS, BEAT_CALL_TIMEOUT_MS * 2);
+      const results = await withHeartbeat(emit, 'validating', () =>
+        mapPooled(needsRepair, beatConcurrency(env), async (verdict) => {
+          const left = repairDeadlineAt - Date.now();
+          if (left <= 30_000) {
+            console.warn(`Beat ${verdict.beatIndex + 1} repair skipped: out of budget`);
+            return { verdict, result: null };
+          }
+          try {
+            // `retries: 0`. A repair IS a retry — the beat has already been attempted once and
+            // deterministically rejected. Letting the transport retry it again turns one visible
+            // repair into three multi-minute calls hidden behind a single progress phase, which
+            // is precisely the kind of invisible latency this round exists to remove.
+            const result = await repairBeat(env, activePlan, {
+              spec: cappedSpec,
+              cast,
+              beatIndex: verdict.beatIndex,
+              beatText: verdict.beatText,
+              broken: verdict.scene,
+              violations: verdict.violations,
+              signal: AbortSignal.timeout(Math.min(BEAT_CALL_TIMEOUT_MS, left)),
+              retries: 0,
+            });
+            return { verdict, result };
+          } catch (error) {
+            console.warn(`Beat ${verdict.beatIndex + 1} repair failed:`, error.message);
+            return { verdict, result: null };
+          }
+        }),
+      );
+
+      // Spend is recorded here, serially, and deliberately NOT inside the parallel block: it is a
+      // read-modify-write on one ledger, and concurrent writers would lose each other's tokens.
+      // The calls are what benefits from being parallel; the accounting for them does not.
+      for (const { verdict, result } of results) {
+        if (!result) continue;
+        verdict.attempts += 1;
+        spend = await recordSpend(env, mindId, { kind: 'llm', model: result.model, usage: result.usage, beatIndex: verdict.beatIndex });
+        if (!result.repaired) continue;
+        const afterRepair = floorViolations({ ...result.repaired, beatIndex: verdict.beatIndex }, profiles);
+        // The two-stage check, unchanged. A repair is only a repair if it passes the check that
+        // rejected the original; otherwise the original failure stands and is reported.
+        if (!afterRepair.length) {
+          verdict.scene = { ...result.repaired, beatIndex: verdict.beatIndex };
+          verdict.violations = [];
+          repaired.push(verdict.beatIndex);
+        } else {
+          verdict.violations = afterRepair;
+        }
+      }
+    }
+
+    // PASS THREE: build the frames, in beat order, from settled verdicts.
+    for (const verdict of verdicts) {
+      if (verdict.transition) {
         // Decided in code, not taken on trust: the marker is in the beat text, so a model that
         // returns a shot for it is simply wrong and there is nothing to verify.
-        storyboard.frames.push(transitionFrame(beatIndex, beatText));
+        storyboard.frames.push(transitionFrame(verdict.beatIndex, verdict.beatText));
         continue;
       }
 
-      let scene = byIndex.get(beatIndex) ?? null;
-      let violations = scene ? floorViolations(scene, profiles) : [{ code: 'missing-beat', severity: 'floor', detail: 'The model returned no geometry for this beat.' }];
-      let attempts = 1;
+      const failed = verdict.violations.length > 0;
+      if (failed) refused.push(verdict.beatIndex);
 
-      // At most one repair per beat, at most three per film. The ceiling is not timidity: round 7
-      // measured these failures landing on DIFFERENT beats each run rather than compounding on
-      // one, so a film needing four repairs is a film with something else wrong with it, and
-      // spending more calls on it hides that rather than fixing it.
-      if (scene && violations.length && repairsUsed < 3) {
-        repairsUsed += 1;
-        attempts += 1;
-        await emit('phase', { phase: 'validating', beatIndex, repairing: true });
-        try {
-          const result = await withHeartbeat(emit, 'validating', () =>
-            repairBeat(env, activePlan, { spec: cappedSpec, cast, beatIndex, beatText, broken: scene, violations, signal: undefined }),
-          );
-          spend = await recordSpend(env, mindId, { kind: 'llm', model: result.model, usage: result.usage, beatIndex });
-          if (result.repaired) {
-            const afterRepair = floorViolations({ ...result.repaired, beatIndex }, profiles);
-            // The two-stage check. A repair is only a repair if it passes the check that
-            // rejected the original; otherwise the original failure stands and is reported.
-            if (!afterRepair.length) {
-              scene = { ...result.repaired, beatIndex };
-              violations = [];
-              repaired.push(beatIndex);
-            } else {
-              violations = afterRepair;
-            }
-          }
-        } catch (error) {
-          console.warn(`Beat ${beatIndex + 1} repair failed:`, error.message);
-        }
-      }
-
-      const failed = violations.length > 0;
-      if (failed) refused.push(beatIndex);
-
-      const frame = {
-        frameId: makeFrameId(beatIndex),
-        beatIndex,
+      storyboard.frames.push({
+        frameId: makeFrameId(verdict.beatIndex),
+        beatIndex: verdict.beatIndex,
         transition: false,
         transitionText: null,
-        beatText,
-        scene: failed ? null : scene,
+        beatText: verdict.beatText,
+        scene: failed ? null : verdict.scene,
         // Kept even on a refused beat: the prose is the primary human surface, it is what the
         // visitor reads first, and it is not what failed.
-        proseNote: scene?.proseNote ?? null,
+        proseNote: verdict.scene?.proseNote ?? null,
         blocking: null,
         status: failed ? 'failed' : 'ok',
-        violations: violations.map((v) => ({ ...v, english: violationInEnglish(v, nameOf) })),
-        attempts,
+        violations: verdict.violations.map((v) => ({ ...v, english: violationInEnglish(v, nameOf) })),
+        attempts: verdict.attempts,
         tier: activePlan.tier,
         model,
         r2Key: null,
@@ -809,11 +1113,25 @@ async function runStoryboardJob(env, { mindId, spec, cast, plan, jobId }) {
         regenCount: 0,
         history: [],
         createdAt: Date.now(),
-      };
-      storyboard.frames.push(frame);
+      });
     }
 
     await emit('phase', { phase: 'finalising' });
+
+    // DID THE SPLIT ACTUALLY KEEP THE VARIETY? This is the one regression the split can cause
+    // and the one round 7's pin was protecting against, so it is measured on every real run
+    // rather than only in the probe. Reported, never enforced: `framing` is the model's claim
+    // about its own numbers, and worker/scene.js derives the true band from the geometry
+    // independently — if they disagree, the geometry is what counts.
+    const adherence = filmPlanUsed ? planAdherence(filmPlanUsed, storyboard.frames) : null;
+    if (adherence) {
+      storyboard.planAdherence = adherence;
+      console.log(`[Storyboarder ${jobId}] plan adherence ${adherence.matched}/${adherence.checked}` +
+        ` (${adherence.distinctPlanned} bands planned, ${adherence.distinctEmitted} emitted)` +
+        (adherence.drifted.length ? ` — drifted: ${adherence.drifted.map((d) => `beat ${d.beatIndex + 1} ${d.planned}->${d.emitted}`).join(', ')}` : ''));
+      await emit('plan-adherence', adherence);
+    }
+
     console.log(`[Storyboarder ${jobId}] validation done: ${repaired.length} repaired, ${refused.length} refused, saving storyboard`);
 
     // SAVE FIRST, THEN TELL THE BROWSER. The whole film arrives from one call, so there is no
@@ -838,6 +1156,9 @@ async function runStoryboardJob(env, { mindId, spec, cast, plan, jobId }) {
       [
         `[Storyboarder] Blocked ${shots} shot(s) on the ${activePlan.tier} tier (${model}).`,
         repaired.length ? ` Repaired: ${repaired.map((i) => `beat ${i + 1}`).join(', ')} — geometry corrected and re-checked.` : '',
+        adherence?.drifted.length
+          ? ` Shot list drift: ${adherence.drifted.map((d) => `beat ${d.beatIndex + 1} was planned ${d.planned} and came back ${d.emitted}`).join('; ')}.`
+          : '',
         refused.length ? ` Refused validation: ${refused.map((i) => `beat ${i + 1}`).join(', ')}. The visitor can regenerate or accept them as-is.` : '',
         activePlan.downgraded ? ` Note: ${activePlan.downgradeReason}` : '',
         spec.beats.length > activePlan.maxBeats ? ` The spec ran to ${spec.beats.length} beats; ${activePlan.maxBeats} were blocked on this tier.` : '',
@@ -932,7 +1253,7 @@ export async function handleStoryboardQueue(batch, env) {
         continue;
       }
 
-      await runStoryboardJob(env, { mindId, spec, cast, plan, jobId });
+      await runStoryboardJob(env, { mindId, spec, cast, plan, jobId, record });
       message.ack();
     } catch (error) {
       console.error('Storyboard queue consumer failed:', error);
@@ -981,60 +1302,21 @@ export async function handleStoryboardJobStatus(request, env) {
   });
 }
 
-const TERMINAL_EVENT = new Set(['result', 'error']);
-
-/** Lightweight SSE over the job log. The heavy generation runs elsewhere; this just polls KV. */
+/** Lightweight SSE over the job log. The loop itself lives in worker/job-events.js — the
+ * Director needs the identical stream over a different record, and the only thing that actually
+ * differed was how the record is loaded. */
 export async function handleStoryboardJobEvents(request, env, ctx) {
   const session = await requireSession(request, env);
   if (!session) return json({ error: 'unauthorized' }, 401);
 
   const { pathname, searchParams } = new URL(request.url);
-  const parts = pathname.split('/');
-  const jobId = parts[4];
+  const jobId = pathname.split('/')[4];
   if (!jobId) return json({ error: 'job_id_required' }, 400);
 
-  let lastEvent = Number(searchParams.get('lastEvent') ?? 0);
-  if (!Number.isFinite(lastEvent) || lastEvent < 0) lastEvent = 0;
-
-  return sseResponse(async (emit) => {
-    let sent = lastEvent;
-    let stagnant = 0;
-    // 2s poll * 15 rounds = 30 seconds of silence before the progress stream closes. The job
-    // keeps running; the client reconnects automatically, and the UI can fall back to status polling.
-    const maxStagnantRounds = 15;
-
-    while (stagnant < maxStagnantRounds) {
-      const record = await loadStoryboardJob(env, session.mindId, jobId);
-      if (!record) {
-        await emit('error', { error: 'Job not found' });
-        return;
-      }
-
-      const events = record.events.slice(sent);
-      for (const event of events) {
-        const ok = await emit(event.type, event.data);
-        sent += 1;
-        stagnant = 0;
-        if (!ok && !TERMINAL_EVENT.has(event.type)) {
-          // Client gone; stop spending KV polls on this connection.
-          return;
-        }
-      }
-
-      const terminal = record.status === 'complete' || record.status === 'failed';
-      if (terminal) {
-        if (!events.length && !sent) {
-          await emit('error', { error: record.error ?? 'Job finished with no events' });
-        }
-        return;
-      }
-
-      await new Promise((done) => setTimeout(done, 2000));
-      stagnant += 1;
-    }
-
-    // Stream closed after a long silence; the client will reconnect if the job is still running.
-  }, ctx);
+  return streamJobEvents(ctx, {
+    loadRecord: () => loadStoryboardJob(env, session.mindId, jobId),
+    lastEvent: searchParams.get('lastEvent') ?? 0,
+  });
 }
 
 /** What the visitor is told BEFORE they click generate: which tier, which model, what it costs,
@@ -1416,19 +1698,9 @@ export async function handleStoryboardGet(request, env) {
  * from a plain `<img src>` or a Producer digest's link, neither of which can attach custom
  * headers. `key` must already be namespaced under the caller's own mindId.
  */
-export async function handleStoryboardImage(request, env) {
-  const { searchParams } = new URL(request.url);
-  const token = searchParams.get('token');
-  const key = searchParams.get('key');
-  const session = token ? await verifySession(env, token) : null;
-  if (!session || !key || !key.startsWith(`storyboard/${session.mindId}/`)) {
-    return json({ error: 'not_found' }, 404);
-  }
-
-  const object = await env.STORYBOARD_IMAGES.get(key);
-  if (!object) return json({ error: 'not_found' }, 404);
-
-  return new Response(object.body, {
-    headers: { 'content-type': 'image/png', 'cache-control': 'private, max-age=31536000, immutable' },
+export const handleStoryboardImage = (request, env) =>
+  serveSignedMedia(request, env, {
+    bucket: env.STORYBOARD_IMAGES,
+    prefixFor: (mindId) => `storyboard/${mindId}/`,
+    contentType: 'image/png',
   });
-}

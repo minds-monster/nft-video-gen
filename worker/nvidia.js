@@ -14,12 +14,29 @@
 // same weights) is a config change, not a rewrite.
 
 /** Thrown for a non-2xx from the provider, carrying the status so callers can see a 429. */
+/** A 429 that says the DAILY allowance is gone, not that requests are arriving too fast.
+ * OpenRouter's free tier is 50 requests/day below 10 credits and 1000 above it, and running out
+ * reads as the same status code as a burst limit. */
+const DAILY_CAP = /free-models-per-day|per-day|daily limit|Add \d+ credits/i;
+
 export class NvidiaError extends Error {
   constructor(status, body) {
     super(`NVIDIA ${status}: ${String(body).slice(0, 400)}`);
     this.name = 'NvidiaError';
     this.status = status;
-    this.retryable = status === 429 || status >= 500;
+    // A DAILY CAP IS NOT A RATE LIMIT, and conflating them costs real time.
+    //
+    // Round 7 learned this shape on the paid side: an exhausted OpenAI credit balance arrives
+    // as a 429, the same status as a burst limit, so it was being retried three times for a
+    // condition that would never clear. `OpenAIError.outOfCredit` split them. The free side had
+    // the identical bug and it went unnoticed until 2026-08-26, when a probe run met the
+    // free-models-per-day cap and then spent nine more films politely backing off and retrying
+    // against a quota that does not replenish until midnight UTC.
+    //
+    // 🔑 The distinction is whether waiting can help. A rate limit clears on its own; a
+    // quota does not, and a billing problem never does.
+    this.quotaExhausted = status === 429 && DAILY_CAP.test(String(body));
+    this.retryable = (status === 429 && !this.quotaExhausted) || status >= 500;
   }
 }
 
@@ -35,7 +52,28 @@ const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
  */
 const jitter = (ms) => ms + Math.floor(Math.random() * Math.min(ms, 2000));
 
-export const chat = async (env, { model, signal, retries = 5, apiKey, baseUrl, ...body }) => {
+/** The response headers worth keeping off a completion. On the Zero Budget tier the rate limit
+ * is the currency, and nothing in this repo has ever recorded it — so a run throttled into three
+ * multi-minute replays and a run that was simply slow are indistinguishable in our own data.
+ * Reported through `onMeta` rather than returned, so the shape every caller reads is unchanged. */
+const RATE_LIMIT_HEADERS = [
+  "x-ratelimit-limit-requests",
+  "x-ratelimit-remaining-requests",
+  "x-ratelimit-reset-requests",
+  "x-ratelimit-limit-tokens",
+  "x-ratelimit-remaining-tokens",
+  "retry-after",
+];
+
+const metaOf = (response, attempt) => ({
+  status: response.status,
+  attempt,
+  headers: Object.fromEntries(
+    RATE_LIMIT_HEADERS.map((h) => [h, response.headers.get(h)]).filter(([, v]) => v != null),
+  ),
+});
+
+export const chat = async (env, { model, signal, retries = 5, apiKey, baseUrl, onMeta, ...body }) => {
   // Overridable per call: most callers share env.NVIDIA_API_KEY, but a model can live
   // on a different key within the same NIM account (see worker/assistant.js, whose
   // model was only ever reachable on a separately-issued key — confirmed empirically,
@@ -68,6 +106,8 @@ export const chat = async (env, { model, signal, retries = 5, apiKey, baseUrl, .
       body: JSON.stringify({ model, ...body }),
     });
 
+    onMeta?.(metaOf(response, attempt));
+
     if (response.ok) {
       const payload = await response.json();
       // A 200 IS NOT SUCCESS ON THIS WIRE FORMAT. Measured against OpenRouter, 2026-08-25: an
@@ -80,6 +120,11 @@ export const chat = async (env, { model, signal, retries = 5, apiKey, baseUrl, .
       // provider's wire format, gives every caller the real code and the normal backoff.
       if (payload?.error) {
         last = new NvidiaError(payload.error.code ?? 502, payload.error.message ?? 'upstream error');
+        // A 200 that is really a failure is INVISIBLE in latency data unless it is reported: the
+        // retry replays a multi-minute call, and the caller only ever sees one big number. This
+        // is how a "slow model" and "the provider bounced us once and we quietly went again"
+        // came to look identical in every free-tier figure this repo has published.
+        onMeta?.({ status: 200, attempt, softError: last.message, retryable: last.retryable, headers: {} });
         if (!last.retryable || attempt === retries) throw last;
         await sleep(jitter(Math.min(15000, 500 * 2 ** attempt)));
         continue;

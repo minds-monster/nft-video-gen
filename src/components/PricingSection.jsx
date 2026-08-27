@@ -123,7 +123,7 @@ const PricingSection = ({ onConnectMind }) => {
               <p className="mt-4 text-3xl font-extrabold text-slate-400 tracking-tight">From $9/mo*</p>
               <span className="text-[10px] text-slate-600 block mt-1">*With your own API keys or local models</span>
               <p className="mt-6 text-sm text-slate-500 leading-relaxed">
-                A subscription with minds.MONSTER will save you money on your existing vid gen requirements. Compatible with local models and third party APIs.
+                A subscription with minds.MONSTER will enhance the performance AND save you money on your existing vid gen setup. Compatible with local models and third party APIs.
               </p>
             </div>
             <div className="mt-8">

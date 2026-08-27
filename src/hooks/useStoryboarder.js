@@ -32,6 +32,12 @@ export const STAGE_LABEL = {
   drafting: 'Blocking the shots',
   validating: 'Checking the geometry',
   finalising: 'Finishing up',
+  // A FIFTH STAGE, and it is not a worker phase — it is this client admitting it lost the
+  // progress stream. It used to report itself as `finalising`, which is a claim about what
+  // the WORKER is doing made by a client that has just stopped being able to see the worker.
+  // A visitor watching 'Finishing up' for twelve minutes is being told something false; the
+  // work really is still running server-side, and that is what this says instead.
+  reconnecting: 'Reconnecting — the work is still running',
 };
 
 /** Drives the Storyboarder's whole-film pass, each frame's failure surface, and each frame's
@@ -60,7 +66,33 @@ export const useStoryboarder = () => {
   const [reasoning, setReasoning] = useState('');
   // The same stream, split by which beat the model was discussing when it said it — so the
   // thinking appears over the frame it is about.
+  //
+  // ⚠ IN PRACTICE THIS IS EMPTY, and it is worth knowing why before building anything on it.
+  // The provider bounces `stream: true` with a 502 inside a second (measured 2026-08-26, both
+  // attempts), so worker/storyboarder.js falls back to the non-streamed call and no reasoning
+  // ever arrives. Kept because the fallback is provider-side and could stop happening; not
+  // relied on, because for now a wait built on it is a wait built on nothing.
   const [reasoningByBeat, setReasoningByBeat] = useState({});
+  // beatIndex -> { framing, principalSubject, motion, intent }. The shot the plan pass decided,
+  // which lands ~15s into a run — long before any geometry does.
+  //
+  // THIS IS THE WAIT SURFACE NOW. Every value in it is a real decision the model made about
+  // this specific beat, not a placeholder and not an animation: beat 1 is an EWS on the ape,
+  // beat 3 is a CU. Three cards say three different true things while the geometry is still
+  // being drawn. Nothing here is ever synthesised to fill time — a card with no plan yet shows
+  // no plan, because a visitor who is told something invented has been given a worse deal than
+  // a visitor who is told nothing.
+  const [beatPlans, setBeatPlans] = useState({});
+  // How many times the progress stream has had to be re-established.
+  //
+  // `streamStoryboardJobEvents` has always emitted these and nothing has ever rendered them,
+  // which meant the one signal that distinguishes 'the model is slow' from 'we keep losing the
+  // connection' was thrown away at the point it was produced. A visitor staring at a stalled
+  // panel deserves to know which of those is happening, and so do we.
+  const [reconnects, setReconnects] = useState(0);
+  // beatIndex -> 'drawing' | 'drawn' | 'failed'. The beats are generated in parallel and land
+  // at different times, so each card reports its own progress rather than sharing one spinner.
+  const [beatStatus, setBeatStatus] = useState({});
   // A short rolling log of events from the worker, for debugging "is it still alive?".
   const [events, setEvents] = useState([]);
   // The beats being worked on, known the instant the run starts. The film gets its shape — one
@@ -136,6 +168,9 @@ export const useStoryboarder = () => {
     setFrames([]);
     setReasoning('');
     setReasoningByBeat({});
+    setReconnects(0);
+    setBeatPlans({});
+    setBeatStatus({});
     setEvents([]);
     setBeatTexts(spec?.beats ?? []);
     // THE CAST IS KNOWN BEFORE ANY OF THIS RUNS. The Worker sends the identical map back with the
@@ -150,14 +185,26 @@ export const useStoryboarder = () => {
       setElapsedSeconds((s) => s + 1);
     }, 1000);
 
+    // ONE DEADLINE FOR THE WHOLE RUN, and the reason is a visitor who sat at 18 minutes.
+    //
+    // These used to be two independent budgets that STACKED: the progress stream got
+    // (max + 120)s, and when it expired the recovery poll started a fresh (max + 120)s of its
+    // own. On the free tier that is 12 minutes, then 12 more — a 24-minute worst case before
+    // the visitor was told anything at all, for a generation whose own ceiling is well under
+    // half of that. Nobody chose 24 minutes; it was the sum of two numbers that were each
+    // defensible alone.
+    //
+    // So the budget is established once, here, as a wall-clock instant. Losing the stream
+    // spends the SAME clock rather than restarting it, which is what makes the number the
+    // visitor is quoted the number they actually wait.
+    const tier = planRef.current?.tier ?? 'free';
+    const tierMaxSeconds = LATENCY_SECONDS[tier]?.max ?? LATENCY_SECONDS.free.max;
+    const runBudgetMs = (tierMaxSeconds + 120) * 1000;
+    const deadlineAt = Date.now() + runBudgetMs;
+    const timeLeft = () => Math.max(0, deadlineAt - Date.now());
+
     try {
-      // The deadline is based on the tier's measured maximum, not the p50 estimate. A free-tier
-      // run is allowed up to LATENCY_SECONDS.free.max; we add a buffer so a legitimately slow run
-      // is not killed early. The Queue consumer can run for up to 15 minutes, so this is still
-      // well inside the real ceiling.
-      const tier = planRef.current?.tier ?? 'free';
-      const tierMaxSeconds = LATENCY_SECONDS[tier]?.max ?? LATENCY_SECONDS.free.max;
-      const deadlineMs = (tierMaxSeconds + 120) * 1000;
+      const deadlineMs = timeLeft();
 
       const result = await storyboard(
         { spec, cast },
@@ -178,6 +225,7 @@ export const useStoryboarder = () => {
               if (data?.maxBeats) setBeatTexts((current) => current.slice(0, data.maxBeats));
             }
             if (type === 'phase') setPhase(data.phase);
+            if (type === 'reconnect') setReconnects((n) => n + 1);
             // The heartbeat is a cross-check against the client-side timer; if it carries a larger
             // elapsed value, trust it (the worker knows when the phase actually started).
             if (type === 'heartbeat') setElapsedSeconds((s) => Math.max(s, data.elapsedSeconds ?? 0));
@@ -189,6 +237,19 @@ export const useStoryboarder = () => {
                 const index = data.beatIndex ?? 0;
                 return { ...current, [index]: (current[index] ?? '') + data.delta };
               });
+            }
+            // The shot list, one beat at a time, as the plan pass decides it.
+            if (type === 'beat-plan' && Number.isInteger(data.beatIndex)) {
+              setBeatPlans((current) => ({ ...current, [data.beatIndex]: data }));
+              setBeatStatus((current) => ({ ...current, [data.beatIndex]: 'drawing' }));
+            }
+            // One beat's geometry finished. The beats run concurrently, so these arrive out of
+            // order and that is the point — the timeline fills in piecemeal instead of all at once.
+            if (type === 'beat-drawn' && Number.isInteger(data.beatIndex)) {
+              setBeatStatus((current) => ({
+                ...current,
+                [data.beatIndex]: data.failed ? 'failed' : 'drawn',
+              }));
             }
             if (type === 'frame' && !data.error) {
               setFrames((current) => [...current, data]);
@@ -208,11 +269,18 @@ export const useStoryboarder = () => {
       // A CUT STREAM IS NOT A LOST FILM. The run keeps going server-side and saves itself; all
       // that broke is the wire. Reported to the visitor as still working, because it is.
       if (failure.truncated) {
-        setPhase('finalising');
-        // Use the same tier-max-based budget for recovery; from now we wait for the durable copy.
-        const recoverTier = planRef.current?.tier ?? 'free';
-        const recoverMaxSeconds = LATENCY_SECONDS[recoverTier]?.max ?? LATENCY_SECONDS.free.max;
-        const budgetMs = (recoverMaxSeconds + 120) * 1000;
+        // Not 'finalising'. We do not know that the worker is finalising — we know we cannot
+        // see it. Say that.
+        setPhase('reconnecting');
+        const budgetMs = timeLeft();
+        if (budgetMs <= 0) {
+          setError(
+            `The Storyboarder did not finish within ${Math.round(runBudgetMs / 60_000)} minutes ` +
+            `(${failure.message}). The run may still be finishing server-side — generating again ` +
+            'is safe, and lands on the same film.',
+          );
+          return;
+        }
         const saved = await recoverAfterCut({ spec, token, deadlineMs: budgetMs });
         if (controller.signal.aborted) return;
         if (saved) {
@@ -227,7 +295,9 @@ export const useStoryboarder = () => {
         // the paid tier records spend before the frames are built, so a blanket reassurance would
         // be false half the time — and the spend panel already reports the truth either way.
         setError(
-          `The connection to the Storyboarder dropped, and no saved film appeared within ${Math.round(budgetMs / 60_000)} minutes (${failure.message}). Generating again is safe — it lands on the same film.`,
+          `The connection to the Storyboarder dropped, and no saved film appeared within the ` +
+          `${Math.round(runBudgetMs / 60_000)}-minute budget for this run (${failure.message}). ` +
+          'Generating again is safe — it lands on the same film.',
         );
         return;
       }
@@ -367,6 +437,9 @@ export const useStoryboarder = () => {
     films,
     reasoning,
     reasoningByBeat,
+    beatPlans,
+    beatStatus,
+    reconnects,
     beatTexts,
     events,
     sketching,

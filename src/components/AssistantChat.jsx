@@ -4,6 +4,7 @@ import RevealText from './canvas/RevealText';
 import { useAssistantChat } from '../hooks/useAssistantChat';
 import { useMindStatusBadge } from '../hooks/useMindStatusBadge';
 import { cn } from '../lib/cn';
+import { parseBrief } from '../lib/directorBrief';
 
 // The assistant's displayed name is tied to the connected Mind — "Adam Assistant" when
 // Adam's Mind is connected, "Production Assistant" before a Mind has been brought in.
@@ -25,7 +26,54 @@ const STATUS_LABEL = {
  * plan doc for why. `connectionId`/`token` come from whichever connect state the caller
  * is currently in (undefined is fine — the assistant still works pre-connection).
  */
-const AssistantChat = ({ connectionId, token, mindName, threadClassName, placeholder = 'Ask the assistant…' }) => {
+/**
+ * A scope the assistant has proposed, and the button that is the whole boundary of its authority.
+ *
+ * The assistant writes a `[BRIEF]` block into its own reply — the same machine-read-marker-inside-
+ * prose convention as the Producer's `[seen …]` and the Screenwriter's `[CUT TO BLACK]`. Parsing
+ * one does NOT apply it. It cannot reach the endpoint that stores this; the visitor pressing here
+ * is the only path, which is what keeps "the assistant helps you scope the film" from quietly
+ * becoming "the assistant spends your money".
+ */
+const ProposedBrief = ({ brief, onAccept, accepted }) => (
+  <div className="mt-2 rounded-xl border border-purple-500/25 bg-purple-950/20 p-2.5">
+    <p className="font-mono text-[9px] uppercase tracking-widest text-purple-300/70">Proposed scope</p>
+    {brief.intent && <p className="mt-1 text-xs leading-relaxed text-slate-200">{brief.intent}</p>}
+    <dl className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 font-mono text-[10px] text-slate-500">
+      {brief.duration && <span>{brief.duration}s</span>}
+      {brief.resolution && <span>{brief.resolution}</span>}
+      {brief.willingToSpend && <span>${brief.willingToSpend} on this film</span>}
+    </dl>
+    {brief.mustHold?.length > 0 && (
+      <ul className="mt-1.5 space-y-0.5">
+        {brief.mustHold.map((item) => (
+          <li key={item} className="flex items-start gap-1.5 text-[11px] leading-snug text-slate-300">
+            <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-purple-400" />
+            {item}
+          </li>
+        ))}
+      </ul>
+    )}
+    <button
+      type="button"
+      disabled={accepted}
+      onClick={() => onAccept?.(brief)}
+      className="mt-2 w-full rounded-lg bg-purple-600 px-2 py-1.5 text-[11px] font-semibold text-white transition-colors hover:bg-purple-500 disabled:bg-white/5 disabled:text-slate-500"
+    >
+      {accepted ? 'Scope accepted' : 'Use this scope'}
+    </button>
+  </div>
+);
+
+const AssistantChat = ({
+  connectionId,
+  token,
+  mindName,
+  threadClassName,
+  placeholder = 'Ask the assistant…',
+  onAcceptBrief,
+  acceptedBriefAt,
+}) => {
   const { messages, phase, isSending, send } = useAssistantChat({ connectionId, token });
   const badge = useMindStatusBadge({ connectionId, token, active: Boolean(connectionId || token) });
 
@@ -39,14 +87,25 @@ const AssistantChat = ({ connectionId, token, mindName, threadClassName, placeho
   // indicator stacked underneath it, so ChatThread's own busy state stays off here.
   const renderMessageText = (msg, text) => {
     if (!text && !msg.streaming) return null;
+
+    // A brief is only pulled out once the reply has SETTLED. Parsing mid-stream would flash a
+    // half-built scope card as the marker's lines arrive one at a time, and a proposal that
+    // rewrites itself while you read it is not one anybody should press a button on.
+    const { brief, text: prose } = msg.streaming ? { brief: null, text } : parseBrief(text);
+
     return (
-      <p className="whitespace-pre-wrap break-words leading-relaxed">
-        {msg.streaming ? (
-          <RevealText text={text} settling placeholder={!text && phase === 'deciding'} />
-        ) : (
-          text
+      <>
+        <p className="whitespace-pre-wrap break-words leading-relaxed">
+          {msg.streaming ? (
+            <RevealText text={text} settling placeholder={!text && phase === 'deciding'} />
+          ) : (
+            prose
+          )}
+        </p>
+        {brief && onAcceptBrief && (
+          <ProposedBrief brief={brief} onAccept={onAcceptBrief} accepted={acceptedBriefAt >= msg.at} />
         )}
-      </p>
+      </>
     );
   };
 

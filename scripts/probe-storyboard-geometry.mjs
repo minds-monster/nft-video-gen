@@ -46,15 +46,47 @@ import { mkdirSync, writeFileSync, readFileSync, readdirSync, existsSync } from 
 import { execFileSync } from 'node:child_process';
 import { H3_FORMAT } from '../worker/rulebook.js';
 import { SCENE_SCHEMA, toStrictSchema, buildBrief, buildFilmUserMessage, buildChainedUserMessage, COORDINATE_CONTRACT_V2 } from './lib/scene-brief.mjs';
-import { BLOCKING_SCHEMA, BLOCKING_BRIEF, LEGACY_FILM_SCHEMA, LEGACY_PARAMS, buildLegacyBeatMessage, buildLegacyFilmMessage } from './lib/legacy-blocking.mjs';
+import { blockingSchema, blockingBrief, legacyFilmSchema, LEGACY_PARAMS, buildLegacyBeatMessage, buildLegacyFilmMessage } from './lib/legacy-blocking.mjs';
 import { FIXTURES, fixtureById, aspectOf } from './lib/storyboard-fixtures.mjs';
 import { chatCompletionsCall, responsesCall, costUsd, MODELS, TOKEN_PRICES } from './lib/openai-probe.mjs';
 import { nvidiaToolCall, nvidiaStreamCall, NVIDIA_MODELS } from './lib/nvidia-probe.mjs';
+// The PRODUCTION transport and the PRODUCTION split, imported rather than reimplemented.
+// Round 11 found the timing probe scoring a code path production does not take; the fix there
+// was to call the real thing, and the same applies here. These cells score exactly what a
+// visitor gets, from the origin a visitor is served by.
+import { filmCall } from '../worker/openrouter.js';
+import {
+  FILM_PLAN_SCHEMA,
+  buildPlanBrief,
+  buildPlanUserMessage,
+  buildBeatUserMessage,
+} from '../worker/film-plan.js';
 import { scoreFilm, stability } from './lib/score.mjs';
 import { selfTest } from './lib/scene-geometry.mjs';
 import { renderScorecard, renderScenesHtml } from './lib/report.mjs';
 
 const OUT_ROOT = 'assets/probes/storyboard-geometry';
+
+/**
+ * OpenRouter, which is where production actually serves the free tier from.
+ *
+ * THE EXISTING FREE CELLS POINT AT NVIDIA'S OWN HOSTING, and that is the confound that produced
+ * round 7's "Super fails the absolute floor 3/3" verdict. Round 11 measured Super on OpenRouter
+ * at 93s against Ultra's 354s with an identical shot plan and an identical violation count — so
+ * that verdict was about the ORIGIN, not the weights, exactly as the round-7 rule warns:
+ * report "model X FROM ORIGIN Y is good enough", never "model X is good enough".
+ *
+ * The `:free` suffix is a distinct catalogue entry from the paid one, not a modifier.
+ */
+const OR_MODELS = {
+  ultra: 'nvidia/nemotron-3-ultra-550b-a55b:free',
+  super: 'nvidia/nemotron-3-super-120b-a12b:free',
+};
+
+const orEnv = {
+  OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
+  OPENROUTER_BASE_URL: process.env.OPENROUTER_BASE_URL ?? 'https://openrouter.ai/api/v1',
+};
 const TRANSITION_PREFIX = /^\s*\[(CUT TO BLACK|TRANSITION|FADE)\]\s*/i;
 
 // ─────────────────────────────────────────────────────────────────────── argv
@@ -144,6 +176,34 @@ const CELLS = {
     kind: 'scene', scope: 'film', transport: 'nvidia', model: NVIDIA_MODELS.super,
     contract: 'v2', enableThinking: true, maxTokens: 32768, free: true,
   },
+  // ── Round 11. All three on OPENROUTER, which is the origin production serves from — see
+  // OR_MODELS. `ultra-or-film` is the baseline the other two are read against, and it is the
+  // same shape as round 7's c1 (whole film, one call), so its numbers are directly comparable
+  // to c1's 3.1 distinct bands / 0.26 MWS share.
+  'ultra-or-film': {
+    label: 'R11 baseline: Ultra 550B on OpenRouter, whole film in one call',
+    kind: 'scene', scope: 'film', transport: 'openrouter', model: OR_MODELS.ultra,
+    contract: 'v2', maxTokens: 32768, free: true, retries: 1,
+  },
+  'super-or-film': {
+    label: 'R11: Super 120B on OpenRouter, whole film in one call',
+    kind: 'scene', scope: 'film', transport: 'openrouter', model: OR_MODELS.super,
+    contract: 'v2', maxTokens: 32768, free: true, retries: 1,
+  },
+  // The shape that actually ships. Deliberately NOT beat-trimmed: the split does one call per
+  // beat, so it is not bound by the provider-side time limit that makes six beats impossible in
+  // a single call (round 7: `finish_reason: error` after 555s). Whether that holds across the
+  // six-beat grid-launch fixture is one of the things this run is for.
+  'split-or': {
+    label: 'R11: SPLIT — shot plan, then one call per beat, Ultra on OpenRouter',
+    kind: 'scene', scope: 'split', transport: 'openrouter', model: OR_MODELS.ultra,
+    contract: 'v2', maxTokens: 32768, free: true, retries: 1,
+  },
+  'split-or-super': {
+    label: 'R11: SPLIT on Super 120B — the two round-11 wins together',
+    kind: 'scene', scope: 'split', transport: 'openrouter', model: OR_MODELS.super,
+    contract: 'v2', maxTokens: 32768, free: true, retries: 1,
+  },
   // ── Temporary stage for the storyboarder slowness investigation. Free tier only, small matrix.
   'f2-ultra-3-on': {
     label: 'F2: Ultra 550B, 3 beats, thinking ON (production config)',
@@ -221,6 +281,20 @@ const callModel = async (cell, { system, user, schema, toolName, strictRanges })
       retries: cell.retries ?? 5,
     });
   }
+  if (cell.transport === 'openrouter') {
+    const result = await filmCall(orEnv, {
+      model: cell.model,
+      system, user,
+      schema: toStrictSchema(schema),
+      toolName: toolName ?? 'emit_film',
+      maxTokens: cell.maxTokens ?? 32768,
+      temperature: cell.temperature ?? 0.3,
+      retries: cell.retries ?? 1,
+      enableThinking: cell.enableThinking ?? true,
+      reasoning: cell.reasoning ?? null,
+    });
+    return { ...result, attempts: 1, usedToolCall: true, request: { model: cell.model }, raw: null };
+  }
   if (cell.transport === 'responses') {
     // Stage 0 finding, measured 2026-08-24: strict json_schema on this account ACCEPTS numeric
     // minimum/maximum keywords, so the full schema goes through unstripped and the API enforces
@@ -277,6 +351,47 @@ const runFilm = async (cell, fixture) => {
     return { film: data, calls };
   }
 
+  // THE SPLIT, scored the way production runs it: one whole-film shot plan, then one call per
+  // beat, each beat shown the WHOLE plan. The distinction from `chain` below is the entire
+  // hypothesis — a chained beat sees only its predecessor and collapses toward the middle
+  // (round 7's c0: 2.4 distinct bands, 0.45 MWS), whereas a split beat sees the film's whole
+  // shot rhythm and is told which part of it it owns. If this scores like `chain` rather than
+  // like `film`, the split is wrong and FREE_STORYBOARD_SPLIT should default to 0.
+  if (cell.kind === 'scene' && cell.scope === 'split') {
+    const spec = cell.trimBeats && fixture.spec.beats.length > cell.trimBeats
+      ? { ...fixture.spec, beats: fixture.spec.beats.slice(0, cell.trimBeats) }
+      : fixture.spec;
+    const plan = record(await callModel(
+      // 16384, not the 4096 this started at — see the ceiling note in worker/storyboarder.js.
+      // A plan call spends most of its budget reasoning, so a tight cap truncates the answer
+      // rather than shortening the thinking.
+      { ...cell, maxTokens: 16384 },
+      { system: buildPlanBrief(), user: buildPlanUserMessage(spec, fixture.cast), schema: FILM_PLAN_SCHEMA, toolName: 'emit_plan' },
+    ));
+    const beats = [];
+    for (let i = 0; i < spec.beats.length; i += 1) {
+      // Sequential here, not pooled. Round 11 measured this route SHEDDING concurrent
+      // film-sized requests with a 502 at concurrency 2 and 3, which is why production runs
+      // FREE_STORYBOARD_BEAT_CONCURRENCY=1 — and a probe that ran them concurrently would be
+      // scoring shed requests as model failures.
+      const data = record(await callModel(cell, {
+        system: briefFor(cell),
+        user: buildBeatUserMessage(spec, fixture.cast, i, plan),
+        schema: SCENE_SCHEMA,
+        toolName: 'emit_film',
+      }));
+      const beat = (data.beats ?? []).find((b) => b.beatIndex === i) ?? (data.beats ?? [])[0];
+      if (!beat) throw new Error(`split call for beat ${i + 1} returned no beat`);
+      beat.beatIndex = i;
+      beats.push(beat);
+    }
+    return {
+      film: { units: 'metres', aspect: aspectOf(spec), sceneScaleNote: plan?.sceneScaleNote ?? '', beats },
+      calls,
+      filmPlan: plan,
+    };
+  }
+
   if (cell.kind === 'scene' && cell.scope === 'chain') {
     const beats = [];
     let previous = null;
@@ -307,9 +422,9 @@ const runFilm = async (cell, fixture) => {
       }
       const data = record(await chatCompletionsCall({
         model: cell.model,
-        system: BLOCKING_BRIEF,
+        system: blockingBrief(),
         user: buildLegacyBeatMessage(fixture.spec, fixture.cast, i, previous),
-        schema: BLOCKING_SCHEMA,
+        schema: blockingSchema(),
         toolName: 'emit_blocking',
         temperature: cell.temperature,
         maxCompletionTokens: cell.maxCompletionTokens,
@@ -323,9 +438,9 @@ const runFilm = async (cell, fixture) => {
   // legacy + film — the scope ablation
   const data = record(await chatCompletionsCall({
     model: cell.model,
-    system: BLOCKING_BRIEF,
+    system: blockingBrief(),
     user: buildLegacyFilmMessage(fixture.spec, fixture.cast),
-    schema: LEGACY_FILM_SCHEMA,
+    schema: legacyFilmSchema(),
     toolName: 'emit_blocking',
     temperature: cell.temperature,
     maxCompletionTokens: cell.maxCompletionTokens,
@@ -379,9 +494,9 @@ const stage0 = async () => {
       id: 's0-legacy-control',
       question: "does today's production request still run unchanged?",
       run: () => chatCompletionsCall({
-        model: LEGACY_PARAMS.model, system: BLOCKING_BRIEF,
+        model: LEGACY_PARAMS.model, system: blockingBrief(),
         user: buildLegacyBeatMessage(fixture.spec, fixture.cast, 0, null),
-        schema: BLOCKING_SCHEMA, toolName: 'emit_blocking',
+        schema: blockingSchema(), toolName: 'emit_blocking',
         temperature: LEGACY_PARAMS.temperature, maxCompletionTokens: LEGACY_PARAMS.maxCompletionTokens,
       }),
     },
@@ -555,7 +670,9 @@ const main = async () => {
   const fixtures = selectedFixtures();
   const plannedCalls = cells.flatMap((id) => fixtures.map((f) => ({
     cell: id, fixture: f.id,
-    callsPerFilm: CELLS[id].scope === 'chain' ? f.spec.beats.length : 1,
+    callsPerFilm: CELLS[id].scope === 'chain'
+      ? f.spec.beats.length
+      : CELLS[id].scope === 'split' ? f.spec.beats.length + 1 : 1,
   })));
 
   console.log(`\nRUN ${runId}`);
@@ -598,7 +715,9 @@ const main = async () => {
   const scored = [];
   let spent = 0;
 
+  let quotaExhausted = false;
   for (const cellId of cells) {
+    if (quotaExhausted) break;
     const cell = CELLS[cellId];
     for (const fixture of fixtures) {
       for (let repeat = 0; repeat < REPEATS; repeat += 1) {
@@ -639,9 +758,32 @@ const main = async () => {
           console.log(`✗ ${error.name}: ${error.message.slice(0, 120)}`);
           scored.push({ cell: cellId, fixture: fixture.id, repeat, failed: true, failure: error.kind ?? 'error', error: `${error.name}: ${error.message}` });
           ledger.push({ tag, cell: cellId, fixture: fixture.id, repeat, failed: true, failure: error.kind ?? 'error' });
+
+          // A DAY'S QUOTA DOES NOT COME BACK BEFORE THE RUN ENDS, so there is nothing to be
+          // gained by attempting the rest of the matrix. On 2026-08-26 this loop met the
+          // free-models-per-day cap on film 7 and then dutifully attempted films 8 through 15,
+          // each failing instantly, filling a scorecard with nine rows that say nothing about
+          // any model and burying the two real results among them.
+          //
+          // Stopping here is not just faster; it is the difference between a partial run that
+          // reports what it measured and a full run that appears to have tested everything and
+          // failed. Whatever HAS been scored is still written out below.
+          if (error.quotaExhausted) {
+            quotaExhausted = true;
+            console.log(
+              '\n⛔ Daily free-model quota exhausted — abandoning the rest of the matrix.\n' +
+              `   Scored ${scored.filter((r) => !r.failed).length} of ${scored.length} attempted film(s) before the wall.\n` +
+              '   The free tier is 50 requests/day below 10 credits, 1000 above. Note that a SPLIT\n' +
+              '   film costs one call per beat plus one for the plan, so it burns quota 4-7x faster\n' +
+              '   than a whole-film cell — budget the matrix accordingly, or add credits.',
+            );
+          }
         }
+        if (quotaExhausted) break;
       }
+      if (quotaExhausted) break;
     }
+    if (quotaExhausted) break;
   }
 
   // rawFilm is stripped here — raw/ already holds every film verbatim, and metrics.json is

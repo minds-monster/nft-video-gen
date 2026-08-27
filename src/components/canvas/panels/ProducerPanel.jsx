@@ -8,7 +8,9 @@ import { useMindChatContext } from '../../../context/mindChat';
  * same toggle ProducerSurface gives ConnectMindModal — see
  * /Users/adamplace/.claude/plans/we-ve-made-a-lot-delegated-pizza.md.
  */
-const ProducerPanel = ({ id, collapsed, onToggle }) => {
+const ProducerPanel = ({
+  onAcceptBrief,
+  acceptedBriefAt, id, collapsed, onToggle }) => {
   const { session, pending, openModal, messages, isInitializing, error, send, isSending } = useMindChatContext();
 
   return (
@@ -39,6 +41,8 @@ const ProducerPanel = ({ id, collapsed, onToggle }) => {
       )}
 
       <ProducerSurface
+        onAcceptBrief={onAcceptBrief}
+        acceptedBriefAt={acceptedBriefAt}
         session={session}
         pending={pending}
         messages={messages}

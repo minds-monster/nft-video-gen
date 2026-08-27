@@ -115,7 +115,7 @@ export const useMindConnect = () => {
     }
   }, []);
 
-  const checkout = useCallback(async (quantity = 1) => {
+  const checkout = useCallback(async (amount = 1) => {
     const guestId = localStorage.getItem('guestId') || generateUUID();
     if (!localStorage.getItem('guestId')) {
       localStorage.setItem('guestId', guestId);
@@ -128,7 +128,7 @@ export const useMindConnect = () => {
           'Content-Type': 'application/json',
           ...(session?.token ? { 'Authorization': `Bearer ${session.token}` } : {}),
         },
-        body: JSON.stringify({ guestId, quantity }),
+        body: JSON.stringify({ guestId, amount }),
       });
       const data = await response.json();
       if (data.url) {

@@ -4,8 +4,14 @@
 	"main": "worker/index.js",
 	"compatibility_date": "2026-08-01",
 	"routes": [
-		{ "pattern": "minds.monster", "custom_domain": true },
-		{ "pattern": "www.minds.monster", "custom_domain": true }
+		{
+			"pattern": "minds.monster",
+			"custom_domain": true
+		},
+		{
+			"pattern": "www.minds.monster",
+			"custom_domain": true
+		}
 	],
 	// One deploy serves both halves: `dist/` (the Vite build) as static assets, and the
 	// Worker for /api/*. `run_worker_first` is what keeps them from fighting — without it
@@ -53,6 +59,21 @@
 		{
 			"binding": "STORYBOARD_IMAGES",
 			"bucket_name": "nft-video-gen-storyboards"
+		},
+		// The Director's output: MiniMax clips, and the frames sampled out of them. A separate
+		// bucket rather than a prefix under STORYBOARD_IMAGES, because a binding name is read by
+		// people as well as by code and "storyboard images" holding finished films would be a lie.
+		//
+		// MiniMax result URLs are SHORT-LIVED, so the bytes are mirrored here the moment a task
+		// settles rather than linked. Keys are director/<mindId>/<filmId>/<takeId>/video.mp4 —
+		// scoped by mind, so the same prefix check that guards a storyboard image guards these.
+		//
+		// Renamed from the `nft_video_gen_renders` wrangler generates on `r2 bucket create`:
+		// every other binding in this file is SCREAMING_CASE and reads as a constant at the call
+		// site, which is what `env.RENDERS` should look like beside `env.STORYBOARD_IMAGES`.
+		{
+			"binding": "RENDERS",
+			"bucket_name": "nft-video-gen-renders"
 		}
 	],
 	"observability": {
@@ -69,7 +90,14 @@
 	// disconnects. The same Worker is both producer and consumer.
 	"queues": {
 		"producers": [
-			{ "queue": "storyboard-jobs", "binding": "STORYBOARD_JOBS" }
+			{
+				"queue": "storyboard-jobs",
+				"binding": "STORYBOARD_JOBS"
+			},
+			{
+				"queue": "director-jobs",
+				"binding": "DIRECTOR_JOBS"
+			}
 		],
 		"consumers": [
 			{
@@ -77,6 +105,25 @@
 				"max_batch_size": 1,
 				"max_batch_timeout": 1,
 				"max_retries": 1
+			},
+			// The Director is a STEP MACHINE, and this retry budget is for genuine failures only —
+			// never for waiting.
+			//
+			// A 2K/15s render was measured at 941-1123 SECONDS, and a Queue invocation gets 15
+			// minutes, so a single render can outlive a single invocation. Each message therefore
+			// performs ONE step and enqueues the next with an explicit `delaySeconds`; a poll is a
+			// fresh message, never a retry. Spending the retry budget on waiting would leave
+			// nothing for the transient 5xx it exists to absorb.
+			//
+			// ⚠️ 3 here is matched to the condition in worker/director.js. The storyboard consumer
+			// above sets 1 while its own handler branches on `attempts <= 2`, so its second retry
+			// can never fire — a live inconsistency, left alone rather than changed blind, but
+			// deliberately not copied here.
+			{
+				"queue": "director-jobs",
+				"max_batch_size": 1,
+				"max_batch_timeout": 1,
+				"max_retries": 3
 			}
 		]
 	},
@@ -111,6 +158,48 @@
 		"STORYBOARDER_MODEL": "gpt-5.6-sol",
 		"STORYBOARDER_EFFORT": "high",
 		"OPENROUTER_BASE_URL": "https://openrouter.ai/api/v1",
-		"FREE_STORYBOARD_MODEL": "nvidia/nemotron-3-ultra-550b-a55b:free"
+		"FREE_STORYBOARD_MODEL": "nvidia/nemotron-3-ultra-550b-a55b:free",
+		// How hard the free model is allowed to think, using OpenRouter's OWN unified `reasoning`
+		// parameter. This is NOT the same lever as `enable_thinking`, which was measured to do
+		// nothing at all: a three-beat film with `chat_template_kwargs: { enable_thinking: false }`
+		// still spent 3,588 tokens reasoning (probe 20260826T090334Z).
+		//
+		// It matters because reasoning is 57-76% of every token this tier generates, on a route
+		// that runs at ~40 tok/s — it is the largest single component of the wait. Accepted values
+		// are a JSON object: {"enabled":false}, {"effort":"low"}, {"max_tokens":1500}. Empty means
+		// send nothing and let the model default.
+		//
+		// A var rather than a constant for the same reason FREE_STORYBOARD_MODEL is one: the depth
+		// that is worth it depends on the model AND its host, and both have changed under us once
+		// already. It stays EMPTY until the probe scores a suppressed cell against validateScene —
+		// round 7's rule is that if a fix requires dropping a gate, the fix is wrong, and cheaper
+		// reasoning that fails the floor is exactly that.
+		"FREE_STORYBOARD_REASONING": "",
+		// ⚠ NOT YET VERIFIED — DO NOT DEPLOY THIS AS "1" WITHOUT READING THIS NOTE.
+		//
+		// "1" runs the plan-then-parallel-beats path in worker/film-plan.js; "0" reverts to the
+		// single whole-film call. The split is measured good on latency-to-first-signal (26.8s vs
+		// 408s), on plan adherence (2/2) and on per-beat failure isolation — but the gate that was
+		// supposed to clear it has NOT run: probe-storyboard-geometry.mjs scored zero split films
+		// on 2026-08-26 because the day's free quota ran out first. Shot variety against round 7's
+		// c1 baseline (3.1 distinct bands / 0.26 MWS share) is therefore still unmeasured.
+		//
+		// AND IT HAS A COST NOTHING ELSE IN THIS FILE HAS: a split film is one request PER BEAT
+		// plus one for the plan, so it consumes the daily free-model allowance 4-7x faster than a
+		// whole-film call. At the 50/day free-tier cap that is roughly 12 films a day across every
+		// visitor, against ~50. At 1000/day (10 credits) it is irrelevant. Check which tier the
+		// account is on before turning this on.
+		"FREE_STORYBOARD_SPLIT": "1",
+		// How many beats the split may have in flight at once. NOT a tuning knob for our own
+		// throughput — a property of the provider, and measured rather than chosen. On 2026-08-26
+		// this route SHED a beat with `502 Service temporarily overloaded` at concurrency 3 AND at
+		// concurrency 2 (the latter through three attempts), while single film-sized calls
+		// succeeded. It serves one at a time and refuses the rest, so 1 is the honest default:
+		// raising it today buys refused beats, not speed.
+		//
+		// The split is still worth it at 1 — the shot plan lands in ~25s with real per-beat facts,
+		// the timeline fills in beat by beat, and one bad response costs one beat instead of the
+		// whole film. Raise this when the route stops shedding; re-measure first, do not assume.
+		"FREE_STORYBOARD_BEAT_CONCURRENCY": "1"
 	}
 }

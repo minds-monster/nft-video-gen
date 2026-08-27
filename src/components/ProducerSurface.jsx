@@ -28,6 +28,8 @@ const TABS = [
  * modal), while existing exactly once.
  */
 const ProducerSurface = ({
+  onAcceptBrief,
+  acceptedBriefAt,
   session,
   pending,
   messages,
@@ -136,6 +138,8 @@ const ProducerSurface = ({
         />
       ) : (
         <AssistantChat
+            onAcceptBrief={onAcceptBrief}
+            acceptedBriefAt={acceptedBriefAt}
           connectionId={pending?.connectionId}
           token={session?.token}
           mindName={session?.mindName ?? pending?.mindName}

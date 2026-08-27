@@ -38,6 +38,26 @@ export const FREE_FILM_MODEL = 'nvidia/nemotron-3-ultra-550b-a55b:free';
  * on Zero Budget, so the cap matches the actual spec length. */
 export const FREE_MAX_BEATS = 3;
 
+/**
+ * The environment's reasoning depth, if one is configured.
+ *
+ * Parsed rather than trusted: `FREE_STORYBOARD_REASONING` is a JSON string in wrangler.jsonc,
+ * and a typo in it must not take the free tier down. A value that will not parse is ignored
+ * with a warning, which leaves the model at its own default — the same behaviour as leaving it
+ * empty, and the right direction for a knob whose whole purpose is to be adjustable.
+ */
+export const envReasoning = (env) => {
+  const raw = env?.FREE_STORYBOARD_REASONING;
+  if (!raw || typeof raw !== 'string' || !raw.trim()) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    console.warn(`FREE_STORYBOARD_REASONING is not valid JSON, ignoring: ${raw.slice(0, 80)}`);
+    return null;
+  }
+};
+
 const requireKey = (env) => {
   const key = env.OPENROUTER_API_KEY;
   if (!key) {
@@ -77,9 +97,26 @@ const usageOf = (payload) => {
  * because it looked unnecessary:
  *   - `response_format` — documented unsupported on Ultra, and measured to degrade output when
  *     it is accepted.
- *   - `reasoning_budget` — returns a 500 (not a clean 400) on the hosted NIM. Reasoning depth
- *     here is `enable_thinking` and nothing else.
+ *   - `reasoning_budget` — returns a 500 (not a clean 400) on the hosted NIM.
  *   - `nvext.guided_json` — 400s with "unknown field"; guided decoding is a self-hosted feature.
+ *
+ * REASONING DEPTH IS THE WHOLE LATENCY STORY ON THIS TIER, and `enable_thinking` is NOT the
+ * control it was assumed to be. Measured 2026-08-26 (assets/probes/storyboarder-timing): a
+ * three-beat film returns ~2,900 tokens of ANSWER and 5,835 tokens of reasoning — 66% of
+ * everything generated, on a route that runs at ~40 tok/s. Sending
+ * `chat_template_kwargs: { enable_thinking: false }` did not turn it off: the same film still
+ * spent 3,588 tokens reasoning. That kwarg is a provider passthrough and there is no evidence it
+ * reaches the model at all.
+ *
+ * So `reasoning` is the parameter that matters here — OpenRouter's OWN unified control
+ * (`{ enabled }`, `{ effort }`, `{ max_tokens }`), sent alongside the kwarg rather than instead
+ * of it because the two are aimed at different layers. Left null by default; set per call, or
+ * per environment through `FREE_STORYBOARD_REASONING` in wrangler.jsonc, so the depth can be
+ * re-pointed without a deploy — the same reason `FREE_STORYBOARD_MODEL` is a var.
+ *
+ * THE GATE STILL APPLIES. Round 7's rule is that if a fix requires dropping a gate, the fix is
+ * wrong. Cheaper reasoning is only a win if the emission still passes `validateScene`, which is
+ * what the timing probe now scores per cell.
  *
  * Cost is always $0, but tokens, latency and attempts are still returned: on this tier
  * wall-clock and the rate limit are the currency, so those are what the ledger records.
@@ -95,12 +132,16 @@ export const filmCall = async (env, {
   retries = 2,
   signal,
   enableThinking = true,
+  reasoning,
+  onMeta,
 }) => {
   const startedAt = Date.now();
+  const depth = reasoning !== undefined ? reasoning : envReasoning(env);
   const payload = await chat(env, {
     model,
     signal,
     retries,
+    onMeta,
     apiKey: requireKey(env),
     baseUrl: env.OPENROUTER_BASE_URL ?? 'https://openrouter.ai/api/v1',
     messages: [
@@ -114,6 +155,7 @@ export const filmCall = async (env, {
     temperature,
     max_tokens: maxTokens,
     chat_template_kwargs: { enable_thinking: enableThinking },
+    ...(depth ? { reasoning: depth } : {}),
   });
 
   const choice = payload.choices?.[0];
@@ -162,8 +204,12 @@ export const streamFilmCall = async (env, {
   maxTokens = 32768,
   onReasoning,
   signal,
+  enableThinking = true,
+  reasoning,
+  onMeta,
 }) => {
   const startedAt = Date.now();
+  const depth = reasoning !== undefined ? reasoning : envReasoning(env);
   const response = await fetch(`${env.OPENROUTER_BASE_URL ?? 'https://openrouter.ai/api/v1'}/chat/completions`, {
     method: 'POST',
     signal,
@@ -184,9 +230,20 @@ export const streamFilmCall = async (env, {
       tool_choice: { type: 'function', function: { name: toolName } },
       temperature,
       max_tokens: maxTokens,
-      chat_template_kwargs: { enable_thinking: true },
+      chat_template_kwargs: { enable_thinking: enableThinking },
+      ...(depth ? { reasoning: depth } : {}),
       stream: true,
     }),
+  });
+
+  onMeta?.({
+    status: response.status,
+    attempt: 0,
+    headers: Object.fromEntries(
+      ["x-ratelimit-limit-requests", "x-ratelimit-remaining-requests", "x-ratelimit-reset-requests", "retry-after"]
+        .map((h) => [h, response.headers.get(h)])
+        .filter(([, v]) => v != null),
+    ),
   });
 
   if (!response.ok) throw new NvidiaError(response.status, await response.text());
@@ -194,7 +251,7 @@ export const streamFilmCall = async (env, {
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
-  let reasoning = '';
+  let reasoningText = '';
   let args = '';
   let content = '';
   let usage = { promptTokens: 0, completionTokens: 0, reasoningTokens: 0 };
@@ -225,9 +282,9 @@ export const streamFilmCall = async (env, {
       const delta = choice.delta ?? {};
       const thought = delta.reasoning ?? delta.reasoning_content;
       if (thought) {
-        reasoning += thought;
+        reasoningText += thought;
         try {
-          await onReasoning?.(thought, reasoning);
+          await onReasoning?.(thought, reasoningText);
         } catch {
           // Showing the work must never be able to break the work.
         }
@@ -247,7 +304,7 @@ export const streamFilmCall = async (env, {
 
   return {
     data: parseFilm({ message: { tool_calls: args ? [{ function: { arguments: args } }] : undefined, content } }),
-    reasoning,
+    reasoning: reasoningText,
     usage,
     model,
     costUsd: 0,

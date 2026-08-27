@@ -35,6 +35,21 @@ import { handleBudgetSet } from './budget.js';
 import { handleProducerState } from './producer-state.js';
 import { handleStripeCheckout, handleStripeWebhook, handleClaimGuestBudget } from './stripe.js';
 import {
+  handleDirectorPlan,
+  handleDirectorStart,
+  handleDirectorApprove,
+  handleDirectorJobStatus,
+  handleDirectorJobEvents,
+  handleDirectorGet,
+  handleDirectorMedia,
+  handleDirectorClose,
+  handleDirectorTest,
+  handleDirectorVerdict,
+  handleDirectorBrief,
+  handleDirectorAssess,
+} from './director.js';
+import { handleDirectorQueue } from './director-job.js';
+import {
   handleStoryboard,
   handleStoryboardSketch,
   handleStoryboardGet,
@@ -77,6 +92,20 @@ const ROUTES = {
   'POST /api/producer/claim-guest-budget': handleClaimGuestBudget,
   'POST /api/checkout': handleStripeCheckout,
   'POST /api/webhook/stripe': handleStripeWebhook,
+  // POST rather than GET despite changing nothing: the whole spec and cast travel in the body,
+  // exactly as /api/storyboard/sketch does. Spends nothing and never queues a task — it reports
+  // what WOULD be sent, what it would cost, and what is already known to be wrong with it.
+  'POST /api/director/plan': handleDirectorPlan,
+  'POST /api/director/start': handleDirectorStart,
+  'POST /api/director/approve': handleDirectorApprove,
+  'POST /api/director/close': handleDirectorClose,
+  'POST /api/director/test': handleDirectorTest,
+  'POST /api/director/verdict': handleDirectorVerdict,
+  'POST /api/director/brief': handleDirectorBrief,
+  'POST /api/director/assess': handleDirectorAssess,
+  'GET /api/director': handleDirectorGet,
+  // Same-origin and signed in the query string, because <video src> cannot send a header.
+  'GET /api/director/media': handleDirectorMedia,
   'GET /api/storyboard/plan': handleStoryboardPlan,
   'POST /api/storyboard': handleStoryboard,
   'POST /api/storyboard/beat/regenerate': handleStoryboardBeatRegenerate,
@@ -95,7 +124,11 @@ const ROUTES = {
 
 export default {
   async queue(batch, env, ctx) {
-    await handleStoryboardQueue(batch, env, ctx);
+    // One Worker, two queues. `batch.queue` is the only thing that says which, and getting it
+    // wrong would hand a director message to the storyboarder's handler, which would not find a
+    // storyboard job and would ack it — losing a paid render silently.
+    if (batch.queue === 'director-jobs') return handleDirectorQueue(batch, env, ctx);
+    return handleStoryboardQueue(batch, env, ctx);
   },
 
   async fetch(request, env, ctx) {
@@ -120,12 +153,29 @@ export default {
         // (with time rather than money). Missing it means Zero Budget is dead, which is the
         // failure that looks like "the site is broken" to everyone who has not set a budget.
         hasOpenRouterKey: Boolean(env.OPENROUTER_API_KEY),
+        // The Director's key, and the only one in this file that buys VIDEO rather than tokens.
+        // Missing it means the render step is dead while every other agent still works, which
+        // presents as "the last button does nothing" rather than as an outage — so it is worth a
+        // line here. It lives in .dev.vars locally and `wrangler secret put MINIMAX_API_KEY` in
+        // production; until this round it existed only in .env for the build-time scripts.
+        hasMinimaxKey: Boolean(env.MINIMAX_API_KEY),
         castingModel: env.CASTING_MODEL,
         screenwriterModel: env.SCREENWRITER_MODEL,
         storyboarderModel: env.STORYBOARDER_MODEL ?? 'gpt-5.6-sol (default)',
         freeStoryboardModel: env.FREE_STORYBOARD_MODEL ?? 'nvidia/nemotron-3-ultra-550b-a55b:free (default)',
         hasAssistantModel: Boolean(env.ASSISTANT_MODEL),
       });
+    }
+
+    if (pathname.startsWith('/api/director/job/')) {
+      const parts = pathname.split('/');
+      const jobId = parts[4];
+      if (request.method === 'GET' && jobId) {
+        return parts[5] === 'events'
+          ? handleDirectorJobEvents(request, env, ctx)
+          : handleDirectorJobStatus(request, env);
+      }
+      return json({ error: `No route for ${request.method} ${pathname}` }, 404);
     }
 
     if (pathname.startsWith('/api/storyboard/job/')) {

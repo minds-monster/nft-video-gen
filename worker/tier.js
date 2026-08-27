@@ -45,10 +45,21 @@ export const PAID_MAX_REFERENCES = 9;
  * patient; a visitor who waits 4 minutes wondering if it's broken is not."
  *
  * Paid: round 7's whole-film runs, p50 194s / max 280s across 14 films on sol.
- * Free: 236s for a five-beat film in round 7, and 390s for the five-beat film run through this
- *   very code path on 2026-08-24. Two samples that far apart mean the honest thing to quote is a
- *   RANGE, so p50 sits between them and the ceiling is generous. Narrow this when there are more
- *   than two numbers behind it — do not narrow it because it looks better.
+ *
+ * FREE IS NOT A DISTRIBUTION WE CONTROL, and round 11 is what established that. The same model,
+ * on the same route, on the same day: **40.5 tok/s at 09:14Z and 20.0 tok/s at 15:40Z**. The
+ * identical three-beat film took 216s in the morning and 354s in the afternoon. Nothing about
+ * the request changed; the provider's throughput halved under us.
+ *
+ * So these are not a spec, and quoting them as one is how a visitor comes to feel lied to. They
+ * are a weather forecast for a shared free tier, and `max` is deliberately generous because the
+ * number's real job is to bound how long the CLIENT waits before it stops believing the stream —
+ * see the single-deadline note in src/hooks/useStoryboarder.js. Getting that ceiling wrong in
+ * the tight direction produces a client that gives up on work that was going to succeed.
+ *
+ * Narrow this only when there are many more numbers behind it, and never because it looks
+ * better. Round 11's own figures are n=2 per cell and its afternoon runs caught the provider
+ * degraded, which makes them a floor on the spread rather than a measurement of it.
  */
 export const LATENCY_SECONDS = { free: { p50: 330, max: 600 }, paid: { p50: 195, max: 300 } };
 

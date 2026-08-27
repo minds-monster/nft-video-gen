@@ -1277,7 +1277,11 @@ export const subjectAssetsFrom = (spec, castByKey) =>
       .filter(Boolean),
   );
 
-const specHeader = (spec, cast) => {
+/** The film header every message shares: world, staging, guard, continuity, and the cast joined
+ * to their referencePlan slots. Exported because worker/film-plan.js builds two more message
+ * shapes from the same header, and a second copy of this join is a second place for the
+ * tag-to-cast mapping to drift. */
+export const specHeader = (spec, cast) => {
   const referenceLines = (spec.referencePlan ?? []).map((slot, i) => {
     const entry = cast.find((c) => c.key === slot.key);
     return castLine(i, entry ?? { key: slot.key });

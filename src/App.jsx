@@ -15,6 +15,7 @@ import { resolveNftName } from './lib/nftMedia';
 import { useCanvasComposer } from './hooks/useCanvasComposer';
 import { useScreenwriter } from './hooks/useScreenwriter';
 import { useStoryboarder } from './hooks/useStoryboarder';
+import { useDirector } from './hooks/useDirector';
 import { assetKey } from './lib/assetKey';
 import { BRANDS, LIVE_COLLECTIONS } from './data/brands';
 import { PAYMENT } from './config/payment';
@@ -62,6 +63,11 @@ const AppShell = () => {
   // separate phase (image generation against a real budget) with its own run/regenerate
   // lifecycle — see src/hooks/useStoryboarder.js.
   const storyboarder = useStoryboarder();
+  // A fourth, again independent. The Director is the first stage that spends REAL money per
+  // action rather than fractions of a cent, so its lifecycle is genuinely different: it opens a
+  // production, asks before spending, and survives this tab closing mid-render. Folding it into
+  // useStoryboarder would have meant one hook with two budgets and two failure models.
+  const director = useDirector();
 
   // Restore THIS film's storyboard once there is both a session to fetch it with and a spec
   // saying which film we are looking at.
@@ -213,8 +219,6 @@ const AppShell = () => {
               from some of the world's leading brands.
             </p>
 
-            <SwarmDiagram />
-
             <div className="mt-10 grid gap-6 md:grid-cols-3">
               {STEPS.map((step, index) => (
                 <div key={step.title} className="glass-panel rounded-2xl p-6">
@@ -231,6 +235,10 @@ const AppShell = () => {
                 </div>
               ))}
             </div>
+
+            <div className="mt-16">
+              <SwarmDiagram />
+            </div>
           </div>
         </section>
 
@@ -240,7 +248,7 @@ const AppShell = () => {
       <footer inert={canvasOpen} className="relative z-20 mt-auto py-10">
         <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-6 text-center text-sm text-slate-500">
           <p>
-            {BRANDS.length} brands · {LIVE_COLLECTIONS.length} collections live · agentic payments via{' '}
+            {BRANDS.length} brands · {LIVE_COLLECTIONS.length} collections featured · agentic payments via{' '}
             <span className="text-purple-300">{PAYMENT.protocol}</span>
           </p>
           <p>
@@ -255,6 +263,7 @@ const AppShell = () => {
         composer={composer}
         screenwriter={screenwriter}
         storyboarder={storyboarder}
+        director={director}
         onLaunch={screenwriter.launch}
       />
 

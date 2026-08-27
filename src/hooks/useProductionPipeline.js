@@ -26,6 +26,7 @@ export const STEP = {
   REVIEW: 'review',
   WRITE: 'write',
   BLOCK: 'block',
+  SHOOT: 'shoot',
 };
 
 /** Step state. `ready` is `idle` that has an action attached — the run's next move. */
@@ -45,6 +46,7 @@ const PANEL = {
   screenplay: 'screenplay',
   storyboarder: 'storyboarder',
   storyboard: 'storyboard',
+  director: 'director',
 };
 
 /** "41s" / "2m 10s". Seconds alone stops reading as a duration somewhere around ninety. */
@@ -69,7 +71,7 @@ const tallyAnalysis = (analysis) => {
   };
 };
 
-export const useProductionPipeline = ({ composer, screenwriter, storyboarder, token, budget }) => {
+export const useProductionPipeline = ({ composer, screenwriter, storyboarder, director, token, budget }) => {
   const spec = screenwriter?.spec ?? null;
   const beatCount = spec?.beats?.length ?? 0;
   const loadPlan = storyboarder?.loadPlan;
@@ -284,8 +286,62 @@ export const useProductionPipeline = ({ composer, screenwriter, storyboarder, to
           : null,
     };
 
-    return [castStep, readStep, reviewStep, writeStep, blockStep];
-  }, [composer, screenwriter, storyboarder, token, plan, capped, capViolations, spec]);
+    // ── Shoot ────────────────────────────────────────────────────────────────────────────
+    //
+    // BLOCK IS NOT A PREREQUISITE, and that is the whole point of this step existing separately.
+    // Both worker/scene.js's `compileSceneToH3` (from blocked geometry) and src/lib/h3Script.js's
+    // `h3Script` (from the screenplay alone) emit H3's same three fields, so a visitor who wants
+    // to shoot what they wrote can skip the Storyboarder entirely. `readyToShoot` therefore keys
+    // off the SPEC, never off frames.
+    const takes = director?.takes ?? [];
+    const shooting = Boolean(director?.running);
+    const directorPlan = director?.plan ?? null;
+    const readyToShoot = Boolean(spec?.beats?.length && token && directorPlan?.ready);
+
+    const shootState = shooting
+      ? STATE.RUNNING
+      : director?.error
+        ? STATE.FAILED
+        : takes.some((take) => take.status === 'ready')
+          ? STATE.DONE
+          : director?.awaitingApproval
+            ? STATE.READY
+            : readyToShoot
+              ? STATE.READY
+              : STATE.IDLE;
+
+    const shootStep = {
+      id: STEP.SHOOT,
+      label: 'Shoot',
+      panel: PANEL.director,
+      state: shootState,
+      detail: shooting
+        ? (director?.phaseLabel ?? 'rendering')
+        : director?.awaitingApproval
+          ? 'waiting for you to approve the spend'
+          : takes.length
+            ? `${takes.length} take${takes.length === 1 ? '' : 's'} shot`
+            : directorPlan?.blocking?.length
+              ? 'MiniMax would reject this as written'
+              : directorPlan
+                ? `~$${(directorPlan.estimate?.finalUsd ?? 0).toFixed(2)} a take`
+                : 'the Director shoots the film',
+      short: shooting
+        ? 'rendering'
+        : director?.awaitingApproval
+          ? 'approve'
+          : takes.length
+            ? `${takes.length} take${takes.length === 1 ? '' : 's'}`
+            : readyToShoot
+              ? 'ready'
+              : null,
+      elapsed: shooting ? (director?.elapsedSeconds ?? 0) : null,
+      error: director?.error ?? null,
+      action: null,
+    };
+
+    return [castStep, readStep, reviewStep, writeStep, blockStep, shootStep];
+  }, [composer, screenwriter, storyboarder, director, token, plan, capped, capViolations, spec]);
 
   // What each panel should say about itself, keyed by panel. CanvasPanel renders this in its
   // header AND in its collapsed strip, so shutting a panel never hides the fact that

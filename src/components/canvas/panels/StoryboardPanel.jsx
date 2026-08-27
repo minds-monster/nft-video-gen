@@ -455,7 +455,48 @@ const ThinkingStream = ({ reasoning }) => {
  * We show the beat text and the model's live reasoning tail so the wait is legible, but we no
  * longer draw provisional wireframes that may contradict the final geometry.
  */
-const PlaceholderCard = ({ beatIndex, beatText, reasoning }) => (
+/**
+ * A beat that has been PLANNED but not yet drawn.
+ *
+ * Everything on this card is a real decision the model made about this specific beat, roughly
+ * fifteen seconds into a run that takes minutes: the shot size, which subject it is sized on,
+ * the camera move, and one line about what the shot is for. Three cards therefore say three
+ * DIFFERENT true things while the geometry is still being drawn, and each one resolves on its
+ * own as its own call returns — the beats are generated in parallel, so they land out of order.
+ *
+ * NOTHING HERE IS EVER SYNTHESISED TO FILL THE TIME. It is tempting, because a card with no
+ * plan yet is a card with nothing on it, and this repo has been here before: round 8 removed
+ * the ghost wireframes for exactly this — they animated a fiction, and the fiction was usually
+ * wrong by the time the real geometry arrived. A visitor who is shown something invented has
+ * been given a worse deal than a visitor who is shown nothing, because the invention is
+ * indistinguishable from the real thing until it contradicts it.
+ */
+const ShotPlan = ({ plan, status }) => {
+  if (!plan) return null;
+  return (
+    <div className="space-y-1.5">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="rounded bg-purple-500/15 px-1.5 py-0.5 font-mono text-[10px] font-semibold tracking-wider text-purple-200">
+          {plan.framing}
+        </span>
+        {plan.motion && (
+          <span className="rounded bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-400">{plan.motion}</span>
+        )}
+        {status === 'drawn' && (
+          <span className="text-[10px] text-emerald-400">blocked</span>
+        )}
+        {status === 'failed' && (
+          <span className="text-[10px] text-amber-400">could not be blocked</span>
+        )}
+      </div>
+      {plan.intent && (
+        <p className="line-clamp-2 text-[10px] italic leading-relaxed text-slate-500">{plan.intent}</p>
+      )}
+    </div>
+  );
+};
+
+const PlaceholderCard = ({ beatIndex, beatText, reasoning, shotPlan, status }) => (
   <div className="min-w-0 rounded-2xl border border-sky-500/20 bg-sky-500/[0.03]">
     <div className="space-y-2 p-3">
       <div className="flex items-center justify-between gap-2">
@@ -470,10 +511,14 @@ const PlaceholderCard = ({ beatIndex, beatText, reasoning }) => (
 
       <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-sky-500/20 bg-black/40">
         <span className="absolute inset-0 flex items-center justify-center text-[10px] uppercase tracking-widest text-slate-700">
-          blocking…
+          {/* The label names the stage this beat is ACTUALLY at, which is not the same for every
+              card once the beats run concurrently. 'waiting' is the honest word before the shot
+              list exists — not a progress bar for something that has not started. */}
+          {shotPlan ? 'blocking…' : 'waiting'}
         </span>
       </div>
 
+      <ShotPlan plan={shotPlan} status={status} />
       <ThinkingStream reasoning={reasoning} />
     </div>
   </div>
@@ -485,21 +530,34 @@ const PlaceholderCard = ({ beatIndex, beatText, reasoning }) => (
  * highest-stakes in the build: "a visitor who waits 4 minutes for a working product is patient; a
  * visitor who waits 4 minutes wondering if it's broken is not." Where a reasoning channel exists,
  * the honest answer is not a better spinner — it is to show the work. */
-const WaitHeader = ({ stageLabel, elapsedSeconds, plan, thinking }) => {
+const WaitHeader = ({ stageLabel, elapsedSeconds, plan, thinking, planned, drawn, total, reconnects }) => {
   const estimate = plan?.estimateSeconds ?? 240;
   const low = Math.round(estimate / 60);
+  // "the whole film arrives at once" stopped being true when the beats started running in
+  // parallel, and a wait surface that describes the wrong shape of wait is the specific thing
+  // this pass is fixing. Once the shot list exists, count the beats that have actually landed.
+  const detail = drawn > 0 || planned > 0
+    ? `${drawn} of ${total} beats blocked`
+    : thinking
+      ? 'thinking out loud below'
+      : `usually ${low}\u2013${low + 2} minutes`;
   return (
     <div className="col-span-full flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/20 px-3 py-2">
       <p className="flex items-center gap-2 text-xs text-slate-300">
         <Loader2 className="h-3.5 w-3.5 animate-spin text-purple-400" />
         <span className="font-semibold text-white">{stageLabel ?? 'Working'}</span>
-        <span className="text-slate-500">
-          {thinking ? 'thinking out loud below' : `the whole film arrives at once — usually ${low}\u2013${low + 2} minutes`}
-        </span>
+        <span className="text-slate-500">{detail}</span>
       </p>
       <p className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-slate-600">
         <Clock className="h-3 w-3" />
         {elapsedSeconds > 0 ? `${elapsedSeconds}s elapsed` : 'starting'}
+        {/* Stated rather than hidden. A run that has reconnected four times is having a
+            different problem from a run that is simply long, and the visitor is the one
+            sitting through it. The work itself survives a dropped stream — that is what the
+            Queue consumer is for — so this is information, not an alarm. */}
+        {reconnects > 0 && (
+          <span className="text-amber-500/70">· reconnected {reconnects}x</span>
+        )}
       </p>
     </div>
   );
@@ -517,7 +575,7 @@ const WaitHeader = ({ stageLabel, elapsedSeconds, plan, thinking }) => {
  * instant the run starts until long after it finishes, and filling in is something that
  * happens *to* that card rather than *instead of* it.
  */
-const BeatCard = ({ index, frame, beatText, reasoning, aspect, frameProps }) => {
+const BeatCard = ({ index, frame, beatText, reasoning, shotPlan, status, aspect, frameProps }) => {
   if (frame?.transition) return <TransitionCard frame={frame} />;
   if (frame) {
     // `sketching` and `regenerating` are per-frame maps upstream; only this frame's own busy
@@ -533,10 +591,10 @@ const BeatCard = ({ index, frame, beatText, reasoning, aspect, frameProps }) => 
       />
     );
   }
-  return <PlaceholderCard beatIndex={index} beatText={beatText} reasoning={reasoning} />;
+  return <PlaceholderCard beatIndex={index} beatText={beatText} reasoning={reasoning} shotPlan={shotPlan} status={status} />;
 };
 
-const StoryboardPanel = ({ id, storyboarder, token, budget, status }) => {
+const StoryboardPanel = ({ id, storyboarder, token, budget, status, tabs }) => {
   const {
     frames,
     sketching,
@@ -555,6 +613,9 @@ const StoryboardPanel = ({ id, storyboarder, token, budget, status }) => {
     elapsedSeconds,
     reasoning,
     reasoningByBeat,
+    beatPlans,
+    beatStatus,
+    reconnects,
     beatTexts,
   } = storyboarder ?? {};
   const [expandedFrame, setExpandedFrame] = useState(null);
@@ -576,8 +637,12 @@ const StoryboardPanel = ({ id, storyboarder, token, budget, status }) => {
   );
 
   const aspect = 16 / 9;
+  // `tabs` is rendered by whoever owns the timeline slot (TimelinePanel), not built here — the
+  // strip has to look identical above the storyboard and above the Dailies, and it has to survive
+  // the empty-state early return below, which mounts its own <CanvasPanel>.
   const header = (
     <div className="flex items-center gap-2">
+      {tabs}
       {hasArt && (
         <button
           type="button"
@@ -710,6 +775,10 @@ const StoryboardPanel = ({ id, storyboarder, token, budget, status }) => {
               elapsedSeconds={elapsedSeconds}
               plan={plan}
               thinking={Boolean(reasoning)}
+              planned={Object.keys(beatPlans ?? {}).length}
+              drawn={Object.values(beatStatus ?? {}).filter((v) => v === 'drawn').length}
+              total={beats.length}
+              reconnects={reconnects}
             />
           )}
 
@@ -722,6 +791,8 @@ const StoryboardPanel = ({ id, storyboarder, token, budget, status }) => {
               frame={frame}
               beatText={beatTexts?.[index]}
               reasoning={reasoningByBeat?.[index]}
+              shotPlan={beatPlans?.[index]}
+              status={beatStatus?.[index]}
               aspect={aspect}
               frameProps={frameProps}
             />

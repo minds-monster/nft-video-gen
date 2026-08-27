@@ -2,7 +2,578 @@
 
 > **Next round is scoped in `HANDOVER-ROUND9.md`** — making the cast real in the previz
 > (proportioned primitives vs billboard impostors vs image-to-3D meshes), with the measured
-> resource inventory behind it. This document covers rounds 1-8, which are built and live.
+> resource inventory behind it. Rounds 1-8 are built and live. **Round 11 (below) corrects three claims in the round-8 section**
+> that turned out to be false in production — read it before trusting any free-tier latency figure
+> in this document.
+
+## Start here — ROUND 12: THE DIRECTOR SHOOTS (2026-08-27)
+
+The render step is built. `worker/producer-briefing.js` and this document both said it was
+greenfield; it is not any more. A visitor with a screenplay and a budget can press Shoot, and a
+film comes back.
+
+**All four phases are built, and the Director is an agent rather than a checklist. 230 tests pass**
+(84 at the start of the round). Frame judging ships behind a capability probe and is inert until
+Media Transformations is enabled on the zone — see finding 3.
+
+### 🔴 The findings that matter
+
+**1. THE JOB LOGGER WAS WRITING TO THE WRONG RECORD, silently.** `createJobLogger` took
+`(env, mindId, record)` and persisted via `saveStoryboardJob` — to `storyboard-job:<mindId>:<jobId>`
+— **whatever record it was handed**. The Director reused it, so every status it wrote landed on a
+storyboard job that did not exist. A failed render would have sat at "queued" forever while the
+visitor watched a spinner over money already spent. Six tests went red at once, which is what
+found it. Now `worker/job-log.js`, with `save` injected.
+
+🔑 A helper that closes over WHERE it writes cannot be reused; it can only be miscalled.
+
+**2. CACHED DOSSIERS ARE FINE — the earlier alarm in this round was wrong.** `SCHEMA_VERSION = 5`,
+the cache key is `dossier:v5:<key>`, the brand-leak check landed at v4, and `castPiece` throws
+rather than swallowing a rejection. So no v5 entry can carry transcribed lettering. The leak found
+in `scripts/fixtures/` is a **pre-v4 capture**, frozen as a test fixture.
+
+What IS real and narrower: `validate()` only catches lettering it TRANSCRIBED. The `whiteCar`
+fixture has `burnedInText: ""` and `hazards: ["visible shield-shaped badge on hood (brand mark)"]`
+— a brand mark that is not text, so there is nothing to catch. That is why the Director re-runs
+the same test against the SCRIPT at spend time. Defence in depth, not a patch.
+
+**3. NEITHER CLOUDFLARE TRANSFORMATION PRODUCT IS ENABLED ON minds.monster.** `/cdn-cgi/trace`
+returns 200, so routing works; `/cdn-cgi/media/...` and `/cdn-cgi/image/...` both 404, in both the
+relative and absolute source forms. This blocks two things:
+
+- **Phase 3's judging** — pulling evenly-timed frames out of a clip for a vision model.
+- **The rule-11 head crop** — `suggestedCrop` in `worker/reference-preflight.js` emits the
+  transform, and nothing can apply it.
+
+Volume if enabled: ~40 frame extractions and ~3 image crops per film. Phase 2 ships without it,
+with the visitor as judge — and given the contact-sheet history, a person watching the clip is the
+more trustworthy instrument, not the lesser one.
+
+**4. A NAIVE BRAND SCAN IS WORSE THAN NONE.** The first version flagged a cast entry called
+"tower" in a script that said "tower" — which is precisely what rule 1 ASKS for. The hero's own
+shipped prompt says "the stylised blue-furred ape character" against a collection with "Ape" in
+its name. The scan now splits by shape: **bigrams** from `burnedInText` catch "bored ape" without
+catching "ape"; **distinctive singles** (5+ chars, minus the piece's own palette) catch "adidas",
+"mclaren", "wbei"; `hazards` contributes only its CAPITALISED tokens, because taking every long
+word from "visible shield-shaped badge on hood (brand mark)" would flag "shield" and "badge".
+
+**5. `framing` IS AN ENUM, and matching it as prose fires on nothing.** The first face check
+regexed `/full[- ]?body|wide|distant/` against a field constrained to `full-bleed |
+centred-with-margin | small-in-frame | busy-composite`. It read plausibly and would never have
+fired. A check that never fires is invisible — both directions are now asserted.
+
+**6. RULE 11 IS ABOUT FACES, and a tower block does not have one.** `physicalProfile.headRatio` is
+"null for anything without a head", which is the exact discriminator. A small-in-frame character
+is warned about its FACE; a small-in-frame building is warned about its identity, citing its own
+`identityMarkers`. Same test, honest wording.
+
+### What is built
+
+- `worker/minimax.js` — the client, promoted out of `scripts/minimax.mjs`, which is now a
+  **re-export shim** supplying a `node:fs` resolver. `gen-video.mjs` and `probe-h3.mjs` verified
+  working unchanged. The price table is scored against `assets/renders/ledger.json`'s 22 real
+  manifests, so it is a golden fixture rather than a transcription.
+- `worker/reference-preflight.js` — header parser (PNG/JPEG/WebP/GIF), H3 legality, crop
+  suggestion. Verified against five tracked images whose dimensions `file(1)` reports
+  independently. **The crop that fixes the aspect is the same crop that saves the face**, so
+  `gravity: 'top'` on a too-tall reference is deliberate, not a default.
+- `worker/director-risks.js` — the deterministic register. Every risk cites what it was measured
+  from; a risk that cannot is judgement and does not belong there.
+- `worker/render-budget.js` — four modes (`ask`/`allowance`/`escrow`/`discretion`), **per film**.
+  No per-render cap: Adam's read, and it is right — nobody can set that number before they have
+  seen what $0.32 and $1.95 each buy. The envelope stores an allowance and a mode and **never a
+  spend figure**; spend is derived by filtering the one global ledger on `filmId`.
+- `worker/director-job.js` — the step machine. One step per queue message, `delaySeconds` for
+  waiting, retries kept for genuine 5xx. **The task id is persisted before the spend is
+  recorded**, and there is a test that fails the ledger write to prove it.
+- `worker/screen-test.js` — a test that strips the film away so a failure is attributable. The
+  anti-mannequin guard and the added-type ban survive the stripping, because a test that fails for
+  a missing guard has taught us about the test, not the film.
+- UI: `DirectorPanel` (left rail, under the Cast), `TimelinePanel` with
+  **Storyboard | Screen Tests | Dailies**, `useDirector`.
+
+### The loop, and what it actually did on its first live run
+
+`worker/director-agent.js` makes two calls, and NEITHER touches the wire format — H3's three-field
+script is still compiled mechanically by `src/lib/h3Script.js` and `worker/scene.js`, exactly as
+probe P8 established. The agent decides; deterministic code compiles.
+
+- **`planShoot`** reads the film plus the MEASURED register and decides what is worth buying an
+  answer to. Its test list is filtered against the register rather than trusted — a hallucinated
+  risk id would otherwise become a real charge against a hazard nobody measured.
+- **`reviewTest`** reads a verdict back and may replace ONE named block of the script. A test that
+  HELD never yields a revision, and that is enforced in code as well as in the brief: a script that
+  survived a test is a script that works, and "improving" it anyway is how a working shot gets
+  broken by an agent looking busy.
+
+**Revisions are layered at COMPILE time, never written back over the Screenwriter's work.** The
+visitor's screenplay stays theirs and stays visible; a revision is reversible by dropping it from
+the list rather than by remembering what a block used to say.
+
+🔑 **THE MOST VALUABLE THING THE AGENT DOES IS SPEND NOTHING.** Its first live run against
+`grid-launch` skipped both proposed tests as "cheap to fix in the script" — which was correct, and
+also revealed a real gap: it said the fix was cheap and then nothing applied one. So the shooting
+plan gained a `fixes` field, and the assess step applies those as revisions immediately. On the
+re-run it rewrote the `world` block to dimensionalise a flat-art mascot for $0, verified present in
+the compiled script, and proposed exactly one $0.32 test for the hazard that genuinely needed an
+answer. Fix what is free; pay only for what needs an answer.
+
+Measured: an assess pass takes 35-70s on SCREENWRITER_MODEL, and streams its reasoning throughout.
+
+### Three modules were extracted rather than copied
+
+`signed-media.js`, `job-events.js`, `job-log.js`. All three were storyboarder-only and all three
+were needed identically by the Director. The storyboarder's own tests pass unchanged against the
+extracted versions.
+
+### The assistant is the Director's front door
+
+`collectProductionState` now carries the Director's half, so the assistant and the Producer Mind
+both see live render spend, take counts and unjudged screen tests on every turn with no new
+plumbing. `worker/producer-briefing.js` no longer tells Minds the render step does not exist.
+
+The scope brief uses the SAME machine-read-marker-inside-prose convention as the Producer's
+`[seen …]` and the Screenwriter's `[CUT TO BLACK]`: the assistant writes a `[BRIEF]` block into
+its own reply, the client parses it out (`src/lib/directorBrief.js`), and the visitor presses a
+button. **The assistant has no way to call the endpoint that stores it** — that is the boundary
+of its authority, and it is enforced by absence rather than by instruction.
+
+`mustHold` is the only field that does deterministic work: it matches against hazards the register
+has already MEASURED and puts those first. "the ape's face" elevates a real hazard; "make it
+cinematic" matches nothing, by design. Elevation reorders and never escalates — a visitor caring
+about something cannot make it dangerous, only make it first.
+
+### Still open
+
+- **Frame judging is inert until finding 3 is resolved.** `worker/frames.js` probes the zone once
+  an hour and caches the answer; `worker/director-judge.js` runs only when frames arrive. Until
+  then a Screen Test is judged by the visitor, which given the contact-sheet history is the more
+  trustworthy instrument rather than the lesser one. A person's verdict is never overwritten by
+  the model's.
+- **`wrangler.jsonc`'s storyboard consumer sets `max_retries: 1` while `handleStoryboardQueue`
+  branches on `attempts <= 2`** — its second retry can never fire. Left alone rather than changed
+  blind; `director-jobs` is set to 3, matched to its own condition.
+- **The Stripe webhook has no idempotency key** — a replayed `checkout.session.completed` would
+  double-credit. Untouched this round.
+- **`SwarmDiagram.jsx:34` has `height="auto"` on an `<svg>`**, which throws a console error on
+  every landing-page load. Pre-existing, cosmetic, unfixed.
+- **Nothing has been rendered for real yet.** Every path is verified against a stubbed MiniMax and
+  a live local Worker; the first genuine $0.48 take has not been shot.
+
+---
+
+## Start here — ROUND 11: WHY THE ZERO BUDGET STORYBOARDER FELT BROKEN (2026-08-26)
+
+A visitor watched a Zero Budget pass sit at **18 minutes**. This round found out why, and the
+short answer is that **most of that wait was ours, not the model's**. Three of the claims in the
+round-8 section below are now known to be false in production; they are corrected here rather
+than edited out, because *how* they came to be believed is the more useful part.
+
+### 🔴 The four findings that matter
+
+**1. The 18 minutes was mostly the CLIENT, and the model was not involved in most of it.**
+`wrangler tail` taken while the pass was live showed 13 requests in 90 seconds, every one of them
+`GET /api/storyboard?film=…` — the `recoverAfterCut` poll. The progress stream had already been
+abandoned. The cause was two deadlines that **stacked**: the SSE stream got `(max + 120)s` = 12
+minutes, and when that expired the recovery poll started a *fresh* 12 minutes of its own. Nobody
+chose a 24-minute worst case; it was the sum of two numbers that were each defensible alone.
+Now one wall-clock deadline is established at the start and both phases spend the same clock.
+
+**2. THE STREAMED PATH DOES NOT WORK, AND HAS NOT FOR SOME TIME.** This is the big one.
+Round 8 built the entire wait surface around the model narrating its reasoning. Measured today,
+both attempts, `stream: true` comes back with **`502 Upstream error from Nvidia: Service
+temporarily overloaded` in under a second.** `generateFilm` catches it and silently falls back to
+the non-streamed call — so the fallback works perfectly and the *feature* is dead. Every free
+visitor for some unknown number of days has had a spinner and a 15-second heartbeat, for minutes,
+with no narration at all.
+
+🔑 **A silent fallback hides the failure of the thing it falls back FROM.** The fallback was
+correct, well-commented, and did exactly its job; that is precisely why nobody noticed the
+primary path had stopped working. Anything that degrades gracefully needs to say that it did.
+
+**3. Reasoning is 57–76% of every token generated, and the lever we had was never connected.**
+A three-beat film is ~2,900 tokens of *answer* and ~5,800 of reasoning. `enable_thinking: false`
+does **not** turn it off — the same film still spent 3,588 tokens reasoning with the kwarg set.
+It goes out as `chat_template_kwargs`, a provider passthrough, and there is no evidence it reaches
+the model. **OpenRouter's own `reasoning` parameter had never been sent from this repo.** It is
+now plumbed through both transports and configurable as `FREE_STORYBOARD_REASONING`, and it stays
+EMPTY until the probe scores a suppressed cell against `validateScene` — round 7's rule holds: if
+a fix requires dropping a gate, the fix is wrong.
+
+**4. Free-tier throughput is not stable, and every number in this document is n=1.**
+The same model, same route, same day: **40.5 tok/s at 09:14Z, 20.0 tok/s at 15:40Z.** A three-beat
+film went 216s → 354s between morning and afternoon. So the free tier's latency is not a property
+we can quote; it is a range that moves under us. `LATENCY_SECONDS` should be read as a weather
+forecast, not a spec.
+
+### The probe was measuring a path that does not run, and grading it with the wrong gate
+
+`scripts/probe-storyboarder-timing.mjs` called `filmCall`. Production calls `streamFilmCall`
+whenever `onReasoning` is set, which on the free tier is always. **Every free-tier latency figure
+in this document came from a code path production does not take.** The probe also could not have
+measured the streamed path even if it had tried — it never set undici's dispatcher, so anything
+over Node's default 300s ceiling would have surfaced as a bare `TypeError: fetch failed`.
+
+Worse, its `valid` check was shape-only: `beats.length`, plus the presence of `camera` and
+`subjects`. It never ran `validateScene` — the gate production actually applies. Re-scored with
+the real validator, the whole-film call **failed the floor on 1 of 3 beats** in a run the old
+probe would have called a clean pass.
+
+🔑 **A probe that scores against a weaker gate than production is not a lenient probe, it is a
+broken one.** It cannot tell "fast" from "fast and wrong", which is the only question worth
+asking about a latency optimisation.
+
+### The KV job log was unsound in three ways at once, and all three were silent
+
+`createJobLogger` flushed every **250ms**, each flush a full **read-modify-write of one KV key**:
+
+1. **KV rate-limits same-key writes to ~1/s.** At 4 Hz most were throttled — and the batch had
+   already been spliced off `pending` *before* the round trip, so a failed write **lost those
+   events permanently**. The `catch` logged "dropped progress narration" and carried on.
+2. **The read-back can be up to 60s stale.** Pushing a fresh batch onto a stale `events` array and
+   writing it back **overwrote every event recorded in between**. The log could go backwards.
+3. **Streaming multiplied both** — one event per reasoning delta, ~937 per film.
+
+The fix is to stop reading. The Queue consumer is one continuous invocation that owns the job for
+its whole life, so it holds the record in memory and only ever writes. Flush ≥1s, failed writes
+retry from memory instead of vanishing, consecutive reasoning deltas coalesce, and the log is
+**append-only** — nothing is ever removed from the middle, because the client resumes by
+positional index and eliding one old event would make every reconnect skip or replay.
+
+`scripts/test/storyboarder-joblog.test.mjs` asserts all of it. Written because **none of this is
+visible by eye** — "the panel looked fine when I tried it" was never evidence.
+
+### What replaced the whole-film call: a shot plan, then parallel beats
+
+Round 7's pin — *do not reconsider whole-film scope to fix the wait* — is about **scope**, and it
+holds. It is not about **sequence**, and that is where the time was.
+
+- **`planFilm`** — ONE call, sees every beat, assigns shot band / principal subject / camera move.
+  ~200 output tokens. **Measured: returns EWS/WS/ECU on the salt-flat fixture — three distinct
+  bands across three beats.** The whole-film variety decision happens here, intact.
+- **Then every beat is drawn in its own call, in parallel**, each handed the WHOLE shot list so it
+  knows it is the tight one in a film of wides. That is the defence against the c0 collapse: the
+  round-7 chain failed because a beat could see only its predecessor, not because beats were
+  separate calls.
+
+The plan pass is **reproducible**: three separate runs on the salt-flat fixture returned
+EWS/WS/ECU every time, in 21.9s / 26.8s / 44.0s.
+
+#### ⚠ But the parallelism does not currently work, and that is the honest headline
+
+Parallel beats were the reason to split the film up, and this provider will not serve them.
+Three measurements, each narrowing it:
+
+| in flight | result |
+|---|---|
+| 1 trivial call | ✓ 4.5s |
+| 1 film-sized call | ✓ 354s |
+| 3 trivial calls | 1.0s / 1.4s / 14.7s — **the 1.0s one was a 502, i.e. shed** |
+| 3 film-sized calls | a whole beat shed, and it stayed shed through a retry |
+| **2 film-sized calls** | **a beat still shed — through three attempts** |
+
+So the route serves ONE film-sized request at a time and refuses the rest.
+`FREE_STORYBOARD_BEAT_CONCURRENCY` therefore defaults to **1**: raising it today does not buy
+latency, it buys refused beats, and a refused beat costs the visitor a whole shot.
+
+🔑 **The split is still worth shipping at concurrency 1, and that is the part to hold on to.**
+The speed win was never the only reason for it. The shot plan lands in ~25s carrying real
+per-beat facts, the timeline fills in beat by beat instead of everything appearing at the end,
+and one bad response costs one beat rather than the whole film. All of that survives with the
+parallelism switched entirely off — **the wait surface does not depend on the optimisation
+working, which is why it stays honest when the optimisation does not.** When the route stops
+shedding, the latency win is a config change away.
+
+#### So what does the split actually cost right now? Roughly nothing, and roughly nothing gained
+
+Be precise about this rather than selling it. One beat takes **71s** on a healthy route and
+**132s** on the degraded one; the plan pass takes 22–27s. Sequentially, three beats plus a plan
+is ~235s healthy / ~420s degraded, against a whole-film call at **216s healthy / 354s degraded**.
+
+**The measured run, end to end** (`20260826T155647Z`, degraded route):
+
+| t | what the visitor gets |
+|---|---|
+| 15.0s | heartbeat — "planning" |
+| **26.8s** | **three cards fill in: EWS / WS / ECU, each with its subject and a line of intent** |
+| 31.1s | beat 2 is refused — the visitor knows at 31s, not at 408s |
+| 158.7s | beat 1 lands (EWS) |
+| 407.9s | beat 3 lands (ECU) |
+
+**Plan adherence 2/2.** Both beats that survived emitted exactly the band the plan assigned —
+no drift toward the middle. The variety mechanism does what the whole-film scope was doing, and
+unlike the whole-film call it is now *inspectable* rather than inferred.
+
+The only floor violation in the run was the missing beat from the 502; the geometry that did
+come back was clean. For comparison the whole-film call in the same session scored **1 floor
+violation on real geometry** — so this is parity at worst, and the failure is attributable.
+
+Also visible for the first time: `attempts: 2` on BOTH successful beats. Every one of them
+needed a retry. That tax has always been there and has never appeared in a published number.
+
+**The split is currently a wash on total time.** What it buys is everything else:
+
+- **The wait is legible.** Real per-beat facts at **26.8s against 408s** — a visitor learns what
+  their film is going to look like fifteen times sooner than they learn anything at all today.
+- **One bad response costs one beat, not the film.** This matters MORE on a degraded provider,
+  not less: today a single 502 on the whole-film call throws away the entire film after 350s of
+  waiting. The split loses one shot and delivers the other two.
+- **The variety decision is reproducible and inspectable** — EWS/WS/ECU three runs out of three,
+  and `planAdherence` reports on every real film whether the geometry honoured it.
+
+The latency win is real but unbanked: it needs concurrency, and concurrency needs a provider
+that will serve it. `FREE_STORYBOARD_SPLIT=0` reverts the whole shape if the trade stops being
+worth it. `worker/film-plan.js`.
+
+**A second bug caught before shipping, from the same family as the first.** Per-call deadlines
+are not a whole-film deadline, and having only the former is worse than obvious: at concurrency
+1, three beats at their 420s ceiling is 21 minutes against the Queue consumer's **15**. A film
+that hit those ceilings would be killed by the runtime partway through and lose every beat that
+had already succeeded, because nothing is saved until the validation pass. The per-call limits
+would have made the failure look bounded while the real bound sat somewhere else. There is now a
+12-minute budget for the whole split; beats share it, and a beat with under 30 seconds left
+fails immediately rather than starting work that cannot finish.
+
+🔑 **A timeout on each part is not a timeout on the whole.** Both bugs this round were the same
+shape as the client-side one that started it: two individually reasonable limits that compose
+into an unreasonable total, because nobody was holding the total.
+
+**A bug this round introduced and caught before shipping**, worth recording because the class
+recurs: `fetch` inside a Worker has NO client-side timeout. The first cut of the split had four
+un-deadlined calls inside a `Promise.all`, so one stalled upstream connection would have held
+the finished beats hostage until the Queue consumer's 15-minute wall clock killed the whole
+invocation. It hung for 25 minutes in the probe, which is how it was found. Every call in the
+split now carries an `AbortSignal.timeout`. The single-call path had the same exposure once; a
+split film had it four times over.
+
+**`planAdherence` runs on every real film**, not just in the probe: it reports whether the geometry
+pass emitted the band the plan assigned. Reported, never enforced — `framing` is the model's claim
+about its own numbers and `worker/scene.js` derives the true band independently. It exists so
+"the films all look samey again" shows up as a number instead of a feeling.
+
+### The wait surface, rebuilt out of facts
+
+The streamed narration is gone (see finding 2), so what a visitor watches now is the shot plan
+landing per beat: **this beat is an EWS on the ape, that one is a CU**, each card resolving on its
+own as its own call returns. Real decisions about their specific beat, ~15–45s in.
+
+Adam's suggestion was that worst case we could show invented words to give an impression of
+activity. **Deliberately not done, and the reason is in this repo's own history**: round 8 removed
+the ghost wireframes for exactly that — they animated a fiction and were usually wrong by the time
+real geometry arrived. A visitor shown something invented gets a worse deal than one shown
+nothing, because the invention is indistinguishable from the real thing until it contradicts it.
+The split produces genuine per-beat signal early, so the trade never had to be made.
+
+### Also found, worth keeping
+
+- **Silent upstream retries.** OpenRouter returns **HTTP 200 carrying an error body**; `chat()`
+  retries it. A single successful one-beat call had already burned an invisible extra attempt. So
+  "the model is slow" and "the provider bounced us and we quietly went again" were indistinguishable
+  in every figure ever published here. `onMeta` now reports them.
+- **OpenRouter reports quota on `/key`, not as response headers.** The completion route returns no
+  `x-ratelimit-*` at all.
+- **Repairs were sequential.** Up to 3, each a full-brief call with `retries = 2` — five to seven
+  minutes of avoidable wall clock hidden behind one progress phase. Now parallel, `retries: 0`
+  (a repair *is* a retry), spend still recorded serially because that ledger is read-modify-write.
+
+### ~~Super 120B is 3.8x faster at parity, and round 7's verdict on it was wrong~~ — RETRACTED
+
+> ⚠ **This section is wrong and is kept only so the mistake is legible.** The full fixture set
+> (above) shows Super whole-film as the WORST cell in the run, and round 7's verdict on it as
+> correct. What follows was one film, on the easiest fixture, at three beats, in a good hour.
+
+Same fixture, same session, an hour apart on the same degraded route:
+
+| | latency | tok/s | bands | floor |
+|---|---|---|---|---|
+| Ultra 550B, whole film | 354s | 19.5 | EWS/WS/ECU | 1 violation, beat 3 |
+| **Super 120B, whole film** | **93s** | **68.3** | EWS/WS/ECU | 1 violation, beat 3 |
+
+Identical shot plan, identical band count, identical violation count. **3.8x faster**, and it is
+a one-line change to `FREE_STORYBOARD_MODEL`. The round-7 table's "Super fails the absolute floor
+3/3" was measured on NVIDIA's hosting, under contract v1, in the round where five of six bugs
+turned out to be in the grader — stale on all three counts, and now contradicted directly.
+
+🔑 **AND BOTH MODELS FAILED THE SAME BEAT.** Ultra reported `camera-inside-subject`, Super
+reported `subject-behind-lens`, both on beat 3 — "her eye opens, and the iris fills the whole
+picture." Two independent models, asked for an extreme close-up, both place the camera somewhere
+the validator calls impossible. Round 7 hit this exact shape: a correct ECU (lens 27cm from a
+face at 300mm) read as "camera inside a body" *because people are modelled as uniform cylinders*.
+
+So the standing rule applies before anyone reaches for the model: **assume the grader is wrong
+before assuming the model is** — that was right five times out of five in round 7. This is not
+chased down here; it is flagged as the most likely next grader bug, with two independent
+witnesses to it.
+
+### The reasoning parameter works — and that is not the same as it being safe to turn on
+
+All three film-sized `reasoning` cells died with a 502 in 5-6.5s, which looked like the parameter
+being rejected at the gate. It is not. A back-to-back A/B on trivial calls, 3 rounds:
+
+| configuration | completion tokens | latency | succeeded |
+|---|---|---|---|
+| no `reasoning`, no tool | 14-31 | 0.9-5.8s | 3/3 |
+| `reasoning:{enabled:false}`, no tool | **2** | 0.8-2.5s | 3/3 |
+| no `reasoning`, forced tool | 47-60 | 15.3-43.5s | 3/3 |
+| `reasoning:{enabled:false}`, forced tool | **6-10** | 1.9-3.5s | 2/3 |
+| `reasoning:{effort:low}`, forced tool | 48 | 2.6s | 1/3 |
+
+**It is honoured, and the effect is enormous** — 2 tokens against 20-31, and 15-43s collapsing to
+2-4s. This is the lever `enable_thinking` was never connected to.
+
+**It is still not turned on, and the reason is the gate, not timidity.** Reliability under a
+forced tool call drops to 2/3 and 1/3 in the same rounds where the un-parameterised call is 3/3,
+and — the part that actually decides it — **no film-sized emission has ever come back with
+reasoning suppressed**, so its effect on geometry is completely unmeasured. A trivial call
+answering "7" in two tokens says nothing about whether a suppressed model can still place a
+camera. Round 7's rule holds: if a fix requires dropping a gate, the fix is wrong, and "we never
+managed to score it" is not the same as "it passed."
+
+`FREE_STORYBOARD_REASONING` therefore ships EMPTY, plumbed and ready, with this table as the
+argument for trying it again on a quiet route.
+
+### The geometry run that settled it (2026-08-26, `20260826T180432Z`, 20 films)
+
+Four cells, five fixtures, one repeat each, ALL on OpenRouter so the origin matches production.
+
+| cell | done | floor✓ | mean floor | mean M3 | mean bands | mean s | calls | tokens |
+|---|---|---|---|---|---|---|---|---|
+| Ultra whole-film *(baseline)* | 3/5 | 1/5 | 2.33 | 0.75 | 3.67 | **348** | 1.0 | 11.6k |
+| Super whole-film | 3/5 | 1/5 | 3.67 | 0.51 | 2.67 | 355 | 1.0 | 20.5k |
+| split + Ultra | 2/5 | 0/5 | 3.00 | **1.00** | **4.00** | 1030 | 5.5 | 35.2k |
+| **split + Super** | **4/5** | **2/5** | **1.25** | 0.90 | 3.75 | 609 | 5.8 | 33.1k |
+
+**THE VARIETY GATE PASSES.** Both split cells beat the baseline on distinct bands (4.00 / 3.75 vs
+3.67) and on framing self-agreement (1.00 / 0.90 vs 0.75), and both clear round 7's c1 benchmark
+of 3.1. M3 came back **1.00 on four of the five scored split films**. The plan mechanism does the
+job it was built for.
+
+The clearest single demonstration: Super whole-film on `cut-to-black` collapsed to **2 bands,
+WS/MWS/MWS/MWS** — the exact c0 failure mode. The same model on the same fixture under the split
+returned 4 bands, M3 1.00, no collapse. Deciding shot sizes in a separate pass is what removes
+the collapse; it is not that some models have it and others do not.
+
+#### 🔑 Super is bad alone and good in the split, and this was got backwards twice
+
+Super whole-film is the worst cell in the run — worst M3 (0.51), worst variety (2.67), worst mean
+floor (3.67), and it TRUNCATES at 32k tokens on 5- and 6-beat films because it spends ~76% of its
+output on reasoning. Round 7 said Super fails, and round 7 was right.
+
+But **split + Super is the best cell measured** — highest completion (4/5), most floor passes
+(2/5), and mean floor violations of **1.25 against the baseline’s 2.33**. The split makes each
+call cover one beat, which keeps Super's reasoning appetite inside the ceiling it otherwise
+blows. The two round-11 changes are complements, not alternatives.
+
+The error worth recording is not the conclusion but the reasoning that produced it. Round 7’s
+Super verdict was confounded three ways (NVIDIA hosting, contract v1, a grader with five known
+bugs) and that was a good reason to RE-TEST it — it was not a reason to believe it was wrong.
+Those two were conflated, a 3.8x-at-parity headline was published off ONE film on the EASIEST
+fixture at THREE beats in a good hour, and every one of those four qualifiers was load-bearing.
+**A confounded method does not make a conclusion false; it makes it unproven.**
+
+#### The cost, stated plainly
+
+The split is **1.8-3x slower** (609s / 1030s against 348s), makes **~5.5 calls per film** instead
+of 1, and burns **~3x the tokens**. Both split cells’ mean latency EXCEEDS the 12-minute
+`FILM_BUDGET_MS` guard added this round, so production would truncate films this probe completed.
+It is a genuine trade — better geometry and variety, materially worse latency and quota — not a
+win, and it should not be written up as one.
+
+#### Two of my own bugs contaminated this run, both worth the lesson
+
+1. **The plan call was capped at `maxTokens: 4096`**, justified in a comment reading "a small
+   answer needs a small ceiling — leave it at 32k and the model treats this as the big call."
+   That is wrong about what the parameter does: `max_tokens` caps the WHOLE completion, and
+   60-75% of one is reasoning. A tight ceiling does not buy less thinking; the model thinks
+   exactly as much as it was going to, runs out mid-thought, and the answer is truncated before
+   it is emitted. It fit a 3-beat film and produced `finish_reason=length` on a 5-beat one,
+   taking the whole split film down. Now 16384. 🔑 **To buy less thinking you must ASK for less
+   thinking; a token ceiling only decides whether you keep the answer the thinking paid for.**
+2. **The probe’s split scope aborts a film on any failed beat call**, where production catches
+   per-beat and continues. So `split-or`’s 2/5 completion is a LOWER BOUND — one of those three
+   failures was bug 1, and production would have shipped the other beats. Do not read the split’s
+   completion rate here as its production completion rate.
+
+Everything above is n=1 per cell on a route whose throughput swung 2x within the day. It is
+enough to settle direction; it is not enough to quote as a spec.
+
+### ⛔ The free tier is 50 requests A DAY, and the split spends them 4-7x faster
+
+Found the hard way on 2026-08-26: a geometry probe run died at film 7 of 15 with
+`Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests`.
+A day's probing had consumed the entire allowance — which also takes the LIVE free tier down
+until midnight UTC, because it is the same key and the same quota.
+
+OpenRouter free models: **50 requests/day below 10 credits lifetime, 1000 above.** Nothing in
+this repo knew that number, and the completion route does not return `x-ratelimit-*` headers —
+the quota is only visible on `GET /v1/key`, which is why round 11 added a check there.
+
+🔑 **The split has a cost that no latency measurement can show.** It makes one request per beat
+plus one for the plan, so a 3-beat film is 4 requests where the whole-film call is 1 — before
+repairs. At 50/day that is ~12 free films per day across ALL visitors, against ~50. Every
+argument for the split so far has been about time and legibility, and on those it wins; this is
+the first axis where it loses, and it was invisible until the quota ran out.
+
+At 1000/day (~250 split films) it stops mattering, so this is mostly a question about the
+account rather than the architecture. But **check which tier the key is on before enabling
+`FREE_STORYBOARD_SPLIT`.**
+
+Two fixes went in with the finding:
+- `NvidiaError.quotaExhausted` — a daily cap arrives as a 429, the same status as a burst limit,
+  and was being retried against a quota that does not replenish for hours. Exactly the bug round
+  7 fixed on the paid side with `OpenAIError.outOfCredit`; the free side had it too. **The
+  distinction is whether waiting can help.**
+- The geometry probe now abandons the matrix on quota exhaustion instead of attempting the
+  remaining films. It had filled a scorecard with nine instant failures that said nothing about
+  any model, burying the two real results among them.
+
+### What the 2026-08-26 geometry run actually established (two films of fifteen)
+
+| film | result |
+|---|---|
+| Ultra, whole film, `cut-to-black` | floor 0, M3 1.00, 4 bands, **759s** |
+| Super, whole film, `captured` | **floor 2, M3 0.38**, 3 bands, 379s |
+
+**Ultra completed 1 of 5 films.** Three died on the provider-side time limit
+(`finish_reason=error` at 8-12k tokens) and one on a 502. Round 7 found that limit biting at SIX
+beats; it now bites at four and five. `FREE_MAX_BEATS = 3` is load-bearing in a way it was not,
+and three may not stay safe.
+
+**The one Ultra success took 759s** — longer than the client's ENTIRE 720s budget after round
+11's deadline fix. `LATENCY_SECONDS.free.max = 600` is optimistic, not generous, and its comment
+currently claims the opposite.
+
+⚠ **Super scored badly on a harder fixture, which qualifies the 3.8x headline above.** That
+result came from `scale-extremes` — one subject, the easiest fixture in the set. On `captured`
+(four subjects) Super breaks the floor twice and its stated framing disagrees with its own
+geometry most of the time. Round 7's verdict on Super may prove directionally right after all,
+even though its reasoning was confounded by origin and a buggy grader. **One good result on the
+easiest fixture was not evidence, and it should not have been led with.**
+
+### Still open
+
+- **`FREE_STORYBOARD_SPLIT` defaults to 1 and its variety gate has NOT run.** Zero split films
+  were scored. Do not deploy it on without either running the gate or accepting that it ships
+  unverified — and check the quota tier first.
+
+- **`FREE_STORYBOARD_REASONING` is empty** pending a `validateScene`-scored FILM. The parameter is
+  proven to work (table above); what is unproven is whether a suppressed model still produces
+  usable geometry. Largest single remaining lever — 57–76% of the wait.
+- ~~Super 120B undecided~~ — **SETTLED.** Bad alone, best-in-run inside the split. See the
+  geometry run above. `FREE_STORYBOARD_MODEL` needs no change; `split + Super` is worth a
+  dedicated look if the split ships.
+- **The beat-3 ECU floor violation, hit independently by both models.** Most likely the sixth
+  grader bug rather than a model failure. Cheap to investigate, and it currently costs a refused
+  beat on every film with a tight close-up in it.
+- **Whether the streamed 502 is permanent or a bad afternoon.** Two attempts is not a verdict —
+  though the concurrency results above make a generally degraded route the better bet, and if
+  that is what it is, both findings may recover together. Re-run the probe on a quiet day
+  before concluding anything about either.
+- **`LATENCY_SECONDS`** still sits on two samples. See finding 4 before trusting it.
+- **The split's variety claim needs the geometry grader**, not just the timing probe: compare
+  against c1's 3.1 bands / 0.26 MWS. `FREE_STORYBOARD_SPLIT=0` reverts if it regresses.
+
+---
 
 ## Start here — ROUND 8 IS BUILT (2026-08-25)
 
