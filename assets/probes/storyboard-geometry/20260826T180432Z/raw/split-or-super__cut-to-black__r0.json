@@ -1,0 +1,406 @@
+{
+  "cell": "split-or-super",
+  "fixture": "cut-to-black",
+  "fixtureSha": "0f9426ef9a65",
+  "repeat": 0,
+  "film": {
+    "units": "metres",
+    "aspect": 1.7777777777777777,
+    "sceneScaleNote": "The staged set is roughly 200 metres wide with the tower about 80 metres tall.",
+    "beats": [
+      {
+        "beatIndex": 0,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 2.5,
+              "z": 2
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1.6,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 2.5,
+              "z": 2
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1.6,
+              "z": 0
+            }
+          },
+          "focalStartMm": 50,
+          "focalEndMm": 50,
+          "rollDeg": 0,
+          "motion": "Static Shot",
+          "amplitude": "small",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0.45,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 0,
+            "containerId": "<Subject 2>",
+            "action": "seated, gripping the steering wheel",
+            "screenPosition": "center",
+            "depth": "foreground"
+          },
+          {
+            "subject": "<Subject 2>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.2,
+            "widthM": 1.8,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "parked, engine off",
+            "screenPosition": "center",
+            "depth": "foreground"
+          },
+          {
+            "subject": "<Subject 3>",
+            "x": 0,
+            "z": -5,
+            "endX": 0,
+            "endZ": -5,
+            "groundOffsetM": 0,
+            "heightM": 80,
+            "widthM": 12,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "standing",
+            "screenPosition": "center",
+            "depth": "background"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "MS",
+        "changes": [],
+        "containmentNotes": "The driver (<Subject 1>) is seated inside the car (<Subject 2>) with a ground offset of 0.45 m; the car is parked at the base of the tower (<Subject 3>).",
+        "proseNote": "A static medium shot frames the driver seated inside the white sports car at the base of the tower. The camera is level, positioned about 2.2 metres back and aligned with the driver’s chest height, holding the subject centered in the frame as the car rests idle and the tower looms in the background."
+      },
+      {
+        "beatIndex": 1,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": -2.05,
+              "y": 1,
+              "z": 4
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 0.65,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": 3.95,
+              "y": 1,
+              "z": 4
+            },
+            "lookAt": {
+              "x": 6,
+              "y": 0.65,
+              "z": 0
+            }
+          },
+          "focalStartMm": 35,
+          "focalEndMm": 35,
+          "rollDeg": 0,
+          "motion": "Tracking Shot",
+          "amplitude": "medium",
+          "speed": "medium",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 2>",
+            "x": 0,
+            "z": 0,
+            "endX": 6,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.3,
+            "widthM": 1.9,
+            "yawDeg": 90,
+            "containerId": null,
+            "action": "pulls away and drives down the empty street",
+            "screenPosition": "right",
+            "depth": "foreground"
+          }
+        ],
+        "principalSubject": "<Subject 2>",
+        "framing": "WS",
+        "changes": [
+          {
+            "subject": "<Subject 2>",
+            "what": "position",
+            "justifiedByBeatText": true
+          }
+        ],
+        "containmentNotes": "<Subject 1> is inside <Subject 2>",
+        "proseNote": "The camera tracks alongside the car as it pulls away from the tower, maintaining a medium amplitude tracking shot at medium speed, keeping the car in a medium‑wide shot that fills about half the frame height."
+      },
+      {
+        "beatIndex": 2,
+        "kind": "transition",
+        "transitionText": " the screen holds black for a long moment before the world returns.",
+        "camera": null,
+        "subjects": [],
+        "principalSubject": null,
+        "framing": "EWS",
+        "changes": [],
+        "containmentNotes": "",
+        "proseNote": "The screen fades to black and remains dark for an extended moment, indicating a temporal jump before the scene returns."
+      },
+      {
+        "beatIndex": 3,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 81.65,
+              "z": 3
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 81.65,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 81.65,
+              "z": 3
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 81.65,
+              "z": 0
+            }
+          },
+          "focalStartMm": 35,
+          "focalEndMm": 35,
+          "rollDeg": 0,
+          "motion": "Static Shot",
+          "amplitude": "small",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 80,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "stands alone on the rooftop, gazing out over the deserted city",
+            "screenPosition": "center",
+            "depth": "foreground"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "MWS",
+        "changes": [
+          {
+            "subject": "<Subject 1>",
+            "what": "position",
+            "justifiedByBeatText": true
+          }
+        ],
+        "containmentNotes": "<Subject 1> is standing on the rooftop, not inside any container.",
+        "proseNote": "The camera remains still, positioned three metres behind the driver on the rooftop, level with his eyes, capturing him in a medium-wide shot that frames him from the knees up as he stands alone overlooking the empty city."
+      },
+      {
+        "beatIndex": 4,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 80.5,
+              "z": 4
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 80.9,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 80.5,
+              "z": 4
+            },
+            "lookAt": {
+              "x": 0.2,
+              "y": 80.2,
+              "z": 0
+            }
+          },
+          "focalStartMm": 200,
+          "focalEndMm": 200,
+          "rollDeg": 0,
+          "motion": "Tilt Down",
+          "amplitude": "small",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 0,
+            "endX": 0.2,
+            "endZ": 0,
+            "groundOffsetM": 80,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 0,
+            "containerId": "<Subject 3>",
+            "action": "walks to the edge of the roof and looks down at the street far below",
+            "screenPosition": "center-right",
+            "depth": "foreground"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "CU",
+        "changes": [
+          {
+            "subject": "<Subject 1>",
+            "what": "position",
+            "justifiedByBeatText": true
+          }
+        ],
+        "containmentNotes": "<Subject 1> is on the roof of <Subject 3>.",
+        "proseNote": "A static shot tracks the driver as he walks a short distance to the roof edge and tilts down to follow his gaze toward the street far below, keeping him in a close‑up."
+      }
+    ]
+  },
+  "calls": [
+    {
+      "usage": {
+        "promptTokens": 1649,
+        "completionTokens": 1845,
+        "reasoningTokens": 1513
+      },
+      "latencyMs": 15237,
+      "attempts": 1,
+      "costUsd": 0,
+      "rateLimitHits": 0,
+      "usedToolCall": true,
+      "request": {
+        "model": "nvidia/nemotron-3-super-120b-a12b:free"
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 5110,
+        "completionTokens": 9081,
+        "reasoningTokens": 6938
+      },
+      "latencyMs": 109365,
+      "attempts": 1,
+      "costUsd": 0,
+      "rateLimitHits": 0,
+      "usedToolCall": true,
+      "request": {
+        "model": "nvidia/nemotron-3-super-120b-a12b:free"
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 5101,
+        "completionTokens": 6188,
+        "reasoningTokens": 5086
+      },
+      "latencyMs": 82981,
+      "attempts": 1,
+      "costUsd": 0,
+      "rateLimitHits": 0,
+      "usedToolCall": true,
+      "request": {
+        "model": "nvidia/nemotron-3-super-120b-a12b:free"
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 5102,
+        "completionTokens": 1365,
+        "reasoningTokens": 1253
+      },
+      "latencyMs": 9038,
+      "attempts": 1,
+      "costUsd": 0,
+      "rateLimitHits": 0,
+      "usedToolCall": true,
+      "request": {
+        "model": "nvidia/nemotron-3-super-120b-a12b:free"
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 5104,
+        "completionTokens": 4465,
+        "reasoningTokens": 3413
+      },
+      "latencyMs": 124292,
+      "attempts": 1,
+      "costUsd": 0,
+      "rateLimitHits": 0,
+      "usedToolCall": true,
+      "request": {
+        "model": "nvidia/nemotron-3-super-120b-a12b:free"
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 5102,
+        "completionTokens": 10800,
+        "reasoningTokens": 8196
+      },
+      "latencyMs": 119953,
+      "attempts": 1,
+      "costUsd": 0,
+      "rateLimitHits": 0,
+      "usedToolCall": true,
+      "request": {
+        "model": "nvidia/nemotron-3-super-120b-a12b:free"
+      }
+    }
+  ],
+  "costUsd": 0
+}

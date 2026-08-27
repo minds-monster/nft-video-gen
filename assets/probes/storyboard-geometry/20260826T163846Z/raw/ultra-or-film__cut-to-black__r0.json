@@ -1,0 +1,396 @@
+{
+  "cell": "ultra-or-film",
+  "fixture": "cut-to-black",
+  "fixtureSha": "0f9426ef9a65",
+  "repeat": 0,
+  "film": {
+    "units": "metres",
+    "aspect": 1.7777777777777777,
+    "sceneScaleNote": "A 150m-tall brutalist tower (50m wide at base) dominates a city block; a street runs along its front face at z=0. The rooftop action occurs at y=150m on the tower roof. The car drives along the street (x-axis) at ground level.",
+    "beats": [
+      {
+        "beatIndex": 0,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 1.4,
+              "z": 3
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1.4,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 1.4,
+              "z": 3
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1.4,
+              "z": 0
+            }
+          },
+          "focalStartMm": 85,
+          "focalEndMm": 85,
+          "rollDeg": 0,
+          "motion": "Static Shot",
+          "amplitude": "small",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0.5,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 90,
+            "containerId": "<Subject 2>",
+            "action": "sits in driver's seat, hands on steering wheel",
+            "screenPosition": "center",
+            "depth": "foreground"
+          },
+          {
+            "subject": "<Subject 2>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.3,
+            "widthM": 2,
+            "yawDeg": 90,
+            "containerId": null,
+            "action": "parked at foot of tower, engine idling",
+            "screenPosition": "center",
+            "depth": "foreground"
+          },
+          {
+            "subject": "<Subject 3>",
+            "x": 0,
+            "z": -35,
+            "endX": 0,
+            "endZ": -35,
+            "groundOffsetM": 0,
+            "heightM": 150,
+            "widthM": 50,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "looms behind the car, brutalist concrete facade stained by weather",
+            "screenPosition": "center",
+            "depth": "background"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "MCU",
+        "changes": [],
+        "containmentNotes": "<Subject 1> is seated inside <Subject 2> (driver in car); groundOffsetM 0.5m reflects seat height. <Subject 2> rests on ground (groundOffsetM 0). <Subject 3> stands on ground.",
+        "proseNote": "A static medium close-up frames the driver through the windscreen: the neon yellow tracksuit and red heart-shaped sunglasses catch the dusk light. The camera sits at eye level, three metres back on the street, locked off. The massive concrete tower rises centered behind the car, its stepped balconies and recessed windows filling the background. No camera movement; the only motion is the faint idle vibration of the car."
+      },
+      {
+        "beatIndex": 1,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 2,
+              "z": 3
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 0.65,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": 30,
+              "y": 2,
+              "z": 3
+            },
+            "lookAt": {
+              "x": 30,
+              "y": 0.65,
+              "z": 0
+            }
+          },
+          "focalStartMm": 24,
+          "focalEndMm": 24,
+          "rollDeg": 0,
+          "motion": "Tracking Shot",
+          "amplitude": "large",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 0,
+            "endX": 30,
+            "endZ": 0,
+            "groundOffsetM": 0.5,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 90,
+            "containerId": "<Subject 2>",
+            "action": "drives the car down the empty street",
+            "screenPosition": "center",
+            "depth": "foreground"
+          },
+          {
+            "subject": "<Subject 2>",
+            "x": 0,
+            "z": 0,
+            "endX": 30,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.3,
+            "widthM": 2,
+            "yawDeg": 90,
+            "containerId": null,
+            "action": "accelerates smoothly down the deserted street, four round LED headlamps cutting the gloom",
+            "screenPosition": "center",
+            "depth": "foreground"
+          },
+          {
+            "subject": "<Subject 3>",
+            "x": 0,
+            "z": -35,
+            "endX": 0,
+            "endZ": -35,
+            "groundOffsetM": 0,
+            "heightM": 150,
+            "widthM": 50,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "recedes in the background as the car pulls away",
+            "screenPosition": "left",
+            "depth": "background"
+          }
+        ],
+        "principalSubject": "<Subject 2>",
+        "framing": "WS",
+        "changes": [
+          {
+            "subject": "<Subject 1>",
+            "what": "moves with car from x=0 to x=30 along street",
+            "justifiedByBeatText": true
+          },
+          {
+            "subject": "<Subject 2>",
+            "what": "drives from x=0 to x=30 along street",
+            "justifiedByBeatText": true
+          }
+        ],
+        "containmentNotes": "<Subject 1> remains inside <Subject 2> (driver in car); groundOffsetM 0.5m. <Subject 2> on ground. <Subject 3> stationary on ground.",
+        "proseNote": "The camera tracks parallel to the street at a constant three-metre offset, holding a wide shot on the white sports car as it pulls away from the tower and accelerates down the empty boulevard. The four circular LED headlamps bloom in the gathering dark. The brutalist tower slides leftward across the background, its vertical staining catching the last light. The move is slow and unhurried, matching the car's smooth departure."
+      },
+      {
+        "beatIndex": 2,
+        "kind": "transition",
+        "transitionText": "the screen holds black for a long moment before the world returns",
+        "camera": null,
+        "subjects": [],
+        "principalSubject": null,
+        "framing": "EWS",
+        "changes": [],
+        "containmentNotes": "",
+        "proseNote": "Cut to black. The screen remains completely dark for an extended beat, silencing the city."
+      },
+      {
+        "beatIndex": 3,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 151.6,
+              "z": -30
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 150,
+              "z": -35
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 151.6,
+              "z": -30
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 150,
+              "z": -35
+            }
+          },
+          "focalStartMm": 85,
+          "focalEndMm": 85,
+          "rollDeg": 0,
+          "motion": "Static Shot",
+          "amplitude": "small",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": -35,
+            "endX": 0,
+            "endZ": -35,
+            "groundOffsetM": 150,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 0,
+            "containerId": "<Subject 3>",
+            "action": "stands alone on the tower roof, facing the front edge",
+            "screenPosition": "center",
+            "depth": "foreground"
+          },
+          {
+            "subject": "<Subject 3>",
+            "x": 0,
+            "z": -35,
+            "endX": 0,
+            "endZ": -35,
+            "groundOffsetM": 0,
+            "heightM": 150,
+            "widthM": 50,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "the roof stretches around the driver; the city spreads out far below",
+            "screenPosition": "center",
+            "depth": "background"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "MS",
+        "changes": [
+          {
+            "subject": "<Subject 1>",
+            "what": "appears on tower roof at groundOffsetM 150m (was in car at ground level)",
+            "justifiedByBeatText": false
+          }
+        ],
+        "containmentNotes": "<Subject 1> stands on <Subject 3> roof (groundOffsetM 150m equals tower height). No car present.",
+        "proseNote": "A static medium shot on the tower roof: the driver stands centered, neon yellow tracksuit vivid against grey concrete, red heart-shaped sunglasses reflecting the city lights far below. The camera sits five metres back on the roof surface, slightly elevated, looking toward the front edge. The vast brutalist structure drops away behind him. No movement; the wind barely stirs the yellow hat."
+      },
+      {
+        "beatIndex": 4,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 151.6,
+              "z": -30
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 150,
+              "z": -35
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 151.6,
+              "z": 5
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 150,
+              "z": 0
+            }
+          },
+          "focalStartMm": 50,
+          "focalEndMm": 50,
+          "rollDeg": 0,
+          "motion": "Tracking Shot",
+          "amplitude": "large",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": -35,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 150,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 0,
+            "containerId": "<Subject 3>",
+            "action": "walks slowly to the roof edge and looks down at the street far below",
+            "screenPosition": "center",
+            "depth": "foreground"
+          },
+          {
+            "subject": "<Subject 3>",
+            "x": 0,
+            "z": -35,
+            "endX": 0,
+            "endZ": -35,
+            "groundOffsetM": 0,
+            "heightM": 150,
+            "widthM": 50,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "the city lights flicker far below its base",
+            "screenPosition": "center",
+            "depth": "background"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "MWS",
+        "changes": [
+          {
+            "subject": "<Subject 1>",
+            "what": "walks from roof center (z=-35) to front edge (z=0)",
+            "justifiedByBeatText": true
+          }
+        ],
+        "containmentNotes": "<Subject 1> remains on <Subject 3> roof (groundOffsetM 150m). Walks 35m along +Z axis to front parapet.",
+        "proseNote": "The camera tracks sideways at a steady five-metre distance, maintaining a medium wide shot as the driver walks the length of the roof toward the front parapet. He arrives at the edge and looks straight down over the sheer concrete face to the deserted street 150 metres below. The move is slow, deliberate, unhurried; the city's faint glow rises to meet him."
+      }
+    ]
+  },
+  "calls": [
+    {
+      "usage": {
+        "promptTokens": 4853,
+        "completionTokens": 15651,
+        "reasoningTokens": 9554
+      },
+      "latencyMs": 759073,
+      "attempts": 1,
+      "costUsd": 0,
+      "rateLimitHits": 0,
+      "usedToolCall": true,
+      "request": {
+        "model": "nvidia/nemotron-3-ultra-550b-a55b:free"
+      }
+    }
+  ],
+  "costUsd": 0
+}

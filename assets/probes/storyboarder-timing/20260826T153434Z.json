@@ -1,0 +1,119 @@
+{
+  "runId": "20260826T153434Z",
+  "startedAt": "2026-08-26T15:34:34.145Z",
+  "fixture": "scale-extremes",
+  "reps": 1,
+  "results": [
+    {
+      "id": "one-beat",
+      "label": "Ultra · ONE beat (Phase 3 parallel unit)",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "beatCount": 1,
+      "reps": [
+        {
+          "rep": 1,
+          "ok": true,
+          "latencyMs": 71282,
+          "tokensPerSecond": 22.5,
+          "usage": {
+            "promptTokens": 4615,
+            "completionTokens": 1607,
+            "reasoningTokens": 745
+          },
+          "answerTokens": 862,
+          "reasoningShare": 0.464,
+          "reasoningChars": null,
+          "floorViolations": [],
+          "passesFloor": true,
+          "distinctBands": 1,
+          "bands": [
+            "EWS"
+          ],
+          "meta": [
+            {
+              "status": 200,
+              "attempt": 0,
+              "headers": {}
+            },
+            {
+              "status": 200,
+              "attempt": 1,
+              "headers": {}
+            }
+          ],
+          "film": {
+            "units": "metres",
+            "aspect": 1.7778,
+            "sceneScaleNote": "A salt flat stretching hundreds of metres to the horizon in every direction; the sole figure stands 60m from camera at the origin.",
+            "beats": [
+              {
+                "beatIndex": 0,
+                "kind": "shot",
+                "transitionText": null,
+                "camera": {
+                  "start": {
+                    "position": {
+                      "x": 0,
+                      "y": 1.6,
+                      "z": 60
+                    },
+                    "lookAt": {
+                      "x": 0,
+                      "y": 1,
+                      "z": 0
+                    }
+                  },
+                  "end": {
+                    "position": {
+                      "x": 0,
+                      "y": 1.6,
+                      "z": 60
+                    },
+                    "lookAt": {
+                      "x": 0,
+                      "y": 1,
+                      "z": 0
+                    }
+                  },
+                  "focalStartMm": 24,
+                  "focalEndMm": 24,
+                  "rollDeg": 0,
+                  "motion": "Static Shot",
+                  "amplitude": "small",
+                  "speed": "slow",
+                  "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+                },
+                "subjects": [
+                  {
+                    "subject": "<Subject 1>",
+                    "x": 0,
+                    "z": 0,
+                    "endX": 0,
+                    "endZ": 0,
+                    "groundOffsetM": 0,
+                    "heightM": 1.7,
+                    "widthM": 0.6,
+                    "yawDeg": 0,
+                    "containerId": null,
+                    "action": "standing motionless at the far end of the salt flat, a solitary speck under the vast sky",
+                    "screenPosition": "center",
+                    "depth": "background"
+                  }
+                ],
+                "principalSubject": "<Subject 1>",
+                "framing": "EWS",
+                "changes": [],
+                "containmentNotes": "No containment; the figure stands alone on the open ground.",
+                "proseNote": "Live-action, cinematic, an extreme wide shot frames the salt flat as a featureless white plane meeting a pale, enormous sky at a razor-straight horizon. The camera sits at eye level, 60 metres back on the +Z axis, perfectly still with a 24mm lens. At the origin, dead centre of frame, <Subject 1> occupies barely three percent of frame height — a lone figure in a long coat reduced to a vertical speck, facing the camera. Hard noon light casts almost no shadows; the white ground reflects upward, bleaching the coat with salt dust. No camera movement, no focus pull; the stillness is the statement."
+              }
+            ]
+          }
+        }
+      ],
+      "medianLatencyMs": 71282,
+      "medianTokensPerSecond": 22.5,
+      "medianReasoningShare": 0.464,
+      "floorPassRate": 1
+    }
+  ]
+}

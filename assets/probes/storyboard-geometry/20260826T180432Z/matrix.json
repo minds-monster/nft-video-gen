@@ -1,0 +1,94 @@
+{
+  "runId": "20260826T180432Z",
+  "gitHead": "0f521e2f2f4b5373fc884131fc3ad8c414080d7c",
+  "startedAt": "2026-08-26T18:04:32.421Z",
+  "cells": {
+    "ultra-or-film": {
+      "label": "R11 baseline: Ultra 550B on OpenRouter, whole film in one call",
+      "kind": "scene",
+      "scope": "film",
+      "transport": "openrouter",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "contract": "v2",
+      "maxTokens": 32768,
+      "free": true,
+      "retries": 1
+    },
+    "super-or-film": {
+      "label": "R11: Super 120B on OpenRouter, whole film in one call",
+      "kind": "scene",
+      "scope": "film",
+      "transport": "openrouter",
+      "model": "nvidia/nemotron-3-super-120b-a12b:free",
+      "contract": "v2",
+      "maxTokens": 32768,
+      "free": true,
+      "retries": 1
+    },
+    "split-or": {
+      "label": "R11: SPLIT — shot plan, then one call per beat, Ultra on OpenRouter",
+      "kind": "scene",
+      "scope": "split",
+      "transport": "openrouter",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "contract": "v2",
+      "maxTokens": 32768,
+      "free": true,
+      "retries": 1
+    },
+    "split-or-super": {
+      "label": "R11: SPLIT on Super 120B — the two round-11 wins together",
+      "kind": "scene",
+      "scope": "split",
+      "transport": "openrouter",
+      "model": "nvidia/nemotron-3-super-120b-a12b:free",
+      "contract": "v2",
+      "maxTokens": 32768,
+      "free": true,
+      "retries": 1
+    }
+  },
+  "fixtures": [
+    {
+      "id": "captured",
+      "sha": "2b3a0fa3b229",
+      "beats": 4
+    },
+    {
+      "id": "grid-launch",
+      "sha": "b2d6f4830c1e",
+      "beats": 6
+    },
+    {
+      "id": "two-hander-axis",
+      "sha": "a1421fc3a811",
+      "beats": 5
+    },
+    {
+      "id": "cut-to-black",
+      "sha": "0f9426ef9a65",
+      "beats": 5
+    },
+    {
+      "id": "scale-extremes",
+      "sha": "933d72d0e9fb",
+      "beats": 5
+    }
+  ],
+  "repeats": 1,
+  "prices": {
+    "gpt-5.6-sol": {
+      "in": 4,
+      "out": 20
+    },
+    "gpt-5.6-terra": {
+      "in": 2,
+      "out": 12
+    },
+    "gpt-5.6-luna": {
+      "in": 0.2,
+      "out": 1.2
+    }
+  },
+  "maxSpend": 250
+}

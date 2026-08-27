@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Check, ChevronDown, Copy, Loader2, LogOut, Sparkles, X } from 'lucide-react';
 import { useMindChatContext } from '../context/mindChat';
 import ProducerSurface from './ProducerSurface';
+import MindIdChip from './MindIdChip';
 
 // Adam's own words, from actually living on the receiving end of a cold connect request —
 // see /Users/adamplace/.claude/plans/we-ve-been-blocked-in-binary-whale.md ("Result:
@@ -75,8 +76,11 @@ const ElapsedSeconds = () => {
 // see the render logic below, which shows it in every connection state, not just this
 // one — so this only needs to surface the connected identity and a way to disconnect.
 const ConnectedBanner = ({ session, disconnect }) => (
-  <div className="flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
-    <span>Connected · {session.mindName || `${session.mindId.slice(0, 8)}…`}</span>
+  <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+    <span className="flex min-w-0 flex-wrap items-center gap-2">
+      <span className="truncate">Connected · {session.mindName || 'Mind'}</span>
+      <MindIdChip mindId={session.mindId} tone="emerald" />
+    </span>
     <button
       type="button"
       onClick={disconnect}

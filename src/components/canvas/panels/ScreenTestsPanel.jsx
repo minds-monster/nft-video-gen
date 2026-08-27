@@ -1,88 +1,29 @@
 import { FlaskConical } from 'lucide-react';
 
 import CanvasPanel from './CanvasPanel';
+import TakeTile from './TakeTile';
 import { cn } from '../../../lib/cn';
+import { ANSWER_TONE, UNANSWERED_TONE } from '../../../lib/takeTone';
 import { VERDICTS } from '../../../../worker/screen-test.js';
 
 /**
  * What the experiments cost, and what they said.
  *
- * THE CARD IS ORDERED: question → price → answer → the clip. That order is the argument. A
- * visitor scrolling this should be able to read what they bought without pressing play, and the
- * clip is the evidence for the answer rather than the point of the card.
+ * THE CARD ANSWERS TWO QUESTIONS AND NO MORE: what did this buy, and did anybody read it. That is
+ * what a visitor scanning the grid needs, and both are legible without pressing play — the
+ * question is the title, the price sits beside it, and an unjudged test wears an amber pill.
  *
- * An unanswered test is shown as unanswered, with the buttons right there. A test nobody judged
- * is money spent and nothing learned, and the surface should make that uncomfortable rather than
- * tidy it away.
+ * AN UNANSWERED TEST IS SHOWN AS UNANSWERED. A test nobody judged is money spent and nothing
+ * learned, and the surface should make that uncomfortable rather than tidy it away.
+ *
+ * THE VERDICT BUTTONS ARE IN THE VIEWER, NOT HERE. They used to sit under a thumbnail-sized
+ * player, which asked people to answer "did the face survive its framing?" from a clip the size
+ * of a stamp. Clicking a card plays it large; the three answers are waiting underneath it there.
  */
 
 const money = (value) => (value == null ? null : `$${Number(value).toFixed(2)}`);
 
-const ANSWER_TONE = {
-  held: 'border-emerald-500/25 bg-emerald-500/5 text-emerald-200',
-  failed: 'border-amber-400/25 bg-amber-500/5 text-amber-200',
-  unclear: 'border-white/10 bg-white/5 text-slate-300',
-};
-
-const ScreenTest = ({ test, onJudge }) => {
-  const answered = test.verdict?.answer;
-
-  return (
-    <article className="min-w-0 rounded-2xl border border-white/10 bg-black/20 p-3">
-      <header className="flex items-start justify-between gap-2">
-        <p className="min-w-0 flex-1 text-[12px] font-semibold leading-snug text-white">
-          {test.question ?? 'An unnamed test'}
-        </p>
-        <span className="shrink-0 font-mono text-[10px] text-slate-400">{money(test.costUsd)}</span>
-      </header>
-
-      <p className="mt-0.5 font-mono text-[9px] uppercase tracking-wider text-slate-600">
-        {test.params?.duration}s · {test.params?.resolution}
-        {test.seconds ? ` · shot in ${test.seconds}s` : ''}
-      </p>
-
-      {answered ? (
-        <p className={cn('mt-2 rounded-xl border px-2 py-1.5 text-[11px] font-semibold', ANSWER_TONE[answered])}>
-          {VERDICTS.find((v) => v.id === answered)?.label ?? answered}
-          {test.verdict.note ? <span className="font-normal opacity-80"> — {test.verdict.note}</span> : null}
-        </p>
-      ) : test.status === 'ready' ? (
-        <div className="mt-2">
-          <p className="mb-1 font-mono text-[9px] uppercase tracking-widest text-slate-600">Watch it, then answer</p>
-          <div className="flex gap-1">
-            {VERDICTS.map((verdict) => (
-              <button
-                key={verdict.id}
-                type="button"
-                onClick={() => onJudge?.({ takeId: test.takeId, answer: verdict.id })}
-                className="flex-1 rounded-lg border border-white/10 bg-black/40 px-1.5 py-1 text-[10px] text-slate-300 transition-colors hover:border-white/25 hover:text-white"
-              >
-                {verdict.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      {test.url ? (
-        <video
-          src={test.url}
-          controls
-          loop
-          playsInline
-          preload="metadata"
-          className="mt-2 block w-full rounded-xl border border-white/10 bg-black/40"
-        />
-      ) : (
-        <p className="mt-2 rounded-xl border border-white/10 bg-black/30 p-2 text-[11px] leading-relaxed text-slate-500">
-          {test.reason ?? 'Still shooting.'}
-        </p>
-      )}
-    </article>
-  );
-};
-
-const ScreenTestsPanel = ({ id, director, status, tabs }) => {
+const ScreenTestsPanel = ({ id, director, status, tabs, activeTakeId, onPreviewTake }) => {
   const tests = director?.screenTests ?? [];
   const spent = tests.reduce((sum, test) => sum + (test.costUsd ?? 0), 0);
   const answered = tests.filter((test) => test.verdict?.answer).length;
@@ -125,11 +66,51 @@ const ScreenTestsPanel = ({ id, director, status, tabs }) => {
       icon={FlaskConical}
       headerAction={header}
       status={status}
-      bodyClassName="flex flex-col gap-3"
+      bodyClassName="grid grid-cols-3 content-start gap-3"
     >
-      {tests.map((test) => (
-        <ScreenTest key={test.takeId} test={test} onJudge={director?.judge} />
-      ))}
+      {tests.map((test) => {
+        const verdict = test.verdict?.answer;
+        return (
+          <TakeTile
+            key={test.takeId}
+            take={test}
+            active={test.takeId === activeTakeId}
+            onOpen={onPreviewTake}
+          >
+            <p className="mt-1.5 line-clamp-2 text-[11px] font-semibold leading-snug text-white">
+              {test.question ?? 'An unnamed test'}
+            </p>
+            <div className="mt-1 flex items-center justify-between gap-1.5">
+              {verdict ? (
+                <span
+                  className={cn(
+                    'min-w-0 truncate rounded-full border px-1.5 py-0.5 text-[9px] font-semibold',
+                    ANSWER_TONE[verdict],
+                  )}
+                >
+                  {VERDICTS.find((entry) => entry.id === verdict)?.label ?? verdict}
+                </span>
+              ) : test.status === 'ready' ? (
+                // Amber is reserved for a test that CAME BACK and nobody read. One that is still
+                // shooting has not earned the reproach, and its tile already says so.
+                <span
+                  className={cn(
+                    'min-w-0 truncate rounded-full border px-1.5 py-0.5 text-[9px] font-semibold',
+                    UNANSWERED_TONE,
+                  )}
+                >
+                  Unanswered
+                </span>
+              ) : (
+                <span />
+              )}
+              <span className="shrink-0 font-mono text-[10px] text-slate-500">
+                {money(test.costUsd)}
+              </span>
+            </div>
+          </TakeTile>
+        );
+      })}
     </CanvasPanel>
   );
 };

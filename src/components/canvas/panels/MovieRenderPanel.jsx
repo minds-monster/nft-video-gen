@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Film, Plus } from 'lucide-react';
 import CanvasPanel from './CanvasPanel';
+import TakeView from './TakeView';
 import {
   mayBeVideoUrl,
   resolveNftDescription,
@@ -15,18 +16,26 @@ const PreviewEmpty = () => (
     <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-slate-500">
       <Film className="h-5 w-5" />
     </span>
-    <p className="text-xs text-slate-500">Select a piece to preview it here.</p>
+    <p className="text-xs text-slate-500">Select a piece or a take to watch it here.</p>
   </div>
 );
 
 /**
- * The viewer. Shows either the current browse preview or the cast lead; when browsing a
- * collection, the user can step prev/next and add the previewed piece to the cast.
+ * The viewer. The one surface in the canvas built for looking at something large.
  *
- * TITLED "VIEWER", NOT "MOVIE RENDER". It renders no movie and performs no render — it shows
- * one NFT. Naming it after the output of the entire pipeline meant the panel promised the
- * finished film and delivered a thumbnail, which is the kind of mismatch that makes somebody
- * distrust every other label on the screen.
+ * IT SHOWS ANY VISUAL ASSET, whichever end of the pipeline it came from: a piece being browsed,
+ * the cast lead, or a take the Director shot and the visitor clicked out of the timeline. It was
+ * NFTs only for a while, which had the perverse result that the one thing this app actually
+ * produces was the one thing its viewer could not play.
+ *
+ * TITLED "VIEWER", NOT "MOVIE RENDER". It renders no movie and performs no render. Naming it
+ * after the output of the entire pipeline meant the panel promised the finished film and
+ * delivered a thumbnail, which is the kind of mismatch that makes somebody distrust every other
+ * label on the screen.
+ *
+ * A take arrives as the resolved record rather than an id, so this stays a dumb display: the
+ * lookup lives in PromptCanvas, which is the only place holding both the composer and the
+ * Director.
  */
 const MovieRenderPanel = ({
   id,
@@ -34,6 +43,9 @@ const MovieRenderPanel = ({
   preview,
   previewLoading,
   previewNfts,
+  take,
+  takeIndex,
+  onJudge,
   onAdd,
   onNext,
   onPrev,
@@ -45,8 +57,11 @@ const MovieRenderPanel = ({
   const [videoFailed, setVideoFailed] = useState(false);
   const reportUnavailable = useReportUnavailable();
 
-  const candidate = preview ?? primary;
-  const isPreview = Boolean(preview);
+  // A take preview is `{ takeId }` and holds no NFT, so it must not fall through to the NFT
+  // branch — every hook below is keyed off `candidate` and each one bails on a candidate with
+  // no `.nft`, but the render path has to be explicit about which of the two it is showing.
+  const candidate = take ? null : (preview ?? primary);
+  const isPreview = Boolean(preview) && !take;
 
   // Reset failed state when the viewed piece changes, and report it if no media is left.
   useEffect(() => {
@@ -94,12 +109,16 @@ const MovieRenderPanel = ({
       collapsed={collapsed}
       onToggle={onToggle}
       status={
-        candidate
-          ? { tone: 'idle', text: isPreview ? 'preview' : 'cast lead' }
-          : undefined
+        take
+          ? { tone: 'idle', text: take.kind === 'screen-test' ? 'screen test' : 'daily' }
+          : candidate
+            ? { tone: 'idle', text: isPreview ? 'preview' : 'cast lead' }
+            : undefined
       }
     >
-      {!candidate ? (
+      {take ? (
+        <TakeView take={take} index={takeIndex} onJudge={onJudge} onClear={onClear} />
+      ) : !candidate ? (
         <PreviewEmpty />
       ) : (
         <>

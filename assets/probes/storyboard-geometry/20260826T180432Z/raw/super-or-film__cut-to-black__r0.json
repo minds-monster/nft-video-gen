@@ -1,0 +1,401 @@
+{
+  "cell": "super-or-film",
+  "fixture": "cut-to-black",
+  "fixtureSha": "0f9426ef9a65",
+  "repeat": 0,
+  "film": {
+    "units": "metres",
+    "aspect": 1.7777777777777777,
+    "sceneScaleNote": "The set spans a 70‑metre tall tower and a street segment of roughly 30 metres length.",
+    "beats": [
+      {
+        "beatIndex": 0,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 6
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 6
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1,
+              "z": 0
+            }
+          },
+          "focalStartMm": 35,
+          "focalEndMm": 35,
+          "rollDeg": 0,
+          "motion": "Static Shot",
+          "amplitude": "small",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 2>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.2,
+            "widthM": 1.8,
+            "yawDeg": 90,
+            "containerId": null,
+            "action": "parked, engine off",
+            "screenPosition": "center",
+            "depth": "midground"
+          },
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0.5,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 90,
+            "containerId": "<Subject 2>",
+            "action": "sits inside car, hands on wheel",
+            "screenPosition": "center",
+            "depth": "midground"
+          },
+          {
+            "subject": "<Subject 3>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 70,
+            "widthM": 30,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "stands tall",
+            "screenPosition": "center",
+            "depth": "background"
+          }
+        ],
+        "principalSubject": "<Subject 2>",
+        "framing": "WS",
+        "changes": [],
+        "containmentNotes": "<Subject 1> is inside <Subject 2>",
+        "proseNote": "A static medium-wide shot shows the white sports car parked at the foot of the massive concrete tower, with the bored ape driver seated inside, wearing his neon tracksuit and heart-shaped sunglasses. The tower looms in the background under a dusk sky."
+      },
+      {
+        "beatIndex": 1,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 6
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": 10,
+              "y": 1.6,
+              "z": 6
+            },
+            "lookAt": {
+              "x": 10,
+              "y": 1,
+              "z": 0
+            }
+          },
+          "focalStartMm": 80,
+          "focalEndMm": 80,
+          "rollDeg": 0,
+          "motion": "Truck Right",
+          "amplitude": "large",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 2>",
+            "x": 0,
+            "z": 0,
+            "endX": 10,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.2,
+            "widthM": 1.8,
+            "yawDeg": 90,
+            "containerId": null,
+            "action": "drives away from the tower down the empty street",
+            "screenPosition": "center",
+            "depth": "midground"
+          },
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 0,
+            "endX": 10,
+            "endZ": 0,
+            "groundOffsetM": 0.5,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 90,
+            "containerId": "<Subject 2>",
+            "action": "rides along, looking ahead",
+            "screenPosition": "center",
+            "depth": "midground"
+          },
+          {
+            "subject": "<Subject 3>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 70,
+            "widthM": 30,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "stands tall",
+            "screenPosition": "left",
+            "depth": "background"
+          }
+        ],
+        "principalSubject": "<Subject 2>",
+        "framing": "MWS",
+        "changes": [
+          {
+            "subject": "<Subject 2>",
+            "what": "position",
+            "justifiedByBeatText": true
+          },
+          {
+            "subject": "<Subject 1>",
+            "what": "position",
+            "justifiedByBeatText": true
+          }
+        ],
+        "containmentNotes": "<Subject 1> is inside <Subject 2>",
+        "proseNote": "The camera trucks right to follow the white sports car as it pulls away from the tower and drives down the deserted street, keeping the car centered in the frame while the tower recedes to the left."
+      },
+      {
+        "beatIndex": 2,
+        "kind": "transition",
+        "transitionText": "the screen holds black for a long moment before the world returns.",
+        "camera": null,
+        "subjects": [],
+        "principalSubject": null,
+        "framing": "EWS",
+        "changes": [],
+        "containmentNotes": "",
+        "proseNote": "The screen cuts to black and remains dark for a beat before the scene returns."
+      },
+      {
+        "beatIndex": 3,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 68,
+              "z": 1.5
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 70.9,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 68,
+              "z": 1.5
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 70.9,
+              "z": 0
+            }
+          },
+          "focalStartMm": 50,
+          "focalEndMm": 50,
+          "rollDeg": 0,
+          "motion": "Static Shot",
+          "amplitude": "small",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 70,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 0,
+            "containerId": "<Subject 3>",
+            "action": "stands alone on the rooftop, looking outward",
+            "screenPosition": "center",
+            "depth": "foreground"
+          },
+          {
+            "subject": "<Subject 3>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 70,
+            "widthM": 30,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "stands tall",
+            "screenPosition": "center",
+            "depth": "background"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "MCU",
+        "changes": [
+          {
+            "subject": "<Subject 1>",
+            "what": "position and containerId",
+            "justifiedByBeatText": true
+          },
+          {
+            "subject": "<Subject 2>",
+            "what": "position",
+            "justifiedByBeatText": true
+          }
+        ],
+        "containmentNotes": "<Subject 1> is on <Subject 3>",
+        "proseNote": "A static medium close‑up shows the bored ape standing on the rooftop of the tower, the city spread out below him under the dimming light."
+      },
+      {
+        "beatIndex": 4,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 68,
+              "z": 1.5
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 70.9,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 68,
+              "z": 1.5
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 70.9,
+              "z": 0
+            }
+          },
+          "focalStartMm": 50,
+          "focalEndMm": 250,
+          "rollDeg": 0,
+          "motion": "Zoom In",
+          "amplitude": "large",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 0,
+            "endX": 0.1,
+            "endZ": 0,
+            "groundOffsetM": 70,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 0,
+            "containerId": "<Subject 3>",
+            "action": "walks to the edge of the roof and looks down",
+            "screenPosition": "center-right",
+            "depth": "foreground"
+          },
+          {
+            "subject": "<Subject 3>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 70,
+            "widthM": 30,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "stands tall",
+            "screenPosition": "center",
+            "depth": "background"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "ECU",
+        "changes": [
+          {
+            "subject": "<Subject 1>",
+            "what": "position",
+            "justifiedByBeatText": true
+          }
+        ],
+        "containmentNotes": "<Subject 1> is on <Subject 3>",
+        "proseNote": "The camera zooms in on the bored ape as he walks to the edge of the rooftop and gazes down at the street far below, the lens tightening on his expression."
+      }
+    ]
+  },
+  "calls": [
+    {
+      "usage": {
+        "promptTokens": 4853,
+        "completionTokens": 23529,
+        "reasoningTokens": 17654
+      },
+      "latencyMs": 334552,
+      "attempts": 1,
+      "costUsd": 0,
+      "rateLimitHits": 0,
+      "usedToolCall": true,
+      "request": {
+        "model": "nvidia/nemotron-3-super-120b-a12b:free"
+      }
+    }
+  ],
+  "costUsd": 0
+}

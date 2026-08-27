@@ -61,8 +61,15 @@ export const useCanvasComposer = () => {
   const [pickerResolving, setPickerResolving] = useState(false);
   const [pickerError, setPickerError] = useState(null);
 
-  // Preview / asset browser state. When set, the movie render panel shows this candidate
-  // and allows the user to add it to the cast or step through its collection.
+  // What the viewer is looking at instead of the cast lead. Three shapes:
+  //
+  //   null                  — nothing previewed; the viewer falls back to the cast lead.
+  //   { nft, collection }   — a piece being browsed. Addable to the cast, steppable prev/next.
+  //   { takeId }            — a take the Director shot, clicked out of Dailies or Screen Tests.
+  //
+  // The take is held as an ID rather than the record itself, on purpose: a take is a live thing
+  // that finishes rendering and gets judged while it is on screen, and a snapshot taken at click
+  // time would sit there stale. Whoever renders it re-resolves the ID against the current takes.
   const [preview, setPreview] = useState(null);
 
   const seeded = useRef(false);
@@ -124,7 +131,7 @@ export const useCanvasComposer = () => {
   // When the user browses a collection (preview set without a specific NFT), land on the
   // first piece with resolvable media once the collection loads.
   useEffect(() => {
-    if (!preview || preview.nft || !previewNfts.length) return;
+    if (!preview || preview.takeId || preview.nft || !previewNfts.length) return;
     const nft = previewNfts.find(hasMedia) ?? previewNfts[0];
     setPreview({ nft, collection: preview.collection });
   }, [preview, previewNfts]);
@@ -134,6 +141,7 @@ export const useCanvasComposer = () => {
   // Only replace when the fetched version actually has media, so a working pool candidate
   // is never swapped for a dead collection copy.
   useEffect(() => {
+    // A take preview carries no `nft`, so it is already excluded by the guard below.
     if (!preview?.nft || !previewNfts.length) return;
     const match = previewNfts.find(
       (nft) => String(nft.tokenId) === String(preview.nft.tokenId),
@@ -178,6 +186,12 @@ export const useCanvasComposer = () => {
 
   const browseCollection = useCallback((collection) => {
     setPreview({ nft: null, collection });
+  }, []);
+
+  // Put one of the Director's takes in the viewer. See the `preview` comment for why this
+  // stores an ID and not the take.
+  const previewTake = useCallback((takeId) => {
+    setPreview(takeId ? { takeId } : null);
   }, []);
 
   const browseNext = useCallback(() => {
@@ -438,6 +452,7 @@ export const useCanvasComposer = () => {
     previewLoading,
     previewNfts,
     setPreviewCandidate,
+    previewTake,
     browseCollection,
     browseNext,
     browsePrev,

@@ -1,0 +1,349 @@
+{
+  "cell": "ultra-or-film",
+  "fixture": "scale-extremes",
+  "fixtureSha": "933d72d0e9fb",
+  "repeat": 0,
+  "film": {
+    "units": "metres",
+    "aspect": 1.7778,
+    "sceneScaleNote": "An effectively infinite salt flat; the staged corridor the figure walks is about 40 metres long from the far speck (beat 1) to the final close-up position (beats 3–5). The sky dome is unbounded.",
+    "beats": [
+      {
+        "beatIndex": 0,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 100
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 100
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1,
+              "z": 0
+            }
+          },
+          "focalStartMm": 24,
+          "focalEndMm": 24,
+          "rollDeg": 0,
+          "motion": "Static Shot",
+          "amplitude": "small",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "stands motionless, a tiny speck at the far end of the white flat",
+            "screenPosition": "center",
+            "depth": "background"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "EWS",
+        "changes": [],
+        "containmentNotes": "Subject stands free on the salt crust; no containers.",
+        "proseNote": "Live-action, cinematic, an extreme wide shot frames the salt flat as a featureless white plane under a vast pale sky. The camera sits at (0, 1.6, 100) with a 24 mm lens, looking straight down the -Z axis toward the origin where the figure stands. The figure occupies roughly 2 % of frame height (hFrac ≈ 0.02), a centred speck at the vanishing point. The camera is static; the only motion is the heat shimmer rising from the crust."
+      },
+      {
+        "beatIndex": 1,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 50
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1,
+              "z": 20
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 40
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1,
+              "z": 30
+            }
+          },
+          "focalStartMm": 35,
+          "focalEndMm": 35,
+          "rollDeg": 0,
+          "motion": "Push In",
+          "amplitude": "medium",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 20,
+            "endX": 0,
+            "endZ": 30,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "walks steadily toward the camera across the flat, pink buzz-cut and green jacket catching the hard noon light",
+            "screenPosition": "center",
+            "depth": "midground"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "WS",
+        "changes": [
+          {
+            "subject": "<Subject 1>",
+            "what": "moved from z=0 to z=30 (walked 30 m toward camera)",
+            "justifiedByBeatText": true
+          }
+        ],
+        "containmentNotes": "Subject walks free on the salt crust; no containers.",
+        "proseNote": "Live-action, cinematic, a wide shot tracks the figure walking toward us. The camera begins at (0, 1.6, 50) looking at (0, 1.0, 20) and pushes in with medium amplitude at slow speed to (0, 1.6, 40) looking at (0, 1.0, 30), keeping the 35 mm focal length. The figure grows from hFrac ≈ 0.16 to ≈ 0.31 — a full-body wide shot with headroom — remaining centred in frame. Her green patent leather moto jacket and orange translucent glasses flash in the noon sun as she covers ten metres during the beat."
+      },
+      {
+        "beatIndex": 2,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 40.03
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1.6,
+              "z": 40
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 40.03
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1.6,
+              "z": 40
+            }
+          },
+          "focalStartMm": 200,
+          "focalEndMm": 200,
+          "rollDeg": 0,
+          "motion": "Static Shot",
+          "amplitude": "small",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 40,
+            "endX": 0,
+            "endZ": 40,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "her right eye snaps open; the iris, flecked with gold, expands to fill the frame",
+            "screenPosition": "center",
+            "depth": "foreground"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "ECU",
+        "changes": [
+          {
+            "subject": "<Subject 1>",
+            "what": "moved from z=30 to z=40 (continued walking 10 m)",
+            "justifiedByBeatText": true
+          }
+        ],
+        "containmentNotes": "Subject stands free; the ECU isolates the eye — no container interaction.",
+        "proseNote": "Live-action, cinematic, a hard cut to an extreme close-up of the figure's right eye. The camera sits at (0, 1.6, 40.03) with a 200 mm lens, only 3 cm from the cornea, looking straight along -Z at (0, 1.6, 40). The iris and its gold flecks occupy hFrac ≈ 8.2 (ECU), centred and dead-sharp. The camera is static; the only movement is the eyelid lifting and the pupil dilating under the blinding sky."
+      },
+      {
+        "beatIndex": 3,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 55
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1,
+              "z": 40
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 55
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1,
+              "z": 40
+            }
+          },
+          "focalStartMm": 50,
+          "focalEndMm": 50,
+          "rollDeg": 0,
+          "motion": "Static Shot",
+          "amplitude": "small",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 40,
+            "endX": 0,
+            "endZ": 40,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 180,
+            "containerId": null,
+            "action": "stands full-height, head turned back toward the horizon she crossed, orange glasses reflecting the white flat",
+            "screenPosition": "center",
+            "depth": "midground"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "WS",
+        "changes": [],
+        "containmentNotes": "Subject stands free on the salt crust; no containers.",
+        "proseNote": "Live-action, cinematic, a wide shot pulls back to show the full figure against the endless flat. The camera is static at (0, 1.6, 55) with a 50 mm lens, looking at (0, 1.0, 40). The subject fills hFrac ≈ 0.30 (WS), centred, her green moto jacket and red shirt vivid against the white. She has rotated to yaw 180°, gazing back toward -Z — the 40 metres she just walked — while the camera holds a level, motionless frame."
+      },
+      {
+        "beatIndex": 4,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 41.5
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1.5,
+              "z": 40
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 41.5
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1.5,
+              "z": 40
+            }
+          },
+          "focalStartMm": 85,
+          "focalEndMm": 85,
+          "rollDeg": 0,
+          "motion": "Static Shot",
+          "amplitude": "small",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 40,
+            "endX": 0,
+            "endZ": 40,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "turns back to camera and speaks a single word; her lips part clearly in the close-up",
+            "screenPosition": "center",
+            "depth": "foreground"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "CU",
+        "changes": [
+          {
+            "subject": "<Subject 1>",
+            "what": "rotated from yaw 180° to yaw 0° (turned to face camera)",
+            "justifiedByBeatText": true
+          }
+        ],
+        "containmentNotes": "Subject stands free; the close-up frames head and shoulders — no container interaction.",
+        "proseNote": "Live-action, cinematic, a close-up holds on the figure's face as she delivers the word. The camera is static at (0, 1.6, 41.5) with an 85 mm lens, 1.5 m from the subject, looking at (0, 1.5, 40). Her head and shoulders fill hFrac ≈ 5.0 (CU), centred. She has snapped back to yaw 0°, orange translucent glasses catching a glint of sky, and her mouth shapes the syllable with deliberate clarity."
+      }
+    ]
+  },
+  "calls": [
+    {
+      "usage": {
+        "promptTokens": 4731,
+        "completionTokens": 6341,
+        "reasoningTokens": 2100
+      },
+      "latencyMs": 128389,
+      "attempts": 1,
+      "costUsd": 0,
+      "rateLimitHits": 0,
+      "usedToolCall": true,
+      "request": {
+        "model": "nvidia/nemotron-3-ultra-550b-a55b:free"
+      }
+    }
+  ],
+  "costUsd": 0
+}

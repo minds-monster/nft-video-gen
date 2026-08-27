@@ -5,6 +5,7 @@ import { messageToText } from '../lib/text';
 import { extractMedia, messageTextWithoutMedia } from '../lib/media';
 import { buildThreads, SUBJECT_MAX } from '../lib/mail';
 import { cn } from '../lib/cn';
+import MindIdChip from './MindIdChip';
 
 const LIVENESS_COPY = {
   active: { label: 'Active', dot: 'bg-emerald-400', hint: 'replied recently' },
@@ -368,6 +369,7 @@ const ProducerInbox = ({ session, pending, messages, isInitializing, error, send
         <div className="flex min-w-0 items-center gap-2">
           <Mail className="h-4 w-4 shrink-0 text-purple-400" />
           <span className="truncate text-sm font-semibold text-white">{mindName || 'Your Producer'}</span>
+          <MindIdChip mindId={mindId} />
           {liveness && (
             <span className="flex shrink-0 items-center gap-1.5 text-xs text-slate-400" title={liveness.hint}>
               <span className={cn('h-1.5 w-1.5 rounded-full', liveness.dot)} />

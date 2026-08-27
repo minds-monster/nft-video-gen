@@ -1,0 +1,444 @@
+{
+  "cell": "split-or-super",
+  "fixture": "captured",
+  "fixtureSha": "2b3a0fa3b229",
+  "repeat": 0,
+  "film": {
+    "units": "metres",
+    "aspect": 1.7777777777777777,
+    "sceneScaleNote": "The staged pit lane is approximately 30 metres long and 10 metres wide.",
+    "beats": [
+      {
+        "beatIndex": 0,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": -8,
+              "y": 1,
+              "z": 4
+            },
+            "lookAt": {
+              "x": -5,
+              "y": 0,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": -2,
+              "y": 1,
+              "z": 4
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          "focalStartMm": 35,
+          "focalEndMm": 35,
+          "rollDeg": 0,
+          "motion": "Tracking Shot",
+          "amplitude": "medium",
+          "speed": "medium",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": -5,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.2,
+            "widthM": 0.5,
+            "yawDeg": 90,
+            "containerId": null,
+            "action": "walking toward the jacket-mannequin, rain dripping from tracksuit",
+            "screenPosition": "center",
+            "depth": "midground"
+          },
+          {
+            "subject": "<Subject 2>",
+            "x": 2,
+            "z": 0,
+            "endX": 2,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.5,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "standing on display, awaiting to be worn",
+            "screenPosition": "right",
+            "depth": "midground"
+          },
+          {
+            "subject": "<Subject 4>",
+            "x": -10,
+            "z": 0,
+            "endX": -10,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.7,
+            "widthM": 0.5,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "watching from the barrier",
+            "screenPosition": "far-left",
+            "depth": "midground"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "WS",
+        "changes": [],
+        "containmentNotes": "<Subject 1> wears a neon-yellow tracksuit; <Subject 2> is on a mannequin; <Subject 3> is parked ahead; <Subject 4> stands on the concrete barrier.",
+        "proseNote": "The camera tracks left-to-right alongside the ape as it walks toward the jacket-mannequin, keeping the ape centered in a wide shot while the jacket-mannequin stays to the right and the rival watches from the far left, all under wet neon‑lit pit‑lane lighting."
+      },
+      {
+        "beatIndex": 1,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 1.8,
+              "z": 1.12
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1.8,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 1.8,
+              "z": 0.96
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1.8,
+              "z": 0
+            }
+          },
+          "focalStartMm": 100,
+          "focalEndMm": 100,
+          "rollDeg": 0,
+          "motion": "Push In",
+          "amplitude": "small",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "slips on the deep-red velvet jacket, adjusting the silver filigree collar",
+            "screenPosition": "center",
+            "depth": "foreground"
+          },
+          {
+            "subject": "<Subject 2>",
+            "x": -0.15,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 0.6,
+            "widthM": 0.5,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "being pulled onto the ape's torso, collar adjusted",
+            "screenPosition": "left",
+            "depth": "foreground"
+          }
+        ],
+        "principalSubject": "<Subject 2>",
+        "framing": "MCU",
+        "changes": [
+          {
+            "subject": "<Subject 2>",
+            "what": "position",
+            "justifiedByBeatText": true
+          },
+          {
+            "subject": "<Subject 2>",
+            "what": "containerId",
+            "justifiedByBeatText": true
+          }
+        ],
+        "containmentNotes": "<Subject 2> is worn by <Subject 1>.",
+        "proseNote": "The camera pushes in slowly on the ape as he slips the deep‑red velvet jacket on, adjusting the silver filigree collar; rain streaks the visor of his red heart‑shaped sunglasses and the jacket catches the neon‑lit reflections of the pit lane."
+      },
+      {
+        "beatIndex": 2,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": -12,
+              "y": 1.2,
+              "z": -10
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 0.6,
+              "z": -10
+            }
+          },
+          "end": {
+            "position": {
+              "x": 12,
+              "y": 1.2,
+              "z": -10
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 0.6,
+              "z": -10
+            }
+          },
+          "focalStartMm": 180,
+          "focalEndMm": 180,
+          "rollDeg": 0,
+          "motion": "Arc Shot",
+          "amplitude": "large",
+          "speed": "medium",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": -4,
+            "z": -10,
+            "endX": 0,
+            "endZ": -10,
+            "groundOffsetM": 0,
+            "heightM": 1.2,
+            "widthM": 0.6,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "strides to the car, pulls the door handle, and prepares to sit",
+            "screenPosition": "center-left",
+            "depth": "midground"
+          },
+          {
+            "subject": "<Subject 3>",
+            "x": 0,
+            "z": -10,
+            "endX": 0,
+            "endZ": -10,
+            "groundOffsetM": 0,
+            "heightM": 1.2,
+            "widthM": 2,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "remains parked, doors closed",
+            "screenPosition": "center",
+            "depth": "midground"
+          },
+          {
+            "subject": "<Subject 4>",
+            "x": 6,
+            "z": -10,
+            "endX": 6,
+            "endZ": -10,
+            "groundOffsetM": 0,
+            "heightM": 1.7,
+            "widthM": 0.5,
+            "yawDeg": -90,
+            "containerId": null,
+            "action": "watches from the barrier",
+            "screenPosition": "right",
+            "depth": "midground"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "MWS",
+        "changes": [
+          {
+            "subject": "<Subject 1>",
+            "what": "changed position",
+            "justifiedByBeatText": true
+          }
+        ],
+        "containmentNotes": "No subject is inside another; the ape stands on the ground and the car is stationary.",
+        "proseNote": "The camera begins low and left of the parked camouflaged supercar, then arcs upward and over the vehicle to the right in a smooth, large-amplitude arc shot at medium speed, keeping the ape in frame as he strides from the jacket-mannequin to the car, pulls the door handle, and readies to sit inside."
+      },
+      {
+        "beatIndex": 3,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 1.2,
+              "z": 14.989
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 0.6,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 1.2,
+              "z": 24.996
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 0.6,
+              "z": 0
+            }
+          },
+          "focalStartMm": 35,
+          "focalEndMm": 35,
+          "rollDeg": 0,
+          "motion": "Push Out",
+          "amplitude": "medium",
+          "speed": "medium",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 3>",
+            "x": 0,
+            "z": 0,
+            "endX": 6,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.2,
+            "widthM": 2,
+            "yawDeg": 90,
+            "containerId": null,
+            "action": "accelerates past the barrier, engine roaring, bright yellow wheels spraying rain",
+            "screenPosition": "center",
+            "depth": "midground"
+          },
+          {
+            "subject": "<Subject 4>",
+            "x": 4,
+            "z": 0,
+            "endX": 4,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.75,
+            "widthM": 0.5,
+            "yawDeg": -90,
+            "containerId": null,
+            "action": "watches the car from the barrier",
+            "screenPosition": "center-right",
+            "depth": "midground"
+          }
+        ],
+        "principalSubject": "<Subject 3>",
+        "framing": "EWS",
+        "changes": [
+          {
+            "subject": "<Subject 3>",
+            "what": "position",
+            "justifiedByBeatText": true
+          }
+        ],
+        "containmentNotes": "Subject 3 and Subject 4 are both on the ground; no containment relationships.",
+        "proseNote": "The camera pushes out with medium amplitude at medium speed, tracking the camouflaged supercar as it accelerates past the barrier; the car’s bright yellow wheels kick up spray while the pink‑haired rival watches from the concrete barrier, remaining centered in the frame as the view widens."
+      }
+    ]
+  },
+  "calls": [
+    {
+      "usage": {
+        "promptTokens": 2048,
+        "completionTokens": 1711,
+        "reasoningTokens": 1464
+      },
+      "latencyMs": 17489,
+      "attempts": 1,
+      "costUsd": 0,
+      "rateLimitHits": 0,
+      "usedToolCall": true,
+      "request": {
+        "model": "nvidia/nemotron-3-super-120b-a12b:free"
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 5480,
+        "completionTokens": 6730,
+        "reasoningTokens": 5318
+      },
+      "latencyMs": 151244,
+      "attempts": 1,
+      "costUsd": 0,
+      "rateLimitHits": 0,
+      "usedToolCall": true,
+      "request": {
+        "model": "nvidia/nemotron-3-super-120b-a12b:free"
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 5485,
+        "completionTokens": 8591,
+        "reasoningTokens": 7071
+      },
+      "latencyMs": 116898,
+      "attempts": 1,
+      "costUsd": 0,
+      "rateLimitHits": 0,
+      "usedToolCall": true,
+      "request": {
+        "model": "nvidia/nemotron-3-super-120b-a12b:free"
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 5484,
+        "completionTokens": 10680,
+        "reasoningTokens": 8904
+      },
+      "latencyMs": 264508,
+      "attempts": 1,
+      "costUsd": 0,
+      "rateLimitHits": 0,
+      "usedToolCall": true,
+      "request": {
+        "model": "nvidia/nemotron-3-super-120b-a12b:free"
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 5488,
+        "completionTokens": 7719,
+        "reasoningTokens": 6519
+      },
+      "latencyMs": 236576,
+      "attempts": 1,
+      "costUsd": 0,
+      "rateLimitHits": 0,
+      "usedToolCall": true,
+      "request": {
+        "model": "nvidia/nemotron-3-super-120b-a12b:free"
+      }
+    }
+  ],
+  "costUsd": 0
+}

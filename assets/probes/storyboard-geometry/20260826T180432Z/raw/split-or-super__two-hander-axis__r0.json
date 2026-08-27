@@ -1,0 +1,487 @@
+{
+  "cell": "split-or-super",
+  "fixture": "two-hander-axis",
+  "fixtureSha": "a1421fc3a811",
+  "repeat": 0,
+  "film": {
+    "units": "metres",
+    "aspect": 1.7777777777777777,
+    "sceneScaleNote": "The staged area is roughly 4 m wide by 3 m deep, with the narrow wooden table centered and the hanging bulb above it.",
+    "beats": [
+      {
+        "beatIndex": 0,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0.4,
+              "y": 1.6,
+              "z": 1.5
+            },
+            "lookAt": {
+              "x": 0.4,
+              "y": 1,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0.4,
+              "y": 1.6,
+              "z": 1.5
+            },
+            "lookAt": {
+              "x": 0.4,
+              "y": 1,
+              "z": 0
+            }
+          },
+          "focalStartMm": 8.5,
+          "focalEndMm": 8.5,
+          "rollDeg": 0,
+          "motion": "Static Shot",
+          "amplitude": "small",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 90,
+            "containerId": null,
+            "action": "seated, facing Subject 2 across the table",
+            "screenPosition": "center-left",
+            "depth": "foreground"
+          },
+          {
+            "subject": "<Subject 2>",
+            "x": 0.8,
+            "z": 0,
+            "endX": 0.8,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": -90,
+            "containerId": null,
+            "action": "seated, facing Subject 1 across the table",
+            "screenPosition": "center-right",
+            "depth": "foreground"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "WS",
+        "changes": [],
+        "containmentNotes": "<Subject 1> and <Subject 2> are seated on chairs at the narrow wooden table, facing each other; the hanging bulb is above the table.",
+        "proseNote": "A static wide two-shot from the side of the table shows both figures seated across from each other in a low‑lit room; the camera holds steady, capturing their full bodies and the hanging bulb overhead."
+      },
+      {
+        "beatIndex": 1,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 8.832
+            },
+            "lookAt": {
+              "x": 0.4,
+              "y": 1,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 1.233
+            },
+            "lookAt": {
+              "x": 0.4,
+              "y": 1,
+              "z": 0
+            }
+          },
+          "focalStartMm": 50,
+          "focalEndMm": 50,
+          "rollDeg": 0,
+          "motion": "Push In",
+          "amplitude": "large",
+          "speed": "medium",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 90,
+            "containerId": null,
+            "action": "seated, facing Subject 2",
+            "screenPosition": "left",
+            "depth": "foreground"
+          },
+          {
+            "subject": "<Subject 2>",
+            "x": 0.8,
+            "z": 0,
+            "endX": 0.8,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": -90,
+            "containerId": null,
+            "action": "seated, reacting",
+            "screenPosition": "center-right",
+            "depth": "midground"
+          }
+        ],
+        "principalSubject": "<Subject 2>",
+        "framing": "MCU",
+        "changes": [],
+        "containmentNotes": "",
+        "proseNote": "The camera pushes in slowly from a wide side view to a medium close‑up on the pink‑haired figure, tightening the framing on their reaction while the bored ape remains visible on the left side of the frame."
+      },
+      {
+        "beatIndex": 2,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": -0.5,
+              "y": 1,
+              "z": 1
+            },
+            "lookAt": {
+              "x": 1,
+              "y": 0,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0.5,
+              "y": 1,
+              "z": 1
+            },
+            "lookAt": {
+              "x": 1,
+              "y": 0,
+              "z": 0
+            }
+          },
+          "focalStartMm": 35,
+          "focalEndMm": 35,
+          "rollDeg": 0,
+          "motion": "Truck Right",
+          "amplitude": "medium",
+          "speed": "medium",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 90,
+            "containerId": null,
+            "action": "sits facing the other",
+            "screenPosition": "far-left",
+            "depth": "foreground"
+          },
+          {
+            "subject": "<Subject 2>",
+            "x": 1,
+            "z": 0,
+            "endX": 1,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": -90,
+            "containerId": null,
+            "action": "sits facing the other",
+            "screenPosition": "center",
+            "depth": "midground"
+          }
+        ],
+        "principalSubject": "<Subject 2>",
+        "framing": "MS",
+        "changes": [],
+        "containmentNotes": "Both subjects are seated at the table; no containment relationships.",
+        "proseNote": "The camera trucks right with medium amplitude at medium speed, arcing around the left shoulder of Subject 1 to achieve a reverse angle over the table that keeps Subject 2 in a medium shot, while Subject 1 remains seated and visible on the far left of the frame."
+      },
+      {
+        "beatIndex": 3,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0.5,
+              "y": 1.6,
+              "z": 6
+            },
+            "lookAt": {
+              "x": 1,
+              "y": 1.6,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0.5,
+              "y": 1.6,
+              "z": 6
+            },
+            "lookAt": {
+              "x": 0.5,
+              "y": 0,
+              "z": 0
+            }
+          },
+          "focalStartMm": 12,
+          "focalEndMm": 12,
+          "rollDeg": 0,
+          "motion": "Tilt Down",
+          "amplitude": "medium",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 90,
+            "containerId": null,
+            "action": "seated, hands on table, waiting",
+            "screenPosition": "left",
+            "depth": "midground"
+          },
+          {
+            "subject": "<Subject 2>",
+            "x": 1,
+            "z": 0,
+            "endX": 1,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": -90,
+            "containerId": null,
+            "action": "seated, reacting",
+            "screenPosition": "right",
+            "depth": "midground"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "EWS",
+        "changes": [],
+        "containmentNotes": "Both subjects are seated on chairs (not modeled) at the narrow wooden table.",
+        "proseNote": "The camera stays positioned over <Subject 1>'s right shoulder, looking toward <Subject 2> across the table. Without moving, it tilts downward to reveal the wooden surface between them, keeping both figures in the frame as the view shifts from their faces to the tabletop."
+      },
+      {
+        "beatIndex": 4,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 6.222
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 6.222
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          "focalStartMm": 35,
+          "focalEndMm": 35,
+          "rollDeg": 0,
+          "motion": "Static Shot",
+          "amplitude": "small",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 0,
+            "endX": 1,
+            "endZ": 0.5,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 90,
+            "containerId": null,
+            "action": "stands up and walks around the table to stand behind Subject 2",
+            "screenPosition": "center",
+            "depth": "midground"
+          },
+          {
+            "subject": "<Subject 2>",
+            "x": 1,
+            "z": 0,
+            "endX": 1,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": -90,
+            "containerId": null,
+            "action": "remains seated, watches",
+            "screenPosition": "center-right",
+            "depth": "midground"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "WS",
+        "changes": [
+          {
+            "subject": "<Subject 1>",
+            "what": "position",
+            "justifiedByBeatText": true
+          }
+        ],
+        "containmentNotes": "No subjects are contained; both sit on the ground.",
+        "proseNote": "The camera stays still, positioned about 6.2 metres back from the table, eye‑level, looking straight at the centre of the scene. Subject 1, a Bored Ape in a neon tracksuit, rises from his seat, walks around the narrow wooden table and stops standing behind Subject 2, the pink‑haired figure in the orange glasses and green jacket, who remains seated and watches. The wide shot captures both figures and the dimly lit room with the single hanging bulb above the table."
+      }
+    ]
+  },
+  "calls": [
+    {
+      "usage": {
+        "promptTokens": 1663,
+        "completionTokens": 1774,
+        "reasoningTokens": 1456
+      },
+      "latencyMs": 52037,
+      "attempts": 1,
+      "costUsd": 0,
+      "rateLimitHits": 0,
+      "usedToolCall": true,
+      "request": {
+        "model": "nvidia/nemotron-3-super-120b-a12b:free"
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 5111,
+        "completionTokens": 5538,
+        "reasoningTokens": 4258
+      },
+      "latencyMs": 63490,
+      "attempts": 1,
+      "costUsd": 0,
+      "rateLimitHits": 0,
+      "usedToolCall": true,
+      "request": {
+        "model": "nvidia/nemotron-3-super-120b-a12b:free"
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 5100,
+        "completionTokens": 11257,
+        "reasoningTokens": 8945
+      },
+      "latencyMs": 180961,
+      "attempts": 1,
+      "costUsd": 0,
+      "rateLimitHits": 0,
+      "usedToolCall": true,
+      "request": {
+        "model": "nvidia/nemotron-3-super-120b-a12b:free"
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 5103,
+        "completionTokens": 11544,
+        "reasoningTokens": 8460
+      },
+      "latencyMs": 142345,
+      "attempts": 1,
+      "costUsd": 0,
+      "rateLimitHits": 0,
+      "usedToolCall": true,
+      "request": {
+        "model": "nvidia/nemotron-3-super-120b-a12b:free"
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 5104,
+        "completionTokens": 8078,
+        "reasoningTokens": 6176
+      },
+      "latencyMs": 194692,
+      "attempts": 1,
+      "costUsd": 0,
+      "rateLimitHits": 0,
+      "usedToolCall": true,
+      "request": {
+        "model": "nvidia/nemotron-3-super-120b-a12b:free"
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 5104,
+        "completionTokens": 4898,
+        "reasoningTokens": 3850
+      },
+      "latencyMs": 50781,
+      "attempts": 1,
+      "costUsd": 0,
+      "rateLimitHits": 0,
+      "usedToolCall": true,
+      "request": {
+        "model": "nvidia/nemotron-3-super-120b-a12b:free"
+      }
+    }
+  ],
+  "costUsd": 0
+}

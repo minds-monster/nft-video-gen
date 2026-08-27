@@ -1,0 +1,791 @@
+[
+  {
+    "cell": "ultra-or-film",
+    "fixture": "captured",
+    "repeat": 0,
+    "failed": true,
+    "failure": "error",
+    "error": "NvidiaError: NVIDIA 504: OpenRouter returned finish_reason=error after 12063 tokens"
+  },
+  {
+    "cell": "ultra-or-film",
+    "fixture": "grid-launch",
+    "repeat": 0,
+    "failed": true,
+    "failure": "error",
+    "error": "NvidiaError: NVIDIA 504: OpenRouter returned finish_reason=error after 9052 tokens"
+  },
+  {
+    "cell": "ultra-or-film",
+    "fixture": "two-hander-axis",
+    "repeat": 0,
+    "failed": true,
+    "failure": "error",
+    "error": "NvidiaError: NVIDIA 504: OpenRouter returned finish_reason=error after 8037 tokens"
+  },
+  {
+    "cell": "ultra-or-film",
+    "fixture": "cut-to-black",
+    "repeat": 0,
+    "fixtureSha": "0f9426ef9a65",
+    "kind": "scene",
+    "metrics": {
+      "m1": {
+        "beatsExpected": 5,
+        "beatsReturned": 5,
+        "tagErrors": [],
+        "indexErrors": [],
+        "valid": true,
+        "canaries": {
+          "units": true,
+          "sensorNote": true
+        }
+      },
+      "m2": {
+        "floor": 0,
+        "soft": 6,
+        "byCode": {
+          "projects-outside-frame": 6
+        },
+        "softPerScene": 1.2
+      },
+      "m3": {
+        "scores": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "exact": 4,
+        "counted": 4,
+        "rows": [
+          {
+            "beat": 0,
+            "declared": "MCU",
+            "derived": "MCU",
+            "hFrac": 2.5185185185185186,
+            "score": 1
+          },
+          {
+            "beat": 1,
+            "declared": "WS",
+            "derived": "WS",
+            "hFrac": 0.4683448717936349,
+            "score": 1
+          },
+          {
+            "beat": 3,
+            "declared": "MS",
+            "derived": "MS",
+            "hFrac": 1.5185630813198145,
+            "score": 1
+          },
+          {
+            "beat": 4,
+            "declared": "MWS",
+            "derived": "MWS",
+            "hFrac": 0.8932724007763615,
+            "score": 1
+          }
+        ],
+        "mean": 1,
+        "exactRate": 1
+      },
+      "m4": {
+        "scores": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          0.5,
+          1,
+          1,
+          1,
+          1
+        ],
+        "sideErrors": 0,
+        "counted": 10,
+        "mean": 0.95,
+        "sideErrorRate": 0
+      },
+      "m5": {
+        "scores": [
+          1,
+          0.5,
+          1,
+          0.5
+        ],
+        "counted": 4,
+        "unscoreable": 0,
+        "directionFlips": 0,
+        "rows": [
+          {
+            "beat": 0,
+            "declared": "Static Shot",
+            "derived": "Static Shot",
+            "score": 1
+          },
+          {
+            "beat": 1,
+            "declared": "Tracking Shot",
+            "derived": "Truck Right",
+            "score": 0.5
+          },
+          {
+            "beat": 3,
+            "declared": "Static Shot",
+            "derived": "Static Shot",
+            "score": 1
+          },
+          {
+            "beat": 4,
+            "declared": "Tracking Shot",
+            "derived": "Push Out",
+            "score": 0.5
+          }
+        ],
+        "mean": 0.75
+      },
+      "m6": {
+        "basis": "derived",
+        "distinctBands": 4,
+        "modalShare": 0.25,
+        "spread": 3,
+        "mwsShare": 0.25,
+        "bands": [
+          "MCU",
+          "WS",
+          "MS",
+          "MWS"
+        ],
+        "extremeHitRate": 1
+      },
+      "m7": {
+        "staticCameraPairs": 2,
+        "meanDisplacementRel": 2.1999999999999997
+      },
+      "m8": {
+        "teleports": 0,
+        "wrongDirection": 0,
+        "unjustifiedDrift": 0,
+        "missedMove": 0,
+        "heightInstability": 0,
+        "selfReportRecall": null
+      },
+      "m9": {
+        "expected": 2,
+        "hit": 2,
+        "applicable": true,
+        "rate": 1
+      },
+      "m10": {
+        "tested": false,
+        "axisErrors": 0,
+        "unpermittedCrosses": 0,
+        "pairs": []
+      },
+      "m11": {
+        "expected": 1,
+        "correct": 1,
+        "rate": 1
+      },
+      "m12": {
+        "earlyReveals": 0,
+        "omissions": 0,
+        "beats": 5,
+        "earlyRevealRate": 0,
+        "omissionRate": 0
+      },
+      "m13": {
+        "failures": 4,
+        "compiled": [
+          {
+            "beat": 0,
+            "text": "A deserted city at dusk, wet streets, a single enormous concrete tower dominating the skyline. Live-action, cinematic. A medium close-up at eye level frames the scene. <Subject 1>, inside <Subject 2>, is in the centre of frame in the foreground, sits in driver's seat, hands on steering wheel. <Subject 2> is in the centre of frame in the foreground, parked at foot of tower, engine idling. <Subject 3> is in the centre of frame in the background, looms behind the car, brutalist concrete facade stained by weather. The camera holds a static shot. <Subject 1> is seated inside <Subject 2> (driver in car); groundOffsetM 0.5m reflects seat height. <Subject 2> rests on ground (groundOffsetM 0). <Subject 3> stands on ground."
+          },
+          {
+            "beat": 1,
+            "text": "Live-action, cinematic. A wide shot from a high angle frames the scene. <Subject 1>, inside <Subject 2>, is in the centre of frame in the foreground, drives the car down the empty street. <Subject 2> is in the centre of frame in the foreground, accelerates smoothly down the deserted street, four round LED headlamps cutting the gloom. <Subject 3> is in the centre of frame in the background, recedes in the background as the car pulls away. The camera truck rights with large amplitude at slow speed. <Subject 1> remains inside <Subject 2> (driver in car); groundOffsetM 0.5m. <Subject 2> on ground. <Subject 3> stationary on ground."
+          },
+          {
+            "beat": 2,
+            "text": "The screen cuts to black. the screen holds black for a long moment before the world returns"
+          },
+          {
+            "beat": 3,
+            "text": "Live-action, cinematic. A medium shot from a high angle frames the scene. <Subject 1>, inside <Subject 3>, is in the centre of frame in the foreground, stands alone on the tower roof, facing the front edge. <Subject 3> is in the centre of frame in the background, the roof stretches around the driver; the city spreads out far below. The camera holds a static shot. <Subject 1> stands on <Subject 3> roof (groundOffsetM 150m equals tower height). No car present."
+          },
+          {
+            "beat": 4,
+            "text": "Live-action, cinematic. A medium-wide shot from a high angle frames the scene. <Subject 1>, inside <Subject 3>, is in the centre of frame in the foreground, walks slowly to the roof edge and looks down at the street far below. <Subject 3> is in the centre of frame in the background, the city lights flicker far below its base. The camera push outs with large amplitude at slow speed. <Subject 1> remains on <Subject 3> roof (groundOffsetM 150m). Walks 35m along +Z axis to front parapet."
+          }
+        ]
+      },
+      "m17": {
+        "thin": 0,
+        "missingFields": 0,
+        "applicable": true
+      }
+    },
+    "violations": [
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 2> is listed in frame but projects to (0.00, -2.10).",
+        "beat": 0,
+        "subject": "<Subject 2>"
+      },
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 3> is listed in frame but projects to (0.00, 16.26).",
+        "beat": 0,
+        "subject": "<Subject 3>"
+      },
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 3> is listed in frame but projects to (0.00, 41.47).",
+        "beat": 1,
+        "subject": "<Subject 3>"
+      },
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 1> is listed in frame but projects to (0.00, 1.45).",
+        "beat": 3,
+        "subject": "<Subject 1>"
+      },
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 3> is listed in frame but projects to (0.00, -21.33).",
+        "beat": 3,
+        "subject": "<Subject 3>"
+      },
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 3> is listed in frame but projects to (0.00, -12.55).",
+        "beat": 4,
+        "subject": "<Subject 3>"
+      },
+      {
+        "code": "identical-consecutive-camera",
+        "severity": "soft",
+        "detail": "Beats 1 and 2 have the same camera pose.",
+        "beat": 1
+      },
+      {
+        "code": "identical-consecutive-camera",
+        "severity": "soft",
+        "detail": "Beats 4 and 5 have the same camera pose.",
+        "beat": 4
+      },
+      {
+        "code": "h3-compile-failure",
+        "severity": "soft",
+        "detail": "Beat 1: leaks schema scaffolding.",
+        "beat": 0
+      },
+      {
+        "code": "h3-compile-failure",
+        "severity": "soft",
+        "detail": "Beat 2: leaks schema scaffolding.",
+        "beat": 1
+      },
+      {
+        "code": "h3-compile-failure",
+        "severity": "soft",
+        "detail": "Beat 4: leaks schema scaffolding.",
+        "beat": 3
+      },
+      {
+        "code": "h3-compile-failure",
+        "severity": "soft",
+        "detail": "Beat 5: leaks schema scaffolding.",
+        "beat": 4
+      }
+    ],
+    "floorCount": 0,
+    "passesFloor": true,
+    "derivedBands": [
+      "MCU",
+      "WS",
+      null,
+      "MS",
+      "MWS"
+    ],
+    "prose": [
+      {
+        "beat": 0,
+        "text": "A static medium close-up frames the driver through the windscreen: the neon yellow tracksuit and red heart-shaped sunglasses catch the dusk light. The camera sits at eye level, three metres back on the street, locked off. The massive concrete tower rises centered behind the car, its stepped balconies and recessed windows filling the background. No camera movement; the only motion is the faint idle vibration of the car."
+      },
+      {
+        "beat": 1,
+        "text": "The camera tracks parallel to the street at a constant three-metre offset, holding a wide shot on the white sports car as it pulls away from the tower and accelerates down the empty boulevard. The four circular LED headlamps bloom in the gathering dark. The brutalist tower slides leftward across the background, its vertical staining catching the last light. The move is slow and unhurried, matching the car's smooth departure."
+      },
+      {
+        "beat": 2,
+        "text": "Cut to black. The screen remains completely dark for an extended beat, silencing the city."
+      },
+      {
+        "beat": 3,
+        "text": "A static medium shot on the tower roof: the driver stands centered, neon yellow tracksuit vivid against grey concrete, red heart-shaped sunglasses reflecting the city lights far below. The camera sits five metres back on the roof surface, slightly elevated, looking toward the front edge. The vast brutalist structure drops away behind him. No movement; the wind barely stirs the yellow hat."
+      },
+      {
+        "beat": 4,
+        "text": "The camera tracks sideways at a steady five-metre distance, maintaining a medium wide shot as the driver walks the length of the roof toward the front parapet. He arrives at the edge and looks straight down over the sheer concrete face to the deserted street 150 metres below. The move is slow, deliberate, unhurried; the city's faint glow rises to meet him."
+      }
+    ],
+    "h3": [
+      {
+        "beat": 0,
+        "text": "A deserted city at dusk, wet streets, a single enormous concrete tower dominating the skyline. Live-action, cinematic. A medium close-up at eye level frames the scene. <Subject 1>, inside <Subject 2>, is in the centre of frame in the foreground, sits in driver's seat, hands on steering wheel. <Subject 2> is in the centre of frame in the foreground, parked at foot of tower, engine idling. <Subject 3> is in the centre of frame in the background, looms behind the car, brutalist concrete facade stained by weather. The camera holds a static shot. <Subject 1> is seated inside <Subject 2> (driver in car); groundOffsetM 0.5m reflects seat height. <Subject 2> rests on ground (groundOffsetM 0). <Subject 3> stands on ground."
+      },
+      {
+        "beat": 1,
+        "text": "Live-action, cinematic. A wide shot from a high angle frames the scene. <Subject 1>, inside <Subject 2>, is in the centre of frame in the foreground, drives the car down the empty street. <Subject 2> is in the centre of frame in the foreground, accelerates smoothly down the deserted street, four round LED headlamps cutting the gloom. <Subject 3> is in the centre of frame in the background, recedes in the background as the car pulls away. The camera truck rights with large amplitude at slow speed. <Subject 1> remains inside <Subject 2> (driver in car); groundOffsetM 0.5m. <Subject 2> on ground. <Subject 3> stationary on ground."
+      },
+      {
+        "beat": 2,
+        "text": "The screen cuts to black. the screen holds black for a long moment before the world returns"
+      },
+      {
+        "beat": 3,
+        "text": "Live-action, cinematic. A medium shot from a high angle frames the scene. <Subject 1>, inside <Subject 3>, is in the centre of frame in the foreground, stands alone on the tower roof, facing the front edge. <Subject 3> is in the centre of frame in the background, the roof stretches around the driver; the city spreads out far below. The camera holds a static shot. <Subject 1> stands on <Subject 3> roof (groundOffsetM 150m equals tower height). No car present."
+      },
+      {
+        "beat": 4,
+        "text": "Live-action, cinematic. A medium-wide shot from a high angle frames the scene. <Subject 1>, inside <Subject 3>, is in the centre of frame in the foreground, walks slowly to the roof edge and looks down at the street far below. <Subject 3> is in the centre of frame in the background, the city lights flicker far below its base. The camera push outs with large amplitude at slow speed. <Subject 1> remains on <Subject 3> roof (groundOffsetM 150m). Walks 35m along +Z axis to front parapet."
+      }
+    ],
+    "costUsd": 0
+  },
+  {
+    "cell": "ultra-or-film",
+    "fixture": "scale-extremes",
+    "repeat": 0,
+    "failed": true,
+    "failure": "error",
+    "error": "NvidiaError: NVIDIA 502: Upstream error from Nvidia: Service temporarily overloaded"
+  },
+  {
+    "cell": "super-or-film",
+    "fixture": "captured",
+    "repeat": 0,
+    "fixtureSha": "2b3a0fa3b229",
+    "kind": "scene",
+    "metrics": {
+      "m1": {
+        "beatsExpected": 4,
+        "beatsReturned": 4,
+        "tagErrors": [],
+        "indexErrors": [],
+        "valid": true,
+        "canaries": {
+          "units": true,
+          "sensorNote": true
+        }
+      },
+      "m2": {
+        "floor": 2,
+        "soft": 9,
+        "byCode": {
+          "projects-outside-frame": 9,
+          "containment-invalid": 2
+        },
+        "softPerScene": 2.25
+      },
+      "m3": {
+        "scores": [
+          1,
+          0,
+          0.5,
+          0
+        ],
+        "exact": 1,
+        "counted": 4,
+        "rows": [
+          {
+            "beat": 0,
+            "declared": "WS",
+            "derived": "WS",
+            "hFrac": 0.34493950850341226,
+            "score": 1
+          },
+          {
+            "beat": 1,
+            "declared": "MCU",
+            "derived": "WS",
+            "hFrac": 0.3555555007467823,
+            "score": 0
+          },
+          {
+            "beat": 2,
+            "declared": "MS",
+            "derived": "MCU",
+            "hFrac": 2.8444299736133436,
+            "score": 0.5
+          },
+          {
+            "beat": 3,
+            "declared": "EWS",
+            "derived": "MWS",
+            "hFrac": 0.8376411134050566,
+            "score": 0
+          }
+        ],
+        "mean": 0.375,
+        "exactRate": 0.25
+      },
+      "m4": {
+        "scores": [
+          0,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          0.5,
+          1
+        ],
+        "sideErrors": 0,
+        "counted": 16,
+        "mean": 0.90625,
+        "sideErrorRate": 0
+      },
+      "m5": {
+        "scores": [
+          0.5,
+          1,
+          0.5,
+          1
+        ],
+        "counted": 4,
+        "unscoreable": 0,
+        "directionFlips": 0,
+        "rows": [
+          {
+            "beat": 0,
+            "declared": "Tracking Shot",
+            "derived": "Truck Right",
+            "score": 0.5
+          },
+          {
+            "beat": 1,
+            "declared": "Push In",
+            "derived": "Push In",
+            "score": 1
+          },
+          {
+            "beat": 2,
+            "declared": "Tracking Shot",
+            "derived": "Truck Right",
+            "score": 0.5
+          },
+          {
+            "beat": 3,
+            "declared": "Push Out",
+            "derived": "Push Out",
+            "score": 1
+          }
+        ],
+        "mean": 0.75
+      },
+      "m6": {
+        "basis": "derived",
+        "distinctBands": 3,
+        "modalShare": 0.5,
+        "spread": 3,
+        "mwsShare": 0.25,
+        "bands": [
+          "WS",
+          "WS",
+          "MCU",
+          "MWS"
+        ],
+        "extremeHitRate": null
+      },
+      "m7": {
+        "staticCameraPairs": 0,
+        "meanDisplacementRel": 0.42465139234365434
+      },
+      "m8": {
+        "teleports": 0,
+        "wrongDirection": 0,
+        "unjustifiedDrift": 0,
+        "missedMove": 0,
+        "heightInstability": 0,
+        "selfReportRecall": null
+      },
+      "m9": {
+        "expected": 1,
+        "hit": 1,
+        "applicable": true,
+        "rate": 1
+      },
+      "m10": {
+        "tested": false,
+        "axisErrors": 0,
+        "unpermittedCrosses": 0,
+        "pairs": []
+      },
+      "m11": {
+        "expected": 0,
+        "correct": 0,
+        "rate": null
+      },
+      "m12": {
+        "earlyReveals": 0,
+        "omissions": 0,
+        "beats": 4,
+        "earlyRevealRate": 0,
+        "omissionRate": 0
+      },
+      "m13": {
+        "failures": 0,
+        "compiled": [
+          {
+            "beat": 0,
+            "text": "Wet-night pit lane under harsh neon signs and floodlights; rain-slick asphalt reflects multicoloured glows, mist hangs in the air, and distant thunder rumbles. Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the background, walking toward jacket-mannequin. <Subject 2> is in the centre of frame in the background, displayed on a mannequin. <Subject 3> is at the far right of frame in the foreground, parked ahead. <Subject 4> is at the far right of frame in the midground, watching the scene. The camera truck rights with medium amplitude at medium speed. <Subject 2> is displayed on a mannequin beside <Subject 1>."
+          },
+          {
+            "beat": 1,
+            "text": "Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the foreground, slipping on the velvet jacket. <Subject 2> is at the far left of frame in the foreground, being slipped onto the ape. <Subject 3> is at the far right of frame in the foreground, parked ahead. <Subject 4> is at the far right of frame in the background, watching the scene. The camera push ins with medium amplitude at medium speed. <Subject 2> is being worn by <Subject 1>."
+          },
+          {
+            "beat": 2,
+            "text": "Live-action, cinematic. A medium close-up at eye level frames the scene. <Subject 1> is in the centre of frame in the foreground, striding to the supercar. <Subject 2>, inside <Subject 1>, is in the centre of frame in the foreground, worn by the ape as he walks to the car. <Subject 3> is at the far right of frame in the foreground, parked ahead. <Subject 4> is at the far right of frame in the background, watching the scene. The camera truck rights with medium amplitude at medium speed. <Subject 2> is worn by <Subject 1>."
+          },
+          {
+            "beat": 3,
+            "text": "Live-action, cinematic. A medium-wide shot at eye level frames the scene. <Subject 1>, inside <Subject 3>, is in the centre of frame in the foreground, driving the supercar. <Subject 2>, inside <Subject 1>, is in the centre of frame in the foreground, worn by the ape inside the car. <Subject 3> is at the far right of frame in the foreground, accelerating past the barrier. <Subject 4> is at the far right of frame in the background, watching the scene. The camera push outs with medium amplitude at medium speed. <Subject 1> is inside <Subject 3>; <Subject 2> is worn by <Subject 1>."
+          }
+        ]
+      },
+      "m17": {
+        "thin": 0,
+        "missingFields": 0,
+        "applicable": true
+      }
+    },
+    "violations": [
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 3> is listed in frame but projects to (4.75, -0.22).",
+        "beat": 0,
+        "subject": "<Subject 3>"
+      },
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 4> is listed in frame but projects to (3.97, -0.05).",
+        "beat": 0,
+        "subject": "<Subject 4>"
+      },
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 2> is listed in frame but projects to (-1.45, -0.24).",
+        "beat": 1,
+        "subject": "<Subject 2>"
+      },
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 3> is listed in frame but projects to (1.34, -0.16).",
+        "beat": 1,
+        "subject": "<Subject 3>"
+      },
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 4> is listed in frame but projects to (1.33, -0.06).",
+        "beat": 1,
+        "subject": "<Subject 4>"
+      },
+      {
+        "code": "containment-invalid",
+        "severity": "floor",
+        "detail": "<Subject 2> sits at 0m inside <Subject 1>, which is 1.8m tall.",
+        "beat": 2,
+        "subject": "<Subject 2>"
+      },
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 2> is listed in frame but projects to (0.00, -1.92).",
+        "beat": 2,
+        "subject": "<Subject 2>"
+      },
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 3> is listed in frame but projects to (10.77, -1.27).",
+        "beat": 2,
+        "subject": "<Subject 3>"
+      },
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 4> is listed in frame but projects to (7.92, -0.54).",
+        "beat": 2,
+        "subject": "<Subject 4>"
+      },
+      {
+        "code": "containment-invalid",
+        "severity": "floor",
+        "detail": "<Subject 2> sits at 0m inside <Subject 1>, which is 1.8m tall.",
+        "beat": 3,
+        "subject": "<Subject 2>"
+      },
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 4> is listed in frame but projects to (1.30, -0.24).",
+        "beat": 3,
+        "subject": "<Subject 4>"
+      },
+      {
+        "code": "framing-disagreement",
+        "severity": "soft",
+        "detail": "Beat 2 declares MCU; its own geometry gives WS (hFrac 0.356).",
+        "beat": 1
+      },
+      {
+        "code": "framing-disagreement",
+        "severity": "soft",
+        "detail": "Beat 4 declares EWS; its own geometry gives MWS (hFrac 0.838).",
+        "beat": 3
+      }
+    ],
+    "floorCount": 2,
+    "passesFloor": false,
+    "derivedBands": [
+      "WS",
+      "WS",
+      "MCU",
+      "MWS"
+    ],
+    "prose": [
+      {
+        "beat": 0,
+        "text": "The camera tracks low and left-to-right alongside the wet pit lane as the Bored Ape strides toward the jacket-mannequin, rain dripping from his neon tracksuit and neon reflections shimmering on the asphalt."
+      },
+      {
+        "beat": 1,
+        "text": "The camera pushes in slowly to focus on the ape as he slips the deep-red velvet jacket over his shoulders, adjusting the silver filigree collar while rain streaks the visor of his red heart-shaped sunglasses."
+      },
+      {
+        "beat": 2,
+        "text": "The camera continues tracking the ape’s steps to the camouflaged supercar, then arcs slightly around the vehicle as he pulls the door handle and slides into the driver’s seat, interior lights flashing."
+      },
+      {
+        "beat": 3,
+        "text": "The camera pulls back gently as the car accelerates past the barrier, its bright yellow wheels spraying rain, while the pink-haired rival watches from the concrete barrier, headlights cutting through the mist."
+      }
+    ],
+    "h3": [
+      {
+        "beat": 0,
+        "text": "Wet-night pit lane under harsh neon signs and floodlights; rain-slick asphalt reflects multicoloured glows, mist hangs in the air, and distant thunder rumbles. Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the background, walking toward jacket-mannequin. <Subject 2> is in the centre of frame in the background, displayed on a mannequin. <Subject 3> is at the far right of frame in the foreground, parked ahead. <Subject 4> is at the far right of frame in the midground, watching the scene. The camera truck rights with medium amplitude at medium speed. <Subject 2> is displayed on a mannequin beside <Subject 1>."
+      },
+      {
+        "beat": 1,
+        "text": "Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the foreground, slipping on the velvet jacket. <Subject 2> is at the far left of frame in the foreground, being slipped onto the ape. <Subject 3> is at the far right of frame in the foreground, parked ahead. <Subject 4> is at the far right of frame in the background, watching the scene. The camera push ins with medium amplitude at medium speed. <Subject 2> is being worn by <Subject 1>."
+      },
+      {
+        "beat": 2,
+        "text": "Live-action, cinematic. A medium close-up at eye level frames the scene. <Subject 1> is in the centre of frame in the foreground, striding to the supercar. <Subject 2>, inside <Subject 1>, is in the centre of frame in the foreground, worn by the ape as he walks to the car. <Subject 3> is at the far right of frame in the foreground, parked ahead. <Subject 4> is at the far right of frame in the background, watching the scene. The camera truck rights with medium amplitude at medium speed. <Subject 2> is worn by <Subject 1>."
+      },
+      {
+        "beat": 3,
+        "text": "Live-action, cinematic. A medium-wide shot at eye level frames the scene. <Subject 1>, inside <Subject 3>, is in the centre of frame in the foreground, driving the supercar. <Subject 2>, inside <Subject 1>, is in the centre of frame in the foreground, worn by the ape inside the car. <Subject 3> is at the far right of frame in the foreground, accelerating past the barrier. <Subject 4> is at the far right of frame in the background, watching the scene. The camera push outs with medium amplitude at medium speed. <Subject 1> is inside <Subject 3>; <Subject 2> is worn by <Subject 1>."
+      }
+    ],
+    "costUsd": 0
+  },
+  {
+    "cell": "super-or-film",
+    "fixture": "grid-launch",
+    "repeat": 0,
+    "failed": true,
+    "failure": "error",
+    "error": "NvidiaError: NVIDIA 429: {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day\",\"code\":429,\"metadata\":{\"headers\":{\"X-RateLimit-Limit\":\"50\",\"X-RateLimit-Remaining\":\"0\",\"X-RateLimit-Reset\":\"1787788800000\"},\"limit_source\":\"openrouter_free_tier_daily\",\"remedy_hint\":\"Wait for the daily reset (see X-RateLimit-Reset), or purchase credits to raise your free-model "
+  },
+  {
+    "cell": "super-or-film",
+    "fixture": "two-hander-axis",
+    "repeat": 0,
+    "failed": true,
+    "failure": "error",
+    "error": "NvidiaError: NVIDIA 429: {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day\",\"code\":429,\"metadata\":{\"headers\":{\"X-RateLimit-Limit\":\"50\",\"X-RateLimit-Remaining\":\"0\",\"X-RateLimit-Reset\":\"1787788800000\"},\"limit_source\":\"openrouter_free_tier_daily\",\"remedy_hint\":\"Wait for the daily reset (see X-RateLimit-Reset), or purchase credits to raise your free-model "
+  },
+  {
+    "cell": "super-or-film",
+    "fixture": "cut-to-black",
+    "repeat": 0,
+    "failed": true,
+    "failure": "error",
+    "error": "NvidiaError: NVIDIA 429: {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day\",\"code\":429,\"metadata\":{\"headers\":{\"X-RateLimit-Limit\":\"50\",\"X-RateLimit-Remaining\":\"0\",\"X-RateLimit-Reset\":\"1787788800000\"},\"limit_source\":\"openrouter_free_tier_daily\",\"remedy_hint\":\"Wait for the daily reset (see X-RateLimit-Reset), or purchase credits to raise your free-model "
+  },
+  {
+    "cell": "super-or-film",
+    "fixture": "scale-extremes",
+    "repeat": 0,
+    "failed": true,
+    "failure": "error",
+    "error": "NvidiaError: NVIDIA 429: {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day\",\"code\":429,\"metadata\":{\"headers\":{\"X-RateLimit-Limit\":\"50\",\"X-RateLimit-Remaining\":\"0\",\"X-RateLimit-Reset\":\"1787788800000\"},\"limit_source\":\"openrouter_free_tier_daily\",\"remedy_hint\":\"Wait for the daily reset (see X-RateLimit-Reset), or purchase credits to raise your free-model "
+  },
+  {
+    "cell": "split-or",
+    "fixture": "captured",
+    "repeat": 0,
+    "failed": true,
+    "failure": "error",
+    "error": "NvidiaError: NVIDIA 429: {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day\",\"code\":429,\"metadata\":{\"headers\":{\"X-RateLimit-Limit\":\"50\",\"X-RateLimit-Remaining\":\"0\",\"X-RateLimit-Reset\":\"1787788800000\"},\"limit_source\":\"openrouter_free_tier_daily\",\"remedy_hint\":\"Wait for the daily reset (see X-RateLimit-Reset), or purchase credits to raise your free-model "
+  },
+  {
+    "cell": "split-or",
+    "fixture": "grid-launch",
+    "repeat": 0,
+    "failed": true,
+    "failure": "error",
+    "error": "NvidiaError: NVIDIA 429: {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day\",\"code\":429,\"metadata\":{\"headers\":{\"X-RateLimit-Limit\":\"50\",\"X-RateLimit-Remaining\":\"0\",\"X-RateLimit-Reset\":\"1787788800000\"},\"limit_source\":\"openrouter_free_tier_daily\",\"remedy_hint\":\"Wait for the daily reset (see X-RateLimit-Reset), or purchase credits to raise your free-model "
+  },
+  {
+    "cell": "split-or",
+    "fixture": "two-hander-axis",
+    "repeat": 0,
+    "failed": true,
+    "failure": "error",
+    "error": "NvidiaError: NVIDIA 429: {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day\",\"code\":429,\"metadata\":{\"headers\":{\"X-RateLimit-Limit\":\"50\",\"X-RateLimit-Remaining\":\"0\",\"X-RateLimit-Reset\":\"1787788800000\"},\"limit_source\":\"openrouter_free_tier_daily\",\"remedy_hint\":\"Wait for the daily reset (see X-RateLimit-Reset), or purchase credits to raise your free-model "
+  },
+  {
+    "cell": "split-or",
+    "fixture": "cut-to-black",
+    "repeat": 0,
+    "failed": true,
+    "failure": "error",
+    "error": "NvidiaError: NVIDIA 429: {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day\",\"code\":429,\"metadata\":{\"headers\":{\"X-RateLimit-Limit\":\"50\",\"X-RateLimit-Remaining\":\"0\",\"X-RateLimit-Reset\":\"1787788800000\"},\"limit_source\":\"openrouter_free_tier_daily\",\"remedy_hint\":\"Wait for the daily reset (see X-RateLimit-Reset), or purchase credits to raise your free-model "
+  },
+  {
+    "cell": "split-or",
+    "fixture": "scale-extremes",
+    "repeat": 0,
+    "failed": true,
+    "failure": "error",
+    "error": "NvidiaError: NVIDIA 429: {\"error\":{\"message\":\"Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day\",\"code\":429,\"metadata\":{\"headers\":{\"X-RateLimit-Limit\":\"50\",\"X-RateLimit-Remaining\":\"0\",\"X-RateLimit-Reset\":\"1787788800000\"},\"limit_source\":\"openrouter_free_tier_daily\",\"remedy_hint\":\"Wait for the daily reset (see X-RateLimit-Reset), or purchase credits to raise your free-model "
+  }
+]

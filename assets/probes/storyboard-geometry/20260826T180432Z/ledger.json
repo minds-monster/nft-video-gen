@@ -1,0 +1,226 @@
+{
+  "runId": "20260826T180432Z",
+  "totalUsd": 0,
+  "entries": [
+    {
+      "tag": "ultra-or-film__captured__r0",
+      "cell": "ultra-or-film",
+      "fixture": "captured",
+      "repeat": 0,
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "costUsd": 0,
+      "calls": 1,
+      "promptTokens": 5252,
+      "completionTokens": 16743,
+      "reasoningTokens": 10012,
+      "wallMs": 529284
+    },
+    {
+      "tag": "ultra-or-film__grid-launch__r0",
+      "cell": "ultra-or-film",
+      "fixture": "grid-launch",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "ultra-or-film__two-hander-axis__r0",
+      "cell": "ultra-or-film",
+      "fixture": "two-hander-axis",
+      "repeat": 0,
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "costUsd": 0,
+      "calls": 1,
+      "promptTokens": 4867,
+      "completionTokens": 11852,
+      "reasoningTokens": 6218,
+      "wallMs": 387624
+    },
+    {
+      "tag": "ultra-or-film__cut-to-black__r0",
+      "cell": "ultra-or-film",
+      "fixture": "cut-to-black",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "ultra-or-film__scale-extremes__r0",
+      "cell": "ultra-or-film",
+      "fixture": "scale-extremes",
+      "repeat": 0,
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "costUsd": 0,
+      "calls": 1,
+      "promptTokens": 4731,
+      "completionTokens": 6341,
+      "reasoningTokens": 2100,
+      "wallMs": 128399
+    },
+    {
+      "tag": "super-or-film__captured__r0",
+      "cell": "super-or-film",
+      "fixture": "captured",
+      "repeat": 0,
+      "model": "nvidia/nemotron-3-super-120b-a12b:free",
+      "costUsd": 0,
+      "calls": 1,
+      "promptTokens": 5252,
+      "completionTokens": 22811,
+      "reasoningTokens": 16126,
+      "wallMs": 547540
+    },
+    {
+      "tag": "super-or-film__grid-launch__r0",
+      "cell": "super-or-film",
+      "fixture": "grid-launch",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "super-or-film__two-hander-axis__r0",
+      "cell": "super-or-film",
+      "fixture": "two-hander-axis",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "super-or-film__cut-to-black__r0",
+      "cell": "super-or-film",
+      "fixture": "cut-to-black",
+      "repeat": 0,
+      "model": "nvidia/nemotron-3-super-120b-a12b:free",
+      "costUsd": 0,
+      "calls": 1,
+      "promptTokens": 4853,
+      "completionTokens": 23529,
+      "reasoningTokens": 17654,
+      "wallMs": 334564
+    },
+    {
+      "tag": "super-or-film__scale-extremes__r0",
+      "cell": "super-or-film",
+      "fixture": "scale-extremes",
+      "repeat": 0,
+      "model": "nvidia/nemotron-3-super-120b-a12b:free",
+      "costUsd": 0,
+      "calls": 1,
+      "promptTokens": 4731,
+      "completionTokens": 15181,
+      "reasoningTokens": 10484,
+      "wallMs": 184338
+    },
+    {
+      "tag": "split-or__captured__r0",
+      "cell": "split-or",
+      "fixture": "captured",
+      "repeat": 0,
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "costUsd": 0,
+      "calls": 5,
+      "promptTokens": 24063,
+      "completionTokens": 44639,
+      "reasoningTokens": 33403,
+      "wallMs": 1283736
+    },
+    {
+      "tag": "split-or__grid-launch__r0",
+      "cell": "split-or",
+      "fixture": "grid-launch",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "split-or__two-hander-axis__r0",
+      "cell": "split-or",
+      "fixture": "two-hander-axis",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "split-or__cut-to-black__r0",
+      "cell": "split-or",
+      "fixture": "cut-to-black",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "split-or__scale-extremes__r0",
+      "cell": "split-or",
+      "fixture": "scale-extremes",
+      "repeat": 0,
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "costUsd": 0,
+      "calls": 6,
+      "promptTokens": 26480,
+      "completionTokens": 25736,
+      "reasoningTokens": 18845,
+      "wallMs": 776262
+    },
+    {
+      "tag": "split-or-super__captured__r0",
+      "cell": "split-or-super",
+      "fixture": "captured",
+      "repeat": 0,
+      "model": "nvidia/nemotron-3-super-120b-a12b:free",
+      "costUsd": 0,
+      "calls": 5,
+      "promptTokens": 23985,
+      "completionTokens": 35431,
+      "reasoningTokens": 29276,
+      "wallMs": 786721
+    },
+    {
+      "tag": "split-or-super__grid-launch__r0",
+      "cell": "split-or-super",
+      "fixture": "grid-launch",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "split-or-super__two-hander-axis__r0",
+      "cell": "split-or-super",
+      "fixture": "two-hander-axis",
+      "repeat": 0,
+      "model": "nvidia/nemotron-3-super-120b-a12b:free",
+      "costUsd": 0,
+      "calls": 6,
+      "promptTokens": 27185,
+      "completionTokens": 43089,
+      "reasoningTokens": 33145,
+      "wallMs": 684312
+    },
+    {
+      "tag": "split-or-super__cut-to-black__r0",
+      "cell": "split-or-super",
+      "fixture": "cut-to-black",
+      "repeat": 0,
+      "model": "nvidia/nemotron-3-super-120b-a12b:free",
+      "costUsd": 0,
+      "calls": 6,
+      "promptTokens": 27168,
+      "completionTokens": 33744,
+      "reasoningTokens": 26399,
+      "wallMs": 460885
+    },
+    {
+      "tag": "split-or-super__scale-extremes__r0",
+      "cell": "split-or-super",
+      "fixture": "scale-extremes",
+      "repeat": 0,
+      "model": "nvidia/nemotron-3-super-120b-a12b:free",
+      "costUsd": 0,
+      "calls": 6,
+      "promptTokens": 26563,
+      "completionTokens": 20213,
+      "reasoningTokens": 15223,
+      "wallMs": 502248
+    }
+  ]
+}

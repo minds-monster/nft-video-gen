@@ -24,6 +24,11 @@ import { cn } from '../../../lib/cn';
  *
  * "Screen Tests" lands here as a third view when the Director starts proposing them. The list is
  * data so that becomes one entry rather than a restructure.
+ *
+ * DAILIES OPENS FIRST, and sits leftmost. The Storyboarder is Beta and opt-in — a film shot
+ * straight from the screenplay never touches it — so opening on an empty Storyboard showed most
+ * visitors a view of a step they had deliberately skipped, while the footage they paid for sat
+ * behind a tab. The default should be the thing that exists.
  */
 
 const Tabs = ({ views, view, setView }) => (
@@ -45,33 +50,60 @@ const Tabs = ({ views, view, setView }) => (
   </div>
 );
 
-const TimelinePanel = ({ id, storyboarder, director, token, budget, status }) => {
-  const [view, setView] = useState('storyboard');
+const TimelinePanel = ({
+  id,
+  storyboarder,
+  director,
+  token,
+  budget,
+  status,
+  activeTakeId,
+  onPreviewTake,
+}) => {
+  const [view, setView] = useState('dailies');
 
   const views = [
-    { id: 'storyboard', label: 'Storyboard' },
-    { id: 'tests', label: 'Screen Tests', count: (director?.screenTests ?? []).length || null },
     { id: 'dailies', label: 'Dailies', count: (director?.finalTakes ?? []).length || null },
+    { id: 'tests', label: 'Screen Tests', count: (director?.screenTests ?? []).length || null },
+    { id: 'storyboard', label: 'Storyboard' },
   ];
 
   const tabs = <Tabs views={views} view={view} setView={setView} />;
 
   if (view === 'tests') {
-    return <ScreenTestsPanel id={id} director={director} status={status} tabs={tabs} />;
+    return (
+      <ScreenTestsPanel
+        id={id}
+        director={director}
+        status={status}
+        tabs={tabs}
+        activeTakeId={activeTakeId}
+        onPreviewTake={onPreviewTake}
+      />
+    );
   }
 
-  if (view === 'dailies') {
-    return <DailiesPanel id={id} director={director} status={status} tabs={tabs} />;
+  if (view === 'storyboard') {
+    return (
+      <StoryboardPanel
+        id={id}
+        storyboarder={storyboarder}
+        token={token}
+        budget={budget}
+        status={status}
+        tabs={tabs}
+      />
+    );
   }
 
   return (
-    <StoryboardPanel
+    <DailiesPanel
       id={id}
-      storyboarder={storyboarder}
-      token={token}
-      budget={budget}
+      director={director}
       status={status}
       tabs={tabs}
+      activeTakeId={activeTakeId}
+      onPreviewTake={onPreviewTake}
     />
   );
 };

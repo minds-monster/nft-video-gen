@@ -1,0 +1,306 @@
+{
+  "runId": "20260826T153723Z",
+  "startedAt": "2026-08-26T15:37:25.047Z",
+  "fixture": "scale-extremes",
+  "reps": 2,
+  "quotaBefore": {
+    "usage": 0.0391357,
+    "limit": null,
+    "limitRemaining": null,
+    "isFreeTier": true,
+    "rateLimit": {
+      "requests": -1,
+      "interval": "10s",
+      "note": "This field is deprecated and safe to ignore."
+    }
+  },
+  "results": [
+    {
+      "id": "stream",
+      "label": "Ultra · streamed (PRODUCTION PATH)",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "streamed": true,
+      "beatCount": 3,
+      "reps": [
+        {
+          "rep": 1,
+          "ok": false,
+          "latencyMs": 871,
+          "error": "NVIDIA 502: Upstream error from Nvidia: Service temporarily overloaded",
+          "status": 502,
+          "meta": [
+            {
+              "status": 200,
+              "attempt": 0,
+              "headers": {}
+            }
+          ]
+        },
+        {
+          "rep": 2,
+          "ok": false,
+          "latencyMs": 678,
+          "error": "NVIDIA 502: Upstream error from Nvidia: Service temporarily overloaded",
+          "status": 502,
+          "meta": [
+            {
+              "status": 200,
+              "attempt": 0,
+              "headers": {}
+            }
+          ]
+        }
+      ],
+      "medianLatencyMs": null,
+      "medianTokensPerSecond": null,
+      "medianReasoningShare": null,
+      "floorPassRate": 0
+    },
+    {
+      "id": "nostream",
+      "label": "Ultra · non-streamed",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "beatCount": 3,
+      "reps": [
+        {
+          "rep": 1,
+          "ok": true,
+          "latencyMs": 353807,
+          "tokensPerSecond": 19.5,
+          "usage": {
+            "promptTokens": 4664,
+            "completionTokens": 6912,
+            "reasoningTokens": 3640
+          },
+          "answerTokens": 3272,
+          "reasoningShare": 0.527,
+          "reasoningChars": null,
+          "floorViolations": [
+            {
+              "beatIndex": 2,
+              "code": "camera-inside-subject",
+              "detail": "The camera stands inside <Subject 1> (0.02m from its centre-line, well within its 0.6m width)."
+            }
+          ],
+          "passesFloor": false,
+          "distinctBands": 3,
+          "bands": [
+            "EWS",
+            "WS",
+            "ECU"
+          ],
+          "meta": [
+            {
+              "status": 200,
+              "attempt": 0,
+              "headers": {}
+            }
+          ],
+          "film": {
+            "units": "metres",
+            "aspect": 1.7778,
+            "sceneScaleNote": "The salt flat is effectively infinite; the staged area used is a 100m deep by 50m wide patch centred on the figure's beat-1 position at the origin.",
+            "beats": [
+              {
+                "beatIndex": 0,
+                "kind": "shot",
+                "transitionText": null,
+                "camera": {
+                  "start": {
+                    "position": {
+                      "x": 0,
+                      "y": 1.6,
+                      "z": 100
+                    },
+                    "lookAt": {
+                      "x": 0,
+                      "y": 1,
+                      "z": 0
+                    }
+                  },
+                  "end": {
+                    "position": {
+                      "x": 0,
+                      "y": 1.6,
+                      "z": 100
+                    },
+                    "lookAt": {
+                      "x": 0,
+                      "y": 1,
+                      "z": 0
+                    }
+                  },
+                  "focalStartMm": 24,
+                  "focalEndMm": 24,
+                  "rollDeg": 0,
+                  "motion": "Static Shot",
+                  "amplitude": "small",
+                  "speed": "slow",
+                  "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+                },
+                "subjects": [
+                  {
+                    "subject": "<Subject 1>",
+                    "x": 0,
+                    "z": 0,
+                    "endX": 0,
+                    "endZ": 0,
+                    "groundOffsetM": 0,
+                    "heightM": 1.7,
+                    "widthM": 0.6,
+                    "yawDeg": 0,
+                    "containerId": null,
+                    "action": "standing still at the far end of the salt flat",
+                    "screenPosition": "center",
+                    "depth": "background"
+                  }
+                ],
+                "principalSubject": "<Subject 1>",
+                "framing": "EWS",
+                "changes": [],
+                "containmentNotes": "Subject stands alone on the salt flat, no containers.",
+                "proseNote": "Live-action, cinematic, an extreme wide shot frames the lone figure as a tiny speck at the far end of a blinding white salt flat under an enormous pale sky. The camera sits high and far back on the +Z axis, perfectly level, holding a static composition with a 24mm lens. Hard noon light casts no shadows worth naming. The figure faces the audience, yaw zero, centered in frame at the vanishing point of the flat."
+              },
+              {
+                "beatIndex": 1,
+                "kind": "shot",
+                "transitionText": null,
+                "camera": {
+                  "start": {
+                    "position": {
+                      "x": 0,
+                      "y": 1.6,
+                      "z": 25
+                    },
+                    "lookAt": {
+                      "x": 0,
+                      "y": 1,
+                      "z": 0
+                    }
+                  },
+                  "end": {
+                    "position": {
+                      "x": 0,
+                      "y": 1.6,
+                      "z": 25
+                    },
+                    "lookAt": {
+                      "x": 0,
+                      "y": 1,
+                      "z": 10
+                    }
+                  },
+                  "focalStartMm": 50,
+                  "focalEndMm": 50,
+                  "rollDeg": 0,
+                  "motion": "Static Shot",
+                  "amplitude": "small",
+                  "speed": "slow",
+                  "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+                },
+                "subjects": [
+                  {
+                    "subject": "<Subject 1>",
+                    "x": 0,
+                    "z": 0,
+                    "endX": 0,
+                    "endZ": 10,
+                    "groundOffsetM": 0,
+                    "heightM": 1.7,
+                    "widthM": 0.6,
+                    "yawDeg": 0,
+                    "containerId": null,
+                    "action": "walking steadily toward the camera across the salt flat",
+                    "screenPosition": "center",
+                    "depth": "midground"
+                  }
+                ],
+                "principalSubject": "<Subject 1>",
+                "framing": "WS",
+                "changes": [
+                  {
+                    "subject": "<Subject 1>",
+                    "what": "moved from z=0 to z=10 (walked 10m toward camera)",
+                    "justifiedByBeatText": true
+                  }
+                ],
+                "containmentNotes": "Subject walks freely on the salt flat, no containers.",
+                "proseNote": "Live-action, cinematic, a wide shot holds the camera at 25m on the +Z axis with a 50mm lens as the figure walks from the far plane (z=0) to 10m out (z=10), growing from a speck to a clear full-body silhouette against the white void. The camera body is static; its lookAt point tracks the figure's chest to keep her centered. Hard noon light remains flat and shadowless. The figure's yaw stays at zero, facing the audience throughout."
+              },
+              {
+                "beatIndex": 2,
+                "kind": "shot",
+                "transitionText": null,
+                "camera": {
+                  "start": {
+                    "position": {
+                      "x": 0,
+                      "y": 1.6,
+                      "z": 10.015
+                    },
+                    "lookAt": {
+                      "x": 0,
+                      "y": 1.6,
+                      "z": 10
+                    }
+                  },
+                  "end": {
+                    "position": {
+                      "x": 0,
+                      "y": 1.6,
+                      "z": 10.015
+                    },
+                    "lookAt": {
+                      "x": 0,
+                      "y": 1.6,
+                      "z": 10
+                    }
+                  },
+                  "focalStartMm": 100,
+                  "focalEndMm": 100,
+                  "rollDeg": 0,
+                  "motion": "Static Shot",
+                  "amplitude": "small",
+                  "speed": "slow",
+                  "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+                },
+                "subjects": [
+                  {
+                    "subject": "<Subject 1>",
+                    "x": 0,
+                    "z": 10,
+                    "endX": 0,
+                    "endZ": 10,
+                    "groundOffsetM": 0,
+                    "heightM": 1.7,
+                    "widthM": 0.6,
+                    "yawDeg": 0,
+                    "containerId": null,
+                    "action": "opening her eye, the iris dilating to reveal fine flecks",
+                    "screenPosition": "center",
+                    "depth": "foreground"
+                  }
+                ],
+                "principalSubject": "<Subject 1>",
+                "framing": "ECU",
+                "changes": [
+                  {
+                    "subject": "<Subject 1>",
+                    "what": "position unchanged from end of beat 2; extreme close-up on eye",
+                    "justifiedByBeatText": true
+                  }
+                ],
+                "containmentNotes": "Subject's eye fills frame; macro distance ~15mm at 100mm. The rest of the figure exists outside the frame.",
+                "proseNote": "Live-action, cinematic, an extreme close-up locks onto the figure's right eye as it opens, the iris and its minute flecks expanding to fill the entire 16:9 frame. The camera sits a mere fifteen millimetres from the cornea at 100mm, dead-level, no movement — a static macro stare into the surface of the eye. Hard noon light catches the wet glisten of the sclera and the radial texture of the iris. The vast salt flat and sky are gone; only the eye remains."
+              }
+            ]
+          }
+        }
+      ],
+      "medianLatencyMs": 353807,
+      "medianTokensPerSecond": 19.5,
+      "medianReasoningShare": 0.527,
+      "floorPassRate": 0
+    }
+  ]
+}

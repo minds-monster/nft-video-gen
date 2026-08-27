@@ -128,6 +128,7 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder, director
     previewLoading,
     previewNfts,
     setPreviewCandidate,
+    previewTake,
     browseCollection,
     browseNext,
     browsePrev,
@@ -384,6 +385,38 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder, director
     });
     return () => cancelAnimationFrame(id);
   }, [pendingFocus, panelRefs, reduceMotion]);
+
+  /* A take clicked in the timeline, resolved for the viewer.
+   *
+   * The composer stores only the id, so this lookup runs every render against the CURRENT take
+   * list. That is the point: a take that is still shooting when you click it becomes playable in
+   * place, and a screen test judged from the viewer shows its verdict without a reload. Snapshot
+   * the record at click time and both of those go stale on screen.
+   *
+   * It happens HERE because this is the only component holding both the composer (which owns the
+   * selection) and the Director (which owns the takes). */
+  const viewedTake = useMemo(() => {
+    if (!preview?.takeId) return null;
+    return (director?.takes ?? []).find((take) => take.takeId === preview.takeId) ?? null;
+  }, [preview?.takeId, director?.takes]);
+
+  // "Take 3" counts within the dailies, not within every render the production paid for — the
+  // number has to match the card the visitor just clicked.
+  const viewedTakeIndex = useMemo(() => {
+    if (!viewedTake) return null;
+    const at = (director?.finalTakes ?? []).findIndex((take) => take.takeId === viewedTake.takeId);
+    return at < 0 ? null : at + 1;
+  }, [viewedTake, director?.finalTakes]);
+
+  // Clicking a card has to work when the viewer is collapsed or scrolled off, which `focusPanel`
+  // already handles for the pipeline bar.
+  const onPreviewTake = useCallback(
+    (takeId) => {
+      previewTake(takeId);
+      focusPanel('viewer');
+    },
+    [previewTake, focusPanel],
+  );
 
   // Restore the collapse map once the panels exist. Sizes are restored by `useDefaultLayout`
   // below; collapse is a separate fact the library does not store for us.
@@ -739,6 +772,9 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder, director
                       preview={preview}
                       previewLoading={previewLoading}
                       previewNfts={previewNfts}
+                      take={viewedTake}
+                      takeIndex={viewedTakeIndex}
+                      onJudge={director?.judge}
                       onAdd={addPreviewToCast}
                       onNext={browseNext}
                       onPrev={browsePrev}
@@ -756,6 +792,8 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder, director
                       token={token}
                       budget={budget}
                       status={status.storyboard}
+                      activeTakeId={preview?.takeId ?? null}
+                      onPreviewTake={onPreviewTake}
                     />
                   </Panel>
                 </Group>

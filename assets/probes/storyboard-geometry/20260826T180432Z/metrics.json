@@ -1,0 +1,4119 @@
+[
+  {
+    "cell": "ultra-or-film",
+    "fixture": "captured",
+    "repeat": 0,
+    "fixtureSha": "2b3a0fa3b229",
+    "kind": "scene",
+    "metrics": {
+      "m1": {
+        "beatsExpected": 4,
+        "beatsReturned": 4,
+        "tagErrors": [],
+        "indexErrors": [],
+        "valid": true,
+        "canaries": {
+          "units": true,
+          "sensorNote": true
+        }
+      },
+      "m2": {
+        "floor": 6,
+        "soft": 2,
+        "byCode": {
+          "subject-floating": 5,
+          "containment-invalid": 1,
+          "projects-outside-frame": 2
+        },
+        "softPerScene": 0.5
+      },
+      "m3": {
+        "scores": [
+          1,
+          0,
+          1,
+          1
+        ],
+        "exact": 3,
+        "counted": 4,
+        "rows": [
+          {
+            "beat": 0,
+            "declared": "EWS",
+            "derived": "EWS",
+            "hFrac": 0.16398615523368165,
+            "score": 1
+          },
+          {
+            "beat": 1,
+            "declared": "MCU",
+            "derived": "EWS",
+            "hFrac": 0.2041116568694572,
+            "score": 0
+          },
+          {
+            "beat": 2,
+            "declared": "MWS",
+            "derived": "MWS",
+            "hFrac": 0.9948013015821954,
+            "score": 1
+          },
+          {
+            "beat": 3,
+            "declared": "WS",
+            "derived": "WS",
+            "hFrac": 0.3899477938995692,
+            "score": 1
+          }
+        ],
+        "mean": 0.75,
+        "exactRate": 0.75
+      },
+      "m4": {
+        "scores": [
+          1,
+          0.5,
+          0,
+          1,
+          1,
+          1,
+          0,
+          1,
+          0.5,
+          0.5,
+          1,
+          0.5,
+          0.5,
+          0.5,
+          0,
+          1
+        ],
+        "sideErrors": 3,
+        "counted": 16,
+        "mean": 0.625,
+        "sideErrorRate": 0.1875
+      },
+      "m5": {
+        "scores": [
+          0,
+          1,
+          0.5,
+          0
+        ],
+        "counted": 4,
+        "unscoreable": 0,
+        "directionFlips": 0,
+        "rows": [
+          {
+            "beat": 0,
+            "declared": "Truck Right",
+            "derived": "Push In",
+            "score": 0
+          },
+          {
+            "beat": 1,
+            "declared": "Push In",
+            "derived": "Push In",
+            "score": 1
+          },
+          {
+            "beat": 2,
+            "declared": "Tracking Shot",
+            "derived": "Push Out",
+            "score": 0.5
+          },
+          {
+            "beat": 3,
+            "declared": "Arc Shot",
+            "derived": "Push Out",
+            "score": 0
+          }
+        ],
+        "mean": 0.375
+      },
+      "m6": {
+        "basis": "derived",
+        "distinctBands": 3,
+        "modalShare": 0.5,
+        "spread": 2,
+        "mwsShare": 0.25,
+        "bands": [
+          "EWS",
+          "EWS",
+          "MWS",
+          "WS"
+        ],
+        "extremeHitRate": null
+      },
+      "m7": {
+        "staticCameraPairs": 0,
+        "meanDisplacementRel": 0.3177269754516732
+      },
+      "m8": {
+        "teleports": 0,
+        "wrongDirection": 0,
+        "unjustifiedDrift": 0,
+        "missedMove": 0,
+        "heightInstability": 0,
+        "selfReportRecall": null
+      },
+      "m9": {
+        "expected": 1,
+        "hit": 1,
+        "applicable": true,
+        "rate": 1
+      },
+      "m10": {
+        "tested": false,
+        "axisErrors": 0,
+        "unpermittedCrosses": 0,
+        "pairs": []
+      },
+      "m11": {
+        "expected": 0,
+        "correct": 0,
+        "rate": null
+      },
+      "m12": {
+        "earlyReveals": 0,
+        "omissions": 0,
+        "beats": 4,
+        "earlyRevealRate": 0,
+        "omissionRate": 0
+      },
+      "m13": {
+        "failures": 3,
+        "compiled": [
+          {
+            "beat": 0,
+            "text": "Wet-night pit lane under harsh neon signs and floodlights; rain-slick asphalt reflects multicoloured glows, mist hangs in the air, and distant thunder rumbles. Live-action, cinematic. An extreme wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the foreground, walking toward jacket mannequin, rain dripping from neon-yellow tracksuit. <Subject 2> is in the centre of frame in the foreground, displayed on mannequin, silver filigree catching neon light. <Subject 3> is left of centre in the background, parked, camouflage wrap reflecting floodlights, bright yellow wheels visible. <Subject 4> is left of centre in the background, standing on concrete barrier observing, pink hair and orange glasses catching light. The camera push ins with large amplitude at medium speed. Jacket (Subject 2) displayed on mannequin at (2,0,-2) with groundOffsetM 1.1m; not worn. Car (Subject 3) parked at (0,0,-8). Rival (Subject 4) on barrier at (-3,0.5,-10) with groundOffsetM 0.5m."
+          },
+          {
+            "beat": 1,
+            "text": "Live-action, cinematic. An extreme wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the foreground, slipping on velvet jacket, adjusting silver filigree collar, rain streaking red heart-shaped sunglasses. <Subject 2>, inside <Subject 1>, is in the centre of frame in the foreground, being donned by ape, deep-red velvet and silver filigree settling on shoulders. <Subject 3> is left of centre in the background, parked, awaiting driver. <Subject 4> is on the left of frame in the background, watching intently, head slightly tilted. The camera push ins with medium amplitude at slow speed. Jacket now worn by ape (Subject 1): containerId <Subject 1>, groundOffsetM 1.1m (shoulder level). Ape stationary at jacket position. Car and rival unchanged."
+          },
+          {
+            "beat": 2,
+            "text": "Live-action, cinematic. A medium-wide shot at eye level frames the scene. <Subject 1>, inside <Subject 3>, is in the centre of frame in the foreground, striding to supercar, pulling door handle, sliding into driver's seat. <Subject 2>, inside <Subject 1>, is in the centre of frame in the foreground, worn by ape, moving with him into car. <Subject 3> is at the far left of frame in the background, driver's door opens, interior lights flash yellow. <Subject 4> is at the far left of frame in the background, tracking ape's movement with gaze. The camera push outs with large amplitude at medium speed. Ape enters car: containerId <Subject 3>, groundOffsetM 0.3m (driver seat). Jacket remains on ape (containerId <Subject 1>). Car door opens, interior lights flash yellow."
+          },
+          {
+            "beat": 3,
+            "text": "Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 1>, inside <Subject 3>, is in the centre of frame in the foreground, seated in driver's seat, hands on wheel as car accelerates. <Subject 2>, inside <Subject 1>, is in the centre of frame in the foreground, worn by ape, velvet sleeves visible on steering wheel. <Subject 3> is right of centre in the foreground, engine roars, accelerates past barrier, bright yellow wheels spraying rain, headlights cutting mist. <Subject 4> is at the far left of frame in the background, watching car blast past, head turning to follow, orange glasses reflecting tail lights. The camera push outs with large amplitude at medium speed. Ape inside car (containerId <Subject 3>), jacket on ape (containerId <Subject 1>). Car accelerates from (0,0,-8) to (0,0,-15). Rival stationary on barrier."
+          }
+        ]
+      },
+      "m17": {
+        "thin": 0,
+        "missingFields": 0,
+        "applicable": true
+      }
+    },
+    "violations": [
+      {
+        "code": "subject-floating",
+        "severity": "floor",
+        "detail": "<Subject 2> floats 1.1m above the ground with no container.",
+        "beat": 0,
+        "subject": "<Subject 2>"
+      },
+      {
+        "code": "subject-floating",
+        "severity": "floor",
+        "detail": "<Subject 4> floats 0.5m above the ground with no container.",
+        "beat": 0,
+        "subject": "<Subject 4>"
+      },
+      {
+        "code": "subject-floating",
+        "severity": "floor",
+        "detail": "<Subject 4> floats 0.5m above the ground with no container.",
+        "beat": 1,
+        "subject": "<Subject 4>"
+      },
+      {
+        "code": "containment-invalid",
+        "severity": "floor",
+        "detail": "<Subject 1> is 6.32m from the centre of <Subject 3>, whose half-width is 1.00m — outside the thing it is inside.",
+        "beat": 2,
+        "subject": "<Subject 1>"
+      },
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 3> is listed in frame but projects to (-1.39, -0.53).",
+        "beat": 2,
+        "subject": "<Subject 3>"
+      },
+      {
+        "code": "subject-floating",
+        "severity": "floor",
+        "detail": "<Subject 4> floats 0.5m above the ground with no container.",
+        "beat": 2,
+        "subject": "<Subject 4>"
+      },
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 4> is listed in frame but projects to (-2.38, -0.14).",
+        "beat": 2,
+        "subject": "<Subject 4>"
+      },
+      {
+        "code": "subject-floating",
+        "severity": "floor",
+        "detail": "<Subject 4> floats 0.5m above the ground with no container.",
+        "beat": 3,
+        "subject": "<Subject 4>"
+      },
+      {
+        "code": "screen-side-error",
+        "severity": "soft",
+        "detail": "Beat 1: <Subject 3> declared center-right but projects to ndcX -0.20 -> -0.31 across the beat.",
+        "beat": 0,
+        "subject": "<Subject 3>"
+      },
+      {
+        "code": "camera-move-disagreement",
+        "severity": "soft",
+        "detail": "Beat 1 declares \"Truck Right\"; its own poses do \"Push In\".",
+        "beat": 0
+      },
+      {
+        "code": "framing-disagreement",
+        "severity": "soft",
+        "detail": "Beat 2 declares MCU; its own geometry gives EWS (hFrac 0.204).",
+        "beat": 1
+      },
+      {
+        "code": "screen-side-error",
+        "severity": "soft",
+        "detail": "Beat 2: <Subject 3> declared center-right but projects to ndcX -0.31 -> -2.37 across the beat.",
+        "beat": 1,
+        "subject": "<Subject 3>"
+      },
+      {
+        "code": "screen-side-error",
+        "severity": "soft",
+        "detail": "Beat 4: <Subject 3> declared center-left but projects to ndcX 0.17 -> 0.19 across the beat.",
+        "beat": 3,
+        "subject": "<Subject 3>"
+      },
+      {
+        "code": "camera-move-disagreement",
+        "severity": "soft",
+        "detail": "Beat 4 declares \"Arc Shot\"; its own poses do \"Push Out\".",
+        "beat": 3
+      },
+      {
+        "code": "h3-compile-failure",
+        "severity": "soft",
+        "detail": "Beat 1: leaks schema scaffolding.",
+        "beat": 0
+      },
+      {
+        "code": "h3-compile-failure",
+        "severity": "soft",
+        "detail": "Beat 2: leaks schema scaffolding.",
+        "beat": 1
+      },
+      {
+        "code": "h3-compile-failure",
+        "severity": "soft",
+        "detail": "Beat 3: leaks schema scaffolding.",
+        "beat": 2
+      }
+    ],
+    "floorCount": 6,
+    "passesFloor": false,
+    "derivedBands": [
+      "EWS",
+      "EWS",
+      "MWS",
+      "WS"
+    ],
+    "prose": [
+      {
+        "beat": 0,
+        "text": "The camera trucks right with large amplitude at medium speed, low at 0.4m height, tracking the ape as he walks from the left foreground toward the jacket mannequin at center-right; the wet asphalt reflects neon glows, rain drips from the tracksuit, and the rival stands distant on the left barrier."
+      },
+      {
+        "beat": 1,
+        "text": "The camera pushes in with medium amplitude at slow speed while zooming from 24mm to 85mm, rising from 0.4m to 1.2m, to frame the ape in medium close-up as he slips on the velvet jacket and adjusts the silver filigree collar, rain streaking his red heart-shaped sunglasses."
+      },
+      {
+        "beat": 2,
+        "text": "The camera executes a tracking shot with large amplitude at medium speed, trucking left and pushing in to follow the ape's stride from the jacket to the camouflaged supercar, the door opening and interior lights flashing yellow as he slides into the driver's seat."
+      },
+      {
+        "beat": 3,
+        "text": "The camera performs an arc shot with large amplitude at medium speed, arcing right around the supercar as the ape settles in, then pushing out to keep the rival in frame on the far left while the car accelerates past, yellow wheels spraying rain and headlights cutting the mist."
+      }
+    ],
+    "h3": [
+      {
+        "beat": 0,
+        "text": "Wet-night pit lane under harsh neon signs and floodlights; rain-slick asphalt reflects multicoloured glows, mist hangs in the air, and distant thunder rumbles. Live-action, cinematic. An extreme wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the foreground, walking toward jacket mannequin, rain dripping from neon-yellow tracksuit. <Subject 2> is in the centre of frame in the foreground, displayed on mannequin, silver filigree catching neon light. <Subject 3> is left of centre in the background, parked, camouflage wrap reflecting floodlights, bright yellow wheels visible. <Subject 4> is left of centre in the background, standing on concrete barrier observing, pink hair and orange glasses catching light. The camera push ins with large amplitude at medium speed. Jacket (Subject 2) displayed on mannequin at (2,0,-2) with groundOffsetM 1.1m; not worn. Car (Subject 3) parked at (0,0,-8). Rival (Subject 4) on barrier at (-3,0.5,-10) with groundOffsetM 0.5m."
+      },
+      {
+        "beat": 1,
+        "text": "Live-action, cinematic. An extreme wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the foreground, slipping on velvet jacket, adjusting silver filigree collar, rain streaking red heart-shaped sunglasses. <Subject 2>, inside <Subject 1>, is in the centre of frame in the foreground, being donned by ape, deep-red velvet and silver filigree settling on shoulders. <Subject 3> is left of centre in the background, parked, awaiting driver. <Subject 4> is on the left of frame in the background, watching intently, head slightly tilted. The camera push ins with medium amplitude at slow speed. Jacket now worn by ape (Subject 1): containerId <Subject 1>, groundOffsetM 1.1m (shoulder level). Ape stationary at jacket position. Car and rival unchanged."
+      },
+      {
+        "beat": 2,
+        "text": "Live-action, cinematic. A medium-wide shot at eye level frames the scene. <Subject 1>, inside <Subject 3>, is in the centre of frame in the foreground, striding to supercar, pulling door handle, sliding into driver's seat. <Subject 2>, inside <Subject 1>, is in the centre of frame in the foreground, worn by ape, moving with him into car. <Subject 3> is at the far left of frame in the background, driver's door opens, interior lights flash yellow. <Subject 4> is at the far left of frame in the background, tracking ape's movement with gaze. The camera push outs with large amplitude at medium speed. Ape enters car: containerId <Subject 3>, groundOffsetM 0.3m (driver seat). Jacket remains on ape (containerId <Subject 1>). Car door opens, interior lights flash yellow."
+      },
+      {
+        "beat": 3,
+        "text": "Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 1>, inside <Subject 3>, is in the centre of frame in the foreground, seated in driver's seat, hands on wheel as car accelerates. <Subject 2>, inside <Subject 1>, is in the centre of frame in the foreground, worn by ape, velvet sleeves visible on steering wheel. <Subject 3> is right of centre in the foreground, engine roars, accelerates past barrier, bright yellow wheels spraying rain, headlights cutting mist. <Subject 4> is at the far left of frame in the background, watching car blast past, head turning to follow, orange glasses reflecting tail lights. The camera push outs with large amplitude at medium speed. Ape inside car (containerId <Subject 3>), jacket on ape (containerId <Subject 1>). Car accelerates from (0,0,-8) to (0,0,-15). Rival stationary on barrier."
+      }
+    ],
+    "costUsd": 0
+  },
+  {
+    "cell": "ultra-or-film",
+    "fixture": "grid-launch",
+    "repeat": 0,
+    "failed": true,
+    "failure": "error",
+    "error": "NvidiaError: NVIDIA 504: OpenRouter returned finish_reason=error after 16171 tokens"
+  },
+  {
+    "cell": "ultra-or-film",
+    "fixture": "two-hander-axis",
+    "repeat": 0,
+    "fixtureSha": "a1421fc3a811",
+    "kind": "scene",
+    "metrics": {
+      "m1": {
+        "beatsExpected": 5,
+        "beatsReturned": 5,
+        "tagErrors": [],
+        "indexErrors": [],
+        "valid": true,
+        "canaries": {
+          "units": true,
+          "sensorNote": true
+        }
+      },
+      "m2": {
+        "floor": 0,
+        "soft": 3,
+        "byCode": {
+          "projects-outside-frame": 3
+        },
+        "softPerScene": 0.6
+      },
+      "m3": {
+        "scores": [
+          1,
+          0.5,
+          0,
+          0.5,
+          1
+        ],
+        "exact": 2,
+        "counted": 5,
+        "rows": [
+          {
+            "beat": 0,
+            "declared": "WS",
+            "derived": "WS",
+            "hFrac": 0.6939336932960535,
+            "score": 1
+          },
+          {
+            "beat": 1,
+            "declared": "MS",
+            "derived": "MWS",
+            "hFrac": 1.0119866360567447,
+            "score": 0.5
+          },
+          {
+            "beat": 2,
+            "declared": "CU",
+            "derived": "MS",
+            "hFrac": 1.5938937907565447,
+            "score": 0
+          },
+          {
+            "beat": 3,
+            "declared": "MCU",
+            "derived": "CU",
+            "hFrac": 3.8495188101487314,
+            "score": 0.5
+          },
+          {
+            "beat": 4,
+            "declared": "CU",
+            "derived": "CU",
+            "hFrac": 6.565754777820226,
+            "score": 1
+          }
+        ],
+        "mean": 0.6,
+        "exactRate": 0.4
+      },
+      "m4": {
+        "scores": [
+          0.5,
+          0,
+          1,
+          0.5,
+          1,
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          0.5
+        ],
+        "sideErrors": 0,
+        "counted": 10,
+        "mean": 0.55,
+        "sideErrorRate": 0
+      },
+      "m5": {
+        "scores": [
+          1,
+          1,
+          0,
+          0,
+          1
+        ],
+        "counted": 5,
+        "unscoreable": 0,
+        "directionFlips": 0,
+        "rows": [
+          {
+            "beat": 0,
+            "declared": "Static Shot",
+            "derived": "Static Shot",
+            "score": 1
+          },
+          {
+            "beat": 1,
+            "declared": "Push In",
+            "derived": "Push In",
+            "score": 1
+          },
+          {
+            "beat": 2,
+            "declared": "Arc Shot",
+            "derived": "Push In",
+            "score": 0
+          },
+          {
+            "beat": 3,
+            "declared": "Tilt Down",
+            "derived": "Pan Left",
+            "score": 0
+          },
+          {
+            "beat": 4,
+            "declared": "Static Shot",
+            "derived": "Static Shot",
+            "score": 1
+          }
+        ],
+        "mean": 0.6
+      },
+      "m6": {
+        "basis": "derived",
+        "distinctBands": 4,
+        "modalShare": 0.4,
+        "spread": 4,
+        "mwsShare": 0.2,
+        "bands": [
+          "WS",
+          "MWS",
+          "MS",
+          "CU",
+          "CU"
+        ],
+        "extremeHitRate": 0.8
+      },
+      "m7": {
+        "staticCameraPairs": 1,
+        "meanDisplacementRel": 0.4513283643351115
+      },
+      "m8": {
+        "teleports": 0,
+        "wrongDirection": 0,
+        "unjustifiedDrift": 0,
+        "missedMove": 0,
+        "heightInstability": 0,
+        "selfReportRecall": null
+      },
+      "m9": {
+        "expected": 0,
+        "hit": 0,
+        "applicable": true,
+        "rate": null
+      },
+      "m10": {
+        "tested": true,
+        "axisErrors": 0,
+        "unpermittedCrosses": 0,
+        "pairs": [
+          {
+            "beat": 1,
+            "tagA": "<Subject 1>",
+            "tagB": "<Subject 2>",
+            "sidePrev": -1,
+            "sideCur": -1,
+            "orderPrev": -1,
+            "orderCur": -1,
+            "permitted": false,
+            "subjectsMoved": false
+          },
+          {
+            "beat": 2,
+            "tagA": "<Subject 1>",
+            "tagB": "<Subject 2>",
+            "sidePrev": -1,
+            "sideCur": -1,
+            "orderPrev": -1,
+            "orderCur": -1,
+            "permitted": true,
+            "subjectsMoved": false
+          },
+          {
+            "beat": 3,
+            "tagA": "<Subject 1>",
+            "tagB": "<Subject 2>",
+            "sidePrev": -1,
+            "sideCur": -1,
+            "orderPrev": -1,
+            "orderCur": -1,
+            "permitted": false,
+            "subjectsMoved": false
+          },
+          {
+            "beat": 4,
+            "tagA": "<Subject 1>",
+            "tagB": "<Subject 2>",
+            "sidePrev": -1,
+            "sideCur": -1,
+            "orderPrev": -1,
+            "orderCur": -1,
+            "permitted": true,
+            "subjectsMoved": false
+          }
+        ]
+      },
+      "m11": {
+        "expected": 0,
+        "correct": 0,
+        "rate": null
+      },
+      "m12": {
+        "earlyReveals": 0,
+        "omissions": 0,
+        "beats": 5,
+        "earlyRevealRate": 0,
+        "omissionRate": 0
+      },
+      "m13": {
+        "failures": 2,
+        "compiled": [
+          {
+            "beat": 0,
+            "text": "A low-lit room at night, a single hanging bulb over a narrow wooden table, bare walls beyond. Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 1> is left of centre in the foreground, sits at table facing <Subject 2>, hands resting on tabletop. <Subject 2> is in the centre of frame in the background, sits at table facing <Subject 1>, arms folded loosely. The camera holds a static shot. Both subjects seated at opposite ends of the narrow table. No chair objects in cast; groundOffsetM=0 indicates seated posture with implied seat height ~0.45m."
+          },
+          {
+            "beat": 1,
+            "text": "Live-action, cinematic. A medium-wide shot at eye level frames the scene. <Subject 1> is left of centre in the foreground, sits facing <Subject 2>, subtle shift of weight. <Subject 2> is right of centre in the background, sits facing <Subject 1>, glances down at table. The camera push ins with medium amplitude at medium speed. Positions unchanged from beat 1. Camera has pushed in from 3m to 1.5m, tightening the two-shot to a medium shot on <Subject 1>."
+          },
+          {
+            "beat": 2,
+            "text": "Live-action, cinematic. A medium shot from a high angle frames the scene. <Subject 1> is on the left of frame in the foreground, sits facing <Subject 2>, now seen from behind near shoulder. <Subject 2> is right of centre in the background, sits facing camera, pink buzz-cut and orange glasses catch the light. The camera push ins with large amplitude at medium speed. Camera has crossed the 180-degree line, moving from the audience side (+Z) to the far side of the table (-Z) behind <Subject 1>. Subjects swap frame sides: <Subject 1> now left foreground (shoulder), <Subject 2> right midground."
+          },
+          {
+            "beat": 3,
+            "text": "Live-action, cinematic. A close-up from a high angle frames the scene. <Subject 1> is at the far left of frame in the foreground, sits, shoulder and back of head visible in lower left. <Subject 2> is in the centre of frame in the background, sits, face tilts down following camera to table. The camera pan lefts with medium amplitude at slow speed. Camera position fixed; only the look-at point drops from <Subject 2>'s face to the table center. <Subject 1> remains seated at near end, <Subject 2> at far end."
+          },
+          {
+            "beat": 4,
+            "text": "Live-action, cinematic. A close-up from directly overhead frames the scene. <Subject 1> is at the far left of frame in the midground, stands, walks around the table's near end, crosses behind <Subject 2>, stops standing behind them. <Subject 2> is at the far right of frame in the midground, remains seated, turns head slightly to track <Subject 1>'s movement. The camera holds a static shot. <Subject 1> rises from seated to standing (groundOffsetM remains 0 as no chair object exists), walks a curved path around the table's near end (z > 0) then behind <Subject 2> to z = -1.8. <Subject 2> stays seated throughout."
+          }
+        ]
+      },
+      "m17": {
+        "thin": 0,
+        "missingFields": 0,
+        "applicable": true
+      }
+    },
+    "violations": [
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 1> is listed in frame but projects to (-53.03, -148.01).",
+        "beat": 3,
+        "subject": "<Subject 1>"
+      },
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 1> is listed in frame but projects to (-2.73, -1.44).",
+        "beat": 4,
+        "subject": "<Subject 1>"
+      },
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 2> is listed in frame but projects to (2.07, 1.73).",
+        "beat": 4,
+        "subject": "<Subject 2>"
+      },
+      {
+        "code": "framing-disagreement",
+        "severity": "soft",
+        "detail": "Beat 3 declares CU; its own geometry gives MS (hFrac 1.594).",
+        "beat": 2
+      },
+      {
+        "code": "camera-move-disagreement",
+        "severity": "soft",
+        "detail": "Beat 3 declares \"Arc Shot\"; its own poses do \"Push In\".",
+        "beat": 2
+      },
+      {
+        "code": "camera-move-disagreement",
+        "severity": "soft",
+        "detail": "Beat 4 declares \"Tilt Down\"; its own poses do \"Pan Left\".",
+        "beat": 3
+      },
+      {
+        "code": "framing-expectation-miss",
+        "severity": "soft",
+        "detail": "Beat 5 came back CU; pre-registered as MS/MWS/WS/MCU. Beat text: \"The camera does not move. <Subject 1> stands, walks around the table, and stops standing behind <Subject 2>.\"",
+        "beat": 4
+      },
+      {
+        "code": "identical-consecutive-camera",
+        "severity": "soft",
+        "detail": "Beats 1 and 2 have the same camera pose.",
+        "beat": 1
+      },
+      {
+        "code": "h3-compile-failure",
+        "severity": "soft",
+        "detail": "Beat 1: leaks schema scaffolding.",
+        "beat": 0
+      },
+      {
+        "code": "h3-compile-failure",
+        "severity": "soft",
+        "detail": "Beat 5: leaks schema scaffolding.",
+        "beat": 4
+      }
+    ],
+    "floorCount": 0,
+    "passesFloor": true,
+    "derivedBands": [
+      "WS",
+      "MWS",
+      "MS",
+      "CU",
+      "CU"
+    ],
+    "prose": [
+      {
+        "beat": 0,
+        "text": "Live-action, cinematic, a medium-wide shot frames the two figures across the table from the audience side. The camera sits at positive Z looking toward -Z, holding a steady wide two-shot. <Subject 1> in neon yellow tracksuit occupies the left of frame, <Subject 2> in green moto jacket the right. The single hanging bulb casts a warm pool of light over the tabletop; bare walls fall into shadow beyond. No camera movement."
+      },
+      {
+        "beat": 1,
+        "text": "From the same side of the table, the camera pushes in with medium amplitude at medium speed, shortening the distance from three metres to one and a half while the focal length shifts to 35mm. The wide two-shot becomes a medium shot that favours <Subject 1> on the left, the neon tracksuit and heart-shaped sunglasses now legible. <Subject 2> on the right remains in the frame but smaller. The bulb's glow sharpens on the wood grain."
+      },
+      {
+        "beat": 2,
+        "text": "The camera executes a large-amplitude arc shot at medium speed, swinging from the audience side around the near end of the table to a position behind <Subject 1>'s right shoulder. It settles at 50mm, framing a close-up of <Subject 2> across the table — pink buzz-cut, orange translucent glasses, green patent leather jacket vivid in the bulb light. <Subject 1>'s neon yellow tracksuit shoulder anchors the left foreground. The move crosses the line, so the figures exchange screen sides."
+      },
+      {
+        "beat": 3,
+        "text": "Holding the same position behind <Subject 1>'s shoulder, the camera tilts down with medium amplitude at slow speed, the look-at point falling from <Subject 2>'s face to the tabletop midway between them. The wood grain, a few scattered objects, and the edge of the bulb's light pool fill the frame. <Subject 2>'s chin and glasses slip toward the top of frame; <Subject 1>'s shoulder remains a dark shape at bottom left."
+      },
+      {
+        "beat": 4,
+        "text": "The camera does not move, holding its tilted-down angle on the table. <Subject 1> stands — the neon yellow tracksuit rising into view at frame left — and walks with deliberate steps around the table's near end, crossing behind <Subject 2> to stop standing directly behind them at the far side. <Subject 2> turns their head to follow the movement. The bulb light catches the white sneakers and yellow hat as <Subject 1> passes through the pool of light."
+      }
+    ],
+    "h3": [
+      {
+        "beat": 0,
+        "text": "A low-lit room at night, a single hanging bulb over a narrow wooden table, bare walls beyond. Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 1> is left of centre in the foreground, sits at table facing <Subject 2>, hands resting on tabletop. <Subject 2> is in the centre of frame in the background, sits at table facing <Subject 1>, arms folded loosely. The camera holds a static shot. Both subjects seated at opposite ends of the narrow table. No chair objects in cast; groundOffsetM=0 indicates seated posture with implied seat height ~0.45m."
+      },
+      {
+        "beat": 1,
+        "text": "Live-action, cinematic. A medium-wide shot at eye level frames the scene. <Subject 1> is left of centre in the foreground, sits facing <Subject 2>, subtle shift of weight. <Subject 2> is right of centre in the background, sits facing <Subject 1>, glances down at table. The camera push ins with medium amplitude at medium speed. Positions unchanged from beat 1. Camera has pushed in from 3m to 1.5m, tightening the two-shot to a medium shot on <Subject 1>."
+      },
+      {
+        "beat": 2,
+        "text": "Live-action, cinematic. A medium shot from a high angle frames the scene. <Subject 1> is on the left of frame in the foreground, sits facing <Subject 2>, now seen from behind near shoulder. <Subject 2> is right of centre in the background, sits facing camera, pink buzz-cut and orange glasses catch the light. The camera push ins with large amplitude at medium speed. Camera has crossed the 180-degree line, moving from the audience side (+Z) to the far side of the table (-Z) behind <Subject 1>. Subjects swap frame sides: <Subject 1> now left foreground (shoulder), <Subject 2> right midground."
+      },
+      {
+        "beat": 3,
+        "text": "Live-action, cinematic. A close-up from a high angle frames the scene. <Subject 1> is at the far left of frame in the foreground, sits, shoulder and back of head visible in lower left. <Subject 2> is in the centre of frame in the background, sits, face tilts down following camera to table. The camera pan lefts with medium amplitude at slow speed. Camera position fixed; only the look-at point drops from <Subject 2>'s face to the table center. <Subject 1> remains seated at near end, <Subject 2> at far end."
+      },
+      {
+        "beat": 4,
+        "text": "Live-action, cinematic. A close-up from directly overhead frames the scene. <Subject 1> is at the far left of frame in the midground, stands, walks around the table's near end, crosses behind <Subject 2>, stops standing behind them. <Subject 2> is at the far right of frame in the midground, remains seated, turns head slightly to track <Subject 1>'s movement. The camera holds a static shot. <Subject 1> rises from seated to standing (groundOffsetM remains 0 as no chair object exists), walks a curved path around the table's near end (z > 0) then behind <Subject 2> to z = -1.8. <Subject 2> stays seated throughout."
+      }
+    ],
+    "costUsd": 0
+  },
+  {
+    "cell": "ultra-or-film",
+    "fixture": "cut-to-black",
+    "repeat": 0,
+    "failed": true,
+    "failure": "error",
+    "error": "NvidiaError: NVIDIA 504: OpenRouter returned finish_reason=error after 14046 tokens"
+  },
+  {
+    "cell": "ultra-or-film",
+    "fixture": "scale-extremes",
+    "repeat": 0,
+    "fixtureSha": "933d72d0e9fb",
+    "kind": "scene",
+    "metrics": {
+      "m1": {
+        "beatsExpected": 5,
+        "beatsReturned": 5,
+        "tagErrors": [],
+        "indexErrors": [],
+        "valid": true,
+        "canaries": {
+          "units": true,
+          "sensorNote": true
+        }
+      },
+      "m2": {
+        "floor": 1,
+        "soft": 2,
+        "byCode": {
+          "projects-outside-frame": 2,
+          "camera-inside-subject": 1
+        },
+        "softPerScene": 0.4
+      },
+      "m3": {
+        "scores": [
+          1,
+          0.5,
+          1,
+          1,
+          1
+        ],
+        "exact": 4,
+        "counted": 5,
+        "rows": [
+          {
+            "beat": 0,
+            "declared": "EWS",
+            "derived": "EWS",
+            "hFrac": 0.02133282135138064,
+            "score": 1
+          },
+          {
+            "beat": 1,
+            "declared": "WS",
+            "derived": "EWS",
+            "hFrac": 0.10367606020935403,
+            "score": 0.5
+          },
+          {
+            "beat": 2,
+            "declared": "ECU",
+            "derived": "ECU",
+            "hFrac": 592.5925925925701,
+            "score": 1
+          },
+          {
+            "beat": 3,
+            "declared": "WS",
+            "derived": "WS",
+            "hFrac": 0.29598074121070134,
+            "score": 1
+          },
+          {
+            "beat": 4,
+            "declared": "CU",
+            "derived": "CU",
+            "hFrac": 4.895901119393477,
+            "score": 1
+          }
+        ],
+        "mean": 0.9,
+        "exactRate": 0.8
+      },
+      "m4": {
+        "scores": [
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "sideErrors": 0,
+        "counted": 5,
+        "mean": 1,
+        "sideErrorRate": 0
+      },
+      "m5": {
+        "scores": [
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "counted": 5,
+        "unscoreable": 0,
+        "directionFlips": 0,
+        "rows": [
+          {
+            "beat": 0,
+            "declared": "Static Shot",
+            "derived": "Static Shot",
+            "score": 1
+          },
+          {
+            "beat": 1,
+            "declared": "Push In",
+            "derived": "Push In",
+            "score": 1
+          },
+          {
+            "beat": 2,
+            "declared": "Static Shot",
+            "derived": "Static Shot",
+            "score": 1
+          },
+          {
+            "beat": 3,
+            "declared": "Static Shot",
+            "derived": "Static Shot",
+            "score": 1
+          },
+          {
+            "beat": 4,
+            "declared": "Static Shot",
+            "derived": "Static Shot",
+            "score": 1
+          }
+        ],
+        "mean": 1
+      },
+      "m6": {
+        "basis": "derived",
+        "distinctBands": 4,
+        "modalShare": 0.4,
+        "spread": 6,
+        "mwsShare": 0,
+        "bands": [
+          "EWS",
+          "EWS",
+          "ECU",
+          "WS",
+          "CU"
+        ],
+        "extremeHitRate": 1
+      },
+      "m7": {
+        "staticCameraPairs": 0,
+        "meanDisplacementRel": 5.408666666666666
+      },
+      "m8": {
+        "teleports": 0,
+        "wrongDirection": 0,
+        "unjustifiedDrift": 1,
+        "missedMove": 0,
+        "heightInstability": 0,
+        "selfReportRecall": 1
+      },
+      "m9": {
+        "expected": 0,
+        "hit": 0,
+        "applicable": true,
+        "rate": null
+      },
+      "m10": {
+        "tested": false,
+        "axisErrors": 0,
+        "unpermittedCrosses": 0,
+        "pairs": []
+      },
+      "m11": {
+        "expected": 0,
+        "correct": 0,
+        "rate": null
+      },
+      "m12": {
+        "earlyReveals": 0,
+        "omissions": 0,
+        "beats": 5,
+        "earlyRevealRate": 0,
+        "omissionRate": 0
+      },
+      "m13": {
+        "failures": 0,
+        "compiled": [
+          {
+            "beat": 0,
+            "text": "An empty white salt flat under an enormous pale sky, flat to the horizon in every direction, hard noon light. Live-action, cinematic. An extreme wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, stands motionless, a tiny speck at the far end of the white flat. The camera holds a static shot. Subject stands free on the salt crust; no containers."
+          },
+          {
+            "beat": 1,
+            "text": "Live-action, cinematic. An extreme wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, walks steadily toward the camera across the flat, pink buzz-cut and green jacket catching the hard noon light. The camera push ins with medium amplitude at slow speed. Subject walks free on the salt crust; no containers."
+          },
+          {
+            "beat": 2,
+            "text": "Live-action, cinematic. An extreme close-up at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, her right eye snaps open; the iris, flecked with gold, expands to fill the frame. The camera holds a static shot. Subject stands free; the ECU isolates the eye — no container interaction."
+          },
+          {
+            "beat": 3,
+            "text": "Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, stands full-height, head turned back toward the horizon she crossed, orange glasses reflecting the white flat. The camera holds a static shot. Subject stands free on the salt crust; no containers."
+          },
+          {
+            "beat": 4,
+            "text": "Live-action, cinematic. A close-up at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, turns back to camera and speaks a single word; her lips part clearly in the close-up. The camera holds a static shot. Subject stands free; the close-up frames head and shoulders — no container interaction."
+          }
+        ]
+      },
+      "m17": {
+        "thin": 0,
+        "missingFields": 0,
+        "applicable": true
+      }
+    },
+    "violations": [
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 1> is listed in frame but projects to (0.00, -460.91).",
+        "beat": 2,
+        "subject": "<Subject 1>"
+      },
+      {
+        "code": "camera-inside-subject",
+        "severity": "floor",
+        "detail": "The camera stands inside <Subject 1> (0.03m from its centre-line, well within its 0.6m width).",
+        "beat": 2,
+        "subject": "<Subject 1>"
+      },
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 1> is listed in frame but projects to (0.00, -3.26).",
+        "beat": 4,
+        "subject": "<Subject 1>"
+      },
+      {
+        "code": "unjustified-drift",
+        "severity": "soft",
+        "detail": "<Subject 1> drifts 10.0m into beat 3 with nothing in the beat text moving it.",
+        "beat": 2,
+        "subject": "<Subject 1>"
+      }
+    ],
+    "floorCount": 1,
+    "passesFloor": false,
+    "derivedBands": [
+      "EWS",
+      "EWS",
+      "ECU",
+      "WS",
+      "CU"
+    ],
+    "prose": [
+      {
+        "beat": 0,
+        "text": "Live-action, cinematic, an extreme wide shot frames the salt flat as a featureless white plane under a vast pale sky. The camera sits at (0, 1.6, 100) with a 24 mm lens, looking straight down the -Z axis toward the origin where the figure stands. The figure occupies roughly 2 % of frame height (hFrac ≈ 0.02), a centred speck at the vanishing point. The camera is static; the only motion is the heat shimmer rising from the crust."
+      },
+      {
+        "beat": 1,
+        "text": "Live-action, cinematic, a wide shot tracks the figure walking toward us. The camera begins at (0, 1.6, 50) looking at (0, 1.0, 20) and pushes in with medium amplitude at slow speed to (0, 1.6, 40) looking at (0, 1.0, 30), keeping the 35 mm focal length. The figure grows from hFrac ≈ 0.16 to ≈ 0.31 — a full-body wide shot with headroom — remaining centred in frame. Her green patent leather moto jacket and orange translucent glasses flash in the noon sun as she covers ten metres during the beat."
+      },
+      {
+        "beat": 2,
+        "text": "Live-action, cinematic, a hard cut to an extreme close-up of the figure's right eye. The camera sits at (0, 1.6, 40.03) with a 200 mm lens, only 3 cm from the cornea, looking straight along -Z at (0, 1.6, 40). The iris and its gold flecks occupy hFrac ≈ 8.2 (ECU), centred and dead-sharp. The camera is static; the only movement is the eyelid lifting and the pupil dilating under the blinding sky."
+      },
+      {
+        "beat": 3,
+        "text": "Live-action, cinematic, a wide shot pulls back to show the full figure against the endless flat. The camera is static at (0, 1.6, 55) with a 50 mm lens, looking at (0, 1.0, 40). The subject fills hFrac ≈ 0.30 (WS), centred, her green moto jacket and red shirt vivid against the white. She has rotated to yaw 180°, gazing back toward -Z — the 40 metres she just walked — while the camera holds a level, motionless frame."
+      },
+      {
+        "beat": 4,
+        "text": "Live-action, cinematic, a close-up holds on the figure's face as she delivers the word. The camera is static at (0, 1.6, 41.5) with an 85 mm lens, 1.5 m from the subject, looking at (0, 1.5, 40). Her head and shoulders fill hFrac ≈ 5.0 (CU), centred. She has snapped back to yaw 0°, orange translucent glasses catching a glint of sky, and her mouth shapes the syllable with deliberate clarity."
+      }
+    ],
+    "h3": [
+      {
+        "beat": 0,
+        "text": "An empty white salt flat under an enormous pale sky, flat to the horizon in every direction, hard noon light. Live-action, cinematic. An extreme wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, stands motionless, a tiny speck at the far end of the white flat. The camera holds a static shot. Subject stands free on the salt crust; no containers."
+      },
+      {
+        "beat": 1,
+        "text": "Live-action, cinematic. An extreme wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, walks steadily toward the camera across the flat, pink buzz-cut and green jacket catching the hard noon light. The camera push ins with medium amplitude at slow speed. Subject walks free on the salt crust; no containers."
+      },
+      {
+        "beat": 2,
+        "text": "Live-action, cinematic. An extreme close-up at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, her right eye snaps open; the iris, flecked with gold, expands to fill the frame. The camera holds a static shot. Subject stands free; the ECU isolates the eye — no container interaction."
+      },
+      {
+        "beat": 3,
+        "text": "Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, stands full-height, head turned back toward the horizon she crossed, orange glasses reflecting the white flat. The camera holds a static shot. Subject stands free on the salt crust; no containers."
+      },
+      {
+        "beat": 4,
+        "text": "Live-action, cinematic. A close-up at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, turns back to camera and speaks a single word; her lips part clearly in the close-up. The camera holds a static shot. Subject stands free; the close-up frames head and shoulders — no container interaction."
+      }
+    ],
+    "costUsd": 0
+  },
+  {
+    "cell": "super-or-film",
+    "fixture": "captured",
+    "repeat": 0,
+    "fixtureSha": "2b3a0fa3b229",
+    "kind": "scene",
+    "metrics": {
+      "m1": {
+        "beatsExpected": 4,
+        "beatsReturned": 4,
+        "tagErrors": [],
+        "indexErrors": [],
+        "valid": true,
+        "canaries": {
+          "units": true,
+          "sensorNote": true
+        }
+      },
+      "m2": {
+        "floor": 5,
+        "soft": 5,
+        "byCode": {
+          "containment-invalid": 5,
+          "projects-outside-frame": 4,
+          "near-interpenetration": 1
+        },
+        "softPerScene": 1.25
+      },
+      "m3": {
+        "scores": [
+          1,
+          0,
+          1,
+          0.5
+        ],
+        "exact": 2,
+        "counted": 4,
+        "rows": [
+          {
+            "beat": 0,
+            "declared": "EWS",
+            "derived": "EWS",
+            "hFrac": 0.17535299580475067,
+            "score": 1
+          },
+          {
+            "beat": 1,
+            "declared": "MCU",
+            "derived": "MWS",
+            "hFrac": 0.9863606014017225,
+            "score": 0
+          },
+          {
+            "beat": 2,
+            "declared": "WS",
+            "derived": "WS",
+            "hFrac": 0.3772499010018378,
+            "score": 1
+          },
+          {
+            "beat": 3,
+            "declared": "EWS",
+            "derived": "WS",
+            "hFrac": 0.7410301807822208,
+            "score": 0.5
+          }
+        ],
+        "mean": 0.625,
+        "exactRate": 0.5
+      },
+      "m4": {
+        "scores": [
+          0.5,
+          0,
+          0.5,
+          0.5,
+          0.5,
+          0,
+          0,
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "sideErrors": 1,
+        "counted": 16,
+        "mean": 0.5625,
+        "sideErrorRate": 0.0625
+      },
+      "m5": {
+        "scores": [
+          1,
+          1,
+          0.5,
+          1
+        ],
+        "counted": 4,
+        "unscoreable": 0,
+        "directionFlips": 0,
+        "rows": [
+          {
+            "beat": 0,
+            "declared": "Truck Right",
+            "derived": "Truck Right",
+            "score": 1
+          },
+          {
+            "beat": 1,
+            "declared": "Push In",
+            "derived": "Push In",
+            "score": 1
+          },
+          {
+            "beat": 2,
+            "declared": "Tracking Shot",
+            "derived": "Push In",
+            "score": 0.5
+          },
+          {
+            "beat": 3,
+            "declared": "Push Out",
+            "derived": "Push Out",
+            "score": 1
+          }
+        ],
+        "mean": 0.875
+      },
+      "m6": {
+        "basis": "derived",
+        "distinctBands": 3,
+        "modalShare": 0.5,
+        "spread": 2,
+        "mwsShare": 0.25,
+        "bands": [
+          "EWS",
+          "MWS",
+          "WS",
+          "WS"
+        ],
+        "extremeHitRate": null
+      },
+      "m7": {
+        "staticCameraPairs": 0,
+        "meanDisplacementRel": 0.32174190847760054
+      },
+      "m8": {
+        "teleports": 0,
+        "wrongDirection": 0,
+        "unjustifiedDrift": 1,
+        "missedMove": 0,
+        "heightInstability": 0,
+        "selfReportRecall": 0
+      },
+      "m9": {
+        "expected": 1,
+        "hit": 1,
+        "applicable": true,
+        "rate": 1
+      },
+      "m10": {
+        "tested": false,
+        "axisErrors": 0,
+        "unpermittedCrosses": 0,
+        "pairs": []
+      },
+      "m11": {
+        "expected": 0,
+        "correct": 0,
+        "rate": null
+      },
+      "m12": {
+        "earlyReveals": 0,
+        "omissions": 0,
+        "beats": 4,
+        "earlyRevealRate": 0,
+        "omissionRate": 0
+      },
+      "m13": {
+        "failures": 0,
+        "compiled": [
+          {
+            "beat": 0,
+            "text": "Wet-night pit lane under harsh neon signs and floodlights; rain-slick asphalt reflects multicoloured glows, mist hangs in the air, and distant thunder rumbles. Live-action, cinematic. An extreme wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the foreground, walks toward the jacket-mannequin, rain dripping from the tracksuit. <Subject 2> is in the centre of frame in the foreground, stands on the mannequin beside the ape. <Subject 3> is right of centre in the background, parked ahead, idle. <Subject 4> is left of centre in the midground, stands on the barrier watching. The camera truck rights with medium amplitude at medium speed. The jacket is displayed on a mannequin beside the ape; no subject is contained within another."
+          },
+          {
+            "beat": 1,
+            "text": "Live-action, cinematic. A medium-wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the foreground, slips the deep-red velvet jacket on, adjusting the silver filigree collar. <Subject 2>, inside <Subject 1>, is at the far left of frame in the foreground, being put on by the ape, adjusting the collar. <Subject 3> is left of centre in the background, still parked, idle. <Subject 4> is at the far left of frame in the midground, still watching from the barrier. The camera push ins with medium amplitude at slow speed. The jacket is now being worn by the ape (containerId = <Subject 1>). All other subjects remain free."
+          },
+          {
+            "beat": 2,
+            "text": "Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the foreground, strides to the car, pulls the door handle, slides into the driver’s seat. <Subject 2>, inside <Subject 1>, is at the far left of frame in the foreground, being worn by the ape, moves with him to the car. <Subject 3> is left of centre in the background, door opens as the ape approaches, interior lights flash yellow. <Subject 4> is at the far left of frame in the midground, continues to watch from the barrier. The camera push ins with medium amplitude at medium speed. The jacket remains worn by the ape (containerId = <Subject 1>). The ape is not yet inside the car; all other subjects are free."
+          },
+          {
+            "beat": 3,
+            "text": "Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 1>, inside <Subject 3>, is in the centre of frame in the background, drives the car. <Subject 2>, inside <Subject 1>, is in the centre of frame in the background, remains on the ape. <Subject 3> is in the centre of frame in the background, accelerates past the barrier, engine roars, wheels spray rain. <Subject 4> is at the far left of frame in the foreground, watches from the barrier, headlights cutting through the mist. The camera push outs with medium amplitude at slow speed. The ape is inside the car (containerId = <Subject 3>) and the jacket is worn by the ape (containerId = <Subject 1>). The rival remains on the barrier."
+          }
+        ]
+      },
+      "m17": {
+        "thin": 0,
+        "missingFields": 0,
+        "applicable": true
+      }
+    },
+    "violations": [
+      {
+        "code": "containment-invalid",
+        "severity": "floor",
+        "detail": "<Subject 2> is 3.00m from the centre of <Subject 1>, whose half-width is 0.30m — outside the thing it is inside.",
+        "beat": 1,
+        "subject": "<Subject 2>"
+      },
+      {
+        "code": "containment-invalid",
+        "severity": "floor",
+        "detail": "<Subject 2> sits at 0m inside <Subject 1>, which is 1.8m tall.",
+        "beat": 1,
+        "subject": "<Subject 2>"
+      },
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 2> is listed in frame but projects to (-1.90, -0.57).",
+        "beat": 1,
+        "subject": "<Subject 2>"
+      },
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 4> is listed in frame but projects to (-4.14, -0.07).",
+        "beat": 1,
+        "subject": "<Subject 4>"
+      },
+      {
+        "code": "containment-invalid",
+        "severity": "floor",
+        "detail": "<Subject 2> is 3.00m from the centre of <Subject 1>, whose half-width is 0.30m — outside the thing it is inside.",
+        "beat": 2,
+        "subject": "<Subject 2>"
+      },
+      {
+        "code": "containment-invalid",
+        "severity": "floor",
+        "detail": "<Subject 2> sits at 0m inside <Subject 1>, which is 1.8m tall.",
+        "beat": 2,
+        "subject": "<Subject 2>"
+      },
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 4> is listed in frame but projects to (-1.56, -0.03).",
+        "beat": 2,
+        "subject": "<Subject 4>"
+      },
+      {
+        "code": "containment-invalid",
+        "severity": "floor",
+        "detail": "<Subject 2> sits at 0m inside <Subject 1>, which is 1.8m tall.",
+        "beat": 3,
+        "subject": "<Subject 2>"
+      },
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 4> is listed in frame but projects to (-6.35, -0.05).",
+        "beat": 3,
+        "subject": "<Subject 4>"
+      },
+      {
+        "code": "near-interpenetration",
+        "severity": "soft",
+        "detail": "<Subject 2> and <Subject 3> are 0.00m apart, closer than 0.75m.",
+        "beat": 3,
+        "subject": "<Subject 2>"
+      },
+      {
+        "code": "framing-disagreement",
+        "severity": "soft",
+        "detail": "Beat 2 declares MCU; its own geometry gives MWS (hFrac 0.986).",
+        "beat": 1
+      },
+      {
+        "code": "screen-side-error",
+        "severity": "soft",
+        "detail": "Beat 2: <Subject 3> declared center-right but projects to ndcX -0.41 -> -0.78 across the beat.",
+        "beat": 1,
+        "subject": "<Subject 3>"
+      },
+      {
+        "code": "unjustified-drift",
+        "severity": "soft",
+        "detail": "<Subject 1> drifts 4.0m into beat 2 with nothing in the beat text moving it.",
+        "beat": 1,
+        "subject": "<Subject 1>"
+      }
+    ],
+    "floorCount": 5,
+    "passesFloor": false,
+    "derivedBands": [
+      "EWS",
+      "MWS",
+      "WS",
+      "WS"
+    ],
+    "prose": [
+      {
+        "beat": 0,
+        "text": "The camera starts low and wide to the left of the ape, tracking right as the ape walks toward the jacket-mannequin under neon‑lit rain, keeping the ape centered in the frame while the wet grid reflects the harsh lights."
+      },
+      {
+        "beat": 1,
+        "text": "The camera pushes in slowly to a medium close‑up on the ape as he pulls the velvet jacket over his shoulders, the rain streaking the visor of his red heart‑shaped sunglasses while the jacket’s silver filigree catches the neon glow."
+      },
+      {
+        "beat": 2,
+        "text": "The camera tracks alongside the ape as he walks to the camouflaged supercar, then arcs slightly around the vehicle while the door opens and he settles into the driver’s seat, the interior lights flashing in the rain‑slick night."
+      },
+      {
+        "beat": 3,
+        "text": "The camera pulls back gently as the car accelerates left past the barrier, the rival’s pink hair and orange glasses staying in frame while the engine’s roar and spraying wheels punctuate the wet‑night pit lane."
+      }
+    ],
+    "h3": [
+      {
+        "beat": 0,
+        "text": "Wet-night pit lane under harsh neon signs and floodlights; rain-slick asphalt reflects multicoloured glows, mist hangs in the air, and distant thunder rumbles. Live-action, cinematic. An extreme wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the foreground, walks toward the jacket-mannequin, rain dripping from the tracksuit. <Subject 2> is in the centre of frame in the foreground, stands on the mannequin beside the ape. <Subject 3> is right of centre in the background, parked ahead, idle. <Subject 4> is left of centre in the midground, stands on the barrier watching. The camera truck rights with medium amplitude at medium speed. The jacket is displayed on a mannequin beside the ape; no subject is contained within another."
+      },
+      {
+        "beat": 1,
+        "text": "Live-action, cinematic. A medium-wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the foreground, slips the deep-red velvet jacket on, adjusting the silver filigree collar. <Subject 2>, inside <Subject 1>, is at the far left of frame in the foreground, being put on by the ape, adjusting the collar. <Subject 3> is left of centre in the background, still parked, idle. <Subject 4> is at the far left of frame in the midground, still watching from the barrier. The camera push ins with medium amplitude at slow speed. The jacket is now being worn by the ape (containerId = <Subject 1>). All other subjects remain free."
+      },
+      {
+        "beat": 2,
+        "text": "Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the foreground, strides to the car, pulls the door handle, slides into the driver’s seat. <Subject 2>, inside <Subject 1>, is at the far left of frame in the foreground, being worn by the ape, moves with him to the car. <Subject 3> is left of centre in the background, door opens as the ape approaches, interior lights flash yellow. <Subject 4> is at the far left of frame in the midground, continues to watch from the barrier. The camera push ins with medium amplitude at medium speed. The jacket remains worn by the ape (containerId = <Subject 1>). The ape is not yet inside the car; all other subjects are free."
+      },
+      {
+        "beat": 3,
+        "text": "Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 1>, inside <Subject 3>, is in the centre of frame in the background, drives the car. <Subject 2>, inside <Subject 1>, is in the centre of frame in the background, remains on the ape. <Subject 3> is in the centre of frame in the background, accelerates past the barrier, engine roars, wheels spray rain. <Subject 4> is at the far left of frame in the foreground, watches from the barrier, headlights cutting through the mist. The camera push outs with medium amplitude at slow speed. The ape is inside the car (containerId = <Subject 3>) and the jacket is worn by the ape (containerId = <Subject 1>). The rival remains on the barrier."
+      }
+    ],
+    "costUsd": 0
+  },
+  {
+    "cell": "super-or-film",
+    "fixture": "grid-launch",
+    "repeat": 0,
+    "failed": true,
+    "failure": "error",
+    "error": "OpenRouterTruncatedError: OpenRouter response truncated: finish_reason=length after 32768 tokens (max_tokens 32768)"
+  },
+  {
+    "cell": "super-or-film",
+    "fixture": "two-hander-axis",
+    "repeat": 0,
+    "failed": true,
+    "failure": "error",
+    "error": "OpenRouterTruncatedError: OpenRouter response truncated: finish_reason=length after 32768 tokens (max_tokens 32768)"
+  },
+  {
+    "cell": "super-or-film",
+    "fixture": "cut-to-black",
+    "repeat": 0,
+    "fixtureSha": "0f9426ef9a65",
+    "kind": "scene",
+    "metrics": {
+      "m1": {
+        "beatsExpected": 5,
+        "beatsReturned": 5,
+        "tagErrors": [],
+        "indexErrors": [],
+        "valid": true,
+        "canaries": {
+          "units": true,
+          "sensorNote": true
+        }
+      },
+      "m2": {
+        "floor": 6,
+        "soft": 6,
+        "byCode": {
+          "projects-outside-frame": 2,
+          "camera-inside-subject": 4,
+          "near-interpenetration": 4,
+          "subject-behind-lens": 2
+        },
+        "softPerScene": 1.2
+      },
+      "m3": {
+        "scores": [
+          1,
+          1,
+          0,
+          0
+        ],
+        "exact": 2,
+        "counted": 4,
+        "rows": [
+          {
+            "beat": 0,
+            "declared": "WS",
+            "derived": "WS",
+            "hFrac": 0.3417079749743594,
+            "score": 1
+          },
+          {
+            "beat": 1,
+            "declared": "MWS",
+            "derived": "MWS",
+            "hFrac": 0.7810467999413929,
+            "score": 1
+          },
+          {
+            "beat": 3,
+            "declared": "MCU",
+            "derived": "MWS",
+            "hFrac": 1.3612530929593065,
+            "score": 0
+          },
+          {
+            "beat": 4,
+            "declared": "ECU",
+            "derived": "MWS",
+            "hFrac": 1.3612530929593065,
+            "score": 0
+          }
+        ],
+        "mean": 0.5,
+        "exactRate": 0.5
+      },
+      "m4": {
+        "scores": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          0.5,
+          1,
+          1
+        ],
+        "sideErrors": 0,
+        "counted": 8,
+        "mean": 0.9375,
+        "sideErrorRate": 0
+      },
+      "m5": {
+        "scores": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "counted": 4,
+        "unscoreable": 0,
+        "directionFlips": 0,
+        "rows": [
+          {
+            "beat": 0,
+            "declared": "Static Shot",
+            "derived": "Static Shot",
+            "score": 1
+          },
+          {
+            "beat": 1,
+            "declared": "Truck Right",
+            "derived": "Truck Right",
+            "score": 1
+          },
+          {
+            "beat": 3,
+            "declared": "Static Shot",
+            "derived": "Static Shot",
+            "score": 1
+          },
+          {
+            "beat": 4,
+            "declared": "Zoom In",
+            "derived": "Zoom In",
+            "score": 1
+          }
+        ],
+        "mean": 1
+      },
+      "m6": {
+        "basis": "derived",
+        "distinctBands": 2,
+        "modalShare": 0.75,
+        "spread": 1,
+        "mwsShare": 0.75,
+        "bands": [
+          "WS",
+          "MWS",
+          "MWS",
+          "MWS"
+        ],
+        "extremeHitRate": 0.75
+      },
+      "m7": {
+        "staticCameraPairs": 2,
+        "meanDisplacementRel": 1
+      },
+      "m8": {
+        "teleports": 0,
+        "wrongDirection": 0,
+        "unjustifiedDrift": 0,
+        "missedMove": 0,
+        "heightInstability": 0,
+        "selfReportRecall": null
+      },
+      "m9": {
+        "expected": 2,
+        "hit": 2,
+        "applicable": true,
+        "rate": 1
+      },
+      "m10": {
+        "tested": false,
+        "axisErrors": 0,
+        "unpermittedCrosses": 0,
+        "pairs": []
+      },
+      "m11": {
+        "expected": 1,
+        "correct": 1,
+        "rate": 1
+      },
+      "m12": {
+        "earlyReveals": 0,
+        "omissions": 0,
+        "beats": 5,
+        "earlyRevealRate": 0,
+        "omissionRate": 0
+      },
+      "m13": {
+        "failures": 0,
+        "compiled": [
+          {
+            "beat": 0,
+            "text": "A deserted city at dusk, wet streets, a single enormous concrete tower dominating the skyline. Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 2> is in the centre of frame in the background, parked, engine off. <Subject 1>, inside <Subject 2>, is in the centre of frame in the background, sits inside car, hands on wheel. <Subject 3> is in the centre of frame in the foreground, stands tall. The camera holds a static shot. <Subject 1> is inside <Subject 2>."
+          },
+          {
+            "beat": 1,
+            "text": "Live-action, cinematic. A medium-wide shot at eye level frames the scene. <Subject 2> is in the centre of frame in the background, drives away from the tower down the empty street. <Subject 1>, inside <Subject 2>, is in the centre of frame in the background, rides along, looking ahead. <Subject 3> is in the centre of frame in the foreground, stands tall. The camera truck rights with large amplitude at slow speed. <Subject 1> is inside <Subject 2>."
+          },
+          {
+            "beat": 2,
+            "text": "The screen cuts to black. the screen holds black for a long moment before the world returns."
+          },
+          {
+            "beat": 3,
+            "text": "Live-action, cinematic. A medium-wide shot from a low angle frames the scene. <Subject 1>, inside <Subject 3>, is in the centre of frame in the background, stands alone on the rooftop, looking outward. <Subject 3> is in the centre of frame in the foreground, stands tall. The camera holds a static shot. <Subject 1> is on <Subject 3>."
+          },
+          {
+            "beat": 4,
+            "text": "Live-action, cinematic. A medium-wide shot from a low angle frames the scene. <Subject 1>, inside <Subject 3>, is in the centre of frame in the background, walks to the edge of the roof and looks down. <Subject 3> is in the centre of frame in the foreground, stands tall. The camera zoom ins with large amplitude at slow speed. <Subject 1> is on <Subject 3>."
+          }
+        ]
+      },
+      "m17": {
+        "thin": 0,
+        "missingFields": 0,
+        "applicable": true
+      }
+    },
+    "violations": [
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 3> is listed in frame but projects to (0.00, 44.18).",
+        "beat": 0,
+        "subject": "<Subject 3>"
+      },
+      {
+        "code": "camera-inside-subject",
+        "severity": "floor",
+        "detail": "The camera stands inside <Subject 3> (6.00m from its centre-line, well within its 30m width).",
+        "beat": 0,
+        "subject": "<Subject 3>"
+      },
+      {
+        "code": "near-interpenetration",
+        "severity": "soft",
+        "detail": "<Subject 2> and <Subject 3> are 0.00m apart, closer than 9.54m.",
+        "beat": 0,
+        "subject": "<Subject 2>"
+      },
+      {
+        "code": "near-interpenetration",
+        "severity": "soft",
+        "detail": "<Subject 1> and <Subject 3> are 0.00m apart, closer than 9.18m.",
+        "beat": 0,
+        "subject": "<Subject 1>"
+      },
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 3> is listed in frame but projects to (0.00, 100.99).",
+        "beat": 1,
+        "subject": "<Subject 3>"
+      },
+      {
+        "code": "camera-inside-subject",
+        "severity": "floor",
+        "detail": "The camera stands inside <Subject 3> (6.00m from its centre-line, well within its 30m width).",
+        "beat": 1,
+        "subject": "<Subject 3>"
+      },
+      {
+        "code": "near-interpenetration",
+        "severity": "soft",
+        "detail": "<Subject 2> and <Subject 3> are 0.00m apart, closer than 9.54m.",
+        "beat": 1,
+        "subject": "<Subject 2>"
+      },
+      {
+        "code": "near-interpenetration",
+        "severity": "soft",
+        "detail": "<Subject 1> and <Subject 3> are 0.00m apart, closer than 9.18m.",
+        "beat": 1,
+        "subject": "<Subject 1>"
+      },
+      {
+        "code": "subject-behind-lens",
+        "severity": "floor",
+        "detail": "<Subject 3> is listed in frame but sits behind the lens.",
+        "beat": 3,
+        "subject": "<Subject 3>"
+      },
+      {
+        "code": "camera-inside-subject",
+        "severity": "floor",
+        "detail": "The camera stands inside <Subject 3> (1.50m from its centre-line, well within its 30m width).",
+        "beat": 3,
+        "subject": "<Subject 3>"
+      },
+      {
+        "code": "subject-behind-lens",
+        "severity": "floor",
+        "detail": "<Subject 3> is listed in frame but sits behind the lens.",
+        "beat": 4,
+        "subject": "<Subject 3>"
+      },
+      {
+        "code": "camera-inside-subject",
+        "severity": "floor",
+        "detail": "The camera stands inside <Subject 3> (1.50m from its centre-line, well within its 30m width).",
+        "beat": 4,
+        "subject": "<Subject 3>"
+      },
+      {
+        "code": "framing-disagreement",
+        "severity": "soft",
+        "detail": "Beat 4 declares MCU; its own geometry gives MWS (hFrac 1.361).",
+        "beat": 3
+      },
+      {
+        "code": "framing-disagreement",
+        "severity": "soft",
+        "detail": "Beat 5 declares ECU; its own geometry gives MWS (hFrac 1.361).",
+        "beat": 4
+      },
+      {
+        "code": "framing-expectation-miss",
+        "severity": "soft",
+        "detail": "Beat 1 came back WS; pre-registered as MCU/MS/MWS/CU. Beat text: \"<Subject 1> sits inside <Subject 2> in the driver's seat, the car parked at the foot of <Subject 3>.\"",
+        "beat": 0
+      },
+      {
+        "code": "identical-consecutive-camera",
+        "severity": "soft",
+        "detail": "Beats 1 and 2 have the same camera pose.",
+        "beat": 1
+      },
+      {
+        "code": "identical-consecutive-camera",
+        "severity": "soft",
+        "detail": "Beats 4 and 5 have the same camera pose.",
+        "beat": 4
+      }
+    ],
+    "floorCount": 6,
+    "passesFloor": false,
+    "derivedBands": [
+      "WS",
+      "MWS",
+      null,
+      "MWS",
+      "MWS"
+    ],
+    "prose": [
+      {
+        "beat": 0,
+        "text": "A static medium-wide shot shows the white sports car parked at the foot of the massive concrete tower, with the bored ape driver seated inside, wearing his neon tracksuit and heart-shaped sunglasses. The tower looms in the background under a dusk sky."
+      },
+      {
+        "beat": 1,
+        "text": "The camera trucks right to follow the white sports car as it pulls away from the tower and drives down the deserted street, keeping the car centered in the frame while the tower recedes to the left."
+      },
+      {
+        "beat": 2,
+        "text": "The screen cuts to black and remains dark for a beat before the scene returns."
+      },
+      {
+        "beat": 3,
+        "text": "A static medium close‑up shows the bored ape standing on the rooftop of the tower, the city spread out below him under the dimming light."
+      },
+      {
+        "beat": 4,
+        "text": "The camera zooms in on the bored ape as he walks to the edge of the rooftop and gazes down at the street far below, the lens tightening on his expression."
+      }
+    ],
+    "h3": [
+      {
+        "beat": 0,
+        "text": "A deserted city at dusk, wet streets, a single enormous concrete tower dominating the skyline. Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 2> is in the centre of frame in the background, parked, engine off. <Subject 1>, inside <Subject 2>, is in the centre of frame in the background, sits inside car, hands on wheel. <Subject 3> is in the centre of frame in the foreground, stands tall. The camera holds a static shot. <Subject 1> is inside <Subject 2>."
+      },
+      {
+        "beat": 1,
+        "text": "Live-action, cinematic. A medium-wide shot at eye level frames the scene. <Subject 2> is in the centre of frame in the background, drives away from the tower down the empty street. <Subject 1>, inside <Subject 2>, is in the centre of frame in the background, rides along, looking ahead. <Subject 3> is in the centre of frame in the foreground, stands tall. The camera truck rights with large amplitude at slow speed. <Subject 1> is inside <Subject 2>."
+      },
+      {
+        "beat": 2,
+        "text": "The screen cuts to black. the screen holds black for a long moment before the world returns."
+      },
+      {
+        "beat": 3,
+        "text": "Live-action, cinematic. A medium-wide shot from a low angle frames the scene. <Subject 1>, inside <Subject 3>, is in the centre of frame in the background, stands alone on the rooftop, looking outward. <Subject 3> is in the centre of frame in the foreground, stands tall. The camera holds a static shot. <Subject 1> is on <Subject 3>."
+      },
+      {
+        "beat": 4,
+        "text": "Live-action, cinematic. A medium-wide shot from a low angle frames the scene. <Subject 1>, inside <Subject 3>, is in the centre of frame in the background, walks to the edge of the roof and looks down. <Subject 3> is in the centre of frame in the foreground, stands tall. The camera zoom ins with large amplitude at slow speed. <Subject 1> is on <Subject 3>."
+      }
+    ],
+    "costUsd": 0
+  },
+  {
+    "cell": "super-or-film",
+    "fixture": "scale-extremes",
+    "repeat": 0,
+    "fixtureSha": "933d72d0e9fb",
+    "kind": "scene",
+    "metrics": {
+      "m1": {
+        "beatsExpected": 5,
+        "beatsReturned": 5,
+        "tagErrors": [],
+        "indexErrors": [],
+        "valid": true,
+        "canaries": {
+          "units": true,
+          "sensorNote": true
+        }
+      },
+      "m2": {
+        "floor": 0,
+        "soft": 1,
+        "byCode": {
+          "projects-outside-frame": 1
+        },
+        "softPerScene": 0.2
+      },
+      "m3": {
+        "scores": [
+          1,
+          1,
+          0,
+          0,
+          0
+        ],
+        "exact": 2,
+        "counted": 5,
+        "rows": [
+          {
+            "beat": 0,
+            "declared": "EWS",
+            "derived": "EWS",
+            "hFrac": 0.062216249730999026,
+            "score": 1
+          },
+          {
+            "beat": 1,
+            "declared": "EWS",
+            "derived": "EWS",
+            "hFrac": 0.062216249730999026,
+            "score": 1
+          },
+          {
+            "beat": 2,
+            "declared": "ECU",
+            "derived": "EWS",
+            "hFrac": 0.07776704649642806,
+            "score": 0
+          },
+          {
+            "beat": 3,
+            "declared": "WS",
+            "derived": "ECU",
+            "hFrac": 7.555555555555555,
+            "score": 0
+          },
+          {
+            "beat": 4,
+            "declared": "MCU",
+            "derived": "WS",
+            "hFrac": 0.5031561205611103,
+            "score": 0
+          }
+        ],
+        "mean": 0.4,
+        "exactRate": 0.4
+      },
+      "m4": {
+        "scores": [
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "sideErrors": 0,
+        "counted": 5,
+        "mean": 1,
+        "sideErrorRate": 0
+      },
+      "m5": {
+        "scores": [
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "counted": 5,
+        "unscoreable": 0,
+        "directionFlips": 0,
+        "rows": [
+          {
+            "beat": 0,
+            "declared": "Static Shot",
+            "derived": "Static Shot",
+            "score": 1
+          },
+          {
+            "beat": 1,
+            "declared": "Static Shot",
+            "derived": "Static Shot",
+            "score": 1
+          },
+          {
+            "beat": 2,
+            "declared": "Push In",
+            "derived": "Push In",
+            "score": 1
+          },
+          {
+            "beat": 3,
+            "declared": "Push Out",
+            "derived": "Push Out",
+            "score": 1
+          },
+          {
+            "beat": 4,
+            "declared": "Push In",
+            "derived": "Push In",
+            "score": 1
+          }
+        ],
+        "mean": 1
+      },
+      "m6": {
+        "basis": "derived",
+        "distinctBands": 3,
+        "modalShare": 0.6,
+        "spread": 6,
+        "mwsShare": 0,
+        "bands": [
+          "EWS",
+          "EWS",
+          "EWS",
+          "ECU",
+          "WS"
+        ],
+        "extremeHitRate": 0.4
+      },
+      "m7": {
+        "staticCameraPairs": 2,
+        "meanDisplacementRel": 0.8833333333333333
+      },
+      "m8": {
+        "teleports": 0,
+        "wrongDirection": 0,
+        "unjustifiedDrift": 0,
+        "missedMove": 0,
+        "heightInstability": 0,
+        "selfReportRecall": null
+      },
+      "m9": {
+        "expected": 0,
+        "hit": 0,
+        "applicable": true,
+        "rate": null
+      },
+      "m10": {
+        "tested": false,
+        "axisErrors": 0,
+        "unpermittedCrosses": 0,
+        "pairs": []
+      },
+      "m11": {
+        "expected": 0,
+        "correct": 0,
+        "rate": null
+      },
+      "m12": {
+        "earlyReveals": 0,
+        "omissions": 0,
+        "beats": 5,
+        "earlyRevealRate": 0,
+        "omissionRate": 0
+      },
+      "m13": {
+        "failures": 0,
+        "compiled": [
+          {
+            "beat": 0,
+            "text": "An empty white salt flat under an enormous pale sky, flat to the horizon in every direction, hard noon light. Live-action, cinematic. An extreme wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, stands still as a tiny speck. The camera holds a static shot."
+          },
+          {
+            "beat": 1,
+            "text": "Live-action, cinematic. An extreme wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, walks toward the camera across the flat. The camera holds a static shot."
+          },
+          {
+            "beat": 2,
+            "text": "Live-action, cinematic. An extreme wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, opens her eye, revealing the iris and its flecks. The camera push ins with large amplitude at medium speed."
+          },
+          {
+            "beat": 3,
+            "text": "Live-action, cinematic. An extreme close-up at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, stands and looks back the way she came. The camera push outs with large amplitude at medium speed."
+          },
+          {
+            "beat": 4,
+            "text": "Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, speaks one word, mouth visible close enough to read. The camera push ins with large amplitude at medium speed."
+          }
+        ]
+      },
+      "m17": {
+        "thin": 0,
+        "missingFields": 0,
+        "applicable": true
+      }
+    },
+    "violations": [
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 1> is listed in frame but projects to (0.00, -5.88).",
+        "beat": 3,
+        "subject": "<Subject 1>"
+      },
+      {
+        "code": "framing-disagreement",
+        "severity": "soft",
+        "detail": "Beat 3 declares ECU; its own geometry gives EWS (hFrac 0.078).",
+        "beat": 2
+      },
+      {
+        "code": "framing-disagreement",
+        "severity": "soft",
+        "detail": "Beat 4 declares WS; its own geometry gives ECU (hFrac 7.556).",
+        "beat": 3
+      },
+      {
+        "code": "framing-disagreement",
+        "severity": "soft",
+        "detail": "Beat 5 declares MCU; its own geometry gives WS (hFrac 0.503).",
+        "beat": 4
+      },
+      {
+        "code": "framing-expectation-miss",
+        "severity": "soft",
+        "detail": "Beat 3 came back EWS; pre-registered as ECU. Beat text: \"Her eye opens, and the iris and its flecks fill the whole picture.\"",
+        "beat": 2
+      },
+      {
+        "code": "framing-expectation-miss",
+        "severity": "soft",
+        "detail": "Beat 4 came back ECU; pre-registered as WS/MWS/MS. Beat text: \"She stands and looks back the way she came, the full length of her against the flat.\"",
+        "beat": 3
+      },
+      {
+        "code": "framing-expectation-miss",
+        "severity": "soft",
+        "detail": "Beat 5 came back WS; pre-registered as CU/MCU. Beat text: \"She says one word, and we are close enough to read her mouth.\"",
+        "beat": 4
+      },
+      {
+        "code": "identical-consecutive-camera",
+        "severity": "soft",
+        "detail": "Beats 1 and 2 have the same camera pose.",
+        "beat": 1
+      },
+      {
+        "code": "identical-consecutive-camera",
+        "severity": "soft",
+        "detail": "Beats 2 and 3 have the same camera pose.",
+        "beat": 2
+      }
+    ],
+    "floorCount": 0,
+    "passesFloor": true,
+    "derivedBands": [
+      "EWS",
+      "EWS",
+      "EWS",
+      "ECU",
+      "WS"
+    ],
+    "prose": [
+      {
+        "beat": 0,
+        "text": "The camera holds static, small amplitude, slow speed, capturing the figure as a speck on the endless white plain under a huge sky."
+      },
+      {
+        "beat": 1,
+        "text": "The camera holds static, small amplitude, slow speed, while the figure walks forward ten metres toward the lens, growing slightly but still a tiny speck against the emptiness."
+      },
+      {
+        "beat": 2,
+        "text": "The camera pushes in with large amplitude at medium speed, zooming from 35 mm to 85 mm, closing from fifty metres to just over one metre to fill the frame with the figure’s eye and its iris flecks."
+      },
+      {
+        "beat": 3,
+        "text": "The camera pushes out with large amplitude at medium speed, pulling back from one metre to fifteen metres while tilting down to reveal the figure’s full length as she turns to look back across the flat."
+      },
+      {
+        "beat": 4,
+        "text": "The camera pushes in with large amplitude at medium speed, moving from fifteen metres to about two and a half metres and tilting up to frame the figure’s mouth closely enough to read her spoken word."
+      }
+    ],
+    "h3": [
+      {
+        "beat": 0,
+        "text": "An empty white salt flat under an enormous pale sky, flat to the horizon in every direction, hard noon light. Live-action, cinematic. An extreme wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, stands still as a tiny speck. The camera holds a static shot."
+      },
+      {
+        "beat": 1,
+        "text": "Live-action, cinematic. An extreme wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, walks toward the camera across the flat. The camera holds a static shot."
+      },
+      {
+        "beat": 2,
+        "text": "Live-action, cinematic. An extreme wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, opens her eye, revealing the iris and its flecks. The camera push ins with large amplitude at medium speed."
+      },
+      {
+        "beat": 3,
+        "text": "Live-action, cinematic. An extreme close-up at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, stands and looks back the way she came. The camera push outs with large amplitude at medium speed."
+      },
+      {
+        "beat": 4,
+        "text": "Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, speaks one word, mouth visible close enough to read. The camera push ins with large amplitude at medium speed."
+      }
+    ],
+    "costUsd": 0
+  },
+  {
+    "cell": "split-or",
+    "fixture": "captured",
+    "repeat": 0,
+    "fixtureSha": "2b3a0fa3b229",
+    "kind": "scene",
+    "metrics": {
+      "m1": {
+        "beatsExpected": 4,
+        "beatsReturned": 4,
+        "tagErrors": [],
+        "indexErrors": [],
+        "valid": true,
+        "canaries": {
+          "units": true,
+          "sensorNote": true
+        }
+      },
+      "m2": {
+        "floor": 4,
+        "soft": 1,
+        "byCode": {
+          "subject-floating": 3,
+          "projects-outside-frame": 1,
+          "containment-invalid": 1
+        },
+        "softPerScene": 0.25
+      },
+      "m3": {
+        "scores": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "exact": 4,
+        "counted": 4,
+        "rows": [
+          {
+            "beat": 0,
+            "declared": "WS",
+            "derived": "WS",
+            "hFrac": 0.332845964873576,
+            "score": 1
+          },
+          {
+            "beat": 1,
+            "declared": "MCU",
+            "derived": "MCU",
+            "hFrac": 2.8152442838269502,
+            "score": 1
+          },
+          {
+            "beat": 2,
+            "declared": "MWS",
+            "derived": "MWS",
+            "hFrac": 0.7663620999490961,
+            "score": 1
+          },
+          {
+            "beat": 3,
+            "declared": "WS",
+            "derived": "WS",
+            "hFrac": 0.3632033324864169,
+            "score": 1
+          }
+        ],
+        "mean": 1,
+        "exactRate": 1
+      },
+      "m4": {
+        "scores": [
+          1,
+          1,
+          1,
+          0.5,
+          1,
+          1,
+          1,
+          1,
+          1,
+          0.5,
+          1,
+          1,
+          0.5
+        ],
+        "sideErrors": 0,
+        "counted": 13,
+        "mean": 0.8846153846153846,
+        "sideErrorRate": 0
+      },
+      "m5": {
+        "scores": [
+          0.5,
+          1,
+          1,
+          1
+        ],
+        "counted": 4,
+        "unscoreable": 0,
+        "directionFlips": 0,
+        "rows": [
+          {
+            "beat": 0,
+            "declared": "Tracking Shot",
+            "derived": "Arc Shot",
+            "score": 0.5
+          },
+          {
+            "beat": 1,
+            "declared": "Push In",
+            "derived": "Push In",
+            "score": 1
+          },
+          {
+            "beat": 2,
+            "declared": "Arc Shot",
+            "derived": "Arc Shot",
+            "score": 1
+          },
+          {
+            "beat": 3,
+            "declared": "Push Out",
+            "derived": "Push Out",
+            "score": 1
+          }
+        ],
+        "mean": 0.875
+      },
+      "m6": {
+        "basis": "derived",
+        "distinctBands": 3,
+        "modalShare": 0.5,
+        "spread": 3,
+        "mwsShare": 0.25,
+        "bands": [
+          "WS",
+          "MCU",
+          "MWS",
+          "WS"
+        ],
+        "extremeHitRate": null
+      },
+      "m7": {
+        "staticCameraPairs": 0,
+        "meanDisplacementRel": 0.69242738728738
+      },
+      "m8": {
+        "teleports": 0,
+        "wrongDirection": 0,
+        "unjustifiedDrift": 2,
+        "missedMove": 0,
+        "heightInstability": 0.14788287837202715,
+        "selfReportRecall": 0.5
+      },
+      "m9": {
+        "expected": 1,
+        "hit": 1,
+        "applicable": true,
+        "rate": 1
+      },
+      "m10": {
+        "tested": false,
+        "axisErrors": 0,
+        "unpermittedCrosses": 0,
+        "pairs": []
+      },
+      "m11": {
+        "expected": 0,
+        "correct": 0,
+        "rate": null
+      },
+      "m12": {
+        "earlyReveals": 0,
+        "omissions": 0,
+        "beats": 4,
+        "earlyRevealRate": 0,
+        "omissionRate": 0
+      },
+      "m13": {
+        "failures": 4,
+        "compiled": [
+          {
+            "beat": 0,
+            "text": "Wet-night pit lane under harsh neon signs and floodlights; rain-slick asphalt reflects multicoloured glows, mist hangs in the air, and distant thunder rumbles. Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the foreground, walks toward the velvet jacket display, rain dripping from neon-yellow tracksuit. <Subject 2> is left of centre in the foreground, displayed on a glossy form, silver filigree catching neon light. <Subject 3> is on the left of frame in the midground, parked, camouflage wrap slick with rain, yellow wheels glowing. <Subject 4> is on the left of frame in the background, leans on concrete barrier, orange glasses reflecting the approaching car. The camera arc shots with medium amplitude at slow speed. Subject 4 stands on a 1m concrete barrier (groundOffsetM 1.0). Subject 2 is displayed on a stationary form at ground level. No other containment."
+          },
+          {
+            "beat": 1,
+            "text": "Live-action, cinematic. A medium close-up at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, slipping on the velvet jacket, adjusting the silver filigree collar. <Subject 2>, inside <Subject 1>, is in the centre of frame in the midground, being donned by the ape, silver filigree collar adjusted. The camera push ins with medium amplitude at slow speed. Subject 2 (velvet jacket) is worn by Subject 1 (ape) at shoulder level (groundOffsetM=1.4m), moving with the ape as a single unit."
+          },
+          {
+            "beat": 2,
+            "text": "Live-action, cinematic. A medium-wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the foreground, strides to the supercar, pulls the door handle, and slides into the driver's seat. <Subject 2>, inside <Subject 1>, is in the centre of frame in the foreground, worn by the ape, sleeves settling as he moves. <Subject 3> is in the centre of frame in the midground, parked, driver's door opens, interior lights flash yellow. <Subject 4> is right of centre in the background, stands on concrete barrier observing, arms crossed. The camera arc shots with large amplitude at medium speed. Subject 2 (velvet jacket) is worn by Subject 1 (ape), moving with him; Subject 1 enters Subject 3 (supercar) at beat end, seated with groundOffsetM 0.3m."
+          },
+          {
+            "beat": 3,
+            "text": "Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 3> is in the centre of frame in the foreground, accelerates hard, bright yellow wheels spraying rain, headlights cutting mist. <Subject 1>, inside <Subject 3>, is in the centre of frame in the foreground, grips steering wheel, visible through windshield as car launches forward. <Subject 4> is on the right of frame in the background, stands motionless on barrier, arms crossed, orange translucent glasses reflecting neon. The camera push outs with medium amplitude at slow speed. Subject 1 (ape) seated inside Subject 3 (supercar) at groundOffsetM 0.5m; Subject 2 (velvet jacket) worn by Subject 1 and not independently visible; Subject 4 (rival) standing on concrete barrier at groundOffsetM 1.0m."
+          }
+        ]
+      },
+      "m17": {
+        "thin": 0,
+        "missingFields": 0,
+        "applicable": true
+      }
+    },
+    "violations": [
+      {
+        "code": "subject-floating",
+        "severity": "floor",
+        "detail": "<Subject 4> floats 1m above the ground with no container.",
+        "beat": 0,
+        "subject": "<Subject 4>"
+      },
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 2> is listed in frame but projects to (0.00, 1.54).",
+        "beat": 1,
+        "subject": "<Subject 2>"
+      },
+      {
+        "code": "containment-invalid",
+        "severity": "floor",
+        "detail": "<Subject 2> sits at 0m inside <Subject 1>, which is 1.8m tall.",
+        "beat": 2,
+        "subject": "<Subject 2>"
+      },
+      {
+        "code": "subject-floating",
+        "severity": "floor",
+        "detail": "<Subject 4> floats 1m above the ground with no container.",
+        "beat": 2,
+        "subject": "<Subject 4>"
+      },
+      {
+        "code": "subject-floating",
+        "severity": "floor",
+        "detail": "<Subject 4> floats 1m above the ground with no container.",
+        "beat": 3,
+        "subject": "<Subject 4>"
+      },
+      {
+        "code": "height-drift",
+        "severity": "soft",
+        "detail": "<Subject 2> varies in height across beats: 1.80, 0.60, 0.70m.",
+        "subject": "<Subject 2>"
+      },
+      {
+        "code": "unjustified-drift",
+        "severity": "soft",
+        "detail": "<Subject 1> drifts 3.6m into beat 2 with nothing in the beat text moving it.",
+        "beat": 1,
+        "subject": "<Subject 1>"
+      },
+      {
+        "code": "unjustified-drift",
+        "severity": "soft",
+        "detail": "<Subject 2> drifts 3.4m into beat 2 with nothing in the beat text moving it.",
+        "beat": 1,
+        "subject": "<Subject 2>"
+      },
+      {
+        "code": "h3-compile-failure",
+        "severity": "soft",
+        "detail": "Beat 1: leaks schema scaffolding.",
+        "beat": 0
+      },
+      {
+        "code": "h3-compile-failure",
+        "severity": "soft",
+        "detail": "Beat 2: leaks schema scaffolding.",
+        "beat": 1
+      },
+      {
+        "code": "h3-compile-failure",
+        "severity": "soft",
+        "detail": "Beat 3: leaks schema scaffolding.",
+        "beat": 2
+      },
+      {
+        "code": "h3-compile-failure",
+        "severity": "soft",
+        "detail": "Beat 4: leaks schema scaffolding.",
+        "beat": 3
+      }
+    ],
+    "floorCount": 4,
+    "passesFloor": false,
+    "derivedBands": [
+      "WS",
+      "MCU",
+      "MWS",
+      "WS"
+    ],
+    "prose": [
+      {
+        "beat": 0,
+        "text": "The camera sits low at the edge of the pit lane, tracking right with medium amplitude at slow speed while gently pushing in, holding a wide shot on the ape as he walks toward the velvet jacket display. Neon signs and floodlights paint the rain-slick asphalt in fractured colour; mist catches the light in volumetric shafts. The jacket on its form waits at the near end, the camouflaged supercar sits parked ten metres back, and the pink-haired rival leans on the barrier at the far end, all held in frame as the ape closes the distance."
+      },
+      {
+        "beat": 1,
+        "text": "Live-action, cinematic, a medium close-up frames the ape at the jacket station as the camera pushes in with medium amplitude at slow speed. The ape slips the deep-red velvet bomber jacket over the neon-yellow tracksuit, fingers adjusting the silver filigree collar with deliberate care. Rain streaks the red heart-shaped sunglasses, each droplet catching the harsh neon glow. The wet asphalt and distant floodlights blur into a colorful bokeh behind the subject, the camouflaged supercar and the pink-haired rival reduced to soft shapes in the deep background."
+      },
+      {
+        "beat": 2,
+        "text": "The camera holds a medium-wide frame on the ape as he strides from the jacket station toward the camouflaged supercar ten metres ahead, tracking smoothly at eye level with a gentle leftward arc that curves around the vehicle's nose. Neon reflections streak across the wet asphalt beneath his sneakers. As he reaches the driver's door, the camera completes its arc to settle slightly behind the B-pillar, watching him pull the handle and drop into the bucket seat, the cabin flashing yellow with interior light. The rival on the distant barrier remains visible over the car's rear deck, pink hair catching the floodlights."
+      },
+      {
+        "beat": 3,
+        "text": "Live-action, cinematic, a wide shot frames the camouflage-wrapped supercar centered on the rain-slick pit lane as its bright yellow wheels churn spray into the neon glow. The camera pushes out with medium amplitude at slow speed, sliding backward along the positive Z axis while the car rockets toward negative Z, its twin headlights knifing through the low mist. The pink-haired rival holds position on the concrete barrier at center-right in the background, orange translucent glasses flashing in the floodlights, motionless as the machine blasts past. Multicoloured neon signs reflect across the wet asphalt throughout the frame, mist swirling in the harsh light."
+      }
+    ],
+    "h3": [
+      {
+        "beat": 0,
+        "text": "Wet-night pit lane under harsh neon signs and floodlights; rain-slick asphalt reflects multicoloured glows, mist hangs in the air, and distant thunder rumbles. Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the foreground, walks toward the velvet jacket display, rain dripping from neon-yellow tracksuit. <Subject 2> is left of centre in the foreground, displayed on a glossy form, silver filigree catching neon light. <Subject 3> is on the left of frame in the midground, parked, camouflage wrap slick with rain, yellow wheels glowing. <Subject 4> is on the left of frame in the background, leans on concrete barrier, orange glasses reflecting the approaching car. The camera arc shots with medium amplitude at slow speed. Subject 4 stands on a 1m concrete barrier (groundOffsetM 1.0). Subject 2 is displayed on a stationary form at ground level. No other containment."
+      },
+      {
+        "beat": 1,
+        "text": "Live-action, cinematic. A medium close-up at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, slipping on the velvet jacket, adjusting the silver filigree collar. <Subject 2>, inside <Subject 1>, is in the centre of frame in the midground, being donned by the ape, silver filigree collar adjusted. The camera push ins with medium amplitude at slow speed. Subject 2 (velvet jacket) is worn by Subject 1 (ape) at shoulder level (groundOffsetM=1.4m), moving with the ape as a single unit."
+      },
+      {
+        "beat": 2,
+        "text": "Live-action, cinematic. A medium-wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the foreground, strides to the supercar, pulls the door handle, and slides into the driver's seat. <Subject 2>, inside <Subject 1>, is in the centre of frame in the foreground, worn by the ape, sleeves settling as he moves. <Subject 3> is in the centre of frame in the midground, parked, driver's door opens, interior lights flash yellow. <Subject 4> is right of centre in the background, stands on concrete barrier observing, arms crossed. The camera arc shots with large amplitude at medium speed. Subject 2 (velvet jacket) is worn by Subject 1 (ape), moving with him; Subject 1 enters Subject 3 (supercar) at beat end, seated with groundOffsetM 0.3m."
+      },
+      {
+        "beat": 3,
+        "text": "Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 3> is in the centre of frame in the foreground, accelerates hard, bright yellow wheels spraying rain, headlights cutting mist. <Subject 1>, inside <Subject 3>, is in the centre of frame in the foreground, grips steering wheel, visible through windshield as car launches forward. <Subject 4> is on the right of frame in the background, stands motionless on barrier, arms crossed, orange translucent glasses reflecting neon. The camera push outs with medium amplitude at slow speed. Subject 1 (ape) seated inside Subject 3 (supercar) at groundOffsetM 0.5m; Subject 2 (velvet jacket) worn by Subject 1 and not independently visible; Subject 4 (rival) standing on concrete barrier at groundOffsetM 1.0m."
+      }
+    ],
+    "costUsd": 0
+  },
+  {
+    "cell": "split-or",
+    "fixture": "grid-launch",
+    "repeat": 0,
+    "failed": true,
+    "failure": "error",
+    "error": "NvidiaError: NVIDIA 502: Upstream error from Nvidia: Service temporarily overloaded"
+  },
+  {
+    "cell": "split-or",
+    "fixture": "two-hander-axis",
+    "repeat": 0,
+    "failed": true,
+    "failure": "error",
+    "error": "OpenRouterTruncatedError: OpenRouter response truncated: finish_reason=length after 4096 tokens (max_tokens 4096)"
+  },
+  {
+    "cell": "split-or",
+    "fixture": "cut-to-black",
+    "repeat": 0,
+    "failed": true,
+    "failure": "error",
+    "error": "NvidiaError: NVIDIA 502: Upstream error from Nvidia: Service temporarily overloaded"
+  },
+  {
+    "cell": "split-or",
+    "fixture": "scale-extremes",
+    "repeat": 0,
+    "fixtureSha": "933d72d0e9fb",
+    "kind": "scene",
+    "metrics": {
+      "m1": {
+        "beatsExpected": 5,
+        "beatsReturned": 5,
+        "tagErrors": [],
+        "indexErrors": [],
+        "valid": true,
+        "canaries": {
+          "units": true,
+          "sensorNote": true
+        }
+      },
+      "m2": {
+        "floor": 0,
+        "soft": 1,
+        "byCode": {
+          "projects-outside-frame": 1
+        },
+        "softPerScene": 0.2
+      },
+      "m3": {
+        "scores": [
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "exact": 5,
+        "counted": 5,
+        "rows": [
+          {
+            "beat": 0,
+            "declared": "EWS",
+            "derived": "EWS",
+            "hFrac": 0.010666602667230662,
+            "score": 1
+          },
+          {
+            "beat": 1,
+            "declared": "MWS",
+            "derived": "MWS",
+            "hFrac": 0.8883560251030079,
+            "score": 1
+          },
+          {
+            "beat": 2,
+            "declared": "ECU",
+            "derived": "ECU",
+            "hFrac": 11.851851851851851,
+            "score": 1
+          },
+          {
+            "beat": 3,
+            "declared": "WS",
+            "derived": "WS",
+            "hFrac": 0.4923703063415348,
+            "score": 1
+          },
+          {
+            "beat": 4,
+            "declared": "CU",
+            "derived": "CU",
+            "hFrac": 4.571675491699703,
+            "score": 1
+          }
+        ],
+        "mean": 1,
+        "exactRate": 1
+      },
+      "m4": {
+        "scores": [
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "sideErrors": 0,
+        "counted": 5,
+        "mean": 1,
+        "sideErrorRate": 0
+      },
+      "m5": {
+        "scores": [
+          1,
+          0.5,
+          1,
+          1,
+          1
+        ],
+        "counted": 5,
+        "unscoreable": 0,
+        "directionFlips": 0,
+        "rows": [
+          {
+            "beat": 0,
+            "declared": "Static Shot",
+            "derived": "Static Shot",
+            "score": 1
+          },
+          {
+            "beat": 1,
+            "declared": "Tracking Shot",
+            "derived": "Push Out",
+            "score": 0.5
+          },
+          {
+            "beat": 2,
+            "declared": "Static Shot",
+            "derived": "Static Shot",
+            "score": 1
+          },
+          {
+            "beat": 3,
+            "declared": "Pan Right",
+            "derived": "Pan Right",
+            "score": 1
+          },
+          {
+            "beat": 4,
+            "declared": "Static Shot",
+            "derived": "Static Shot",
+            "score": 1
+          }
+        ],
+        "mean": 0.9
+      },
+      "m6": {
+        "basis": "derived",
+        "distinctBands": 5,
+        "modalShare": 0.2,
+        "spread": 6,
+        "mwsShare": 0.2,
+        "bands": [
+          "EWS",
+          "MWS",
+          "ECU",
+          "WS",
+          "CU"
+        ],
+        "extremeHitRate": 1
+      },
+      "m7": {
+        "staticCameraPairs": 0,
+        "meanDisplacementRel": 57.225
+      },
+      "m8": {
+        "teleports": 2,
+        "wrongDirection": 0,
+        "unjustifiedDrift": 3,
+        "missedMove": 0,
+        "heightInstability": 0,
+        "selfReportRecall": 0.75
+      },
+      "m9": {
+        "expected": 0,
+        "hit": 0,
+        "applicable": true,
+        "rate": null
+      },
+      "m10": {
+        "tested": false,
+        "axisErrors": 0,
+        "unpermittedCrosses": 0,
+        "pairs": []
+      },
+      "m11": {
+        "expected": 0,
+        "correct": 0,
+        "rate": null
+      },
+      "m12": {
+        "earlyReveals": 0,
+        "omissions": 0,
+        "beats": 5,
+        "earlyRevealRate": 0,
+        "omissionRate": 0
+      },
+      "m13": {
+        "failures": 0,
+        "compiled": [
+          {
+            "beat": 0,
+            "text": "An empty white salt flat under an enormous pale sky, flat to the horizon in every direction, hard noon light. Live-action, cinematic. An extreme wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, stands motionless at the horizon line, a solitary speck against the white flat. The camera holds a static shot. Subject stands alone on open salt flat; no containers."
+          },
+          {
+            "beat": 1,
+            "text": "Live-action, cinematic. A medium-wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, walks steadily toward the camera across the salt flat. The camera push outs with medium amplitude at slow speed. <Subject 1> stands free on the salt crust; no containers, no props held."
+          },
+          {
+            "beat": 2,
+            "text": "Live-action, cinematic. An extreme close-up at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, Her eye opens, revealing the iris and its flecks in extreme close-up. The camera holds a static shot. Subject stands free on salt flat. No containers. Orange translucent glasses frames may be visible at extreme edge of frame but eye itself is unobstructed."
+          },
+          {
+            "beat": 3,
+            "text": "Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, stands and looks back toward the horizon. The camera pan rights with medium amplitude at medium speed. Subject stands free on salt flat. No containment."
+          },
+          {
+            "beat": 4,
+            "text": "Live-action, cinematic. A close-up from a high angle frames the scene. <Subject 1> is in the centre of frame in the midground, speaks a single word, lips forming the syllable clearly. The camera holds a static shot. Subject 1 stands free on the salt flat, no containment."
+          }
+        ]
+      },
+      "m17": {
+        "thin": 0,
+        "missingFields": 0,
+        "applicable": true
+      }
+    },
+    "violations": [
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 1> is listed in frame but projects to (0.00, -9.88).",
+        "beat": 2,
+        "subject": "<Subject 1>"
+      },
+      {
+        "code": "teleport",
+        "severity": "floor",
+        "detail": "<Subject 1> moves 182.0m between beats 2 and 3; the physical ceiling for this beat is 57.6m.",
+        "beat": 2,
+        "subject": "<Subject 1>"
+      },
+      {
+        "code": "unjustified-drift",
+        "severity": "soft",
+        "detail": "<Subject 1> drifts 182.0m into beat 3 with nothing in the beat text moving it.",
+        "beat": 2,
+        "subject": "<Subject 1>"
+      },
+      {
+        "code": "unjustified-drift",
+        "severity": "soft",
+        "detail": "<Subject 1> drifts 30.0m into beat 4 with nothing in the beat text moving it.",
+        "beat": 3,
+        "subject": "<Subject 1>"
+      },
+      {
+        "code": "teleport",
+        "severity": "floor",
+        "detail": "<Subject 1> moves 149.0m between beats 4 and 5; the physical ceiling for this beat is 57.6m.",
+        "beat": 4,
+        "subject": "<Subject 1>"
+      },
+      {
+        "code": "unjustified-drift",
+        "severity": "soft",
+        "detail": "<Subject 1> drifts 149.0m into beat 5 with nothing in the beat text moving it.",
+        "beat": 4,
+        "subject": "<Subject 1>"
+      }
+    ],
+    "floorCount": 2,
+    "passesFloor": false,
+    "derivedBands": [
+      "EWS",
+      "MWS",
+      "ECU",
+      "WS",
+      "CU"
+    ],
+    "prose": [
+      {
+        "beat": 0,
+        "text": "Live-action, cinematic, an extreme wide shot frames the salt flat as a seamless white plane under a vast pale sky. The camera sits static at 200 metres on the +Z axis, level at 1.6 metres height, looking toward the origin with a 24mm lens. <Subject 1> stands alone at the horizon line, a tiny vertical accent at frame center, pink buzz-cut and green moto jacket barely resolved against the glare. No camera movement; the stillness amplifies the scale."
+      },
+      {
+        "beat": 1,
+        "text": "The camera tracks backward with medium amplitude at slow speed, paralleling <Subject 1> as she walks toward us across the white flat, holding her at a constant medium-wide framing that cuts around the knees. Her green patent leather moto jacket flashes in the hard noon light, orange glasses a bright slash, pink buzz-cut sharp against the pale sky. The featureless ground rushes toward the lens beneath her boots."
+      },
+      {
+        "beat": 2,
+        "text": "Live-action, cinematic, an extreme close-up frames the subject's right eye as it opens, the iris and its flecks dominating the entire frame. The camera holds a static shot at 200mm, positioned 1.4 metres from the subject's face at eye level, centered on the pupil with no movement. The pale noon sky reflects in the translucent orange glasses rims at the edge of frame, while the green patent leather jacket is suggested only by a blur of colour at the lower border. The subject faces the camera directly, yaw zero, motionless save for the eyelid lifting."
+      },
+      {
+        "beat": 3,
+        "text": "The camera sits nine metres behind her at eye level, framing her full figure in a wide shot against the endless white flat. She faces the horizon, her green moto jacket catching the hard noon light. The camera pans right with medium amplitude at medium speed, sweeping across the featureless expanse to her right, the pale sky dominating the upper frame. Her pink buzz-cut and orange glasses are sharp at this distance, the buckles on her slacks catching glints. The pan reveals the sheer horizontal scale of the salt flat stretching perpendicular to her path."
+      },
+      {
+        "beat": 4,
+        "text": "The camera holds a static close-up at 85mm, positioned 1.5 metres from the figure and framed on her mouth and lower face. She stands at centre frame, pink buzz-cut catching the hard noon light, orange translucent glasses reflecting the white flat. Her green patent leather moto jacket fills the lower edge of frame. The camera does not move; the only motion is her lips shaping one quiet word. The pale sky presses down behind her, featureless and bright."
+      }
+    ],
+    "h3": [
+      {
+        "beat": 0,
+        "text": "An empty white salt flat under an enormous pale sky, flat to the horizon in every direction, hard noon light. Live-action, cinematic. An extreme wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, stands motionless at the horizon line, a solitary speck against the white flat. The camera holds a static shot. Subject stands alone on open salt flat; no containers."
+      },
+      {
+        "beat": 1,
+        "text": "Live-action, cinematic. A medium-wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, walks steadily toward the camera across the salt flat. The camera push outs with medium amplitude at slow speed. <Subject 1> stands free on the salt crust; no containers, no props held."
+      },
+      {
+        "beat": 2,
+        "text": "Live-action, cinematic. An extreme close-up at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, Her eye opens, revealing the iris and its flecks in extreme close-up. The camera holds a static shot. Subject stands free on salt flat. No containers. Orange translucent glasses frames may be visible at extreme edge of frame but eye itself is unobstructed."
+      },
+      {
+        "beat": 3,
+        "text": "Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, stands and looks back toward the horizon. The camera pan rights with medium amplitude at medium speed. Subject stands free on salt flat. No containment."
+      },
+      {
+        "beat": 4,
+        "text": "Live-action, cinematic. A close-up from a high angle frames the scene. <Subject 1> is in the centre of frame in the midground, speaks a single word, lips forming the syllable clearly. The camera holds a static shot. Subject 1 stands free on the salt flat, no containment."
+      }
+    ],
+    "costUsd": 0
+  },
+  {
+    "cell": "split-or-super",
+    "fixture": "captured",
+    "repeat": 0,
+    "fixtureSha": "2b3a0fa3b229",
+    "kind": "scene",
+    "metrics": {
+      "m1": {
+        "beatsExpected": 4,
+        "beatsReturned": 4,
+        "tagErrors": [],
+        "indexErrors": [],
+        "valid": true,
+        "canaries": {
+          "units": true,
+          "sensorNote": true
+        }
+      },
+      "m2": {
+        "floor": 0,
+        "soft": 5,
+        "byCode": {
+          "projects-outside-frame": 4,
+          "near-interpenetration": 1
+        },
+        "softPerScene": 1.25
+      },
+      "m3": {
+        "scores": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "exact": 4,
+        "counted": 4,
+        "rows": [
+          {
+            "beat": 0,
+            "declared": "WS",
+            "derived": "WS",
+            "hFrac": 0.41636788095829097,
+            "score": 1
+          },
+          {
+            "beat": 1,
+            "declared": "MCU",
+            "derived": "MCU",
+            "hFrac": 2.645502645502645,
+            "score": 1
+          },
+          {
+            "beat": 2,
+            "declared": "MWS",
+            "derived": "MWS",
+            "hFrac": 1.3300114168203099,
+            "score": 1
+          },
+          {
+            "beat": 3,
+            "declared": "EWS",
+            "derived": "EWS",
+            "hFrac": 0.1382623505807355,
+            "score": 1
+          }
+        ],
+        "mean": 1,
+        "exactRate": 1
+      },
+      "m4": {
+        "scores": [
+          1,
+          1,
+          1,
+          1,
+          0.5,
+          0.5,
+          1,
+          0,
+          1,
+          1
+        ],
+        "sideErrors": 0,
+        "counted": 10,
+        "mean": 0.8,
+        "sideErrorRate": 0
+      },
+      "m5": {
+        "scores": [
+          0.5,
+          1,
+          1,
+          1
+        ],
+        "counted": 4,
+        "unscoreable": 0,
+        "directionFlips": 0,
+        "rows": [
+          {
+            "beat": 0,
+            "declared": "Tracking Shot",
+            "derived": "Truck Right",
+            "score": 0.5
+          },
+          {
+            "beat": 1,
+            "declared": "Push In",
+            "derived": "Push In",
+            "score": 1
+          },
+          {
+            "beat": 2,
+            "declared": "Arc Shot",
+            "derived": "Arc Shot",
+            "score": 1
+          },
+          {
+            "beat": 3,
+            "declared": "Push Out",
+            "derived": "Push Out",
+            "score": 1
+          }
+        ],
+        "mean": 0.875
+      },
+      "m6": {
+        "basis": "derived",
+        "distinctBands": 4,
+        "modalShare": 0.25,
+        "spread": 4,
+        "mwsShare": 0.25,
+        "bands": [
+          "WS",
+          "MCU",
+          "MWS",
+          "EWS"
+        ],
+        "extremeHitRate": null
+      },
+      "m7": {
+        "staticCameraPairs": 0,
+        "meanDisplacementRel": 3.1003964911689685
+      },
+      "m8": {
+        "teleports": 0,
+        "wrongDirection": 0,
+        "unjustifiedDrift": 3,
+        "missedMove": 0,
+        "heightInstability": 0.17894018441783652,
+        "selfReportRecall": 0.75
+      },
+      "m9": {
+        "expected": 1,
+        "hit": 0,
+        "applicable": true,
+        "rate": 0
+      },
+      "m10": {
+        "tested": false,
+        "axisErrors": 0,
+        "unpermittedCrosses": 0,
+        "pairs": []
+      },
+      "m11": {
+        "expected": 0,
+        "correct": 0,
+        "rate": null
+      },
+      "m12": {
+        "earlyReveals": 0,
+        "omissions": 0,
+        "beats": 4,
+        "earlyRevealRate": 0,
+        "omissionRate": 0
+      },
+      "m13": {
+        "failures": 0,
+        "compiled": [
+          {
+            "beat": 0,
+            "text": "Wet-night pit lane under harsh neon signs and floodlights; rain-slick asphalt reflects multicoloured glows, mist hangs in the air, and distant thunder rumbles. Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, walking toward the jacket-mannequin, rain dripping from tracksuit. <Subject 2> is at the far right of frame in the background, standing on display, awaiting to be worn. <Subject 4> is at the far left of frame in the foreground, watching from the barrier. The camera truck rights with medium amplitude at medium speed. <Subject 1> wears a neon-yellow tracksuit; <Subject 2> is on a mannequin; <Subject 3> is parked ahead; <Subject 4> stands on the concrete barrier."
+          },
+          {
+            "beat": 1,
+            "text": "Live-action, cinematic. A medium close-up at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, slips on the deep-red velvet jacket, adjusting the silver filigree collar. <Subject 2> is at the far left of frame in the midground, being pulled onto the ape's torso, collar adjusted. The camera push ins with small amplitude at slow speed. <Subject 2> is worn by <Subject 1>."
+          },
+          {
+            "beat": 2,
+            "text": "Live-action, cinematic. A medium-wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the foreground, strides to the car, pulls the door handle, and prepares to sit. <Subject 3> is in the centre of frame in the midground, remains parked, doors closed. <Subject 4> is in the centre of frame in the background, watches from the barrier. The camera arc shots with large amplitude at medium speed. No subject is inside another; the ape stands on the ground and the car is stationary."
+          },
+          {
+            "beat": 3,
+            "text": "Live-action, cinematic. An extreme wide shot at eye level frames the scene. <Subject 3> is in the centre of frame in the midground, accelerates past the barrier, engine roaring, bright yellow wheels spraying rain. <Subject 4> is on the right of frame in the midground, watches the car from the barrier. The camera push outs with medium amplitude at medium speed. Subject 3 and Subject 4 are both on the ground; no containment relationships."
+          }
+        ]
+      },
+      "m17": {
+        "thin": 0,
+        "missingFields": 0,
+        "applicable": true
+      }
+    },
+    "violations": [
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 2> is listed in frame but projects to (1.20, 0.65).",
+        "beat": 0,
+        "subject": "<Subject 2>"
+      },
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 4> is listed in frame but projects to (-3.91, 0.43).",
+        "beat": 0,
+        "subject": "<Subject 4>"
+      },
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 1> is listed in frame but projects to (0.00, -7.94).",
+        "beat": 1,
+        "subject": "<Subject 1>"
+      },
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 2> is listed in frame but projects to (-0.74, -13.23).",
+        "beat": 1,
+        "subject": "<Subject 2>"
+      },
+      {
+        "code": "near-interpenetration",
+        "severity": "soft",
+        "detail": "<Subject 1> and <Subject 2> are 0.15m apart, closer than 0.33m.",
+        "beat": 1,
+        "subject": "<Subject 1>"
+      },
+      {
+        "code": "height-drift",
+        "severity": "soft",
+        "detail": "<Subject 1> varies in height across beats: 1.20, 1.80, 1.20m.",
+        "subject": "<Subject 1>"
+      },
+      {
+        "code": "height-drift",
+        "severity": "soft",
+        "detail": "<Subject 2> varies in height across beats: 1.80, 0.60m.",
+        "subject": "<Subject 2>"
+      },
+      {
+        "code": "unjustified-drift",
+        "severity": "soft",
+        "detail": "<Subject 2> drifts 2.1m into beat 2 with nothing in the beat text moving it.",
+        "beat": 1,
+        "subject": "<Subject 2>"
+      },
+      {
+        "code": "unjustified-drift",
+        "severity": "soft",
+        "detail": "<Subject 1> drifts 10.8m into beat 3 with nothing in the beat text moving it.",
+        "beat": 2,
+        "subject": "<Subject 1>"
+      },
+      {
+        "code": "unjustified-drift",
+        "severity": "soft",
+        "detail": "<Subject 4> drifts 10.2m into beat 4 with nothing in the beat text moving it.",
+        "beat": 3,
+        "subject": "<Subject 4>"
+      },
+      {
+        "code": "containment-missed",
+        "severity": "floor",
+        "detail": "<Subject 1> should be inside <Subject 3> in beat 4; got containerId null.",
+        "beat": 3,
+        "subject": "<Subject 1>"
+      }
+    ],
+    "floorCount": 1,
+    "passesFloor": false,
+    "derivedBands": [
+      "WS",
+      "MCU",
+      "MWS",
+      "EWS"
+    ],
+    "prose": [
+      {
+        "beat": 0,
+        "text": "The camera tracks left-to-right alongside the ape as it walks toward the jacket-mannequin, keeping the ape centered in a wide shot while the jacket-mannequin stays to the right and the rival watches from the far left, all under wet neon‑lit pit‑lane lighting."
+      },
+      {
+        "beat": 1,
+        "text": "The camera pushes in slowly on the ape as he slips the deep‑red velvet jacket on, adjusting the silver filigree collar; rain streaks the visor of his red heart‑shaped sunglasses and the jacket catches the neon‑lit reflections of the pit lane."
+      },
+      {
+        "beat": 2,
+        "text": "The camera begins low and left of the parked camouflaged supercar, then arcs upward and over the vehicle to the right in a smooth, large-amplitude arc shot at medium speed, keeping the ape in frame as he strides from the jacket-mannequin to the car, pulls the door handle, and readies to sit inside."
+      },
+      {
+        "beat": 3,
+        "text": "The camera pushes out with medium amplitude at medium speed, tracking the camouflaged supercar as it accelerates past the barrier; the car’s bright yellow wheels kick up spray while the pink‑haired rival watches from the concrete barrier, remaining centered in the frame as the view widens."
+      }
+    ],
+    "h3": [
+      {
+        "beat": 0,
+        "text": "Wet-night pit lane under harsh neon signs and floodlights; rain-slick asphalt reflects multicoloured glows, mist hangs in the air, and distant thunder rumbles. Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, walking toward the jacket-mannequin, rain dripping from tracksuit. <Subject 2> is at the far right of frame in the background, standing on display, awaiting to be worn. <Subject 4> is at the far left of frame in the foreground, watching from the barrier. The camera truck rights with medium amplitude at medium speed. <Subject 1> wears a neon-yellow tracksuit; <Subject 2> is on a mannequin; <Subject 3> is parked ahead; <Subject 4> stands on the concrete barrier."
+      },
+      {
+        "beat": 1,
+        "text": "Live-action, cinematic. A medium close-up at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, slips on the deep-red velvet jacket, adjusting the silver filigree collar. <Subject 2> is at the far left of frame in the midground, being pulled onto the ape's torso, collar adjusted. The camera push ins with small amplitude at slow speed. <Subject 2> is worn by <Subject 1>."
+      },
+      {
+        "beat": 2,
+        "text": "Live-action, cinematic. A medium-wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the foreground, strides to the car, pulls the door handle, and prepares to sit. <Subject 3> is in the centre of frame in the midground, remains parked, doors closed. <Subject 4> is in the centre of frame in the background, watches from the barrier. The camera arc shots with large amplitude at medium speed. No subject is inside another; the ape stands on the ground and the car is stationary."
+      },
+      {
+        "beat": 3,
+        "text": "Live-action, cinematic. An extreme wide shot at eye level frames the scene. <Subject 3> is in the centre of frame in the midground, accelerates past the barrier, engine roaring, bright yellow wheels spraying rain. <Subject 4> is on the right of frame in the midground, watches the car from the barrier. The camera push outs with medium amplitude at medium speed. Subject 3 and Subject 4 are both on the ground; no containment relationships."
+      }
+    ],
+    "costUsd": 0
+  },
+  {
+    "cell": "split-or-super",
+    "fixture": "grid-launch",
+    "repeat": 0,
+    "failed": true,
+    "failure": "error",
+    "error": "OpenRouterTruncatedError: OpenRouter response truncated: finish_reason=length after 32768 tokens (max_tokens 32768)"
+  },
+  {
+    "cell": "split-or-super",
+    "fixture": "two-hander-axis",
+    "repeat": 0,
+    "fixtureSha": "a1421fc3a811",
+    "kind": "scene",
+    "metrics": {
+      "m1": {
+        "beatsExpected": 5,
+        "beatsReturned": 5,
+        "tagErrors": [],
+        "indexErrors": [],
+        "valid": true,
+        "canaries": {
+          "units": true,
+          "sensorNote": true
+        }
+      },
+      "m2": {
+        "floor": 0,
+        "soft": 2,
+        "byCode": {
+          "projects-outside-frame": 2
+        },
+        "softPerScene": 0.4
+      },
+      "m3": {
+        "scores": [
+          1,
+          0,
+          1,
+          1,
+          1
+        ],
+        "exact": 4,
+        "counted": 5,
+        "rows": [
+          {
+            "beat": 0,
+            "declared": "WS",
+            "derived": "WS",
+            "hFrac": 0.4571675491699703,
+            "score": 1
+          },
+          {
+            "beat": 1,
+            "declared": "MCU",
+            "derived": "WS",
+            "hFrac": 0.500150377578882,
+            "score": 0
+          },
+          {
+            "beat": 2,
+            "declared": "MS",
+            "derived": "MS",
+            "hFrac": 1.914543242409527,
+            "score": 1
+          },
+          {
+            "beat": 3,
+            "declared": "EWS",
+            "derived": "EWS",
+            "hFrac": 0.17964150420575917,
+            "score": 1
+          },
+          {
+            "beat": 4,
+            "declared": "WS",
+            "derived": "WS",
+            "hFrac": 0.501769110518739,
+            "score": 1
+          }
+        ],
+        "mean": 0.8,
+        "exactRate": 0.8
+      },
+      "m4": {
+        "scores": [
+          0.5,
+          0.5,
+          0.5,
+          0.5,
+          1,
+          1,
+          0,
+          0,
+          1,
+          1
+        ],
+        "sideErrors": 0,
+        "counted": 10,
+        "mean": 0.6,
+        "sideErrorRate": 0
+      },
+      "m5": {
+        "scores": [
+          1,
+          1,
+          0.5,
+          1,
+          1
+        ],
+        "counted": 5,
+        "unscoreable": 0,
+        "directionFlips": 0,
+        "rows": [
+          {
+            "beat": 0,
+            "declared": "Static Shot",
+            "derived": "Static Shot",
+            "score": 1
+          },
+          {
+            "beat": 1,
+            "declared": "Push In",
+            "derived": "Push In",
+            "score": 1
+          },
+          {
+            "beat": 2,
+            "declared": "Truck Right",
+            "derived": "Arc Shot",
+            "score": 0.5
+          },
+          {
+            "beat": 3,
+            "declared": "Tilt Down",
+            "derived": "Tilt Down",
+            "score": 1
+          },
+          {
+            "beat": 4,
+            "declared": "Static Shot",
+            "derived": "Static Shot",
+            "score": 1
+          }
+        ],
+        "mean": 0.9
+      },
+      "m6": {
+        "basis": "derived",
+        "distinctBands": 3,
+        "modalShare": 0.6,
+        "spread": 3,
+        "mwsShare": 0,
+        "bands": [
+          "WS",
+          "WS",
+          "MS",
+          "EWS",
+          "WS"
+        ],
+        "extremeHitRate": 0.6
+      },
+      "m7": {
+        "staticCameraPairs": 0,
+        "meanDisplacementRel": 1.5287438998683156
+      },
+      "m8": {
+        "teleports": 0,
+        "wrongDirection": 0,
+        "unjustifiedDrift": 0,
+        "missedMove": 1,
+        "heightInstability": 0,
+        "selfReportRecall": null
+      },
+      "m9": {
+        "expected": 0,
+        "hit": 0,
+        "applicable": true,
+        "rate": null
+      },
+      "m10": {
+        "tested": true,
+        "axisErrors": 0,
+        "unpermittedCrosses": 0,
+        "pairs": [
+          {
+            "beat": 1,
+            "tagA": "<Subject 1>",
+            "tagB": "<Subject 2>",
+            "sidePrev": -1,
+            "sideCur": -1,
+            "orderPrev": -1,
+            "orderCur": -1,
+            "permitted": false,
+            "subjectsMoved": false
+          },
+          {
+            "beat": 2,
+            "tagA": "<Subject 1>",
+            "tagB": "<Subject 2>",
+            "sidePrev": -1,
+            "sideCur": -1,
+            "orderPrev": -1,
+            "orderCur": -1,
+            "permitted": true,
+            "subjectsMoved": false
+          },
+          {
+            "beat": 3,
+            "tagA": "<Subject 1>",
+            "tagB": "<Subject 2>",
+            "sidePrev": -1,
+            "sideCur": -1,
+            "orderPrev": -1,
+            "orderCur": -1,
+            "permitted": false,
+            "subjectsMoved": false
+          },
+          {
+            "beat": 4,
+            "tagA": "<Subject 1>",
+            "tagB": "<Subject 2>",
+            "sidePrev": -1,
+            "sideCur": -1,
+            "orderPrev": -1,
+            "orderCur": -1,
+            "permitted": true,
+            "subjectsMoved": false
+          }
+        ]
+      },
+      "m11": {
+        "expected": 0,
+        "correct": 0,
+        "rate": null
+      },
+      "m12": {
+        "earlyReveals": 0,
+        "omissions": 0,
+        "beats": 5,
+        "earlyRevealRate": 0,
+        "omissionRate": 0
+      },
+      "m13": {
+        "failures": 0,
+        "compiled": [
+          {
+            "beat": 0,
+            "text": "A low-lit room at night, a single hanging bulb over a narrow wooden table, bare walls beyond. Live-action, cinematic. A wide shot from a high angle frames the scene. <Subject 1> is in the centre of frame in the midground, seated, facing Subject 2 across the table. <Subject 2> is in the centre of frame in the midground, seated, facing Subject 1 across the table. The camera holds a static shot. <Subject 1> and <Subject 2> are seated on chairs at the narrow wooden table, facing each other; the hanging bulb is above the table."
+          },
+          {
+            "beat": 1,
+            "text": "Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, seated, facing Subject 2. <Subject 2> is in the centre of frame in the midground, seated, reacting. The camera push ins with large amplitude at medium speed."
+          },
+          {
+            "beat": 2,
+            "text": "Live-action, cinematic. A medium shot from a high angle frames the scene. <Subject 1> is at the far left of frame in the foreground, sits facing the other. <Subject 2> is in the centre of frame in the background, sits facing the other. The camera arc shots with medium amplitude at medium speed. Both subjects are seated at the table; no containment relationships."
+          },
+          {
+            "beat": 3,
+            "text": "Live-action, cinematic. An extreme wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, seated, hands on table, waiting. <Subject 2> is in the centre of frame in the midground, seated, reacting. The camera tilt downs with medium amplitude at slow speed. Both subjects are seated on chairs (not modeled) at the narrow wooden table."
+          },
+          {
+            "beat": 4,
+            "text": "Live-action, cinematic. A wide shot from a high angle frames the scene. <Subject 1> is in the centre of frame in the midground, stands up and walks around the table to stand behind Subject 2. <Subject 2> is right of centre in the midground, remains seated, watches. The camera holds a static shot. No subjects are contained; both sit on the ground."
+          }
+        ]
+      },
+      "m17": {
+        "thin": 0,
+        "missingFields": 0,
+        "applicable": true
+      }
+    },
+    "violations": [
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 1> is listed in frame but projects to (-1.20, 1.48).",
+        "beat": 2,
+        "subject": "<Subject 1>"
+      },
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 2> is listed in frame but projects to (0.00, 1.67).",
+        "beat": 2,
+        "subject": "<Subject 2>"
+      },
+      {
+        "code": "framing-disagreement",
+        "severity": "soft",
+        "detail": "Beat 2 declares MCU; its own geometry gives WS (hFrac 0.500).",
+        "beat": 1
+      },
+      {
+        "code": "framing-expectation-miss",
+        "severity": "soft",
+        "detail": "Beat 2 came back WS; pre-registered as MWS/MS/MCU. Beat text: \"From that same side of the table, without moving around it, the camera pushes in to a tighter two-shot.\"",
+        "beat": 1
+      },
+      {
+        "code": "framing-expectation-miss",
+        "severity": "soft",
+        "detail": "Beat 4 came back EWS; pre-registered as MCU/CU/MS/ECU. Beat text: \"Holding that same position behind <Subject 1>'s shoulder, the camera tilts down to the table between them.\"",
+        "beat": 3
+      },
+      {
+        "code": "missed-move",
+        "severity": "soft",
+        "detail": "<Subject 1> was pre-registered to move at least 1.2m in beat 5; it travelled 1.12m (1.12m within the beat, 0.00m since the last one).",
+        "beat": 4,
+        "subject": "<Subject 1>"
+      }
+    ],
+    "floorCount": 0,
+    "passesFloor": true,
+    "derivedBands": [
+      "WS",
+      "WS",
+      "MS",
+      "EWS",
+      "WS"
+    ],
+    "prose": [
+      {
+        "beat": 0,
+        "text": "A static wide two-shot from the side of the table shows both figures seated across from each other in a low‑lit room; the camera holds steady, capturing their full bodies and the hanging bulb overhead."
+      },
+      {
+        "beat": 1,
+        "text": "The camera pushes in slowly from a wide side view to a medium close‑up on the pink‑haired figure, tightening the framing on their reaction while the bored ape remains visible on the left side of the frame."
+      },
+      {
+        "beat": 2,
+        "text": "The camera trucks right with medium amplitude at medium speed, arcing around the left shoulder of Subject 1 to achieve a reverse angle over the table that keeps Subject 2 in a medium shot, while Subject 1 remains seated and visible on the far left of the frame."
+      },
+      {
+        "beat": 3,
+        "text": "The camera stays positioned over <Subject 1>'s right shoulder, looking toward <Subject 2> across the table. Without moving, it tilts downward to reveal the wooden surface between them, keeping both figures in the frame as the view shifts from their faces to the tabletop."
+      },
+      {
+        "beat": 4,
+        "text": "The camera stays still, positioned about 6.2 metres back from the table, eye‑level, looking straight at the centre of the scene. Subject 1, a Bored Ape in a neon tracksuit, rises from his seat, walks around the narrow wooden table and stops standing behind Subject 2, the pink‑haired figure in the orange glasses and green jacket, who remains seated and watches. The wide shot captures both figures and the dimly lit room with the single hanging bulb above the table."
+      }
+    ],
+    "h3": [
+      {
+        "beat": 0,
+        "text": "A low-lit room at night, a single hanging bulb over a narrow wooden table, bare walls beyond. Live-action, cinematic. A wide shot from a high angle frames the scene. <Subject 1> is in the centre of frame in the midground, seated, facing Subject 2 across the table. <Subject 2> is in the centre of frame in the midground, seated, facing Subject 1 across the table. The camera holds a static shot. <Subject 1> and <Subject 2> are seated on chairs at the narrow wooden table, facing each other; the hanging bulb is above the table."
+      },
+      {
+        "beat": 1,
+        "text": "Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, seated, facing Subject 2. <Subject 2> is in the centre of frame in the midground, seated, reacting. The camera push ins with large amplitude at medium speed."
+      },
+      {
+        "beat": 2,
+        "text": "Live-action, cinematic. A medium shot from a high angle frames the scene. <Subject 1> is at the far left of frame in the foreground, sits facing the other. <Subject 2> is in the centre of frame in the background, sits facing the other. The camera arc shots with medium amplitude at medium speed. Both subjects are seated at the table; no containment relationships."
+      },
+      {
+        "beat": 3,
+        "text": "Live-action, cinematic. An extreme wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, seated, hands on table, waiting. <Subject 2> is in the centre of frame in the midground, seated, reacting. The camera tilt downs with medium amplitude at slow speed. Both subjects are seated on chairs (not modeled) at the narrow wooden table."
+      },
+      {
+        "beat": 4,
+        "text": "Live-action, cinematic. A wide shot from a high angle frames the scene. <Subject 1> is in the centre of frame in the midground, stands up and walks around the table to stand behind Subject 2. <Subject 2> is right of centre in the midground, remains seated, watches. The camera holds a static shot. No subjects are contained; both sit on the ground."
+      }
+    ],
+    "costUsd": 0
+  },
+  {
+    "cell": "split-or-super",
+    "fixture": "cut-to-black",
+    "repeat": 0,
+    "fixtureSha": "0f9426ef9a65",
+    "kind": "scene",
+    "metrics": {
+      "m1": {
+        "beatsExpected": 5,
+        "beatsReturned": 5,
+        "tagErrors": [],
+        "indexErrors": [],
+        "valid": true,
+        "canaries": {
+          "units": true,
+          "sensorNote": true
+        }
+      },
+      "m2": {
+        "floor": 3,
+        "soft": 1,
+        "byCode": {
+          "projects-outside-frame": 1,
+          "subject-behind-lens": 1,
+          "subject-floating": 1,
+          "containment-invalid": 1
+        },
+        "softPerScene": 0.2
+      },
+      "m3": {
+        "scores": [
+          1,
+          1,
+          1,
+          1
+        ],
+        "exact": 4,
+        "counted": 4,
+        "rows": [
+          {
+            "beat": 0,
+            "declared": "MS",
+            "derived": "MS",
+            "hFrac": 1.9359339909046724,
+            "score": 1
+          },
+          {
+            "beat": 1,
+            "declared": "WS",
+            "derived": "WS",
+            "hFrac": 0.4983920337359083,
+            "score": 1
+          },
+          {
+            "beat": 3,
+            "declared": "MWS",
+            "derived": "MWS",
+            "hFrac": 1.037037037037037,
+            "score": 1
+          },
+          {
+            "beat": 4,
+            "declared": "CU",
+            "derived": "CU",
+            "hFrac": 4.422387512044395,
+            "score": 1
+          }
+        ],
+        "mean": 1,
+        "exactRate": 1
+      },
+      "m4": {
+        "scores": [
+          1,
+          1,
+          0,
+          1,
+          0.5
+        ],
+        "sideErrors": 0,
+        "counted": 5,
+        "mean": 0.7,
+        "sideErrorRate": 0
+      },
+      "m5": {
+        "scores": [
+          1,
+          0.5,
+          1,
+          1
+        ],
+        "counted": 4,
+        "unscoreable": 0,
+        "directionFlips": 0,
+        "rows": [
+          {
+            "beat": 0,
+            "declared": "Static Shot",
+            "derived": "Static Shot",
+            "score": 1
+          },
+          {
+            "beat": 1,
+            "declared": "Tracking Shot",
+            "derived": "Truck Right",
+            "score": 0.5
+          },
+          {
+            "beat": 3,
+            "declared": "Static Shot",
+            "derived": "Static Shot",
+            "score": 1
+          },
+          {
+            "beat": 4,
+            "declared": "Tilt Down",
+            "derived": "Tilt Down",
+            "score": 1
+          }
+        ],
+        "mean": 0.875
+      },
+      "m6": {
+        "basis": "derived",
+        "distinctBands": 4,
+        "modalShare": 0.25,
+        "spread": 4,
+        "mwsShare": 0.25,
+        "bands": [
+          "MS",
+          "WS",
+          "MWS",
+          "CU"
+        ],
+        "extremeHitRate": 0.75
+      },
+      "m7": {
+        "staticCameraPairs": 0,
+        "meanDisplacementRel": 0.4958776994170419
+      },
+      "m8": {
+        "teleports": 0,
+        "wrongDirection": 0,
+        "unjustifiedDrift": 0,
+        "missedMove": 0,
+        "heightInstability": 0.020000000000000018,
+        "selfReportRecall": null
+      },
+      "m9": {
+        "expected": 2,
+        "hit": 1,
+        "applicable": true,
+        "rate": 0.5
+      },
+      "m10": {
+        "tested": false,
+        "axisErrors": 0,
+        "unpermittedCrosses": 0,
+        "pairs": []
+      },
+      "m11": {
+        "expected": 1,
+        "correct": 1,
+        "rate": 1
+      },
+      "m12": {
+        "earlyReveals": 0,
+        "omissions": 0,
+        "beats": 5,
+        "earlyRevealRate": 0,
+        "omissionRate": 0
+      },
+      "m13": {
+        "failures": 0,
+        "compiled": [
+          {
+            "beat": 0,
+            "text": "A deserted city at dusk, wet streets, a single enormous concrete tower dominating the skyline. Live-action, cinematic. A medium shot from a high angle frames the scene. <Subject 1>, inside <Subject 2>, is in the centre of frame in the background, seated, gripping the steering wheel. <Subject 2> is in the centre of frame in the background, parked, engine off. <Subject 3> is in the centre of frame in the foreground, standing. The camera holds a static shot. The driver (<Subject 1>) is seated inside the car (<Subject 2>) with a ground offset of 0.45 m; the car is parked at the base of the tower (<Subject 3>)."
+          },
+          {
+            "beat": 1,
+            "text": "Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 2> is in the centre of frame in the midground, pulls away and drives down the empty street. The camera truck rights with medium amplitude at medium speed. <Subject 1> is inside <Subject 2>."
+          },
+          {
+            "beat": 2,
+            "text": "The screen cuts to black.  the screen holds black for a long moment before the world returns."
+          },
+          {
+            "beat": 3,
+            "text": "Live-action, cinematic. A medium-wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, stands alone on the rooftop, gazing out over the deserted city. The camera holds a static shot. <Subject 1> is standing on the rooftop, not inside any container."
+          },
+          {
+            "beat": 4,
+            "text": "Live-action, cinematic. A close-up at eye level frames the scene. <Subject 1>, inside <Subject 3>, is in the centre of frame in the midground, walks to the edge of the roof and looks down at the street far below. The camera tilt downs with small amplitude at slow speed. <Subject 1> is on the roof of <Subject 3>."
+          }
+        ]
+      },
+      "m17": {
+        "thin": 0,
+        "missingFields": 0,
+        "applicable": true
+      }
+    },
+    "violations": [
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 2> is listed in frame but projects to (0.00, -1.73).",
+        "beat": 0,
+        "subject": "<Subject 2>"
+      },
+      {
+        "code": "subject-behind-lens",
+        "severity": "floor",
+        "detail": "<Subject 3> is listed in frame but sits behind the lens.",
+        "beat": 0,
+        "subject": "<Subject 3>"
+      },
+      {
+        "code": "subject-floating",
+        "severity": "floor",
+        "detail": "<Subject 1> floats 80m above the ground with no container.",
+        "beat": 3,
+        "subject": "<Subject 1>"
+      },
+      {
+        "code": "containment-invalid",
+        "severity": "floor",
+        "detail": "<Subject 1> names container <Subject 3>, absent from this beat.",
+        "beat": 4,
+        "subject": "<Subject 1>"
+      },
+      {
+        "code": "framing-expectation-miss",
+        "severity": "soft",
+        "detail": "Beat 5 came back CU; pre-registered as MS/MWS/WS/MCU. Beat text: \"<Subject 1> walks to the edge of the roof and looks down at the street far below.\"",
+        "beat": 4
+      },
+      {
+        "code": "containment-missed",
+        "severity": "floor",
+        "detail": "<Subject 1> should be inside <Subject 2> in beat 2; got containerId null.",
+        "beat": 1,
+        "subject": "<Subject 1>"
+      }
+    ],
+    "floorCount": 4,
+    "passesFloor": false,
+    "derivedBands": [
+      "MS",
+      "WS",
+      null,
+      "MWS",
+      "CU"
+    ],
+    "prose": [
+      {
+        "beat": 0,
+        "text": "A static medium shot frames the driver seated inside the white sports car at the base of the tower. The camera is level, positioned about 2.2 metres back and aligned with the driver’s chest height, holding the subject centered in the frame as the car rests idle and the tower looms in the background."
+      },
+      {
+        "beat": 1,
+        "text": "The camera tracks alongside the car as it pulls away from the tower, maintaining a medium amplitude tracking shot at medium speed, keeping the car in a medium‑wide shot that fills about half the frame height."
+      },
+      {
+        "beat": 2,
+        "text": "The screen fades to black and remains dark for an extended moment, indicating a temporal jump before the scene returns."
+      },
+      {
+        "beat": 3,
+        "text": "The camera remains still, positioned three metres behind the driver on the rooftop, level with his eyes, capturing him in a medium-wide shot that frames him from the knees up as he stands alone overlooking the empty city."
+      },
+      {
+        "beat": 4,
+        "text": "A static shot tracks the driver as he walks a short distance to the roof edge and tilts down to follow his gaze toward the street far below, keeping him in a close‑up."
+      }
+    ],
+    "h3": [
+      {
+        "beat": 0,
+        "text": "A deserted city at dusk, wet streets, a single enormous concrete tower dominating the skyline. Live-action, cinematic. A medium shot from a high angle frames the scene. <Subject 1>, inside <Subject 2>, is in the centre of frame in the background, seated, gripping the steering wheel. <Subject 2> is in the centre of frame in the background, parked, engine off. <Subject 3> is in the centre of frame in the foreground, standing. The camera holds a static shot. The driver (<Subject 1>) is seated inside the car (<Subject 2>) with a ground offset of 0.45 m; the car is parked at the base of the tower (<Subject 3>)."
+      },
+      {
+        "beat": 1,
+        "text": "Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 2> is in the centre of frame in the midground, pulls away and drives down the empty street. The camera truck rights with medium amplitude at medium speed. <Subject 1> is inside <Subject 2>."
+      },
+      {
+        "beat": 2,
+        "text": "The screen cuts to black.  the screen holds black for a long moment before the world returns."
+      },
+      {
+        "beat": 3,
+        "text": "Live-action, cinematic. A medium-wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, stands alone on the rooftop, gazing out over the deserted city. The camera holds a static shot. <Subject 1> is standing on the rooftop, not inside any container."
+      },
+      {
+        "beat": 4,
+        "text": "Live-action, cinematic. A close-up at eye level frames the scene. <Subject 1>, inside <Subject 3>, is in the centre of frame in the midground, walks to the edge of the roof and looks down at the street far below. The camera tilt downs with small amplitude at slow speed. <Subject 1> is on the roof of <Subject 3>."
+      }
+    ],
+    "costUsd": 0
+  },
+  {
+    "cell": "split-or-super",
+    "fixture": "scale-extremes",
+    "repeat": 0,
+    "fixtureSha": "933d72d0e9fb",
+    "kind": "scene",
+    "metrics": {
+      "m1": {
+        "beatsExpected": 5,
+        "beatsReturned": 5,
+        "tagErrors": [],
+        "indexErrors": [],
+        "valid": true,
+        "canaries": {
+          "units": true,
+          "sensorNote": true
+        }
+      },
+      "m2": {
+        "floor": 0,
+        "soft": 2,
+        "byCode": {
+          "projects-outside-frame": 2
+        },
+        "softPerScene": 0.4
+      },
+      "m3": {
+        "scores": [
+          1,
+          1,
+          0.5,
+          1,
+          0.5
+        ],
+        "exact": 3,
+        "counted": 5,
+        "rows": [
+          {
+            "beat": 0,
+            "declared": "EWS",
+            "derived": "EWS",
+            "hFrac": 0.04266666666666667,
+            "score": 1
+          },
+          {
+            "beat": 1,
+            "declared": "WS",
+            "derived": "WS",
+            "hFrac": 0.501769110518739,
+            "score": 1
+          },
+          {
+            "beat": 2,
+            "declared": "ECU",
+            "derived": "CU",
+            "hFrac": 5,
+            "score": 0.5
+          },
+          {
+            "beat": 3,
+            "declared": "WS",
+            "derived": "WS",
+            "hFrac": 0.5001786352268668,
+            "score": 1
+          },
+          {
+            "beat": 4,
+            "declared": "CU",
+            "derived": "MCU",
+            "hFrac": 2.4420430278780256,
+            "score": 0.5
+          }
+        ],
+        "mean": 0.8,
+        "exactRate": 0.6
+      },
+      "m4": {
+        "scores": [
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "sideErrors": 0,
+        "counted": 5,
+        "mean": 1,
+        "sideErrorRate": 0
+      },
+      "m5": {
+        "scores": [
+          1,
+          0.5,
+          1,
+          1,
+          1
+        ],
+        "counted": 5,
+        "unscoreable": 0,
+        "directionFlips": 0,
+        "rows": [
+          {
+            "beat": 0,
+            "declared": "Static Shot",
+            "derived": "Static Shot",
+            "score": 1
+          },
+          {
+            "beat": 1,
+            "declared": "Tracking Shot",
+            "derived": "Push Out",
+            "score": 0.5
+          },
+          {
+            "beat": 2,
+            "declared": "Zoom In",
+            "derived": "Zoom In",
+            "score": 1
+          },
+          {
+            "beat": 3,
+            "declared": "Pan Left",
+            "derived": "Pan Left",
+            "score": 1
+          },
+          {
+            "beat": 4,
+            "declared": "Push In",
+            "derived": "Push In",
+            "score": 1
+          }
+        ],
+        "mean": 0.9
+      },
+      "m6": {
+        "basis": "derived",
+        "distinctBands": 4,
+        "modalShare": 0.4,
+        "spread": 5,
+        "mwsShare": 0,
+        "bands": [
+          "EWS",
+          "WS",
+          "CU",
+          "WS",
+          "MCU"
+        ],
+        "extremeHitRate": 0.8
+      },
+      "m7": {
+        "staticCameraPairs": 0,
+        "meanDisplacementRel": 2.2215595258505365
+      },
+      "m8": {
+        "teleports": 0,
+        "wrongDirection": 0,
+        "unjustifiedDrift": 1,
+        "missedMove": 1,
+        "heightInstability": 0,
+        "selfReportRecall": 0
+      },
+      "m9": {
+        "expected": 0,
+        "hit": 0,
+        "applicable": true,
+        "rate": null
+      },
+      "m10": {
+        "tested": false,
+        "axisErrors": 0,
+        "unpermittedCrosses": 0,
+        "pairs": []
+      },
+      "m11": {
+        "expected": 0,
+        "correct": 0,
+        "rate": null
+      },
+      "m12": {
+        "earlyReveals": 0,
+        "omissions": 0,
+        "beats": 5,
+        "earlyRevealRate": 0,
+        "omissionRate": 0
+      },
+      "m13": {
+        "failures": 0,
+        "compiled": [
+          {
+            "beat": 0,
+            "text": "An empty white salt flat under an enormous pale sky, flat to the horizon in every direction, hard noon light. Live-action, cinematic. An extreme wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, Standing still, facing the camera. The camera holds a static shot. <Subject 1> stands on the salt flat, not inside any container."
+          },
+          {
+            "beat": 1,
+            "text": "Live-action, cinematic. A wide shot from a high angle frames the scene. <Subject 1> is in the centre of frame in the midground, walks toward the camera. The camera push outs with small amplitude at medium speed. No containment; subject stands on ground."
+          },
+          {
+            "beat": 2,
+            "text": "Live-action, cinematic. A close-up at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, She opens her eye, revealing the iris and flecks. The camera zoom ins with large amplitude at medium speed. Subject stands on the salt flat; no containment."
+          },
+          {
+            "beat": 3,
+            "text": "Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, stands and looks back the way she came. The camera pan lefts with medium amplitude at medium speed."
+          },
+          {
+            "beat": 4,
+            "text": "Live-action, cinematic. A medium close-up from a high angle frames the scene. <Subject 1> is in the centre of frame in the midground, She speaks the single word. The camera push ins with medium amplitude at medium speed."
+          }
+        ]
+      },
+      "m17": {
+        "thin": 0,
+        "missingFields": 0,
+        "applicable": true
+      }
+    },
+    "violations": [
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 1> is listed in frame but projects to (0.00, -4.17).",
+        "beat": 2,
+        "subject": "<Subject 1>"
+      },
+      {
+        "code": "projects-outside-frame",
+        "severity": "soft",
+        "detail": "<Subject 1> is listed in frame but projects to (0.00, 2.24).",
+        "beat": 4,
+        "subject": "<Subject 1>"
+      },
+      {
+        "code": "framing-expectation-miss",
+        "severity": "soft",
+        "detail": "Beat 3 came back CU; pre-registered as ECU. Beat text: \"Her eye opens, and the iris and its flecks fill the whole picture.\"",
+        "beat": 2
+      },
+      {
+        "code": "missed-move",
+        "severity": "soft",
+        "detail": "<Subject 1> was pre-registered to move at least 5m in beat 2; it travelled 4.00m (4.00m within the beat, 0.00m since the last one).",
+        "beat": 1,
+        "subject": "<Subject 1>"
+      },
+      {
+        "code": "unjustified-drift",
+        "severity": "soft",
+        "detail": "<Subject 1> drifts 4.0m into beat 3 with nothing in the beat text moving it.",
+        "beat": 2,
+        "subject": "<Subject 1>"
+      }
+    ],
+    "floorCount": 0,
+    "passesFloor": true,
+    "derivedBands": [
+      "EWS",
+      "WS",
+      "CU",
+      "WS",
+      "MCU"
+    ],
+    "prose": [
+      {
+        "beat": 0,
+        "text": "A static shot captures the tiny pink‑haired figure as a speck on the endless white salt flat, the camera positioned far back on the axis with a wide lens, holding steady as the figure stands motionless under the hard noon light."
+      },
+      {
+        "beat": 1,
+        "text": "Live-action, cinematic, a medium-wide shot frames the pink‑haired figure in orange translucent glasses, a green patent leather moto jacket over a red shirt, black cotton‑wool slacks with buckles, and black leather combat boots as she walks toward the camera across the endless white salt flat under a pale, hard‑noon sky. The camera executes a tracking shot, moving backward at the same pace as the figure’s advance so that she remains centered, her full body visible from head to toe with modest headroom. The only diegetic sound is the soft crunch of salt crystals beneath her boots."
+      },
+      {
+        "beat": 2,
+        "text": "The camera stays fixed at a distance of 1.5 meters from the figure’s eye, level with her gaze, and zooms in from 84mm to 135mm with a large amplitude at medium speed, tightening the frame from a chest‑up view of her face to an extreme close‑up where her iris and its flecks fill the entire view."
+      },
+      {
+        "beat": 3,
+        "text": "The camera pans left with a medium amplitude at medium speed, keeping the pink‑haired figure in a wide shot as she stands on the endless white salt flat and looks back the way she came under the hard noon light."
+      },
+      {
+        "beat": 4,
+        "text": "The camera pushes in slowly from a medium close‑up to a tight close‑up on the pink‑haired figure, keeping her centered as she utters the single word. The lens holds at 100 mm while the camera advances along its line of sight, reducing the distance from about four metres to under two metres, so her mouth fills the frame and the salt flat recedes into a blurred white backdrop."
+      }
+    ],
+    "h3": [
+      {
+        "beat": 0,
+        "text": "An empty white salt flat under an enormous pale sky, flat to the horizon in every direction, hard noon light. Live-action, cinematic. An extreme wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, Standing still, facing the camera. The camera holds a static shot. <Subject 1> stands on the salt flat, not inside any container."
+      },
+      {
+        "beat": 1,
+        "text": "Live-action, cinematic. A wide shot from a high angle frames the scene. <Subject 1> is in the centre of frame in the midground, walks toward the camera. The camera push outs with small amplitude at medium speed. No containment; subject stands on ground."
+      },
+      {
+        "beat": 2,
+        "text": "Live-action, cinematic. A close-up at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, She opens her eye, revealing the iris and flecks. The camera zoom ins with large amplitude at medium speed. Subject stands on the salt flat; no containment."
+      },
+      {
+        "beat": 3,
+        "text": "Live-action, cinematic. A wide shot at eye level frames the scene. <Subject 1> is in the centre of frame in the midground, stands and looks back the way she came. The camera pan lefts with medium amplitude at medium speed."
+      },
+      {
+        "beat": 4,
+        "text": "Live-action, cinematic. A medium close-up from a high angle frames the scene. <Subject 1> is in the centre of frame in the midground, She speaks the single word. The camera push ins with medium amplitude at medium speed."
+      }
+    ],
+    "costUsd": 0
+  }
+]

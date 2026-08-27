@@ -1,0 +1,412 @@
+{
+  "cell": "ultra-or-film",
+  "fixture": "two-hander-axis",
+  "fixtureSha": "a1421fc3a811",
+  "repeat": 0,
+  "film": {
+    "units": "metres",
+    "aspect": 1.7778,
+    "sceneScaleNote": "Small low-lit room, roughly 4m x 4m. Narrow wooden table 1.5m long (along Z) by 0.8m wide (along X), height 0.75m. Two chairs at opposite ends. Single hanging bulb above table center.",
+    "beats": [
+      {
+        "beatIndex": 0,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 3
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1,
+              "z": -0.6
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 3
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1,
+              "z": -0.6
+            }
+          },
+          "focalStartMm": 24,
+          "focalEndMm": 24,
+          "rollDeg": 0,
+          "motion": "Static Shot",
+          "amplitude": "small",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": -0.4,
+            "z": 0,
+            "endX": -0.4,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 146,
+            "containerId": null,
+            "action": "sits at table facing <Subject 2>, hands resting on tabletop",
+            "screenPosition": "left",
+            "depth": "midground"
+          },
+          {
+            "subject": "<Subject 2>",
+            "x": 0.4,
+            "z": -1.2,
+            "endX": 0.4,
+            "endZ": -1.2,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 326,
+            "containerId": null,
+            "action": "sits at table facing <Subject 1>, arms folded loosely",
+            "screenPosition": "right",
+            "depth": "midground"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "WS",
+        "changes": [],
+        "containmentNotes": "Both subjects seated at opposite ends of the narrow table. No chair objects in cast; groundOffsetM=0 indicates seated posture with implied seat height ~0.45m.",
+        "proseNote": "Live-action, cinematic, a medium-wide shot frames the two figures across the table from the audience side. The camera sits at positive Z looking toward -Z, holding a steady wide two-shot. <Subject 1> in neon yellow tracksuit occupies the left of frame, <Subject 2> in green moto jacket the right. The single hanging bulb casts a warm pool of light over the tabletop; bare walls fall into shadow beyond. No camera movement."
+      },
+      {
+        "beatIndex": 1,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 3
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1,
+              "z": -0.6
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 1.5
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1,
+              "z": -0.6
+            }
+          },
+          "focalStartMm": 35,
+          "focalEndMm": 35,
+          "rollDeg": 0,
+          "motion": "Push In",
+          "amplitude": "medium",
+          "speed": "medium",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": -0.4,
+            "z": 0,
+            "endX": -0.4,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 146,
+            "containerId": null,
+            "action": "sits facing <Subject 2>, subtle shift of weight",
+            "screenPosition": "left",
+            "depth": "midground"
+          },
+          {
+            "subject": "<Subject 2>",
+            "x": 0.4,
+            "z": -1.2,
+            "endX": 0.4,
+            "endZ": -1.2,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 326,
+            "containerId": null,
+            "action": "sits facing <Subject 1>, glances down at table",
+            "screenPosition": "right",
+            "depth": "midground"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "MS",
+        "changes": [],
+        "containmentNotes": "Positions unchanged from beat 1. Camera has pushed in from 3m to 1.5m, tightening the two-shot to a medium shot on <Subject 1>.",
+        "proseNote": "From the same side of the table, the camera pushes in with medium amplitude at medium speed, shortening the distance from three metres to one and a half while the focal length shifts to 35mm. The wide two-shot becomes a medium shot that favours <Subject 1> on the left, the neon tracksuit and heart-shaped sunglasses now legible. <Subject 2> on the right remains in the frame but smaller. The bulb's glow sharpens on the wood grain."
+      },
+      {
+        "beatIndex": 2,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 1.5
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1,
+              "z": -0.6
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0.2,
+              "y": 1.6,
+              "z": -0.3
+            },
+            "lookAt": {
+              "x": 0.4,
+              "y": 1,
+              "z": -1.2
+            }
+          },
+          "focalStartMm": 50,
+          "focalEndMm": 50,
+          "rollDeg": 0,
+          "motion": "Arc Shot",
+          "amplitude": "large",
+          "speed": "medium",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": -0.4,
+            "z": 0,
+            "endX": -0.4,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 146,
+            "containerId": null,
+            "action": "sits facing <Subject 2>, now seen from behind near shoulder",
+            "screenPosition": "left",
+            "depth": "foreground"
+          },
+          {
+            "subject": "<Subject 2>",
+            "x": 0.4,
+            "z": -1.2,
+            "endX": 0.4,
+            "endZ": -1.2,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 326,
+            "containerId": null,
+            "action": "sits facing camera, pink buzz-cut and orange glasses catch the light",
+            "screenPosition": "right",
+            "depth": "midground"
+          }
+        ],
+        "principalSubject": "<Subject 2>",
+        "framing": "CU",
+        "changes": [],
+        "containmentNotes": "Camera has crossed the 180-degree line, moving from the audience side (+Z) to the far side of the table (-Z) behind <Subject 1>. Subjects swap frame sides: <Subject 1> now left foreground (shoulder), <Subject 2> right midground.",
+        "proseNote": "The camera executes a large-amplitude arc shot at medium speed, swinging from the audience side around the near end of the table to a position behind <Subject 1>'s right shoulder. It settles at 50mm, framing a close-up of <Subject 2> across the table — pink buzz-cut, orange translucent glasses, green patent leather jacket vivid in the bulb light. <Subject 1>'s neon yellow tracksuit shoulder anchors the left foreground. The move crosses the line, so the figures exchange screen sides."
+      },
+      {
+        "beatIndex": 3,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0.2,
+              "y": 1.6,
+              "z": -0.3
+            },
+            "lookAt": {
+              "x": 0.4,
+              "y": 1,
+              "z": -1.2
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0.2,
+              "y": 1.6,
+              "z": -0.3
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 0.75,
+              "z": -0.6
+            }
+          },
+          "focalStartMm": 50,
+          "focalEndMm": 50,
+          "rollDeg": 0,
+          "motion": "Tilt Down",
+          "amplitude": "medium",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": -0.4,
+            "z": 0,
+            "endX": -0.4,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 146,
+            "containerId": null,
+            "action": "sits, shoulder and back of head visible in lower left",
+            "screenPosition": "left",
+            "depth": "foreground"
+          },
+          {
+            "subject": "<Subject 2>",
+            "x": 0.4,
+            "z": -1.2,
+            "endX": 0.4,
+            "endZ": -1.2,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 326,
+            "containerId": null,
+            "action": "sits, face tilts down following camera to table",
+            "screenPosition": "right",
+            "depth": "midground"
+          }
+        ],
+        "principalSubject": "<Subject 2>",
+        "framing": "MCU",
+        "changes": [],
+        "containmentNotes": "Camera position fixed; only the look-at point drops from <Subject 2>'s face to the table center. <Subject 1> remains seated at near end, <Subject 2> at far end.",
+        "proseNote": "Holding the same position behind <Subject 1>'s shoulder, the camera tilts down with medium amplitude at slow speed, the look-at point falling from <Subject 2>'s face to the tabletop midway between them. The wood grain, a few scattered objects, and the edge of the bulb's light pool fill the frame. <Subject 2>'s chin and glasses slip toward the top of frame; <Subject 1>'s shoulder remains a dark shape at bottom left."
+      },
+      {
+        "beatIndex": 4,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0.2,
+              "y": 1.6,
+              "z": -0.3
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 0.75,
+              "z": -0.6
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0.2,
+              "y": 1.6,
+              "z": -0.3
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 0.75,
+              "z": -0.6
+            }
+          },
+          "focalStartMm": 50,
+          "focalEndMm": 50,
+          "rollDeg": 0,
+          "motion": "Static Shot",
+          "amplitude": "small",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": -0.4,
+            "z": 0,
+            "endX": 0.4,
+            "endZ": -1.8,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "stands, walks around the table's near end, crosses behind <Subject 2>, stops standing behind them",
+            "screenPosition": "left",
+            "depth": "midground"
+          },
+          {
+            "subject": "<Subject 2>",
+            "x": 0.4,
+            "z": -1.2,
+            "endX": 0.4,
+            "endZ": -1.2,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 326,
+            "containerId": null,
+            "action": "remains seated, turns head slightly to track <Subject 1>'s movement",
+            "screenPosition": "right",
+            "depth": "midground"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "CU",
+        "changes": [
+          {
+            "subject": "<Subject 1>",
+            "what": "position and yaw",
+            "justifiedByBeatText": true
+          }
+        ],
+        "containmentNotes": "<Subject 1> rises from seated to standing (groundOffsetM remains 0 as no chair object exists), walks a curved path around the table's near end (z > 0) then behind <Subject 2> to z = -1.8. <Subject 2> stays seated throughout.",
+        "proseNote": "The camera does not move, holding its tilted-down angle on the table. <Subject 1> stands — the neon yellow tracksuit rising into view at frame left — and walks with deliberate steps around the table's near end, crossing behind <Subject 2> to stop standing directly behind them at the far side. <Subject 2> turns their head to follow the movement. The bulb light catches the white sneakers and yellow hat as <Subject 1> passes through the pool of light."
+      }
+    ]
+  },
+  "calls": [
+    {
+      "usage": {
+        "promptTokens": 4867,
+        "completionTokens": 11852,
+        "reasoningTokens": 6218
+      },
+      "latencyMs": 387615,
+      "attempts": 1,
+      "costUsd": 0,
+      "rateLimitHits": 0,
+      "usedToolCall": true,
+      "request": {
+        "model": "nvidia/nemotron-3-ultra-550b-a55b:free"
+      }
+    }
+  ],
+  "costUsd": 0
+}
