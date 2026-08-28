@@ -144,6 +144,7 @@ export const useScreenwriter = () => {
             ...current,
             [owner]: {
               phase: data.phase,
+              message: data.message,
               // Keep the reasoning the user has already watched; only clear it when the
               // piece actually settles. Otherwise the formalising/watching phases look empty
               // and the live card appears to obfuscate what just happened.
@@ -192,6 +193,7 @@ export const useScreenwriter = () => {
         [owner]: {
           owner,
           phase: snapshot.phase,
+          message: snapshot.message,
           reasoning: snapshot.reasoning,
           content: snapshot.content,
           finishedAt: Date.now(),

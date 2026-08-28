@@ -132,6 +132,7 @@ const CastingLog = ({ cast, analysis, streams, thoughts }) => {
         const reasoning = stream?.reasoning ?? thought?.reasoning ?? '';
         const content = stream?.content ?? thought?.content ?? '';
         const phase = stream?.phase ?? thought?.phase ?? state?.status;
+        const message = stream?.message ?? thought?.message;
         const compiling = status === 'live' && !reasoning?.trim() && !content?.trim();
 
         return (
@@ -139,6 +140,7 @@ const CastingLog = ({ cast, analysis, streams, thoughts }) => {
             <AgentThought
               label={`Casting Director · ${resolveNftName(entry.nft)}`}
               phase={phase}
+              message={message}
               status={status}
               reasoning={reasoning}
               content={content}

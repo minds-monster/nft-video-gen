@@ -23,7 +23,7 @@
 const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
 const jitter = (ms) => ms + Math.floor(Math.random() * Math.min(ms, 1000));
 
-export const stream = async (path, body, { signal, onEvent, headers, retries = 0 } = {}) => {
+export const stream = async (path, body, { signal, onEvent, headers, retries = 0, method = 'POST' } = {}) => {
   // A TRUNCATED STREAM IS THE MOST RETRYABLE FAILURE THERE IS, and it used to be the only one
   // we gave up on. When a stream is cut the work usually finished anyway — the Worker keeps
   // running and persists what it produced (see worker/sse.js) — so the retry is normally a cache
@@ -36,10 +36,10 @@ export const stream = async (path, body, { signal, onEvent, headers, retries = 0
 
   const attempt = async () => {
     const response = await fetch(path, {
-      method: 'POST',
+      method,
       signal,
-      headers: { 'content-type': 'application/json', ...headers },
-      body: JSON.stringify(body),
+      headers: method === 'GET' ? headers : { 'content-type': 'application/json', ...headers },
+      body: method === 'GET' ? undefined : JSON.stringify(body),
     });
 
     if (!response.ok || !response.body) {
@@ -48,6 +48,7 @@ export const stream = async (path, body, { signal, onEvent, headers, retries = 0
       const payload = await response.json().catch(() => null);
       const error = new Error(payload?.error ?? `${path} → ${response.status}`);
       error.status = response.status;
+      error.payload = payload;
       throw error;
     }
 
@@ -303,8 +304,14 @@ export const forCastingWire = ({ key, nft }) => {
  * Supervisor's dossier review (see previsDossierReview below) — both optional, both empty by
  * default so the plain re-cast path this always was is unaffected.
  */
-export const castPiece = ({ key, nft, refresh, previsNote }, options) =>
-  stream('/api/casting', { ...forCastingWire({ key, nft }), refresh, previsNote }, options);
+export const castPiece = async ({ key, nft, refresh, previsNote }, options) => {
+  const [chain, address, tokenId] = key.split(':');
+  const url = new URL(`${import.meta.env.VITE_PROD_SERVER}/casting-director/${chain}/${address}/${tokenId}`);
+  if (refresh) url.searchParams.set('refresh', 'true');
+  if (previsNote) url.searchParams.set('previsNote', previsNote);
+  
+  return await stream(url.toString(), null, { ...options, method: 'GET' });
+};
 
 /**
  * Quick reachability check for the agent Worker.
