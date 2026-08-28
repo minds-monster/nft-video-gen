@@ -4,7 +4,7 @@ import { AlertTriangle, Clapperboard, Check, X } from 'lucide-react';
 import CanvasPanel from './CanvasPanel';
 import { cn } from '../../../lib/cn';
 import { MODES } from '../../../../worker/render-budget.js';
-import { VERDICTS } from '../../../../worker/screen-test.js';
+import { verdictLabel } from '../../../../worker/screen-test.js';
 
 /**
  * The Director's own rail, under the Cast.
@@ -146,7 +146,7 @@ const ShootingPlan = ({ plan }) => {
 /** How each asked-for test stands, from worker/director-gate.js. */
 const TEST_STATE = {
   unshot: { label: 'Not yet run', cls: 'border-white/10 text-slate-400' },
-  unjudged: { label: 'Unanswered', cls: 'border-amber-400/30 text-amber-300' },
+  unjudged: { label: 'Came back — answer it', cls: 'border-amber-400/30 text-amber-300' },
   failed: { label: 'Failed — run again', cls: 'border-rose-400/30 text-rose-300' },
   retest: { label: 'Re-test asked for', cls: 'border-amber-400/30 text-amber-300' },
   cleared: { label: 'Held', cls: 'border-emerald-400/30 text-emerald-300' },
@@ -161,10 +161,15 @@ const TEST_STATE = {
  * button says how many are owed, and the server refuses to shoot until they are answered
  * (worker/director-gate.js). A test the Director asked for is a precondition, not a suggestion.
  */
-const AskedTests = ({ plan, gate, onRunAll, busy, batch }) => {
+const AskedTests = ({ plan, gate, onRunAll, onAnswer, busy, batch }) => {
   const asked = gate?.asked ?? [];
   if (!asked.length) return null;
-  const outstanding = gate.outstanding ?? [];
+  // Two different next moves, and the difference cost $2.40 in five identical rehearsals: a
+  // clip that came back is ANSWERED (free, in the viewer); only a question with no clip, or a
+  // failed one, is RUN. Answering always comes first, because spending again while an answer is
+  // owed is exactly the loop this block exists to break.
+  const unanswered = gate.unanswered ?? [];
+  const toRun = gate.toRun ?? [];
   const whyFor = (riskId) =>
     plan?.tests?.find((test) => test.riskId === riskId)?.why ??
     plan?.demands?.find((demand) => `demand:${demand.id}` === riskId)?.why ??
@@ -177,7 +182,11 @@ const AskedTests = ({ plan, gate, onRunAll, busy, batch }) => {
       </p>
       <ul className="space-y-1.5">
         {asked.map((test) => {
-          const pill = TEST_STATE[test.state] ?? TEST_STATE.unshot;
+          // A clip waiting to be watched outranks whatever the last answer was.
+          const pill =
+            test.state !== 'cleared' && test.unansweredCount > 0
+              ? TEST_STATE.unjudged
+              : TEST_STATE[test.state] ?? TEST_STATE.unshot;
           const label = test.state === 'cleared' && test.answer && test.answer !== 'held' ? 'Cannot tell' : pill.label;
           const why = whyFor(test.riskId);
           return (
@@ -200,14 +209,28 @@ const AskedTests = ({ plan, gate, onRunAll, busy, batch }) => {
         <p className="font-mono text-[10px] text-sky-300/70">
           Running {Math.min(batch.done + 1, batch.total)} of {batch.total} — {batch.current}
         </p>
-      ) : outstanding.length > 0 ? (
+      ) : unanswered.length > 0 ? (
+        <div className="space-y-1">
+          <button
+            type="button"
+            onClick={() => onAnswer?.(unanswered[0].unansweredTakeId)}
+            className="w-full rounded-xl bg-amber-500/90 px-2 py-2 text-[11px] font-semibold text-black transition-colors hover:bg-amber-400"
+          >
+            Watch and answer the test that came back
+          </button>
+          <p className="text-[10px] leading-snug text-slate-500">
+            Free. The Director reads your answer — and anything you type with it — before it
+            changes a word of the script. Nothing more is run until this is answered.
+          </p>
+        </div>
+      ) : toRun.length > 0 ? (
         <button
           type="button"
           disabled={busy}
           onClick={onRunAll}
           className="w-full rounded-xl bg-purple-600 px-2 py-2 text-[11px] font-semibold text-white transition-colors hover:bg-purple-500 disabled:cursor-not-allowed disabled:bg-white/5 disabled:text-slate-600"
         >
-          Run the Director’s {outstanding.length} test{outstanding.length === 1 ? '' : 's'} · {money(gate.outstandingUsd)}
+          Run the Director’s {toRun.length} test{toRun.length === 1 ? '' : 's'} · {money(gate.outstandingUsd)}
         </button>
       ) : (
         <p className="text-[10px] leading-relaxed text-emerald-200/70">
@@ -218,8 +241,15 @@ const AskedTests = ({ plan, gate, onRunAll, busy, batch }) => {
   );
 };
 
-/** What the tests actually changed. The loop, made visible. */
-const Revisions = ({ revisions }) => {
+/**
+ * What the Director changed. The loop, made visible — and reversible.
+ *
+ * Every row has a ✕, because on 2026-08-28 a visitor watched "the Hollywood sign" get rewritten
+ * out of a film about the Hollywood sign and had no way to take it back. The replacement text is
+ * shown on demand: "removes the prohibited brand name" is a claim, and the visitor is owed the
+ * evidence.
+ */
+const Revisions = ({ revisions, onDrop, busy }) => {
   if (!revisions?.length) return null;
   return (
     <div className="space-y-1 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-2">
@@ -227,9 +257,34 @@ const Revisions = ({ revisions }) => {
         {revisions.length} change{revisions.length === 1 ? '' : 's'} from what it learned
       </p>
       {revisions.map((revision, index) => (
-        <p key={`${revision.block}-${index}`} className="text-[10px] leading-snug text-slate-400">
-          <span className="font-mono text-emerald-200/70">{revision.block}</span> — {revision.why}
-        </p>
+        <details key={`${revision.block}-${revision.at ?? index}`} className="group">
+          <summary className="flex cursor-pointer list-none items-start gap-1.5 text-[10px] leading-snug text-slate-400">
+            <span className="min-w-0 flex-1">
+              <span className="font-mono text-emerald-200/70">{revision.block}</span> — {revision.why}
+              {revision.free ? null : <span className="text-slate-600"> · from a test</span>}
+            </span>
+            {onDrop && revision.at != null && (
+              <button
+                type="button"
+                disabled={busy}
+                aria-label="Drop this change"
+                title="Take this change back off the script"
+                onClick={(event) => {
+                  event.preventDefault();
+                  onDrop(revision.at);
+                }}
+                className="shrink-0 rounded px-1 text-slate-500 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-40"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </summary>
+          {revision.text && (
+            <p className="mt-1 whitespace-pre-wrap border-t border-white/5 pt-1 text-[10px] leading-relaxed text-slate-500">
+              {revision.text}
+            </p>
+          )}
+        </details>
       ))}
     </div>
   );
@@ -305,6 +360,7 @@ const DirectorPanel = ({
   onToggle,
   status,
   onShoot,
+  onAnswerTest,
 }) => {
   const { plan, planning, envelope, job, phaseLabel, elapsedSeconds, error, running, awaitingApproval } = director;
 
@@ -330,7 +386,7 @@ const DirectorPanel = ({
     const map = {};
     for (const test of director.screenTests ?? []) {
       if (test.riskId && test.verdict?.answer) {
-        map[test.riskId] = VERDICTS.find((v) => v.id === test.verdict.answer)?.label ?? test.verdict.answer;
+        map[test.riskId] = verdictLabel(test, test.verdict.answer);
       }
     }
     return map;
@@ -396,8 +452,13 @@ const DirectorPanel = ({
             batch={director.batch}
             busy={running || awaitingApproval || planning || !token}
             onRunAll={() => director.runTests?.({ spec, cast, token })}
+            onAnswer={onAnswerTest}
           />
-          <Revisions revisions={director.revisions} />
+          <Revisions
+            revisions={director.revisions}
+            busy={running || awaitingApproval || planning || batching}
+            onDrop={(at) => director.dropRevision?.({ at })}
+          />
           <ThinkingStream text={director.thinking} />
 
           <Budget

@@ -121,6 +121,16 @@ const demandsOf = (data, spec, risks) => {
       direction,
       onHeld: String(raw?.onHeld ?? '').trim() || null,
       onFailed: String(raw?.onFailed ?? '').trim() || null,
+      // The buttons, in the film's words. Missing or malformed falls back to the generic
+      // "It held / It did not" rather than dropping a demand over its labels.
+      answers:
+        raw?.answers?.held && raw?.answers?.failed
+          ? {
+              held: String(raw.answers.held).trim().slice(0, 60),
+              failed: String(raw.answers.failed).trim().slice(0, 60),
+              unclear: 'Cannot tell',
+            }
+          : null,
       refKeys: refKeys.length ? refKeys.slice(0, 3) : referencePlan.slice(0, 3).map((slot) => slot.key),
       params: MOTION_TEST,
       estUsd: priceUsd(MOTION_TEST) ?? 0,
@@ -218,9 +228,30 @@ export async function planShoot(env, { spec, risks, brief, prompt = null, finalU
   // Same discipline as `tests`: a fix against a hazard nobody measured is filtered out. A model
   // rewriting the script for an imagined problem is a quieter failure than one billing for it,
   // but it is the same failure.
-  const fixes = (data?.fixes ?? []).filter(
-    (fix) => byId.has(fix.riskId) && REVISABLE_BLOCKS.includes(fix.block) && typeof fix.text === 'string' && fix.text.trim(),
-  );
+  // Two more guards, both learned on 2026-08-28 when a Director "fixed" a landmark out of its own
+  // film: a risk the register marked `autofix: false` is reported to the visitor and never
+  // rewritten, and a hazard gets ONE fix — a second fix against the same id is the model using a
+  // real hazard as a licence to rewrite something else.
+  const fixedIds = new Set();
+  const droppedFixes = [];
+  const fixes = (data?.fixes ?? []).filter((fix) => {
+    const risk = byId.get(fix.riskId);
+    const reason = !risk
+      ? 'not in the register'
+      : risk.autofix === false
+        ? 'reported, never rewritten'
+        : !REVISABLE_BLOCKS.includes(fix.block) || typeof fix.text !== 'string' || !fix.text.trim()
+          ? 'malformed'
+          : fixedIds.has(fix.riskId)
+            ? 'a hazard gets one fix'
+            : null;
+    if (reason) {
+      droppedFixes.push({ riskId: fix.riskId ?? '(none)', block: fix.block ?? null, reason });
+      return false;
+    }
+    fixedIds.add(fix.riskId);
+    return true;
+  });
 
   const { demands, droppedDemands } = demandsOf(data, spec, risks);
 
@@ -233,6 +264,7 @@ export async function planShoot(env, { spec, risks, brief, prompt = null, finalU
     plan: data?.plan ?? '',
     dropped: (data?.tests ?? []).filter((entry) => !byId.get(entry.riskId)?.test).map((entry) => entry.riskId),
     droppedDemands,
+    droppedFixes,
     usage,
   };
 }

@@ -84,6 +84,7 @@ export const demandAsRisk = (demand) => {
       refKeys: demand.refKeys ?? [],
       focus: 'rehearsal',
       direction: demand.direction ?? null,
+      answers: demand.answers ?? null,
       beats: demand.beats ?? [],
       onHeld: demand.onHeld ?? null,
       onFailed: demand.onFailed ?? null,
@@ -107,7 +108,14 @@ export function buildScreenTest(risk, spec, cast = []) {
   const byKey = new Map(cast.map((entry) => [entry?.key, entry]));
   const entry = byKey.get(risk.test.refKeys?.[0]);
 
-  const common = { question: risk.test.question, riskId: risk.id, refKeys: risk.test.refKeys ?? [] };
+  // `answers` are the verdict buttons in this test's own words — { held, failed, unclear } — and
+  // travel with the take so the visitor is never asked "did it hold?" about an either/or.
+  const common = {
+    question: risk.test.question,
+    riskId: risk.id,
+    refKeys: risk.test.refKeys ?? [],
+    answers: risk.test.answers ?? null,
+  };
 
   if (risk.test.focus === 'identity') {
     // One subject, one slow move, nothing else. Probe P8's finding is that wardrobe transfers and
@@ -219,3 +227,7 @@ export const VERDICTS = [
   { id: 'failed', label: 'It did not', tone: 'bad' },
   { id: 'unclear', label: 'Cannot tell', tone: 'neutral' },
 ];
+
+/** The label for one verdict on one take: the test's own words when it has them, else the generic. */
+export const verdictLabel = (take, answer) =>
+  take?.answers?.[answer] ?? VERDICTS.find((entry) => entry.id === answer)?.label ?? answer;

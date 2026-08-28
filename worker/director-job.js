@@ -34,7 +34,7 @@ import { extractFrames } from './frames.js';
 import { judgeFrames } from './director-judge.js';
 import { planShoot, reviewTest } from './director-agent.js';
 import { signedMediaUrl } from './signed-media.js';
-import { relayFilmographyDigest } from './filmography.js';
+import { relayFilmographyDigest, relayScreenTestDigest } from './filmography.js';
 
 const jobKey = (mindId, jobId) => `director-job:${mindId}:${jobId}`;
 
@@ -80,6 +80,9 @@ export async function createJob(
     // A rehearsal's own beat text (worker/screen-test.js), read back by the review step so the
     // Director knows what the test was told to render, not only what it asked.
     direction = null,
+    // The verdict buttons in this test's own words ({ held, failed, unclear }), or null for the
+    // generic ones. On the take, because the take is what gets judged.
+    answers = null,
     // The visitor shooting past the Director's outstanding tests (worker/director-gate.js). On
     // the take rather than the job, because it is part of what the take IS.
     override = null,
@@ -119,6 +122,7 @@ export async function createJob(
       riskId,
       costUsd,
       status: 'pending',
+      ...(answers ? { answers } : {}),
       ...(override ? { override } : {}),
     },
     events: [],
@@ -180,6 +184,32 @@ export async function saveShootingPlan(env, mindId, filmId, shootingPlan) {
 export async function appendRevision(env, mindId, filmId, revision) {
   const record = await loadProduction(env, mindId, filmId);
   const revisions = [...(record.revisions ?? []), { ...revision, at: Date.now() }];
+  const next = { ...record, filmId, revisions, updatedAt: Date.now() };
+  await env.MIND_CONNECTIONS.put(productionKey(mindId, filmId), JSON.stringify(next));
+  return next;
+}
+
+/**
+ * A fresh reading replaces the last reading's free fixes rather than stacking on them.
+ *
+ * Learned on 2026-08-28: two readings of one film left three revisions on the record, two of
+ * them from a hazard the second reading no longer raised, and there was no way to shed them.
+ * Revisions that came from a TEST are kept — those were paid for and answered something.
+ */
+export async function replaceFreeRevisions(env, mindId, filmId, fixes) {
+  const record = await loadProduction(env, mindId, filmId);
+  const kept = (record.revisions ?? []).filter((revision) => !revision.free);
+  const now = Date.now();
+  const revisions = [...kept, ...fixes.map((fix, index) => ({ ...fix, free: true, at: now + index }))];
+  const next = { ...record, filmId, revisions, updatedAt: now };
+  await env.MIND_CONNECTIONS.put(productionKey(mindId, filmId), JSON.stringify(next));
+  return next;
+}
+
+/** Drop one revision by its timestamp — the reversibility `applyRevisions` promises, made real. */
+export async function dropRevision(env, mindId, filmId, at) {
+  const record = await loadProduction(env, mindId, filmId);
+  const revisions = (record.revisions ?? []).filter((revision) => revision.at !== at);
   const next = { ...record, filmId, revisions, updatedAt: Date.now() };
   await env.MIND_CONNECTIONS.put(productionKey(mindId, filmId), JSON.stringify(next));
   return next;
@@ -300,22 +330,27 @@ async function assess(env, record, logger) {
       `Director demands dropped: ${plan.droppedDemands.map((d) => `${d.id} (${d.reason})`).join(', ')}`,
     );
   }
+  if (plan.droppedFixes.length) {
+    // A fix against a hazard the register said not to rewrite is the Hollywood failure; it is
+    // refused above and named here so the log shows the model trying.
+    console.warn(`Director fixes dropped: ${plan.droppedFixes.map((f) => `${f.riskId}/${f.block} (${f.reason})`).join(', ')}`);
+    logger.log('dropped-fixes', { fixes: plan.droppedFixes });
+  }
 
   logger.log('reading', { reading: plan.reading, plan: plan.plan });
 
   // Free fixes are applied NOW, as revisions, because a hazard the Director says is "cheap to fix
   // in the script" is only actually fixed if something writes the fix down. Applied before the
   // tests are proposed, so a hazard it just repaired is not also something it asks money for.
-  for (const fix of plan.fixes) {
-    await appendRevision(env, record.mindId, record.filmId, {
-      block: fix.block,
-      text: fix.text,
-      why: fix.why,
-      fromRiskId: fix.riskId,
-      free: true,
-    });
-    logger.log('revision', { block: fix.block, why: fix.why, free: true });
-  }
+  // Applied as a SET: this reading's fixes replace the last reading's, so a hazard that no longer
+  // exists cannot leave its rewrite behind.
+  await replaceFreeRevisions(
+    env,
+    record.mindId,
+    record.filmId,
+    plan.fixes.map((fix) => ({ block: fix.block, text: fix.text, why: fix.why, fromRiskId: fix.riskId })),
+  );
+  for (const fix of plan.fixes) logger.log('revision', { block: fix.block, why: fix.why, free: true });
   for (const test of plan.tests) {
     logger.log('proposed', {
       riskId: test.riskId,
@@ -606,12 +641,11 @@ async function poll(env, record, logger) {
     await enqueue(env, { mindId: record.mindId, jobId: record.jobId, step: 'review' }, 1);
   }
 
-  // A final take goes on to be pinned and told about. A separate step, after `complete`, because
-  // neither is allowed to cost the visitor the film: the clip is safe and the job is finished
-  // before anything here can fail. Screen tests are evidence, not filmography, and stay out.
-  if (record.take.kind !== 'screen-test') {
-    await enqueue(env, { mindId: record.mindId, jobId: record.jobId, step: 'pin' }, 1);
-  }
+  // Every clip goes on to be pinned and told about — tests included, since 2026-08-28: a visitor
+  // who ran five rehearsals and liked one needs the Mind to be able to name it. A separate step,
+  // after `complete`, because neither is allowed to cost the visitor the film: the clip is safe
+  // and the job is finished before anything here can fail.
+  await enqueue(env, { mindId: record.mindId, jobId: record.jobId, step: 'pin' }, 1);
 }
 
 /**
@@ -729,7 +763,9 @@ async function pin(env, record, logger) {
     logger.log('ipfs', { takeId: record.take.takeId, cid, gatewayUrl });
   }
 
-  await pinScreenplay(env, record, logger);
+  // A test's record is its question and answer, carried in the digest; the screenplay document
+  // belongs beside the film, not beside every rehearsal of it.
+  if (record.take.kind !== 'screen-test') await pinScreenplay(env, record, logger);
   await tellTheMind(env, record);
 }
 
@@ -764,7 +800,8 @@ async function pinScreenplay(env, record, logger) {
 /** Once per job. The pin step can be retried; the Mind must not be told twice. */
 async function tellTheMind(env, record) {
   if (record.take?.digestedAt) return;
-  const sent = await relayFilmographyDigest(env, record).catch((error) => {
+  const relay = record.take?.kind === 'screen-test' ? relayScreenTestDigest : relayFilmographyDigest;
+  const sent = await relay(env, record).catch((error) => {
     console.warn(`Filmography digest for ${record.take?.takeId} failed:`, error.message);
     return false;
   });
@@ -800,7 +837,6 @@ export async function rememberTake(
   const production = await loadProduction(env, mindId, filmId);
   const take = production.takes.find((entry) => entry.takeId === takeId);
   if (!take) throw Object.assign(new Error('take_not_found'), { status: 404 });
-  if (take.kind === 'screen-test') throw Object.assign(new Error('screen_tests_are_not_filmography'), { status: 400 });
   if (take.status !== 'ready' || !take.r2Key) throw Object.assign(new Error('take_not_ready'), { status: 409 });
 
   const record = {
@@ -926,7 +962,7 @@ export async function startTake(
     // What the screenplay record pinned beside the film carries (see `pinScreenplay`): the prompt
     // from the visitor's saved draft, the cast by asset key, and the cast by name for the digest.
     prompt = null, castRefs = null, castNames = null,
-    direction = null, override = null,
+    direction = null, override = null, answers = null,
   },
 ) {
   const costUsd = priceUsd(params) ?? 0;
@@ -968,6 +1004,7 @@ export async function startTake(
     castNames,
     direction,
     override,
+    answers,
     status: needsApproval ? 'awaiting-approval' : 'queued',
     step: 'submit',
   });
@@ -992,6 +1029,41 @@ export async function resumeAfterApproval(env, mindId, record, cast) {
 }
 
 export { getEnvelope };
+
+/**
+ * Read a verdict back when the job that shot the test is gone.
+ *
+ * Jobs expire in a day and, before 2026-08-28, a take did not remember its job — so a visitor
+ * who answered a test after a refresh recorded a verdict the Director never read. The durable
+ * take and the saved draft hold everything the review needs; this rebuilds a job around them,
+ * the way `rememberTake` does for the pin step. Spends nothing.
+ */
+export async function startReview(env, mindId, { filmId, take, spec = null, prompt = null, origin = null }) {
+  if (!take?.verdict?.answer || !spec?.beats?.length) return null;
+  const record = await createJob(env, mindId, {
+    filmId,
+    script: take.script ?? null,
+    params: take.params ?? { model: 'MiniMax-H3', resolution: '768P', duration: 6, ratio: '16:9' },
+    refKeys: take.refKeys ?? [],
+    proposalId: null,
+    costUsd: 0,
+    kind: 'screen-test',
+    question: take.question ?? null,
+    riskId: take.riskId ?? null,
+    origin,
+    spec,
+    prompt,
+    direction: take.direction ?? null,
+    answers: take.answers ?? null,
+    status: 'queued',
+    step: 'review',
+  });
+  // The rebuilt job judges THIS take, not a fresh one: same id, same verdict, already settled.
+  record.take = { ...record.take, ...take, kind: 'screen-test' };
+  await saveJob(env, mindId, record);
+  await enqueue(env, { mindId, jobId: record.jobId, step: 'review' }, 1);
+  return record;
+}
 
 /**
  * Start a planning pass. Spends nothing, so it bypasses the money gate entirely.

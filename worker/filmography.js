@@ -22,6 +22,7 @@ import { signedMediaUrl } from './signed-media.js';
 
 export const FILMOGRAPHY_TAG = '[Filmography]';
 export const SCREENPLAY_TAG = '[Screenplay]';
+export const SCREEN_TEST_TAG = '[Screen test]';
 
 // System events, not visitor chat — same debounce the Storyboarder's digests use, and for the
 // same reason: best-effort, isolate-scoped, enough to stop a retry storm doubling a message.
@@ -76,6 +77,78 @@ export function filmographyDigest(record, { watchUrl = null } = {}) {
       '.',
   );
   return lines.join('\n');
+}
+
+/**
+ * The Mind's record of one screen test: the question, the answer, and what the visitor saw.
+ *
+ * WHY TESTS ARE REMEMBERED TOO. Until 2026-08-28 a screen test was "evidence, not filmography"
+ * and the Mind was told only a count. Then a visitor ran five rehearsals of one question, liked
+ * the third, and had no way to refer to it — and a Mind that cannot say "the third rehearsal,
+ * where the letters folded into the brain in place, held" cannot help make the film. The answer
+ * and the note ARE the production knowledge; the clip is what they are about. Same shape as the
+ * filmography digest, same pin, same audit fields.
+ */
+export function screenTestDigest(record, { watchUrl = null } = {}) {
+  const take = record.take ?? {};
+  const params = record.params ?? take.params ?? {};
+  const logline = record.spec?.logline ?? null;
+  const delivered = take.settledAt ? new Date(take.settledAt).toISOString() : new Date().toISOString();
+  const answer = take.verdict?.answer ?? null;
+  const answerLabel = answer ? (take.answers?.[answer] ?? { held: 'it held', failed: 'it did not', unclear: 'cannot tell' }[answer] ?? answer) : null;
+
+  const lines = [
+    `${SCREEN_TEST_TAG} A screen test has been ${answer ? 'answered' : 'delivered'} in your production.`,
+    logline ? `Film: "${logline}" (film ${record.filmId})` : `Film: ${record.filmId}`,
+    `Test ${take.takeId} — ${params.duration}s ${params.resolution}, ${money(take.costUsd) ?? 'cost unknown'}, delivered ${delivered}.`,
+  ];
+  if (take.question) lines.push(`Question: ${take.question}`);
+  const direction = excerpt(record.direction ?? take.direction, 240);
+  if (direction) lines.push(`Rehearsed: "${direction}"`);
+  if (answer) {
+    lines.push(`Answer: ${answerLabel} (${answer}, judged by ${take.verdict?.by === 'visitor' ? 'the visitor' : 'the frame judge'}).`);
+    const note = excerpt(take.verdict?.note, 400);
+    if (note) lines.push(`What the visitor saw, in their words: "${note}"`);
+  } else {
+    lines.push('Answer: not yet given.');
+  }
+  if (take.retest) lines.push('The Director asked for this question to be run again against the revised script.');
+  if (watchUrl) lines.push(`Watch (link valid 7 days): ${watchUrl}`);
+  if (take.ipfs?.cid) {
+    lines.push(`Permanent record: ipfs://${take.ipfs.cid}${take.ipfs.gatewayUrl ? ` — ${take.ipfs.gatewayUrl}` : ''}`);
+  }
+  if (take.sha256) lines.push(`File SHA-256: ${take.sha256}`);
+  lines.push(
+    '',
+    'This is a screen test — evidence about what the model can do for this film, not a finished take. ' +
+      'If asked what has been tested or learned here, quote the question, the answer, the visitor\'s words and the test id.',
+  );
+  return lines.join('\n');
+}
+
+// Keyed by take AND by whether it carries an answer, so a test that settles and is judged a
+// moment later sends both facts — and a retried step sends neither twice.
+const lastTestDigestAt = new Map();
+
+/** Tell the Mind about a screen test. Returns true only when the message actually went. */
+export async function relayScreenTestDigest(env, record) {
+  const client = mindsClient(env);
+  if (!client) return false;
+
+  const key = `${record.mindId}:${record.take?.takeId}:${record.take?.verdict?.answer ? 'answered' : 'delivered'}`;
+  const now = Date.now();
+  if (now - (lastTestDigestAt.get(key) ?? 0) < DIGEST_MIN_INTERVAL_MS) return false;
+  lastTestDigestAt.set(key, now);
+
+  const origin = new URL(record.origin ?? 'https://minds.monster').origin;
+  const watchUrl = record.take?.r2Key
+    ? await signedMediaUrl(env, record.mindId, { path: '/api/director/media', key: record.take.r2Key, requestUrl: origin })
+    : null;
+
+  const alias = chatAlias(record.mindId);
+  await client.ensureConversation(alias, record.mindId);
+  await client.sendMessage({ alias, messageText: screenTestDigest(record, { watchUrl }) });
+  return true;
 }
 
 /**

@@ -312,6 +312,10 @@ export const useProductionPipeline = ({ composer, screenwriter, storyboarder, di
     // two films were.
     const gate = directorPlan?.gate ?? null;
     const owed = gate?.outstanding?.length ?? 0;
+    // A clip waiting to be answered is the next move, and it is free; only what has no clip
+    // (or failed) is run. Offering "run" while an answer is owed bought five identical tests.
+    const unanswered = gate?.unanswered?.length ?? 0;
+    const toRun = gate?.toRun?.length ?? 0;
     const readyToShoot = Boolean(spec?.beats?.length && token && directorPlan?.ready && gate?.cleared);
     // Everything the free read needs, and nothing more. It wants the screenplay and a Mind —
     // deliberately NOT `writtenCast`, and deliberately not a storyboard.
@@ -350,7 +354,9 @@ export const useProductionPipeline = ({ composer, screenwriter, storyboarder, di
             ? `${takes.length} take${takes.length === 1 ? '' : 's'} shot`
             : directorPlan?.blocking?.length
               ? 'MiniMax would reject this as written'
-              : owed
+              : unanswered
+                ? `${unanswered} screen test${unanswered === 1 ? '' : 's'} came back — watch and answer`
+                : owed
                 ? `${owed} screen test${owed === 1 ? '' : 's'} the Director asked for`
                 : gate?.unread && directorPlan
                   ? 'not yet read by the Director'
@@ -365,9 +371,11 @@ export const useProductionPipeline = ({ composer, screenwriter, storyboarder, di
             ? `${takes.length} take${takes.length === 1 ? '' : 's'}`
             : readyToShoot
               ? 'ready'
-              : owed
-                ? 'tests owed'
-                : null,
+              : unanswered
+                ? 'answer the test'
+                : owed
+                  ? 'tests owed'
+                  : null,
       elapsed: shooting ? (director?.elapsedSeconds ?? 0) : null,
       error: director?.error ?? null,
       // THE RUN'S PRIMARY CTA, MOVED HERE FROM BLOCK — and it is the FREE half of the Director's
@@ -398,16 +406,20 @@ export const useProductionPipeline = ({ composer, screenwriter, storyboarder, di
           ? null
           : directorPlan && !gate?.unread
             ? {
-                label: owed
-                  ? `Run ${owed} test${owed === 1 ? '' : 's'} · $${(gate?.outstandingUsd ?? 0).toFixed(2)}`
-                  : 'Open the Director',
+                label: unanswered
+                  ? `Answer the test${unanswered === 1 ? '' : 's'} that came back`
+                  : toRun
+                    ? `Run ${toRun} test${toRun === 1 ? '' : 's'} · $${(gate?.outstandingUsd ?? 0).toFixed(2)}`
+                    : 'Open the Director',
                 disabled: false,
                 reason: null,
                 hint: directorPlan.blocking?.length
                   ? 'the Director flagged something first'
-                  : owed
-                    ? 'the Director asked for these before the film is shot'
-                    : `~$${(directorPlan.estimate?.finalUsd ?? 0).toFixed(2)} a take`,
+                  : unanswered
+                    ? 'free — the Director reads your answer before changing the script'
+                    : toRun
+                      ? 'the Director asked for these before the film is shot'
+                      : `~$${(directorPlan.estimate?.finalUsd ?? 0).toFixed(2)} a take`,
                 // The bar owns panel focus, not this hook — `focusPanel` asks for it rather than
                 // reaching for a callback the pipeline has no business holding.
                 focusPanel: true,

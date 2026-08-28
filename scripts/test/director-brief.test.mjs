@@ -145,7 +145,8 @@ test('elevation reorders and never escalates', () => {
 test('a floor violation still outranks anything the visitor asked for', () => {
   // What would be REJECTED comes before what someone wants to be sure of, always.
   const withBrand = spec({ beats: ['the Rimowa case sits open'] });
-  const brandCast = [{ ...cast[0], name: 'Rimowa' }];
+  // A recognised brand (in the dossier's hazards) is what makes it a floor; a bare name is only a note.
+  const brandCast = [{ ...cast[0], name: 'Rimowa', dossier: { ...cast[0].dossier, hazards: ['RIMOWA wordmark on the lid'] } }];
   const result = assessRisks({ spec: withBrand, cast: brandCast, mustHold: ["the ape's face"] });
   assert.equal(result.risks[0].severity, 'floor');
 });

@@ -32,12 +32,13 @@ import { preflightReferences } from './reference-preflight.js';
 import { LATENCY_SECONDS, checkH3Params, priceUsd } from './minimax.js';
 import { DEFAULT_MODE, MODES, closeEnvelope, getEnvelope, listEnvelopes, openEnvelope, recordDecision, spentOnFilm } from './render-budget.js';
 import { getSpend } from './budget.js';
-import { castRefsFrom, loadJob, loadProduction, rememberTake, resumeAfterApproval, saveJob, startTake, startAssessment, enqueue } from './director-job.js';
+import { castRefsFrom, dropRevision, loadJob, loadProduction, rememberTake, resumeAfterApproval, saveJob, startTake, startAssessment, startReview, enqueue } from './director-job.js';
 import { draftCastForWire, loadDraft } from './draft.js';
 import { applyRevisions } from './director-agent.js';
 import { serveSignedMedia, signedMediaUrl } from './signed-media.js';
 import { streamJobEvents } from './job-events.js';
 import { buildScreenTest, demandAsRisk, isDemandId, VERDICTS } from './screen-test.js';
+import { relayScreenTestDigest } from './filmography.js';
 import { testGate } from './director-gate.js';
 import { parseBrief } from '../src/lib/directorBrief.js';
 import { recordVerdict } from './director-job.js';
@@ -663,6 +664,25 @@ export async function handleDirectorRemember(request, env) {
   }
 }
 
+/**
+ * POST /api/director/revision/drop — take one of the Director's amendments back off the script.
+ *
+ * `applyRevisions` has always promised that "every revision is reversible by dropping it from the
+ * list"; until 2026-08-28 nothing could drop one, and a visitor watched a landmark get rewritten
+ * out of their film with no way back. Identified by `at`, the timestamp each revision is stamped
+ * with on append.
+ */
+export async function handleDirectorRevisionDrop(request, env) {
+  const session = await requireSession(request, env);
+  if (!session) return json({ error: 'unauthorized' }, 401);
+
+  const { filmId, at } = await request.json().catch(() => ({}));
+  if (!filmId || !Number.isFinite(at)) return json({ error: 'film_and_at_required' }, 400);
+
+  const production = await dropRevision(env, session.mindId, filmId, at);
+  return json({ filmId, revisions: production.revisions ?? [] });
+}
+
 /** POST /api/director/close — settle the production and release whatever is left. */
 export async function handleDirectorClose(request, env) {
   const session = await requireSession(request, env);
@@ -750,6 +770,7 @@ export async function handleDirectorTest(request, env) {
       prompt,
       riskMeasured: risk.measured ?? risk.judgement ?? null,
       direction: risk.test?.direction ?? null,
+      answers: test.answers ?? null,
     });
 
     return json({
@@ -794,22 +815,50 @@ export async function handleDirectorVerdict(request, env) {
 
   const production = await recordVerdict(env, session.mindId, filmId, { takeId, answer, note, by: 'visitor' });
 
+  // The answer is the fact worth remembering — more than the clip. Told to the Mind in the same
+  // shape as a delivered take, and never allowed to fail the verdict that carries it.
+  const judged = production.takes.find((take) => take.takeId === takeId);
+  if (judged) {
+    const draft = await loadDraft(env, session.mindId).catch(() => null);
+    relayScreenTestDigest(env, {
+      mindId: session.mindId,
+      filmId,
+      take: judged,
+      params: judged.params ?? null,
+      spec: draft?.filmId === filmId ? draft.spec : null,
+      origin: new URL(request.url).origin,
+    }).catch((error) => console.warn(`Screen test digest for ${takeId} failed:`, error.message));
+  }
+
   // The answer closes the loop. Whichever job shot this test still holds the spec and the question,
   // so it is the thing that can read the verdict back — and a review costs nothing, so it never
   // needs approval. The client sends the job id when it has it; the take remembers it otherwise,
   // because a verdict that never reaches the Director is a test that taught the script nothing.
-  const resolvedJobId = jobId ?? production.takes.find((take) => take.takeId === takeId)?.jobId ?? null;
-  if (resolvedJobId) {
-    const record = await loadJob(env, session.mindId, resolvedJobId).catch(() => null);
-    if (record?.take?.takeId === takeId && record.spec) {
-      record.take.verdict = { answer, note, by: 'visitor', at: Date.now() };
-      record.status = 'running';
-      await saveJob(env, session.mindId, record);
-      await enqueue(env, { mindId: session.mindId, jobId: resolvedJobId, step: 'review' }, 1);
-    }
+  const judgedTake = production.takes.find((take) => take.takeId === takeId) ?? null;
+  const resolvedJobId = jobId ?? judgedTake?.jobId ?? null;
+  const record = resolvedJobId ? await loadJob(env, session.mindId, resolvedJobId).catch(() => null) : null;
+  let reviewing = false;
+  if (record?.take?.takeId === takeId && record.spec) {
+    record.take.verdict = { answer, note, by: 'visitor', at: Date.now() };
+    record.status = 'running';
+    await saveJob(env, session.mindId, record);
+    await enqueue(env, { mindId: session.mindId, jobId: resolvedJobId, step: 'review' }, 1);
+    reviewing = true;
+  } else if (judgedTake) {
+    // The job is gone (expired, or shot before takes remembered their job). The verdict must
+    // still reach the Director, so a review job is rebuilt from the durable take and the draft.
+    const draft = await loadDraft(env, session.mindId).catch(() => null);
+    const rebuilt = await startReview(env, session.mindId, {
+      filmId,
+      take: judgedTake,
+      spec: draft?.filmId === filmId ? draft.spec : null,
+      prompt: draft?.filmId === filmId ? draft.prompt : null,
+      origin: new URL(request.url).origin,
+    });
+    reviewing = Boolean(rebuilt);
   }
 
-  return json({ production });
+  return json({ production, reviewing });
 }
 
 /**

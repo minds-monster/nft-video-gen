@@ -4,7 +4,7 @@ import CanvasPanel from './CanvasPanel';
 import TakeTile from './TakeTile';
 import { cn } from '../../../lib/cn';
 import { ANSWER_TONE, UNANSWERED_TONE } from '../../../lib/takeTone';
-import { VERDICTS } from '../../../../worker/screen-test.js';
+import { verdictLabel } from '../../../../worker/screen-test.js';
 
 /**
  * What the experiments cost, and what they said.
@@ -90,7 +90,7 @@ const ScreenTestsPanel = ({ id, director, status, tabs, activeTakeId, onPreviewT
                     ANSWER_TONE[verdict],
                   )}
                 >
-                  {VERDICTS.find((entry) => entry.id === verdict)?.label ?? verdict}
+                  {verdictLabel(test, verdict)}
                   {test.retest ? ' · run again' : ''}
                 </span>
               ) : test.status === 'ready' ? (

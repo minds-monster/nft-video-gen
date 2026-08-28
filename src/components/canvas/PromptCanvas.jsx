@@ -711,6 +711,7 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder, director
                           onToggle={() => togglePanel('director')}
                           status={status.director}
                           onShoot={director?.shoot}
+                          onAnswerTest={onPreviewTake}
                         />
                       </Panel>
                     </Group>

@@ -111,6 +111,46 @@ test('the proposed test carries the measured risk with it, so a price is never i
   assert.equal(result.tests[0].risk.test.question, "Does the ape's face survive?");
 });
 
+test('a fix against a hazard the register only reports is refused — the Hollywood guard', async () => {
+  // The register raised a NOTE about a cast piece's name and said autofix: false. The model,
+  // reading rule 1 in its own brief, decided the landmark was a brand and rewrote it out.
+  const noteRisks = [
+    ...risks,
+    { id: 'brand-word-in-script', severity: 'note', what: 'the script says "Hollywood sign"', measured: 'reported, never rewritten', estUsd: 0, test: null, fix: 'review', autofix: false },
+  ];
+  stub({
+    reading: 'x',
+    tests: [],
+    skip: [],
+    fixes: [
+      { riskId: 'brand-word-in-script', block: 'world', text: 'A white-lettered sign on a hillside.', why: 'Removes the prohibited brand name.' },
+      { riskId: 'brand-word-in-script', block: 'staging', text: '<Subject 1> is the sign.', why: 'Removes the prohibited brand name.' },
+    ],
+    demands: [],
+    plan: 'p',
+  });
+  const result = await planShoot(env, { spec: spec(), risks: noteRisks, finalUsd: 0.48, remainingUsd: 6 });
+  assert.deepEqual(result.fixes, [], 'nothing is rewritten');
+  assert.deepEqual(result.droppedFixes.map((f) => f.reason), ['reported, never rewritten', 'reported, never rewritten']);
+});
+
+test('a hazard gets one fix; a second against the same id is refused', async () => {
+  stub({
+    reading: 'x',
+    tests: [],
+    skip: [],
+    fixes: [
+      { riskId: 'brand-name-in-script', block: 'world', text: 'first', why: 'w' },
+      { riskId: 'brand-name-in-script', block: 'staging', text: 'second', why: 'w' },
+    ],
+    demands: [],
+    plan: 'p',
+  });
+  const result = await planShoot(env, { spec: spec(), risks, finalUsd: 0.48, remainingUsd: 6 });
+  assert.equal(result.fixes.length, 1);
+  assert.equal(result.droppedFixes[0].reason, 'a hazard gets one fix');
+});
+
 test('skips are kept, because what it chose not to spend on is also a decision', async () => {
   stub({
     reading: 'x',
@@ -139,6 +179,7 @@ const demand = (over = {}) => ({
   direction: 'The letters are rubber that inflates and fuses into one mass, which folds into the ridges of a brain. Nothing fades in.',
   onHeld: 'shoot the film',
   onFailed: 'split the change across two beats',
+  answers: { held: 'The letters became the brain', failed: 'A brain faded in over them' },
   ...over,
 });
 
@@ -157,6 +198,7 @@ test('a demand is kept, priced from the parameters, and bound to its subjects\' 
   assert.equal(kept.estUsd, 0.48, 'the price comes from MOTION_TEST, never from the model');
   assert.deepEqual(kept.refKeys, ['sign'], '<Subject 1> resolves to the first reference slot');
   assert.match(kept.direction, /rubber that inflates/);
+  assert.deepEqual(kept.answers, { held: 'The letters became the brain', failed: 'A brain faded in over them', unclear: 'Cannot tell' });
   assert.deepEqual(result.droppedDemands, []);
 });
 

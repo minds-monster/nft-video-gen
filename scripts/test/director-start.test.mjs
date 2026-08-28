@@ -13,7 +13,7 @@ import assert from 'node:assert/strict';
 import { signSession } from '../../worker/session.js';
 import { setBudget } from '../../worker/budget.js';
 import { handleDirectorPlan, handleDirectorStart, handleDirectorTest } from '../../worker/director.js';
-import { appendTake, loadJob, saveShootingPlan } from '../../worker/director-job.js';
+import { appendTake, appendRevision, dropRevision, loadJob, loadProduction, replaceFreeRevisions, saveShootingPlan } from '../../worker/director-job.js';
 import { filmIdFor } from '../../worker/film-id.js';
 import { FIXTURES } from '../lib/storyboard-fixtures.mjs';
 
@@ -69,6 +69,7 @@ const demand = {
   subjects: [1],
   direction: 'The letters are rubber that inflates and fuses into one mass. Nothing fades in.',
   refKeys: [fixture.spec.referencePlan[0].key],
+  answers: { held: 'The letters became the brain', failed: 'A brain faded in over them', unclear: 'Cannot tell' },
   params: { model: 'MiniMax-H3', resolution: '768P', duration: 6, ratio: '16:9' },
   estUsd: 0.48,
 };
@@ -189,6 +190,7 @@ test('a demand id runs as a rehearsal of the real film, carrying its direction',
   assert.equal(job.take.kind, 'screen-test');
   assert.equal(job.take.riskId, 'demand:letters-become-brain');
   assert.equal(job.direction, demand.direction, 'the review step will be told what was rendered');
+  assert.equal(job.take.answers.failed, 'A brain faded in over them', 'the buttons under the clip speak the film\'s language');
   assert.match(job.script.text, /rubber that inflates/, 'the direction IS the beat');
   assert.match(job.script.text, /Nothing fades in or out, nothing dissolves/);
   assert.equal(job.params.duration, 6);
@@ -202,4 +204,72 @@ test('a demand the plan does not have is not on this film', async () => {
     env,
   );
   assert.equal(response.status, 404);
+});
+
+// ------------------------------------------------------------------------------- revisions
+
+test('a fresh reading replaces the last reading\'s free fixes and keeps the ones tests paid for', async () => {
+  const env = await makeEnv();
+  await appendRevision(env, MIND, filmId, { block: 'world', text: 'scrubbed', why: 'Removes the prohibited brand name.', fromRiskId: 'brand-name-in-script', free: true });
+  await appendRevision(env, MIND, filmId, { block: 'continuity', text: 'one take', why: 'from a test', fromTakeId: 'test-1' });
+  await replaceFreeRevisions(env, MIND, filmId, [{ block: 'world', text: 'the letters are the material', why: 'rule 12', fromRiskId: 'transformation-faked:2' }]);
+  const { revisions } = await loadProduction(env, MIND, filmId);
+  assert.deepEqual(revisions.map((r) => [r.block, r.text, Boolean(r.free)]), [
+    ['continuity', 'one take', false],
+    ['world', 'the letters are the material', true],
+  ]);
+});
+
+test('a revision can be dropped by its timestamp, through the endpoint', async () => {
+  const env = await makeEnv();
+  await appendRevision(env, MIND, filmId, { block: 'world', text: 'scrubbed', why: 'w', free: true });
+  const { revisions } = await loadProduction(env, MIND, filmId);
+  const { handleDirectorRevisionDrop } = await import('../../worker/director.js');
+  const response = await handleDirectorRevisionDrop(await post(env, '/api/director/revision/drop', { filmId, at: revisions[0].at }), env);
+  assert.equal(response.status, 200);
+  assert.deepEqual((await response.json()).revisions, []);
+  assert.deepEqual((await loadProduction(env, MIND, filmId)).revisions, []);
+  assert.equal(typeof dropRevision, 'function');
+});
+
+// ------------------------------------------------------------------------------- verdicts
+
+test('a verdict on a take whose job is gone still reaches the Director, via a rebuilt review job', async () => {
+  // Tests shot before 2026-08-28 do not remember their job, and jobs expire in a day either way.
+  const env = await makeEnv();
+  await env.MIND_CONNECTIONS.put(`draft:${MIND}`, JSON.stringify({ filmId, spec: fixture.spec, prompt: 'letters become a brain' }));
+  await appendTake(env, MIND, filmId, {
+    takeId: 'test-old',
+    kind: 'screen-test',
+    riskId: 'transformation-faked:prompt',
+    question: 'Does it physically happen?',
+    status: 'ready',
+    r2Key: 'director/x/y/test-old/video.mp4',
+    params: { model: 'MiniMax-H3', resolution: '768P', duration: 6, ratio: '16:9' },
+  });
+  const { handleDirectorVerdict } = await import('../../worker/director.js');
+  const response = await handleDirectorVerdict(
+    await post(env, '/api/director/verdict', { filmId, takeId: 'test-old', answer: 'held', note: 'the letters folded into the brain in place' }),
+    env,
+  );
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.reviewing, true);
+  const queued = env.DIRECTOR_JOBS.sent.find((m) => m.body.step === 'review');
+  assert.ok(queued, 'a review step is queued');
+  const job = await loadJob(env, MIND, queued.body.jobId);
+  assert.equal(job.take.takeId, 'test-old', 'and it judges THIS take');
+  assert.equal(job.take.verdict.answer, 'held');
+  assert.equal(job.take.verdict.note, 'the letters folded into the brain in place');
+  assert.equal(job.prompt, 'letters become a brain', 'with the visitor\'s words to hand');
+  assert.deepEqual(job.spec.beats, fixture.spec.beats);
+});
+
+test('a verdict with no draft for the film is recorded but cannot be reviewed', async () => {
+  const env = await makeEnv();
+  await appendTake(env, MIND, filmId, { takeId: 'test-orphan', kind: 'screen-test', riskId: 'x', status: 'ready' });
+  const { handleDirectorVerdict } = await import('../../worker/director.js');
+  const body = await (await handleDirectorVerdict(await post(env, '/api/director/verdict', { filmId, takeId: 'test-orphan', answer: 'failed' }), env)).json();
+  assert.equal(body.reviewing, false);
+  assert.equal(body.production.takes[0].verdict.answer, 'failed', 'the answer itself is never lost');
 });

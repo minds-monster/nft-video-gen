@@ -169,6 +169,20 @@ export async function collectProductionState(env, mindId) {
   // What the Director asked for and is still owed — the same computation the Shoot button
   // refuses on (worker/director-gate.js), so the Mind and the panel never disagree about it.
   const gate = production ? testGate(production.shootingPlan ?? null, shots) : null;
+  // The last few screen tests, question and answer, so the Mind can name "the rehearsal where
+  // the letters folded into the brain" on the next connect even before its digests are read.
+  const recentTests = screenTests
+    .filter((test) => test.status === 'ready')
+    .slice(-5)
+    .map((test) => ({
+      takeId: test.takeId,
+      question: str(test.question, 160),
+      answer: test.verdict?.answer ?? null,
+      answerLabel: test.verdict?.answer ? str(test.answers?.[test.verdict.answer] ?? null, 60) : null,
+      note: str(test.verdict?.note, 200),
+      costUsd: test.costUsd ?? null,
+      cid: test.ipfs?.cid ?? null,
+    }));
 
   // The filmography, as far as the greeting needs it: the Mind's own record is the digests in
   // its conversation, this is the "welcome back, here is what happened" bundle its own design
@@ -188,6 +202,7 @@ export async function collectProductionState(env, mindId) {
 
   return {
     filmography,
+    recentTests,
     draft,
     isReturning: num(sessionCount?.count) > 1,
     sessionCount: num(sessionCount?.count),
@@ -308,6 +323,16 @@ export function renderStateBlock(state) {
       lines.push(
         `${state.screenTestCount - state.screenTestsAnswered} screen test(s) are shot but unjudged — ` +
           'money spent and nothing learned yet, which is worth nudging.',
+      );
+    }
+    for (const test of state.recentTests ?? []) {
+      lines.push(
+        `Screen test ${test.takeId}: "${test.question ?? 'unnamed'}" → ` +
+          (test.answer ? `${test.answerLabel ?? test.answer}` : 'not yet answered') +
+          (test.note ? ` — the visitor saw: "${test.note}"` : '') +
+          (test.costUsd != null ? ` (${money(test.costUsd)})` : '') +
+          (test.cid ? `, permanent copy at ipfs://${test.cid}` : '') +
+          '. Your [Screen test] messages in this conversation are your record of it.',
       );
     }
     for (const take of state.filmography ?? []) {

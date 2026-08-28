@@ -64,17 +64,64 @@ test('the hero\'s own brand-free prose raises nothing, against the very cast it 
   assert.deepEqual(ids(result), []);
 });
 
-test('an actual marque in the script is a floor violation, because the request would be rejected', () => {
+test('a marque the Casting Director recognised is a floor violation, because the request would be rejected', () => {
+  // The dossier is where a recognised brand goes ("If you recognise one, it goes in hazards").
+  // That recognition is the evidence; the name matching on its own is not — see the Hollywood
+  // test below for why.
   const result = assessRisks({
     spec: spec({ beats: ['the Lamborghini Revuelto stands still on the grid'] }),
-    cast: cast(),
+    cast: cast({ dossier: dossier({ hazards: ['Lamborghini badge on the nose (brand mark)'] }) }),
   });
   const risk = result.risks.find((r) => r.id === 'brand-name-in-script');
-  assert.ok(risk, 'a full marque appearing intact is unambiguous');
+  assert.ok(risk, 'a recognised marque appearing intact is unambiguous');
   assert.equal(risk.severity, 'floor');
   assert.equal(risk.estUsd, 0, 'a rejected request never rendered, so it costs nothing');
   assert.equal(risk.test, null, 'this is fixed by rewriting, never by paying to confirm it');
   assert.match(risk.measured, /1026/);
+});
+
+test('a cast piece called what it is — the Hollywood sign — is a note, never a blocker, never rewritten', () => {
+  // 2026-08-28, verbatim from the visitor's draft: the piece is named "Hollywood sign", the
+  // artwork reads HOLLYWOOD, and the Casting Director recognised no brand. The old scan called
+  // it one and the Director's free fix rewrote the landmark out of its own film.
+  const result = assessRisks({
+    spec: spec({
+      world: 'A rugged brown hillside, the famous white capital-letter HOLLYWOOD sign mounted on its steel lattice.',
+      staging: '<Subject 1> is the massive white-lettered HOLLYWOOD sign on a rugged brown hillside, from <Picture 1>.',
+      beats: ['The camera begins on the Hollywood sign on the hillside'],
+      referencePlan: [{ key: 'sign', role: 'prop', crop: '' }],
+    }),
+    cast: [{
+      key: 'sign',
+      name: 'Hollywood sign',
+      collectionName: 'Hollywood sign',
+      dossier: dossier({
+        subject: 'A massive white lettered sign on a rugged hillside',
+        burnedInText: 'HOLLYWOOD',
+        hazards: ['visible human faces', 'large bold lettering'],
+        identityMarkers: ['large white capital letters forming a famous city name'],
+      }),
+    }],
+  });
+  assert.deepEqual(result.blocking, [], 'nothing blocks the shoot');
+  assert.equal(result.risks.some((r) => r.id === 'brand-name-in-script'), false);
+  const note = result.risks.find((r) => r.id === 'brand-word-in-script');
+  assert.ok(note, 'it is reported');
+  assert.equal(note.severity, 'note');
+  assert.equal(note.autofix, false, 'and the Director is never handed it as something to rewrite');
+  assert.match(note.what, /Hollywood sign/);
+  assert.match(note.what, /rejected for free/);
+});
+
+test('a name the register only reports, the Director cannot be told to fix', () => {
+  // The line the whole Hollywood failure crossed. `autofix: false` is what planShoot filters on.
+  const result = assessRisks({
+    spec: spec({ beats: ['the Rimowa case sits open'] }),
+    cast: [{ key: 'car', name: 'Rimowa', dossier: dossier({ subject: 'a grooved aluminium cabin case' }) }],
+  });
+  const note = result.risks.find((r) => r.id === 'brand-word-in-script');
+  assert.equal(note.autofix, false);
+  assert.equal(result.free.includes(note), true, 'costs nothing to leave alone');
 });
 
 test('a single-word collection name that the dossier itself uses is NOT a brand hit', () => {
@@ -88,12 +135,20 @@ test('a single-word collection name that the dossier itself uses is NOT a brand 
   assert.equal(ids(result).includes('brand-name-in-script'), false);
 });
 
-test('a single-word name no dossier vocabulary contains IS a brand hit', () => {
-  const result = assessRisks({
+test('a single-word name no dossier vocabulary contains is reported, but blocks only if recognised', () => {
+  const unrecognised = assessRisks({
     spec: spec({ beats: ['the Rimowa case sits open'] }),
     cast: [{ key: 'car', name: 'Rimowa', dossier: dossier({ subject: 'a grooved aluminium cabin case' }) }],
   });
-  assert.ok(result.risks.find((r) => r.id === 'brand-name-in-script'));
+  assert.ok(unrecognised.risks.find((r) => r.id === 'brand-word-in-script'), 'the visitor is told');
+  assert.deepEqual(unrecognised.blocking, [], 'a rejected request is free; a scrubbed subject is not');
+
+  const recognised = assessRisks({
+    spec: spec({ beats: ['the Rimowa case sits open'] }),
+    cast: [{ key: 'car', name: 'Rimowa', dossier: dossier({ subject: 'a grooved aluminium cabin case', hazards: ['RIMOWA wordmark on the lid'] }) }],
+  });
+  assert.ok(recognised.risks.find((r) => r.id === 'brand-name-in-script'));
+  assert.equal(recognised.blocking.length, 1);
 });
 
 test('a contract address or chain name in prose is caught, because this model draws text it is shown', () => {
@@ -231,7 +286,7 @@ test('a tenth reference slot is a floor violation that names what does not fit',
 test('risks come back floor-first, so the top of the list is what to act on', () => {
   const result = assessRisks({
     spec: spec({ beats: ['the Lamborghini Revuelto stands still'], grade: 'No text anywhere.' }),
-    cast: cast({ dossier: dossier({ framing: 'small-in-frame', burnedInText: 'X' }) }),
+    cast: cast({ dossier: dossier({ framing: 'small-in-frame', burnedInText: 'X', hazards: ['Lamborghini badge (brand mark)'] }) }),
   });
   assert.deepEqual(result.risks.map((r) => r.severity), ['floor', 'hazard', 'note']);
 });
@@ -344,6 +399,11 @@ test('a beat that asks one thing to become another is a rehearsal, six seconds l
   assert.deepEqual(risk.test.params, MOTION_TEST, 'a transformation needs two beats of time');
   assert.deepEqual(risk.test.beats, [2]);
   assert.match(risk.what, /morph into an enormous white pulsating brain/, 'and quotes the clause');
+  // One yes/no question with answers in the film's words — never an either/or against "It held".
+  assert.doesNotMatch(risk.test.question, /, or does/, 'not an either/or');
+  assert.match(risk.test.question, /\?$/);
+  assert.equal(risk.test.answers.held, 'It physically became the other thing');
+  assert.equal(risk.test.answers.failed, 'The second thing faded in over it');
   assert.match(risk.measured, /faded in on top/);
   assert.equal(risk.estUsd, 0.48);
 });

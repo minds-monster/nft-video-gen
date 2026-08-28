@@ -612,6 +612,18 @@ export const saveDirectorBrief = async ({ filmId, brief }, token) => {
   return payload;
 };
 
+/** Take one of the Director's amendments back off the script. `at` is the revision's timestamp. */
+export const dropDirectorRevision = async ({ filmId, at }, token) => {
+  const response = await fetch('/api/director/revision/drop', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filmId, at }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.detail ?? payload.error ?? 'Could not drop that revision');
+  return payload;
+};
+
 /** Ask the Director to read the film and say what is worth paying to find out. Spends nothing. */
 export const assessFilm = async ({ spec, cast }, token) => {
   const response = await fetch('/api/director/assess', {

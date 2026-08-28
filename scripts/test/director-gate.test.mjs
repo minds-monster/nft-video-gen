@@ -68,9 +68,38 @@ test('a plan with unshot tests is read but not cleared, and names what is owed',
   assert.equal(gate.outstandingUsd, 0.96);
 });
 
-test('a test that came back and nobody judged is still outstanding', () => {
-  const gate = testGate(plan(), [shot('transformation-faked:2')]);
-  assert.equal(gate.outstanding.find((t) => t.riskId === 'transformation-faked:2').state, 'unjudged');
+test('a test that came back and nobody judged is outstanding — to ANSWER, never to re-run', () => {
+  const gate = testGate(plan(), [shot('transformation-faked:2', { takeId: 'test-a' })]);
+  const entry = gate.outstanding.find((t) => t.riskId === 'transformation-faked:2');
+  assert.equal(entry.state, 'unjudged');
+  assert.equal(entry.unansweredTakeId, 'test-a', 'the clip to open');
+  assert.deepEqual(gate.unanswered.map((t) => t.riskId), ['transformation-faked:2']);
+  assert.deepEqual(gate.toRun.map((t) => t.riskId), ['demand:brain-pulses-like-tissue'], 'only the unshot one is bought');
+  assert.equal(gate.outstandingUsd, 0.48, 'and the price is for running, not for answering');
+});
+
+test('an answered question is settled by its answer; later unjudged clips do not reopen it', () => {
+  // 2026-08-28: the same rehearsal was run five times because every unanswered clip read as
+  // "outstanding". Answering clip 3 "held" must clear the question even with 4 and 5 unwatched.
+  const gate = testGate(plan({ demands: [] }), [
+    shot('transformation-faked:2'),
+    shot('transformation-faked:2'),
+    shot('transformation-faked:2', { verdict: held }),
+    shot('transformation-faked:2'),
+    shot('transformation-faked:2'),
+  ]);
+  assert.equal(gate.cleared, true);
+  assert.equal(gate.asked[0].unansweredCount, 4, 'the unwatched clips are still counted, just not owed');
+});
+
+test('a failed answer followed by an unjudged re-run still waits for the new answer', () => {
+  const gate = testGate(plan({ demands: [] }), [
+    shot('transformation-faked:2', { verdict: failed }),
+    shot('transformation-faked:2', { takeId: 'test-again' }),
+  ]);
+  assert.equal(gate.outstanding[0].state, 'failed');
+  assert.equal(gate.outstanding[0].unansweredTakeId, 'test-again');
+  assert.deepEqual(gate.toRun, [], 'nothing to buy — there is a clip to watch');
 });
 
 test('a test that FAILED is outstanding; one that held is not', () => {

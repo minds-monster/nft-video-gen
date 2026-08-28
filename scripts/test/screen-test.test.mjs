@@ -17,7 +17,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { buildScreenTest, demandAsRisk, isDemandId, VERDICTS } from '../../worker/screen-test.js';
+import { buildScreenTest, demandAsRisk, isDemandId, VERDICTS, verdictLabel } from '../../worker/screen-test.js';
 import { assessRisks } from '../../worker/director-risks.js';
 import { SCREEN_TEST, MOTION_TEST } from '../../worker/director-risks.js';
 
@@ -130,7 +130,7 @@ test('a risk fixed by rewriting is never turned into a render', () => {
   // Paying to watch MiniMax reject a brand name would be absurd. The register already knows the
   // difference; this asserts the builder respects it.
   const specValue = spec({ beats: ['the Lamborghini Revuelto stands still'] });
-  const castValue = [{ key: 'ape', name: 'Lamborghini Revuelto', dossier: dossier() }];
+  const castValue = [{ key: 'ape', name: 'Lamborghini Revuelto', dossier: dossier({ hazards: ['Lamborghini badge (brand mark)'] }) }];
   const risk = riskFor(specValue, castValue, 'brand-name-in-script');
   assert.ok(risk, 'the hazard is real');
   assert.equal(buildScreenTest(risk, specValue, castValue), null, 'but it is not a render');
@@ -215,6 +215,19 @@ test('a rehearsal keeps the world, the staging and the camera, and renders the n
   assert.match(built.script, /Beat 1: the letters inflate like balloons/, 'the named beat, renumbered from 1');
   assert.doesNotMatch(built.script, /the brain pulses/, 'and only the named beat');
   assert.deepEqual(built.refKeys, ['sign']);
+});
+
+test('a test carries its own answer labels to the take, and the generic ones are the fallback', () => {
+  const labelled = buildScreenTest(
+    rehearsalRisk({ answers: { held: 'The letters became the brain', failed: 'A brain faded in over them', unclear: 'Cannot tell' } }),
+    brainSpec(),
+    brainCast,
+  );
+  assert.equal(labelled.answers.held, 'The letters became the brain');
+  const generic = buildScreenTest(rehearsalRisk(), brainSpec(), brainCast);
+  assert.equal(generic.answers, null);
+  assert.equal(verdictLabel({ answers: labelled.answers }, 'failed'), 'A brain faded in over them');
+  assert.equal(verdictLabel({}, 'failed'), 'It did not');
 });
 
 test('the register\'s own rule-12 risk builds the same rehearsal', () => {

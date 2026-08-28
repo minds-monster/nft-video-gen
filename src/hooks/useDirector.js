@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   approveDirectorTake,
   closeDirectorProduction,
+  dropDirectorRevision,
   getDirectorFilms,
   getDirectorJobStatus,
   getDirectorPlan,
@@ -88,6 +89,9 @@ export function useDirector() {
   /** What a take would cost and what is wrong with it. Free, so the panel can call it freely. */
   const loadPlan = useCallback(async ({ spec, cast, token, preflight = false }) => {
     if (!token || !spec?.beats?.length) return null;
+    // The film being priced is the film every later click acts on, whether or not Shoot or a
+    // test has been pressed yet — dropping a revision needs it.
+    contextRef.current = { ...contextRef.current, spec, cast, token, filmId: filmIdFor(spec) };
     setPlanning(true);
     try {
       const next = await getDirectorPlan({ spec, cast, preflight }, token);
@@ -331,7 +335,9 @@ export function useDirector() {
    */
   const runTests = useCallback(
     async ({ spec, cast, token }) => {
-      const outstanding = plan?.gate?.outstanding ?? [];
+      // Only what needs RUNNING. A test that came back unanswered is not re-bought — it is
+      // answered, for free, in the viewer.
+      const outstanding = plan?.gate?.toRun ?? [];
       if (!outstanding.length || !token) return 0;
       setRefusal(null);
       let done = 0;
@@ -351,7 +357,7 @@ export function useDirector() {
       await loadPlan({ spec, cast, token });
       return done;
     },
-    [loadPlan, plan?.gate?.outstanding, runTest],
+    [loadPlan, plan?.gate?.toRun, runTest],
   );
 
   /** Record what the visitor saw. */
@@ -392,6 +398,22 @@ export function useDirector() {
       } catch (failure) {
         setError(failure.message);
         return null;
+      }
+    },
+    [loadPlan],
+  );
+
+  /** Take one of the Director's amendments off the script, then re-price against what is left. */
+  const dropRevision = useCallback(
+    async ({ at }) => {
+      const { token, filmId, spec, cast } = contextRef.current;
+      if (!token || !filmId) return;
+      setError(null);
+      try {
+        await dropDirectorRevision({ filmId, at }, token);
+        if (spec?.beats?.length) await loadPlan({ spec, cast: cast ?? [], token });
+      } catch (failure) {
+        setError(failure.message);
       }
     },
     [loadPlan],
@@ -493,6 +515,7 @@ export function useDirector() {
     shootingPlan: plan?.shootingPlan ?? null,
     revisions: plan?.revisions ?? [],
     acceptBrief,
+    dropRevision,
     brief: plan?.brief ?? null,
     runTest,
     judge,

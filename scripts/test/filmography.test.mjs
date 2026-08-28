@@ -110,3 +110,41 @@ test('the screenplay digest is a system notice with the film’s identity on its
   assert.equal(bare.includes('Cast:'), false);
   assert.equal(bare.includes('Prompt'), false);
 });
+
+// ───────────────────────────────────────────────────────────────────── screen tests
+
+import { screenTestDigest, SCREEN_TEST_TAG } from '../../worker/filmography.js';
+
+const testRecord = {
+  ...record,
+  direction: 'The letters are rubber that inflates and fuses into one mass which folds into a brain.',
+  take: {
+    ...record.take,
+    takeId: 'test-c21c9186',
+    kind: 'screen-test',
+    costUsd: 0.48,
+    question: 'In beat 2, does the change physically happen to the thing on screen?',
+    answers: { held: 'It physically became the other thing', failed: 'The second thing faded in over it', unclear: 'Cannot tell' },
+    verdict: { answer: 'held', by: 'visitor', note: 'the middle letters folded into brain tissue in place — no fade' },
+  },
+};
+
+test('a judged screen test is remembered with its question, its answer in the film\'s words, and what the visitor saw', () => {
+  const text = screenTestDigest(testRecord, { watchUrl: 'https://minds.monster/api/director/media?key=k&token=t' });
+  assert.ok(text.startsWith(`${SCREEN_TEST_TAG} A screen test has been answered`));
+  assert.match(text, /^Test test-c21c9186 — 6s 768P, \$0\.48/m);
+  assert.match(text, /^Question: In beat 2, does the change physically happen/m);
+  assert.match(text, /^Rehearsed: "The letters are rubber/m);
+  assert.match(text, /^Answer: It physically became the other thing \(held, judged by the visitor\)\./m);
+  assert.match(text, /^What the visitor saw, in their words: "the middle letters folded into brain tissue in place — no fade"/m);
+  assert.match(text, /^Permanent record: ipfs:\/\/bafy/m);
+  assert.match(text, /quote the question, the answer, the visitor's words and the test id/);
+  assert.equal(parseMail(text).kind, 'system', 'a system notice, never the Mind speaking');
+});
+
+test('an unanswered screen test says so, rather than inventing an answer', () => {
+  const text = screenTestDigest({ ...testRecord, take: { ...testRecord.take, verdict: null } });
+  assert.ok(text.startsWith(`${SCREEN_TEST_TAG} A screen test has been delivered`));
+  assert.match(text, /^Answer: not yet given\.$/m);
+  assert.doesNotMatch(text, /What the visitor saw/);
+});

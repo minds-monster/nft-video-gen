@@ -130,12 +130,27 @@ export const SHOOTING_PLAN_SCHEMA = {
       items: {
         type: 'object',
         additionalProperties: false,
-        required: ['id', 'question', 'why', 'beats', 'subjects', 'direction', 'onHeld', 'onFailed'],
+        required: ['id', 'question', 'why', 'beats', 'subjects', 'direction', 'answers', 'onHeld', 'onFailed'],
         properties: {
           id: { type: 'string', description: 'A short kebab-case slug naming the demand, e.g. "letters-become-brain".' },
           question: {
             type: 'string',
-            description: 'The one question the rehearsal answers, in the visitor\'s terms. Must end in a question mark.',
+            description:
+              'The one question the rehearsal answers, in the visitor\'s terms. A single YES/NO ' +
+              'question, never an either/or — "Do the letters physically become the brain?", not ' +
+              '"...or does a brain fade in?". Must end in a question mark.',
+          },
+          answers: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['held', 'failed'],
+            description:
+              'The two buttons the visitor presses after watching, in the film\'s own words, six ' +
+              'words or fewer each: what they click if it worked, and what they click if it did not.',
+            properties: {
+              held: { type: 'string', description: 'e.g. "The letters became the brain"' },
+              failed: { type: 'string', description: 'e.g. "A brain faded in over them"' },
+            },
           },
           why: { type: 'string', description: 'One sentence: what in their prompt makes you doubt the model will do this.' },
           beats: {
@@ -278,6 +293,14 @@ object, a garment on a display form that needs an "ordinary skin" line, a film m
 that never says so. Every one of those costs nothing and never needs a test. Put the actual
 replacement text in the "fixes" field. Saying something is "cheap to fix in the script" and then not fixing
 it leaves the film exactly as broken as it was, and spends the visitor's attention for nothing.
+WHAT A FIX IS NOT. A fix ADDS a constraint; it never deletes what the visitor asked to see. Rule 1
+is the register's to enforce, not yours: if the register has not flagged a word as a brand, it is
+not one, however famous it is. A landmark, a place, a title, a city, the piece's own name — these
+are what the film is ABOUT, and a Director that rewrote "the Hollywood sign" into "a white-lettered
+sign on a hillside" to be safe has thrown the film away to save a request that costs nothing to
+have rejected. Never touch a proper noun the register did not name. Never rewrite a block the
+register gave you no hazard on.
+
 A demand is different: stating the mechanism in the script is necessary and it is NOT sufficient.
 The Hollywood script could have said "no dissolve" and nobody would have known whether that worked
 until it was rehearsed.
