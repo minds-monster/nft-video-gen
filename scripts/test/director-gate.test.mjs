@@ -154,7 +154,21 @@ test('a demand is always known, because it is the Director\'s own ask', () => {
   assert.equal(gate.outstanding.length, 1);
 });
 
-test('a running or failed RENDER does not count as an answer', () => {
-  const gate = testGate(plan({ demands: [] }), [shot('transformation-faked:2', { status: 'failed' })]);
-  assert.equal(gate.outstanding[0].state, 'unshot');
+test('a failed RENDER is named as such, with its reason, and never counts as an answer', () => {
+  // The Phoenix loop: a render rejected by H3 used to read as "not yet run" and be offered again.
+  const gate = testGate(plan({ demands: [] }), [
+    shot('transformation-faked:2', { status: 'failed', reason: 'image size 140x250, expected each side in [256, 5760]' }),
+  ]);
+  assert.equal(gate.outstanding[0].state, 'render-failed');
+  assert.match(gate.outstanding[0].failedReason, /140x250/);
+  assert.equal(gate.toRun.length, 1, 'it can be run again once the cause is fixed');
+  assert.equal(gate.cleared, false);
+});
+
+test('a failure followed by a successful render is forgotten', () => {
+  const gate = testGate(plan({ demands: [] }), [
+    shot('transformation-faked:2', { status: 'failed', reason: 'x' }),
+    shot('transformation-faked:2', { verdict: held }),
+  ]);
+  assert.equal(gate.cleared, true);
 });

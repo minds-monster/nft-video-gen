@@ -26,7 +26,8 @@
 // we have lost is money spent on something nobody can ever collect.
 
 import { createJobLogger } from './job-log.js';
-import { castingStills, fetchImageAsDataUri } from './casting-director.js';
+import { castingStills } from './casting-director.js';
+import { fetchLegalReference } from './reference-legal.js';
 import { recordSpend } from './budget.js';
 import { authoriseSpend, getEnvelope } from './render-budget.js';
 import { LATENCY_SECONDS, MinimaxError, createH3Task, h3Content, pollVideo, priceUsd } from './minimax.js';
@@ -298,16 +299,41 @@ async function resolveReferences(cast, refKeys) {
   for (const key of refKeys ?? []) {
     const entry = byKey.get(key);
     try {
+      // The first still H3 will ACCEPT, not the first that loads — measured here, before the
+      // task is created, because H3 measures it after the task is billed (worker/reference-legal.js).
       // eslint-disable-next-line no-await-in-loop -- sequential against third-party media hosts.
-      images.push(await fetchImageAsDataUri(castingStills(entry?.nft)));
+      const legal = await fetchLegalReference(castingStills(entry?.nft), { key, dossierFraming: entry?.dossier?.framing ?? null });
+      images.push(legal.dataUri);
     } catch (error) {
-      throw new Error(
-        `Could not fetch the artwork for "${key}", and shooting without it would render a film ` +
-          `missing a piece you cast: ${error.message}`,
+      throw Object.assign(
+        new Error(
+          error.code === 'reference_illegal'
+            ? `${error.message}. Shooting without it would render a film missing a piece you cast.`
+            : `Could not fetch the artwork for "${key}", and shooting without it would render a film ` +
+              `missing a piece you cast: ${error.message}`,
+        ),
+        { fatal: true, code: error.code ?? 'reference_unreachable' },
       );
     }
   }
   return images;
+}
+
+/**
+ * A render that failed, on the durable record — so the panel can say WHY rather than "not yet
+ * run", and the gate can stop offering the same doomed run again (2026-08-28, three times).
+ */
+async function recordFailedTake(env, record, reason) {
+  record.take.status = 'failed';
+  record.take.reason = reason;
+  record.take.settledAt = record.take.settledAt ?? Date.now();
+  await appendTake(env, record.mindId, record.filmId, {
+    ...record.take,
+    params: record.params,
+    script: record.script,
+    refKeys: record.refKeys,
+    jobId: record.jobId,
+  }).catch((error) => console.warn(`Could not record failed take ${record.take?.takeId}:`, error.message));
 }
 
 /**
@@ -558,9 +584,8 @@ async function poll(env, record, logger) {
   if (result.failed) {
     // Money spent, nothing to show. Recorded rather than swallowed — worker/budget.js's own note
     // on `failed` is the reason: "why did my budget run out faster than the beats I can see?"
-    record.take.status = 'failed';
-    record.take.reason = result.reason;
-    record.take.settledAt = Date.now();
+    // On the production too, so the failure outlives the job log and the panel can show it.
+    await recordFailedTake(env, record, result.reason);
     logger.log('take', { takeId: record.take.takeId, status: 'failed', reason: result.reason });
     await logger.setStatus('failed', { take: record.take, error: `The render failed: ${result.reason}` });
     return;
@@ -955,6 +980,9 @@ export async function handleDirectorQueue(batch, env) {
       // A failure AFTER submission leaves the take in whatever state it was in — the task id is on
       // the record and the money is spent, and saying so is more useful than a bare error.
       const submitted = Boolean(record.take?.taskId);
+      // A failure BEFORE submission — a reference H3 would refuse, artwork that cannot be fetched
+      // — spent nothing but must still be visible: on the production, with its reason.
+      if (!submitted && step === 'submit' && record.take) await recordFailedTake(env, record, error.message);
       logger.log('error', { message: error.message, taskId: record.take?.taskId ?? null });
       await logger.setStatus('failed', {
         error: submitted

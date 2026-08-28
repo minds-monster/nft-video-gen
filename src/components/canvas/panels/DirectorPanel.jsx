@@ -146,6 +146,7 @@ const ShootingPlan = ({ plan }) => {
 /** How each asked-for test stands, from worker/director-gate.js. */
 const TEST_STATE = {
   unshot: { label: 'Not yet run', cls: 'border-white/10 text-slate-400' },
+  'render-failed': { label: 'Render failed', cls: 'border-rose-400/30 text-rose-300' },
   unjudged: { label: 'Came back — answer it', cls: 'border-amber-400/30 text-amber-300' },
   failed: { label: 'Failed — run again', cls: 'border-rose-400/30 text-rose-300' },
   retest: { label: 'Re-test asked for', cls: 'border-amber-400/30 text-amber-300' },
@@ -198,6 +199,11 @@ const AskedTests = ({ plan, gate, onRunAll, onAnswer, busy, batch }) => {
                 </span>
               </div>
               {why && <p className="mt-0.5 text-slate-500">{why}</p>}
+              {test.failedReason && (
+                <p className="mt-1 rounded-lg border border-rose-400/20 bg-rose-500/5 p-1.5 text-[10px] leading-snug text-rose-200/80">
+                  {test.failedReason}
+                </p>
+              )}
               {test.finding && (
                 <p className="mt-1 rounded-lg border border-white/10 bg-black/40 p-1.5 text-[10px] leading-snug text-slate-300">
                   <span className="font-mono text-[9px] uppercase tracking-wider text-slate-600">Read back · </span>

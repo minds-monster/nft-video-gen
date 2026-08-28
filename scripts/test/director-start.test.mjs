@@ -19,6 +19,24 @@ import { FIXTURES } from '../lib/storyboard-fixtures.mjs';
 
 const MIND = 'mind-test';
 
+/** A PNG header of the given size — 33 bytes is all worker/reference-preflight.js reads. */
+const png = (width, height) => {
+  const bytes = new Uint8Array(33);
+  bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 0x49, 0x48, 0x44, 0x52]);
+  new DataView(bytes.buffer).setUint32(16, width);
+  new DataView(bytes.buffer).setUint32(20, height);
+  return bytes;
+};
+
+/** Every artwork host serves a still of this size; nothing else is ever fetched here. */
+const serveStills = (width, height) => {
+  globalThis.fetch = async () =>
+    new Response(png(width, height), { status: 200, headers: { 'content-type': 'image/png' } });
+};
+const originalFetch = globalThis.fetch;
+test.beforeEach(() => serveStills(1024, 1024));
+test.afterEach(() => { globalThis.fetch = originalFetch; });
+
 class MockKV {
   store = new Map();
   async get(key, type = 'text') {
@@ -56,10 +74,13 @@ const post = async (env, path, body) => {
 };
 
 const fixture = FIXTURES.find((f) => f.id === 'grid-launch');
+/** The fixture cast carries no artwork; give every piece one still for the stub to serve. */
+const withArt = (cast) => cast.map((entry) => ({ ...entry, nft: { ...(entry.nft ?? {}), image: { pngUrl: `https://art.example/${encodeURIComponent(entry.key)}.png` } } }));
+const CAST = withArt(fixture.cast);
 const filmId = filmIdFor(fixture.spec);
 // Ask mode parks every spend for approval, so nothing here ever reaches MiniMax.
 const start = async (env, extra = {}) =>
-  handleDirectorStart(await post(env, '/api/director/start', { spec: fixture.spec, cast: fixture.cast, mode: 'ask', ...extra }), env);
+  handleDirectorStart(await post(env, '/api/director/start', { spec: fixture.spec, cast: CAST, mode: 'ask', ...extra }), env);
 
 const demand = {
   id: 'letters-become-brain',
@@ -154,7 +175,7 @@ test('a cleared gate records no override even when the flag is sent', async () =
 test('the plan carries the gate and merges the demand into the priced register', async () => {
   const env = await makeEnv();
   await readWithDemand(env);
-  const response = await handleDirectorPlan(await post(env, '/api/director/plan', { spec: fixture.spec, cast: fixture.cast }), env);
+  const response = await handleDirectorPlan(await post(env, '/api/director/plan', { spec: fixture.spec, cast: CAST }), env);
   const body = await response.json();
   assert.equal(body.gate.unread, false);
   assert.equal(body.gate.cleared, false);
@@ -168,7 +189,7 @@ test('the plan carries the gate and merges the demand into the priced register',
 
 test('an unread plan says so, and is never cleared', async () => {
   const env = await makeEnv();
-  const body = await (await handleDirectorPlan(await post(env, '/api/director/plan', { spec: fixture.spec, cast: fixture.cast }), env)).json();
+  const body = await (await handleDirectorPlan(await post(env, '/api/director/plan', { spec: fixture.spec, cast: CAST }), env)).json();
   assert.equal(body.gate.unread, true);
   assert.equal(body.gate.cleared, false);
 });
@@ -179,7 +200,7 @@ test('a demand id runs as a rehearsal of the real film, carrying its direction',
   const env = await makeEnv();
   await readWithDemand(env);
   const response = await handleDirectorTest(
-    await post(env, '/api/director/test', { spec: fixture.spec, cast: fixture.cast, riskId: 'demand:letters-become-brain', mode: 'ask' }),
+    await post(env, '/api/director/test', { spec: fixture.spec, cast: CAST, riskId: 'demand:letters-become-brain', mode: 'ask' }),
     env,
   );
   const body = await response.json();
@@ -200,7 +221,7 @@ test('a demand the plan does not have is not on this film', async () => {
   const env = await makeEnv();
   await readWithDemand(env);
   const response = await handleDirectorTest(
-    await post(env, '/api/director/test', { spec: fixture.spec, cast: fixture.cast, riskId: 'demand:nope', mode: 'ask' }),
+    await post(env, '/api/director/test', { spec: fixture.spec, cast: CAST, riskId: 'demand:nope', mode: 'ask' }),
     env,
   );
   assert.equal(response.status, 404);
@@ -272,4 +293,41 @@ test('a verdict with no draft for the film is recorded but cannot be reviewed', 
   const body = await (await handleDirectorVerdict(await post(env, '/api/director/verdict', { filmId, takeId: 'test-orphan', answer: 'failed' }), env)).json();
   assert.equal(body.reviewing, false);
   assert.equal(body.production.takes[0].verdict.answer, 'failed', 'the answer itself is never lost');
+});
+
+// ------------------------------------------------------------------------------- references
+
+test('a piece whose only still is too small is refused before anything is charged — the Phoenix guard', async () => {
+  // 2026-08-28: three renders billed and failed on a 140x250 thumbnail H3 rejects after queueing.
+  const env = await makeEnv();
+  await readWithDemand(env);
+  serveStills(140, 250);
+  const response = await handleDirectorTest(
+    await post(env, '/api/director/test', { spec: fixture.spec, cast: CAST, riskId: 'demand:letters-become-brain', mode: 'ask' }),
+    env,
+  );
+  const body = await response.json();
+  assert.equal(response.status, 400, JSON.stringify(body));
+  assert.equal(body.error, 'reference_illegal');
+  assert.match(body.detail, /nothing was sent and nothing was charged/);
+  assert.match(body.pieces[0].reason, /140x250/);
+  assert.deepEqual(env.DIRECTOR_JOBS.sent, [], 'no job, no envelope, no spend');
+});
+
+test('the same refusal guards the final take', async () => {
+  const env = await makeEnv();
+  await readWithDemand(env);
+  await held(env);
+  serveStills(140, 250);
+  const response = await start(env);
+  assert.equal(response.status, 400);
+  assert.equal((await response.json()).error, 'reference_illegal');
+});
+
+test('a legal still passes, and the plan\'s preflight names an illegal one as a floor violation', async () => {
+  const env = await makeEnv();
+  serveStills(140, 250);
+  const body = await (await handleDirectorPlan(await post(env, '/api/director/plan', { spec: fixture.spec, cast: CAST, preflight: true }), env)).json();
+  assert.equal(body.ready, false);
+  assert.ok(body.preflight.violations.some((v) => v.severity === 'floor' && /140x250/.test(v.detail)));
 });
