@@ -349,6 +349,13 @@ one beat across two, with the camera holding on the thing that is changing so no
 away from. Say whether the new mechanism has to be SEEN to work before the film is shot: a failed
 test is not the end of the question, and if it is not, name the re-test.
 
+A TEST THAT HELD, WITH WORDS FROM THE VISITOR, IS A HELD MECHANISM WITH A NAMED DEFECT. "It held —
+but the brain formed only from the middle letters" means the physical change works and the
+composition is wrong. Keep what held. Fix what they named, in one block, in their terms — "every
+letter, from the H to the final D, is part of the brain; no letter is left out" — and say whether
+that has to be seen before the film is shot. Never answer a visitor's own observation with "no
+change needed".
+
 You are also given every earlier verdict on this film. Use them: a mechanism that held in one
 rehearsal is a mechanism you can rely on in the next, and a revision must never undo what an
 earlier test proved.

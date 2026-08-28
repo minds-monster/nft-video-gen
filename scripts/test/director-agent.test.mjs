@@ -257,13 +257,14 @@ test('the Director is shown the visitor\'s prompt verbatim', async () => {
 
 // -------------------------------------------------------------------------------- reviewing
 
-test('a test that HELD never yields a revision, even when the model proposes one', async () => {
+test('a test that HELD with nothing said never yields a revision, even when the model proposes one', async () => {
   // The guard that matters. A script that survived a test is a script that works.
   stub({
     settled: true,
     finding: 'The face held.',
     revision: { block: 'guard', text: 'Some extra guard text.', why: 'belt and braces' },
     readyToShoot: true,
+    retest: true,
   });
   const result = await reviewTest(env, {
     spec: spec(),
@@ -272,7 +273,29 @@ test('a test that HELD never yields a revision, even when the model proposes one
   });
   assert.equal(result.revision, null);
   assert.equal(result.suppressedRevision, true, 'and the attempt is visible rather than silently dropped');
+  assert.equal(result.retest, false);
   assert.equal(result.readyToShoot, true);
+});
+
+test('a test that HELD with a defect in the visitor\'s own words may be revised — their words unlock it', async () => {
+  // 2026-08-28: "All of the letters inflated but the brain was specifically concentrated in the
+  // middle — the Y & W rather than being assembled of all of the letters." The mechanism held;
+  // the composition is a named defect, and the Director's revision for it was thrown away.
+  stub({
+    settled: true,
+    finding: 'The change is physical, but only the Y and W became the brain.',
+    revision: { block: 'continuity', text: 'Every letter from the H to the final D is part of the brain; no letter is left out.', why: 'the visitor saw only the middle letters change' },
+    readyToShoot: false,
+    retest: true,
+  });
+  const result = await reviewTest(env, {
+    spec: spec(),
+    question: 'Does the change physically happen?',
+    verdict: { answer: 'held', by: 'visitor', note: 'the brain formed only from the Y and W, not all the letters' },
+  });
+  assert.equal(result.revision.block, 'continuity');
+  assert.equal(result.suppressedRevision, false);
+  assert.equal(result.retest, true, 'and it may ask to see the fix work');
 });
 
 test('a test that FAILED yields the revision, on a named block', async () => {

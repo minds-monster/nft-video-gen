@@ -372,13 +372,20 @@ export function useDirector() {
         const result = await recordScreenTestVerdict({ filmId, takeId, answer, note, jobId }, token);
         setProduction((current) => ({ ...current, takes: result.production.takes }));
         // A verdict moves the gate (worker/director-gate.js). Re-read the plan so the Shoot
-        // button and the asked-for list reflect it without a reload.
+        // button and the asked-for list reflect it without a reload — and again as the Director's
+        // read-back lands, which takes the queue a few seconds and may change the script.
         if (spec?.beats?.length) await loadPlan({ spec, cast: cast ?? [], token });
+        for (const delay of [8000, 20000, 45000]) {
+          setTimeout(() => {
+            loadProduction({ token, filmId });
+            if (spec?.beats?.length) loadPlan({ spec, cast: cast ?? [], token });
+          }, delay);
+        }
       } catch (failure) {
         setError(failure.message);
       }
     },
-    [job?.jobId, job?.take?.takeId, loadPlan],
+    [job?.jobId, job?.take?.takeId, loadPlan, loadProduction],
   );
 
   /**

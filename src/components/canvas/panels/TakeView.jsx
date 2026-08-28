@@ -34,7 +34,10 @@ const TakeView = ({ take, index, onJudge, onRemember, onClear }) => {
   // What the visitor saw, in their own words. Goes with the verdict to the Director's read-back
   // as "What was seen" — the one place a visitor can tell the Director something the three
   // buttons cannot. Optional, and worth more than the button.
-  const [note, setNote] = useState('');
+  const [note, setNote] = useState(take.verdict?.note ?? '');
+  // Answering again — a changed mind, or words added to a bare click. The Director reads the
+  // new answer back exactly as it would a first one.
+  const [reanswering, setReanswering] = useState(false);
 
   const isTest = take.kind === 'screen-test';
   const answered = take.verdict?.answer;
@@ -125,6 +128,25 @@ const TakeView = ({ take, index, onJudge, onRemember, onClear }) => {
             {take.verdict.note ? (
               <span className="font-normal opacity-80"> — {take.verdict.note}</span>
             ) : null}
+            {!reanswering && (
+              <button
+                type="button"
+                onClick={() => setReanswering(true)}
+                className="ml-2 font-mono text-[9px] font-normal uppercase tracking-wider opacity-70 hover:opacity-100"
+              >
+                Change your answer
+              </button>
+            )}
+          </p>
+        )}
+
+        {isTest && take.review?.finding && (
+          <p className="mt-1 rounded-xl border border-white/10 bg-black/40 px-2 py-1.5 text-[11px] leading-relaxed text-slate-300">
+            <span className="font-mono text-[9px] uppercase tracking-widest text-slate-600">The Director read it back · </span>
+            {take.review.finding}
+            {take.review.revised ? (
+              <span className="text-emerald-200/80"> Changed the {take.review.revised.block} block: {take.review.revised.why}</span>
+            ) : null}
           </p>
         )}
 
@@ -135,7 +157,7 @@ const TakeView = ({ take, index, onJudge, onRemember, onClear }) => {
           </p>
         )}
 
-        {isTest && !answered && take.status === 'ready' && (
+        {isTest && (!answered || reanswering) && take.status === 'ready' && (
           <div className="mt-2">
             <p className="mb-1 font-mono text-[9px] uppercase tracking-widest text-slate-600">
               You just watched it — tell the Director what you saw
@@ -153,7 +175,10 @@ const TakeView = ({ take, index, onJudge, onRemember, onClear }) => {
                 <button
                   key={verdict.id}
                   type="button"
-                  onClick={() => onJudge?.({ takeId: take.takeId, answer: verdict.id, note: note.trim() || undefined })}
+                  onClick={() => {
+                    setReanswering(false);
+                    onJudge?.({ takeId: take.takeId, answer: verdict.id, note: note.trim() || undefined });
+                  }}
                   className="flex-1 rounded-lg border border-white/10 bg-black/40 px-1.5 py-1 text-[10px] text-slate-300 transition-colors hover:border-white/25 hover:text-white"
                 >
                   {verdictLabel(take, verdict.id)}

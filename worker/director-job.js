@@ -255,6 +255,19 @@ export async function recordTakeRetest(env, mindId, filmId, takeId, retest) {
   return next;
 }
 
+/**
+ * The Director's read-back of a test, on the take it is about — so the finding outlives the job
+ * log and the visitor can see what their answer changed. Until 2026-08-28 the finding lived only
+ * in a 24-hour job log and a streaming tail nobody who refreshed ever saw.
+ */
+export async function recordTakeReview(env, mindId, filmId, takeId, review) {
+  const record = await loadProduction(env, mindId, filmId);
+  const takes = record.takes.map((take) => (take.takeId === takeId ? { ...take, review } : take));
+  const next = { ...record, filmId, takes, updatedAt: Date.now() };
+  await env.MIND_CONNECTIONS.put(productionKey(mindId, filmId), JSON.stringify(next));
+  return next;
+}
+
 export async function recordVerdict(env, mindId, filmId, { takeId, answer, note, by }) {
   // A person's answer outranks the model's, always — and never the other way round. The Director
   // judging is a convenience where frames are available; the visitor watching the clip is the
@@ -457,6 +470,15 @@ async function review(env, record, logger) {
     record.take.retest = true;
     logger.log('retest', { takeId: take.takeId, question: take.question });
   }
+
+  await recordTakeReview(env, record.mindId, record.filmId, take.takeId, {
+    finding: result.finding,
+    settled: result.settled,
+    readyToShoot: result.readyToShoot,
+    retest: result.retest,
+    revised: result.revision ? { block: result.revision.block, why: result.revision.why } : null,
+    at: Date.now(),
+  });
 
   logger.log('result', { finding: result.finding, revised: Boolean(result.revision), retest: result.retest });
   await logger.setStatus('complete');

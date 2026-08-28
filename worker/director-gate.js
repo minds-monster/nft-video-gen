@@ -82,6 +82,9 @@ export const testGate = (shootingPlan, takes = [], { knownRiskIds = null } = {})
         state,
         answer,
         takeId: (latest ?? ready[ready.length - 1])?.takeId ?? null,
+        // What the Director made of the answer, when it has read it back.
+        finding: latest?.review?.finding ?? null,
+        revised: latest?.review?.revised ?? null,
         // The clip waiting to be watched, when there is one — the thing to open, not to re-buy.
         unansweredTakeId: unjudged[unjudged.length - 1]?.takeId ?? null,
         unansweredCount: unjudged.length,

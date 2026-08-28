@@ -198,6 +198,13 @@ const AskedTests = ({ plan, gate, onRunAll, onAnswer, busy, batch }) => {
                 </span>
               </div>
               {why && <p className="mt-0.5 text-slate-500">{why}</p>}
+              {test.finding && (
+                <p className="mt-1 rounded-lg border border-white/10 bg-black/40 p-1.5 text-[10px] leading-snug text-slate-300">
+                  <span className="font-mono text-[9px] uppercase tracking-wider text-slate-600">Read back · </span>
+                  {test.finding}
+                  {test.revised ? <span className="text-emerald-200/70"> — changed {test.revised.block}.</span> : null}
+                </p>
+              )}
               <p className="mt-0.5 font-mono text-[9px] text-slate-600">
                 {test.source === 'director' ? 'its own judgement' : 'measured'} · {money(test.estUsd)}
               </p>

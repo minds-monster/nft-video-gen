@@ -312,19 +312,24 @@ export async function reviewTest(
     onReasoning,
   });
 
-  // A test that held must never produce a revision. The model is instructed not to, and this is
-  // the guard for when it does anyway: a script that survived a test is a script that works, and
-  // "improving" it is how a working shot gets broken by an agent looking busy.
-  const revision = verdict.answer === 'held' ? null : (data?.revision ?? null);
+  // A test that held with NOTHING said about it must never produce a revision: a script that
+  // survived a test is a script that works, and "improving" it is how a working shot gets broken
+  // by an agent looking busy. But a held test where the visitor WROTE what was wrong — "the brain
+  // formed only from the Y and W" (2026-08-28) — is a working mechanism with a named defect, which
+  // is exactly the unit the hero was fixed in. Their words unlock the revision; silence does not.
+  const namedDefect = verdict.answer === 'held' && Boolean(String(verdict.note ?? '').trim());
+  const locked = verdict.answer === 'held' && !namedDefect;
+  const revision = locked ? null : (data?.revision ?? null);
 
   return {
     settled: Boolean(data?.settled),
     finding: data?.finding ?? '',
     revision,
     readyToShoot: Boolean(data?.readyToShoot),
-    // A held test is settled by definition; a re-test only ever follows a failure or a doubt.
-    retest: verdict.answer !== 'held' && Boolean(data?.retest),
-    suppressedRevision: verdict.answer === 'held' && Boolean(data?.revision),
+    // A held test is settled by definition; a re-test only ever follows a failure, a doubt, or a
+    // defect the visitor named.
+    retest: !locked && Boolean(data?.retest),
+    suppressedRevision: locked && Boolean(data?.revision),
     usage,
   };
 }
