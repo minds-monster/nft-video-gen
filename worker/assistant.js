@@ -136,12 +136,7 @@ async function resolveState(request, env, connectionId) {
     const mindName = client
       ? await client.getMind(session.mindId).then((m) => m.name ?? null).catch(() => null)
       : null;
-    await ensureProducerReady(env, session.mindId);
     const budget = await getBudget(env, session.mindId);
-    // The same production state the Producer's briefing carries. Without it the assistant
-    // is blind to facts the Mind it speaks for can see — it would cheerfully suggest
-    // "start by picking some assets" to a visitor already holding a finished storyboard.
-    const production = await collectProductionState(env, session.mindId).catch(() => null);
     return {
       connectionStatus: 'approved',
       mindId: session.mindId,
@@ -149,7 +144,6 @@ async function resolveState(request, env, connectionId) {
       hasMindAccess: true,
       budget,
       activated: Boolean(budget),
-      production,
     };
   }
 
@@ -295,6 +289,13 @@ export async function handleAssistantMessage(request, env) {
   return sseResponse(async (emit) => {
     const state = await resolveState(request, env, connectionId);
     const stored = await loadStored(env, threadId);
+
+    if (state.hasMindAccess) {
+      await ensureProducerReady(env, state.mindId);
+      // The same production state the Producer's briefing carries. Without it the assistant
+      // is blind to facts the Mind it speaks for can see.
+      state.production = await collectProductionState(env, state.mindId).catch(() => null);
+    }
 
     // Flush anything held from before this turn if it's aged past the idle-relay
     // window — a fresh visitor message means they're back, but what they said earlier
