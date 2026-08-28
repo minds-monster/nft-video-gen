@@ -32,11 +32,14 @@ import { preflightReferences } from './reference-preflight.js';
 import { LATENCY_SECONDS, checkH3Params, priceUsd } from './minimax.js';
 import { DEFAULT_MODE, MODES, closeEnvelope, getEnvelope, listEnvelopes, openEnvelope, recordDecision, spentOnFilm } from './render-budget.js';
 import { getSpend } from './budget.js';
-import { loadJob, loadProduction, rememberTake, resumeAfterApproval, saveJob, startTake, startAssessment, enqueue } from './director-job.js';
+import { castRefsFrom, dropRevision, loadJob, loadProduction, rememberTake, resumeAfterApproval, saveJob, startTake, startAssessment, startReview, enqueue } from './director-job.js';
+import { draftCastForWire, loadDraft } from './draft.js';
 import { applyRevisions } from './director-agent.js';
 import { serveSignedMedia, signedMediaUrl } from './signed-media.js';
 import { streamJobEvents } from './job-events.js';
-import { buildScreenTest, VERDICTS } from './screen-test.js';
+import { buildScreenTest, demandAsRisk, isDemandId, VERDICTS } from './screen-test.js';
+import { relayScreenTestDigest } from './filmography.js';
+import { testGate } from './director-gate.js';
 import { parseBrief } from '../src/lib/directorBrief.js';
 import { recordVerdict } from './director-job.js';
 import { h3Params, h3ScriptFrom, h3Script } from '../src/lib/h3Script.js';
@@ -44,6 +47,29 @@ import { record as trackEvent } from './analytics.js';
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8' } });
+
+/**
+ * The visitor's own words for this film, from their saved draft (worker/draft.js) — the only
+ * place the prompt exists server-side. Only when the draft IS this film: a visitor mid-way
+ * through a second screenplay must not have its prompt read against the first.
+ */
+const promptFor = async (env, mindId, filmId) => {
+  const draft = await loadDraft(env, mindId).catch(() => null);
+  return draft?.filmId === filmId ? draft.prompt ?? null : null;
+};
+
+/**
+ * The register plus the Director's own demands, in one list.
+ *
+ * The register is recomputed from the spec every time; the demands are read from the shooting
+ * plan the Director saved, because they are its judgement about THIS reading of the film and
+ * there is nothing to recompute them from. Both carry a price and a test, and the panel and the
+ * test endpoint treat them alike — the difference is labelled, not hidden.
+ */
+const withDemands = (risks, production) => [
+  ...risks,
+  ...(production?.shootingPlan?.demands ?? []).map(demandAsRisk).filter(Boolean),
+];
 
 /**
  * Turn a spec — and a storyboard, when there is one — into the exact script H3 receives.
@@ -180,14 +206,34 @@ export async function handleDirectorPlan(request, env) {
     preflight = preflightReferences(gathered.references);
   }
 
-  const brief = await loadBrief(env, session.mindId, filmId);
-  const assessment = assessRisks({ spec: revised, cast, preflight, mustHold: brief?.mustHold ?? [] });
+  const [brief, prompt] = await Promise.all([
+    loadBrief(env, session.mindId, filmId),
+    promptFor(env, session.mindId, filmId),
+  ]);
+  const assessment = assessRisks({
+    spec: revised,
+    cast,
+    preflight,
+    mustHold: brief?.mustHold ?? [],
+    prompt,
+    intent: brief?.intent ?? null,
+  });
+  const risks = withDemands(assessment.risks, production);
+  const testableUsd = Math.round(risks.reduce((sum, risk) => sum + (risk.estUsd ?? 0), 0) * 100) / 100;
+
+  // Whether the film may be shot yet — read, and every asked test answered. Distinct from
+  // `ready` below, which only says whether MiniMax would accept the request.
+  const gate = testGate(production?.shootingPlan ?? null, production?.takes ?? [], {
+    knownRiskIds: risks.map((risk) => risk.id),
+  });
 
   return json({
     filmId,
     brief,
+    prompt,
     revisions,
     shootingPlan: production?.shootingPlan ?? null,
+    gate,
     script: {
       source: script.source,
       why: script.why,
@@ -201,14 +247,14 @@ export async function handleDirectorPlan(request, env) {
     paramViolations,
     estimate: {
       finalUsd,
-      // What settling every testable risk would cost. The Director proposes a SUBSET of this;
-      // showing the ceiling first is what makes the subset read as a decision rather than an
-      // upsell.
-      testsCeilingUsd: assessment.testableUsd,
-      totalCeilingUsd: Math.round((finalUsd + assessment.testableUsd) * 100) / 100,
+      // What settling every testable risk would cost, demands included. The Director proposes
+      // a SUBSET of the register; showing the ceiling first is what makes the subset read as a
+      // decision rather than an upsell.
+      testsCeilingUsd: testableUsd,
+      totalCeilingUsd: Math.round((finalUsd + testableUsd) * 100) / 100,
       seconds: LATENCY_SECONDS(params.resolution, params.duration),
     },
-    risks: assessment.risks,
+    risks,
     blocking: assessment.blocking,
     preflight,
     unreachable,
@@ -274,16 +320,21 @@ export async function handleDirectorBrief(request, env) {
  *   2. Parameters.     Free. A duration H3 will not accept is a 400 we can predict.
  *   3. Blocking risks. Free. A brand name is a rejected request; shooting it wastes a round trip
  *                      and teaches the visitor nothing.
- *   4. Open the money. Only now. An envelope is a commitment, and committing to a film that
+ *   4. The tests.      Free. Has the Director read this film, and has every test it asked for
+ *                      been answered? (worker/director-gate.js). The hero was made probes-first
+ *                      and the Hollywood film was not; this is the difference, enforced. The
+ *                      visitor can shoot past it with `override: true`, and that is written on
+ *                      the take.
+ *   5. Open the money. Only now. An envelope is a commitment, and committing to a film that
  *                      cannot legally be submitted is a commitment to nothing.
- *   5. Authorise.      The gate that either goes, parks for approval, or refuses.
+ *   6. Authorise.      The gate that either goes, parks for approval, or refuses.
  */
 export async function handleDirectorStart(request, env) {
   const session = await requireSession(request, env);
   if (!session) return json({ error: 'unauthorized' }, 401);
 
   const body = await request.json().catch(() => ({}));
-  const { spec, cast = [], mode = DEFAULT_MODE, allowanceUsd = null } = body;
+  const { spec, cast = [], mode = DEFAULT_MODE, allowanceUsd = null, override = false } = body;
 
   if (!spec || !Array.isArray(spec.beats) || !spec.beats.length) {
     return json({ error: 'no_spec', detail: 'The Director needs a screenplay with at least one beat.' }, 400);
@@ -307,20 +358,67 @@ export async function handleDirectorStart(request, env) {
   const paramViolations = checkH3Params(params);
   if (paramViolations.length) return json({ error: 'bad_params', violations: paramViolations }, 400);
 
-  const brief = await loadBrief(env, session.mindId, filmId);
-  const { blocking } = assessRisks({ spec: revised, cast, mustHold: brief?.mustHold ?? [] });
-  if (blocking.length) {
+  // The prompt lives in the visitor's saved draft (worker/draft.js), never in this request. It is
+  // read for the register (rule 12 fires on the visitor's own verbs) and carried on to the
+  // screenplay record pinned beside the finished film, so that record says what was ASKED for.
+  const [brief, prompt] = await Promise.all([
+    loadBrief(env, session.mindId, filmId),
+    promptFor(env, session.mindId, filmId),
+  ]);
+  const assessment = assessRisks({
+    spec: revised,
+    cast,
+    mustHold: brief?.mustHold ?? [],
+    prompt,
+    intent: brief?.intent ?? null,
+  });
+  if (assessment.blocking.length) {
     return json(
       {
         error: 'would_be_rejected',
         detail: 'MiniMax would reject this outright, so shooting it would spend a round trip and teach us nothing.',
-        blocking,
+        blocking: assessment.blocking,
       },
       400,
     );
   }
 
+  // Has the Director read it, and is every test it asked for answered? Refused rather than
+  // warned about, because a warning beside a Shoot button is what the last two films had.
+  const risks = withDemands(assessment.risks, production);
+  const gate = testGate(production?.shootingPlan ?? null, production?.takes ?? [], {
+    knownRiskIds: risks.map((risk) => risk.id),
+  });
+  if (gate.unread && !override) {
+    return json(
+      {
+        error: 'unread',
+        detail: 'The Director has not read this film. Reading is free; shooting blind is not.',
+        gate,
+      },
+      409,
+    );
+  }
+  if (!gate.cleared && !override) {
+    return json(
+      {
+        error: 'untested',
+        detail:
+          `The Director asked for ${gate.outstanding.length} screen test${gate.outstanding.length === 1 ? '' : 's'} ` +
+          'that have not been answered. Run them, or shoot anyway and own the result.',
+        outstanding: gate.outstanding,
+        gate,
+      },
+      409,
+    );
+  }
+
   const finalUsd = priceUsd(params) ?? 0;
+  const castRefs = castRefsFrom(cast);
+  const overrideRecord =
+    override && (gate.unread || !gate.cleared)
+      ? { unread: gate.unread, outstanding: gate.outstanding.map((test) => test.riskId), at: Date.now() }
+      : null;
 
   try {
     await openEnvelope(env, session.mindId, { filmId, mode, allowanceUsd, finalUsd });
@@ -334,6 +432,10 @@ export async function handleDirectorStart(request, env) {
       // Carried for the filmography digest, which names the film by its logline. The screen-test
       // path has always passed it; a final take without it reached the Mind as a bare hash.
       spec: revised,
+      prompt,
+      castRefs,
+      castNames: castRefs.map((ref) => ref.name).filter(Boolean),
+      override: overrideRecord,
     });
 
     return json({
@@ -342,6 +444,7 @@ export async function handleDirectorStart(request, env) {
       status: record.status,
       verdict,
       costUsd: finalUsd,
+      override: overrideRecord,
       seconds: LATENCY_SECONDS(params.resolution, params.duration),
       envelope: await getEnvelope(env, session.mindId, filmId),
     });
@@ -468,7 +571,7 @@ async function listProductions(env, mindId, requestUrl) {
         // Every identifier the Mind was given for this film, so its recall can be checked
         // against the record whichever one it quotes back.
         takeIds: ready.map((take) => take.takeId),
-        cids: ready.map((take) => take.ipfs?.cid).filter(Boolean),
+        cids: ready.flatMap((take) => [take.ipfs?.cid, take.ipfs?.screenplayCid]).filter(Boolean),
         posterUrl: poster
           ? await signedMediaUrl(env, mindId, { path: '/api/director/media', key: poster.r2Key, requestUrl })
           : null,
@@ -527,18 +630,57 @@ export async function handleDirectorRemember(request, env) {
 
   // The logline is read here rather than in the job, because the storyboard module reaches
   // the job module through the connection path and the job must not import it back.
-  const storyboard = await loadStoryboard(env, session.mindId, filmId).catch(() => null);
+  //
+  // The screenplay itself comes from the visitor's saved draft when it is this film — that is
+  // the only place the prompt exists — and the cast falls back to the storyboard's subject
+  // assets, which name every piece by asset key, for a film whose draft has since moved on.
+  const [storyboard, draft] = await Promise.all([
+    loadStoryboard(env, session.mindId, filmId).catch(() => null),
+    loadDraft(env, session.mindId).catch(() => null),
+  ]);
+  const sameFilm = draft?.filmId === filmId;
+  const castRefs = castRefsFrom(
+    sameFilm
+      ? draftCastForWire(draft)
+      : Object.values(storyboard?.subjectAssets ?? {}).map((asset) => ({
+          key: asset.assetKey,
+          name: asset.name ?? null,
+          collectionName: asset.collectionName ?? null,
+        })),
+  );
   try {
     const result = await rememberTake(env, session.mindId, {
       filmId,
       takeId,
       origin: new URL(request.url).origin,
       logline: storyboard?.logline ?? null,
+      spec: sameFilm ? draft.spec : null,
+      prompt: sameFilm ? draft.prompt : null,
+      castRefs,
     });
     return json(result, 202);
   } catch (error) {
     return json({ error: error.message }, error.status ?? 500);
   }
+}
+
+/**
+ * POST /api/director/revision/drop — take one of the Director's amendments back off the script.
+ *
+ * `applyRevisions` has always promised that "every revision is reversible by dropping it from the
+ * list"; until 2026-08-28 nothing could drop one, and a visitor watched a landmark get rewritten
+ * out of their film with no way back. Identified by `at`, the timestamp each revision is stamped
+ * with on append.
+ */
+export async function handleDirectorRevisionDrop(request, env) {
+  const session = await requireSession(request, env);
+  if (!session) return json({ error: 'unauthorized' }, 401);
+
+  const { filmId, at } = await request.json().catch(() => ({}));
+  if (!filmId || !Number.isFinite(at)) return json({ error: 'film_and_at_required' }, 400);
+
+  const production = await dropRevision(env, session.mindId, filmId, at);
+  return json({ filmId, revisions: production.revisions ?? [] });
 }
 
 /** POST /api/director/close — settle the production and release whatever is left. */
@@ -571,13 +713,31 @@ export async function handleDirectorTest(request, env) {
   if (!spec || !riskId) return json({ error: 'spec_and_risk_required' }, 400);
   if (!env.MINIMAX_API_KEY) return json({ error: 'not_configured' }, 503);
 
-  const filmIdForBrief = filmIdFor(spec);
-  const brief = await loadBrief(env, session.mindId, filmIdForBrief);
-  const { risks } = assessRisks({ spec, cast, mustHold: brief?.mustHold ?? [] });
-  const risk = risks.find((entry) => entry.id === riskId);
+  const filmId = filmIdFor(spec);
+  const [brief, prompt, production] = await Promise.all([
+    loadBrief(env, session.mindId, filmId),
+    promptFor(env, session.mindId, filmId),
+    loadProduction(env, session.mindId, filmId).catch(() => null),
+  ]);
+  // The rehearsal renders the script as the Director has amended it so far — a test against the
+  // un-revised film would answer a question about a film that is no longer going to be shot.
+  const revised = applyRevisions(spec, production?.revisions ?? []);
+  const { risks } = assessRisks({
+    spec: revised,
+    cast,
+    mustHold: brief?.mustHold ?? [],
+    prompt,
+    intent: brief?.intent ?? null,
+  });
+  // A `demand:` id names a test the Director asked for in its shooting plan rather than one the
+  // register measured. It is read from the plan, not recomputed — its rehearsal text is the
+  // Director's judgement and there is nothing to derive it from.
+  const risk = isDemandId(riskId)
+    ? withDemands([], production).find((entry) => entry.id === riskId)
+    : risks.find((entry) => entry.id === riskId);
   if (!risk) return json({ error: 'unknown_risk', detail: 'That hazard is not on this film any more.' }, 404);
 
-  const test = buildScreenTest(risk, spec, cast);
+  const test = buildScreenTest(risk, revised, cast);
   if (!test) {
     return json(
       {
@@ -589,7 +749,7 @@ export async function handleDirectorTest(request, env) {
     );
   }
 
-  const filmId = filmIdForBrief;
+  const castRefs = castRefsFrom(cast);
   try {
     await openEnvelope(env, session.mindId, { filmId, mode, allowanceUsd, finalUsd: priceUsd(h3Params(spec)) ?? 0 });
     const { record, verdict } = await startTake(env, session.mindId, {
@@ -602,10 +762,15 @@ export async function handleDirectorTest(request, env) {
       question: test.question,
       riskId: risk.id,
       origin: new URL(request.url).origin,
+      castRefs,
+      castNames: castRefs.map((ref) => ref.name).filter(Boolean),
       // The review step reads these back. Carried on the job because a Queue consumer has no
       // request to re-derive them from, and the spec exists only in the visitor's browser.
-      spec: applyRevisions(spec, (await loadProduction(env, session.mindId, filmIdForBrief).catch(() => null))?.revisions ?? []),
-      riskMeasured: risk.measured,
+      spec: revised,
+      prompt,
+      riskMeasured: risk.measured ?? risk.judgement ?? null,
+      direction: risk.test?.direction ?? null,
+      answers: test.answers ?? null,
     });
 
     return json({
@@ -650,20 +815,50 @@ export async function handleDirectorVerdict(request, env) {
 
   const production = await recordVerdict(env, session.mindId, filmId, { takeId, answer, note, by: 'visitor' });
 
-  // The answer closes the loop. Whichever job shot this test still holds the spec and the question,
-  // so it is the thing that can read the verdict back — and a review costs nothing, so it never
-  // needs approval.
-  if (jobId) {
-    const record = await loadJob(env, session.mindId, jobId).catch(() => null);
-    if (record?.take?.takeId === takeId && record.spec) {
-      record.take.verdict = { answer, note, by: 'visitor', at: Date.now() };
-      record.status = 'running';
-      await saveJob(env, session.mindId, record);
-      await enqueue(env, { mindId: session.mindId, jobId, step: 'review' }, 1);
-    }
+  // The answer is the fact worth remembering — more than the clip. Told to the Mind in the same
+  // shape as a delivered take, and never allowed to fail the verdict that carries it.
+  const judged = production.takes.find((take) => take.takeId === takeId);
+  if (judged) {
+    const draft = await loadDraft(env, session.mindId).catch(() => null);
+    relayScreenTestDigest(env, {
+      mindId: session.mindId,
+      filmId,
+      take: judged,
+      params: judged.params ?? null,
+      spec: draft?.filmId === filmId ? draft.spec : null,
+      origin: new URL(request.url).origin,
+    }).catch((error) => console.warn(`Screen test digest for ${takeId} failed:`, error.message));
   }
 
-  return json({ production });
+  // The answer closes the loop. Whichever job shot this test still holds the spec and the question,
+  // so it is the thing that can read the verdict back — and a review costs nothing, so it never
+  // needs approval. The client sends the job id when it has it; the take remembers it otherwise,
+  // because a verdict that never reaches the Director is a test that taught the script nothing.
+  const judgedTake = production.takes.find((take) => take.takeId === takeId) ?? null;
+  const resolvedJobId = jobId ?? judgedTake?.jobId ?? null;
+  const record = resolvedJobId ? await loadJob(env, session.mindId, resolvedJobId).catch(() => null) : null;
+  let reviewing = false;
+  if (record?.take?.takeId === takeId && record.spec) {
+    record.take.verdict = { answer, note, by: 'visitor', at: Date.now() };
+    record.status = 'running';
+    await saveJob(env, session.mindId, record);
+    await enqueue(env, { mindId: session.mindId, jobId: resolvedJobId, step: 'review' }, 1);
+    reviewing = true;
+  } else if (judgedTake) {
+    // The job is gone (expired, or shot before takes remembered their job). The verdict must
+    // still reach the Director, so a review job is rebuilt from the durable take and the draft.
+    const draft = await loadDraft(env, session.mindId).catch(() => null);
+    const rebuilt = await startReview(env, session.mindId, {
+      filmId,
+      take: judgedTake,
+      spec: draft?.filmId === filmId ? draft.spec : null,
+      prompt: draft?.filmId === filmId ? draft.prompt : null,
+      origin: new URL(request.url).origin,
+    });
+    reviewing = Boolean(rebuilt);
+  }
+
+  return json({ production, reviewing });
 }
 
 /**
@@ -681,20 +876,30 @@ export async function handleDirectorAssess(request, env) {
   if (!spec?.beats?.length) return json({ error: 'no_spec' }, 400);
 
   const filmId = filmIdFor(spec);
-  const [brief, production, envelope] = await Promise.all([
+  const [brief, production, envelope, prompt] = await Promise.all([
     loadBrief(env, session.mindId, filmId),
     loadProduction(env, session.mindId, filmId).catch(() => null),
     getEnvelope(env, session.mindId, filmId).catch(() => null),
+    promptFor(env, session.mindId, filmId),
   ]);
 
   const revised = applyRevisions(spec, production?.revisions ?? []);
-  const { risks } = assessRisks({ spec: revised, cast, mustHold: brief?.mustHold ?? [] });
+  const { risks } = assessRisks({
+    spec: revised,
+    cast,
+    mustHold: brief?.mustHold ?? [],
+    prompt,
+    intent: brief?.intent ?? null,
+  });
 
   const record = await startAssessment(env, session.mindId, {
     filmId,
     spec: revised,
     risks,
     brief,
+    // The visitor's own words, verbatim. This is what the Director reads for demands — the spec
+    // alone is what it read for the Hollywood film, and the spec had already softened the ask.
+    prompt,
     finalUsd: priceUsd(h3Params(revised)) ?? 0,
     remainingUsd: envelope?.remainingUsd ?? null,
   });

@@ -19,6 +19,7 @@ import { mindChatInit, mindChatSend, mindChatPoll } from './mind-chat.js';
 import { handleAssistantMessage, handleAssistantHistory, handleAssistantStatus } from './assistant.js';
 import { handleBudgetSet } from './budget.js';
 import { handleProducerState } from './producer-state.js';
+import { handleDraftGet, handleDraftPut, handleDraftDelete } from './draft.js';
 import { handleStripeCheckout, handleStripeWebhook, handleClaimGuestBudget } from './stripe.js';
 import {
   handleDirectorPlan,
@@ -30,6 +31,7 @@ import {
   handleDirectorMedia,
   handleDirectorClose,
   handleDirectorRemember,
+  handleDirectorRevisionDrop,
   handleDirectorTest,
   handleDirectorVerdict,
   handleDirectorBrief,
@@ -90,6 +92,11 @@ const ROUTES = {
   'GET /api/assistant/status': handleAssistantStatus,
   'POST /api/producer/budget': handleBudgetSet,
   'POST /api/producer/state': handleProducerState,
+  // The visitor's draft — prompt, cast, screenplay — kept for a connected Mind so it survives the
+  // Stripe round-trip, a cleared browser and a second device. See worker/draft.js.
+  'GET /api/draft': handleDraftGet,
+  'PUT /api/draft': handleDraftPut,
+  'DELETE /api/draft': handleDraftDelete,
   'POST /api/producer/claim-guest-budget': handleClaimGuestBudget,
   'POST /api/checkout': handleStripeCheckout,
   'POST /api/webhook/stripe': handleStripeWebhook,
@@ -103,6 +110,7 @@ const ROUTES = {
   // Pin an existing take and put it in the Mind's filmography — for footage shot before the
   // filmography existed, or a Mind that needs reminding.
   'POST /api/director/remember': handleDirectorRemember,
+  'POST /api/director/revision/drop': handleDirectorRevisionDrop,
   'POST /api/director/test': handleDirectorTest,
   'POST /api/director/verdict': handleDirectorVerdict,
   'POST /api/director/brief': handleDirectorBrief,

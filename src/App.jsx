@@ -26,6 +26,8 @@ import { useCanvasComposer } from './hooks/useCanvasComposer';
 import { useScreenwriter } from './hooks/useScreenwriter';
 import { useStoryboarder } from './hooks/useStoryboarder';
 import { useDirector } from './hooks/useDirector';
+import { useDraftPersistence } from './hooks/useDraftPersistence';
+import { consumeCheckoutReturn } from './lib/checkoutReturn';
 import { assetKey } from './lib/assetKey';
 import { BRANDS, LIVE_COLLECTIONS } from './data/brands';
 import { PAYMENT } from './config/payment';
@@ -61,10 +63,19 @@ const STEPS = [
   },
 ];
 
+// How long after a Stripe return the budget readout polls fast. The webhook that credits the
+// top-up (worker/stripe.js) usually lands within seconds; a minute and a half covers a slow one.
+const CHECKOUT_BOOST_MS = 90 * 1000;
+
 const AppShell = () => {
   const { session, openModal, checkout } = useMindChatContext();
   const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
   const route = useHashRoute();
+
+  // Stripe sends the visitor back to `/?checkout=success|cancel` (worker/stripe.js). Read once
+  // and stripped from the address bar; the notice below is what the visitor sees of it.
+  const [checkoutOutcome, setCheckoutOutcome] = useState(() => consumeCheckoutReturn());
+  const [budgetBoostUntil] = useState(() => (checkoutOutcome === 'success' ? Date.now() + CHECKOUT_BOOST_MS : null));
 
   // One page_view per page, where a page is a hash route — the anchors on the home page
   // (#pricing etc.) all count as '/'.
@@ -85,6 +96,12 @@ const AppShell = () => {
   // production, asks before spending, and survives this tab closing mid-render. Folding it into
   // useStoryboarder would have meant one hook with two budgets and two failure models.
   const director = useDirector();
+
+  // The draft — prompt, cast, screenplay — written to localStorage and, for a connected Mind, to
+  // the Worker, and put back on load. This is what makes the Stripe round-trip survivable; see
+  // src/lib/draftStore.js for why it exists and src/hooks/useDraftPersistence.js for the order
+  // it restores things in.
+  const draft = useDraftPersistence({ composer, screenwriter, session });
 
   // Restore THIS film's storyboard once there is both a session to fetch it with and a spec
   // saying which film we are looking at.
@@ -114,10 +131,11 @@ const AppShell = () => {
   //
   // Only when the tab has no spec of its own. The storyboard note above is the reason: pulling
   // the Mind's LAST film into a tab that is mid-way through a different one is the exact
-  // leak this app already refused once.
+  // leak this app already refused once. `draft.pending` is the same guard one step earlier: a
+  // tab whose own draft is still being read back does not yet know whether it has a spec.
   const { loadFilms: loadProductions, openProduction } = director;
   useEffect(() => {
-    if (!session?.token || screenwriter.spec) return;
+    if (!session?.token || screenwriter.spec || draft.pending) return;
     let cancelled = false;
     loadProductions(session.token).then((films) => {
       if (cancelled) return;
@@ -127,7 +145,7 @@ const AppShell = () => {
     return () => {
       cancelled = true;
     };
-  }, [session?.token, screenwriter.spec, loadProductions, openProduction]);
+  }, [session?.token, screenwriter.spec, draft.pending, loadProductions, openProduction]);
 
   // Publish how far this visitor has actually got, for the Producer briefing.
   //
@@ -321,6 +339,30 @@ const AppShell = () => {
 
       <SupportModal open={supportOpen} onClose={() => route.navigate('/')} />
 
+      {/* Above the canvas (z-50): the visitor has just come back from Stripe and, if a draft was
+          restored, is looking at the canvas. There is no toast system in this app; this is the
+          one notice that needs to sit over everything. */}
+      {checkoutOutcome && (
+        <div
+          role="status"
+          className="fixed inset-x-0 top-4 z-[60] mx-auto flex w-[min(92vw,40rem)] items-start gap-3 rounded-2xl border border-white/10 bg-slate-900/95 px-4 py-3 text-sm text-slate-200 shadow-2xl backdrop-blur"
+        >
+          <span className="flex-1 leading-relaxed">
+            {checkoutOutcome === 'success'
+              ? `Payment received — your budget is being credited.${draft.restored ? ' Your draft has been restored.' : ''}`
+              : `Checkout cancelled.${draft.restored ? ' Your draft is still here.' : ''}`}
+          </span>
+          <button
+            type="button"
+            onClick={() => setCheckoutOutcome(null)}
+            aria-label="Dismiss"
+            className="shrink-0 font-mono text-[10px] uppercase tracking-widest text-slate-400 transition-colors hover:text-white"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {/* Both overlays sit at z-50. They're never both open in practice, and rendering
           the canvas first means the Studio wins any overlap during exit animations. */}
       <PromptCanvas
@@ -329,6 +371,8 @@ const AppShell = () => {
         storyboarder={storyboarder}
         director={director}
         onLaunch={screenwriter.launch}
+        onStartFresh={draft.startFresh}
+        budgetBoostUntil={budgetBoostUntil}
       />
 
       <ConnectMindModal />

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   approveDirectorTake,
   closeDirectorProduction,
+  dropDirectorRevision,
   getDirectorFilms,
   getDirectorJobStatus,
   getDirectorPlan,
@@ -62,10 +63,18 @@ export function useDirector() {
   const [findings, setFindings] = useState([]);
   const [mode, setMode] = useState(DEFAULT_MODE);
   const [allowanceUsd, setAllowance] = useState(5);
+  // The refusal the server gave the last Shoot — `untested` or `unread`, with what is owed
+  // (worker/director-gate.js). The "Shoot anyway" control exists only while this is set: it is
+  // offered AFTER a refusal, never as the default path.
+  const [refusal, setRefusal] = useState(null);
+  // Progress through "run every test the Director asked for": { total, done, current }.
+  const [batch, setBatch] = useState(null);
 
   const abortRef = useRef(null);
   const timerRef = useRef(null);
   const contextRef = useRef({});
+  // Resolved by `decide`, so a batch of tests parked for approval can wait for the click.
+  const approvalRef = useRef(null);
 
   const stopTimer = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -80,6 +89,9 @@ export function useDirector() {
   /** What a take would cost and what is wrong with it. Free, so the panel can call it freely. */
   const loadPlan = useCallback(async ({ spec, cast, token, preflight = false }) => {
     if (!token || !spec?.beats?.length) return null;
+    // The film being priced is the film every later click acts on, whether or not Shoot or a
+    // test has been pressed yet — dropping a revision needs it.
+    contextRef.current = { ...contextRef.current, spec, cast, token, filmId: filmIdFor(spec) };
     setPlanning(true);
     try {
       const next = await getDirectorPlan({ spec, cast, preflight }, token);
@@ -215,13 +227,14 @@ export function useDirector() {
   /** Press Shoot. Returns the job, which may be parked awaiting approval — that is `ask` mode
    * working, not failing. */
   const shoot = useCallback(
-    async ({ spec, cast, token }) => {
+    async ({ spec, cast, token, override = false }) => {
       setError(null);
+      setRefusal(null);
       const filmId = filmIdFor(spec);
       contextRef.current = { spec, cast, token, filmId };
 
       try {
-        const started = await startDirectorTake({ spec, cast, mode, allowanceUsd }, token);
+        const started = await startDirectorTake({ spec, cast, mode, allowanceUsd, override }, token);
         setJob({ jobId: started.jobId, status: started.status, take: { costUsd: started.costUsd } });
         await loadProduction({ token, filmId });
 
@@ -229,11 +242,25 @@ export function useDirector() {
         await follow(started.jobId, token, plan?.params);
         return started;
       } catch (failure) {
+        // The gate. The Director asked for tests that are not answered, or has not read the
+        // film at all. Not an error in the usual sense — it is the product working — so it is
+        // kept apart from `error`, and the panel offers "shoot anyway" beside it.
+        if (failure.error === 'untested' || failure.error === 'unread') {
+          setRefusal(failure);
+          await loadPlan({ spec, cast, token });
+          return null;
+        }
         setError(failure.detail ?? failure.message);
         return null;
       }
     },
-    [allowanceUsd, follow, loadProduction, mode, plan?.params],
+    [allowanceUsd, follow, loadPlan, loadProduction, mode, plan?.params],
+  );
+
+  /** Shoot past the Director's outstanding tests. Offered only after a refusal; written on the take. */
+  const shootAnyway = useCallback(
+    ({ spec, cast, token }) => shoot({ spec, cast, token, override: true }),
+    [shoot],
   );
 
   /**
@@ -247,6 +274,7 @@ export function useDirector() {
     async ({ spec, cast, token }) => {
       if (!spec?.beats?.length || !token) return null;
       setError(null);
+      setRefusal(null);
       setThinking('');
       setFindings([]);
       contextRef.current = { spec, cast, token, filmId: filmIdFor(spec) };
@@ -285,7 +313,9 @@ export function useDirector() {
         });
         await loadProduction({ token, filmId });
         if (started.status === 'awaiting-approval') return started;
-        await follow(started.jobId, token, { resolution: '768P', duration: 4 });
+        // Six seconds, the longer of the two test shapes: a rehearsal takes 190-333s to settle
+        // and a deadline sized for a 4s probe would give up on one that is still rendering.
+        await follow(started.jobId, token, { resolution: '768P', duration: 6 });
         return started;
       } catch (failure) {
         setError(failure.detail ?? failure.message);
@@ -295,19 +325,67 @@ export function useDirector() {
     [allowanceUsd, follow, loadProduction, mode],
   );
 
+  /**
+   * Run every test the Director asked for, in the order it asked, one after another.
+   *
+   * ONE AT A TIME, not fired together: in `ask` mode each test parks for approval and the panel
+   * holds one job at a time, so the loop waits for the visitor's click (`decide` resolves it) and
+   * for the clip to land before starting the next. A declined test stops the batch — the visitor
+   * said no, and the rest are still there to run later.
+   */
+  const runTests = useCallback(
+    async ({ spec, cast, token }) => {
+      // Only what needs RUNNING. A test that came back unanswered is not re-bought — it is
+      // answered, for free, in the viewer.
+      const outstanding = plan?.gate?.toRun ?? [];
+      if (!outstanding.length || !token) return 0;
+      setRefusal(null);
+      let done = 0;
+      for (const entry of outstanding) {
+        setBatch({ total: outstanding.length, done, current: entry.question ?? entry.riskId });
+        const started = await runTest({ spec, cast, token, riskId: entry.riskId });
+        if (!started) break;
+        if (started.status === 'awaiting-approval') {
+          const approved = await new Promise((resolve) => {
+            approvalRef.current = resolve;
+          });
+          if (!approved) break;
+        }
+        done += 1;
+      }
+      setBatch(null);
+      await loadPlan({ spec, cast, token });
+      return done;
+    },
+    [loadPlan, plan?.gate?.toRun, runTest],
+  );
+
   /** Record what the visitor saw. */
   const judge = useCallback(
     async ({ takeId, answer, note }) => {
-      const { token, filmId } = contextRef.current;
+      const { token, filmId, spec, cast } = contextRef.current;
       if (!token || !filmId) return;
       try {
-        const result = await recordScreenTestVerdict({ filmId, takeId, answer, note }, token);
+        // The job id lets the Director read the verdict back (the review step). Sent when this
+        // tab still holds it; the server falls back to the id stored on the take otherwise.
+        const jobId = job?.take?.takeId === takeId ? job.jobId : undefined;
+        const result = await recordScreenTestVerdict({ filmId, takeId, answer, note, jobId }, token);
         setProduction((current) => ({ ...current, takes: result.production.takes }));
+        // A verdict moves the gate (worker/director-gate.js). Re-read the plan so the Shoot
+        // button and the asked-for list reflect it without a reload — and again as the Director's
+        // read-back lands, which takes the queue a few seconds and may change the script.
+        if (spec?.beats?.length) await loadPlan({ spec, cast: cast ?? [], token });
+        for (const delay of [8000, 20000, 45000]) {
+          setTimeout(() => {
+            loadProduction({ token, filmId });
+            if (spec?.beats?.length) loadPlan({ spec, cast: cast ?? [], token });
+          }, delay);
+        }
       } catch (failure) {
         setError(failure.message);
       }
     },
-    [],
+    [job?.jobId, job?.take?.takeId, loadPlan, loadProduction],
   );
 
   /**
@@ -332,6 +410,22 @@ export function useDirector() {
     [loadPlan],
   );
 
+  /** Take one of the Director's amendments off the script, then re-price against what is left. */
+  const dropRevision = useCallback(
+    async ({ at }) => {
+      const { token, filmId, spec, cast } = contextRef.current;
+      if (!token || !filmId) return;
+      setError(null);
+      try {
+        await dropDirectorRevision({ filmId, at }, token);
+        if (spec?.beats?.length) await loadPlan({ spec, cast: cast ?? [], token });
+      } catch (failure) {
+        setError(failure.message);
+      }
+    },
+    [loadPlan],
+  );
+
   /** Approve or decline a parked take. */
   const decide = useCallback(
     async (approved) => {
@@ -341,13 +435,17 @@ export function useDirector() {
       try {
         const result = await approveDirectorTake({ jobId: job.jobId, approved, cast }, token);
         setJob((current) => ({ ...current, status: result.status }));
-        if (approved) await follow(job.jobId, token, plan?.params);
+        if (approved) await follow(job.jobId, token, job?.take?.kind === 'screen-test' ? { resolution: '768P', duration: 6 } : plan?.params);
         else await loadProduction({ token, filmId });
       } catch (failure) {
         setError(failure.message);
+      } finally {
+        // A batch of tests waiting on this click (see `runTests`) continues or stops here.
+        approvalRef.current?.(approved);
+        approvalRef.current = null;
       }
     },
-    [follow, job?.jobId, loadProduction, plan?.params],
+    [follow, job?.jobId, job?.take?.kind, loadProduction, plan?.params],
   );
 
   /**
@@ -411,6 +509,12 @@ export function useDirector() {
     loadFilms,
     openProduction,
     shoot,
+    shootAnyway,
+    refusal,
+    runTests,
+    batch,
+    // Whether the film may be shot: read, and every asked test answered (worker/director-gate.js).
+    gate: plan?.gate ?? null,
     assess,
     thinking,
     reading,
@@ -418,6 +522,7 @@ export function useDirector() {
     shootingPlan: plan?.shootingPlan ?? null,
     revisions: plan?.revisions ?? [],
     acceptBrief,
+    dropRevision,
     brief: plan?.brief ?? null,
     runTest,
     judge,

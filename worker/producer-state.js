@@ -26,7 +26,9 @@ import { getBudget, getSpend } from './budget.js';
 import { resolveTier } from './tier.js';
 import { listFilms, loadStoryboard } from './storyboarder.js';
 import { loadProduction } from './director-job.js';
+import { testGate } from './director-gate.js';
 import { getEnvelope } from './render-budget.js';
+import { loadDraft } from './draft.js';
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8' } });
@@ -115,13 +117,31 @@ export async function recordConnect(env, mindId) {
  * path and a KV hiccup must degrade the greeting rather than break the connect.
  */
 export async function collectProductionState(env, mindId) {
-  const [snapshot, budget, spend, films, sessionCount] = await Promise.all([
+  const [snapshot, budget, spend, films, sessionCount, savedDraft] = await Promise.all([
     getSnapshot(env, mindId).catch(() => null),
     getBudget(env, mindId).catch(() => null),
     getSpend(env, mindId).catch(() => null),
     listFilms(env, mindId).catch(() => []),
     env.MIND_CONNECTIONS.get(connectsKey(mindId), 'json').catch(() => null),
+    loadDraft(env, mindId).catch(() => null),
   ]);
+
+  // The screenplay itself, when the browser has saved one (worker/draft.js). Unlike the snapshot
+  // above — counts and names, posted live — this is the work, kept for a week, and it is what lets
+  // the Mind know there is a film in progress even when the tab that wrote it is long closed.
+  const draft = savedDraft?.spec?.beats?.length
+    ? {
+        filmId: savedDraft.filmId ?? null,
+        logline: str(savedDraft.spec.logline, MAX_LOGLINE),
+        beatCount: num(savedDraft.spec.beats.length, 100),
+        castNames: (savedDraft.writtenCast ?? savedDraft.cast ?? [])
+          .map((entry) => str(entry?.name ?? entry?.nft?.name ?? entry?.nft?.title, MAX_NAME))
+          .filter(Boolean)
+          .slice(0, MAX_NAMES),
+        promptExcerpt: str(savedDraft.prompt, 160),
+        savedAt: savedDraft.savedAt ?? null,
+      }
+    : null;
 
   const tier = await resolveTier(env, mindId, snapshot?.beatCount ?? 0).catch(() => null);
   const newest = films?.[0] ?? null;
@@ -146,6 +166,23 @@ export async function collectProductionState(env, mindId) {
   const shots = production?.takes ?? [];
   const screenTests = shots.filter((shot) => shot.kind === 'screen-test');
   const finalTakes = shots.filter((shot) => shot.kind !== 'screen-test');
+  // What the Director asked for and is still owed — the same computation the Shoot button
+  // refuses on (worker/director-gate.js), so the Mind and the panel never disagree about it.
+  const gate = production ? testGate(production.shootingPlan ?? null, shots) : null;
+  // The last few screen tests, question and answer, so the Mind can name "the rehearsal where
+  // the letters folded into the brain" on the next connect even before its digests are read.
+  const recentTests = screenTests
+    .filter((test) => test.status === 'ready')
+    .slice(-5)
+    .map((test) => ({
+      takeId: test.takeId,
+      question: str(test.question, 160),
+      answer: test.verdict?.answer ?? null,
+      answerLabel: test.verdict?.answer ? str(test.answers?.[test.verdict.answer] ?? null, 60) : null,
+      note: str(test.verdict?.note, 200),
+      costUsd: test.costUsd ?? null,
+      cid: test.ipfs?.cid ?? null,
+    }));
 
   // The filmography, as far as the greeting needs it: the Mind's own record is the digests in
   // its conversation, this is the "welcome back, here is what happened" bundle its own design
@@ -160,10 +197,13 @@ export async function collectProductionState(env, mindId) {
       costUsd: take.costUsd ?? null,
       settledAt: take.settledAt ?? null,
       cid: take.ipfs?.cid ?? null,
+      screenplayCid: take.ipfs?.screenplayCid ?? null,
     }));
 
   return {
     filmography,
+    recentTests,
+    draft,
     isReturning: num(sessionCount?.count) > 1,
     sessionCount: num(sessionCount?.count),
     hasCast: (snapshot?.castCount ?? 0) > 0,
@@ -171,9 +211,9 @@ export async function collectProductionState(env, mindId) {
     castNames: snapshot?.castNames ?? [],
     primaryName: snapshot?.primaryName ?? null,
     hasPrompt: Boolean(snapshot?.hasPrompt),
-    hasScreenplay: snapshot?.screenplayStage === 'treatment' && (snapshot?.beatCount ?? 0) > 0,
-    beatCount: snapshot?.beatCount ?? 0,
-    logline: snapshot?.logline ?? newest?.logline ?? null,
+    hasScreenplay: (snapshot?.screenplayStage === 'treatment' && (snapshot?.beatCount ?? 0) > 0) || Boolean(draft),
+    beatCount: snapshot?.beatCount || draft?.beatCount || 0,
+    logline: snapshot?.logline ?? draft?.logline ?? newest?.logline ?? null,
     hasStoryboard: Boolean(newest?.frames),
     storyboardFrames: newest?.frames ?? 0,
     filmCount: films?.length ?? 0,
@@ -191,6 +231,11 @@ export async function collectProductionState(env, mindId) {
     renderClosed: Boolean(envelope?.closedAt),
     screenTestCount: screenTests.length,
     screenTestsAnswered: screenTests.filter((test) => test.verdict?.answer).length,
+    directorRead: Boolean(gate && !gate.unread),
+    testsAsked: gate?.asked?.length ?? 0,
+    testsOutstanding: gate?.outstanding?.length ?? 0,
+    testsOutstandingUsd: gate?.outstandingUsd ?? 0,
+    outstandingQuestions: (gate?.outstanding ?? []).map((test) => str(test.question, 160)).filter(Boolean).slice(0, 4),
     takeCount: finalTakes.length,
     takesReady: finalTakes.filter((take) => take.status === 'ready').length,
     takesFailed: finalTakes.filter((take) => take.status === 'failed' || take.status === 'unsettled').length,
@@ -227,6 +272,17 @@ export function renderStateBlock(state) {
 
   if (state.hasScreenplay) {
     lines.push(`Screenplay: written, ${state.beatCount} beat${state.beatCount === 1 ? '' : 's'}.`);
+    if (state.draft) {
+      const saved = state.draft.savedAt ? new Date(state.draft.savedAt).toISOString().slice(0, 10) : null;
+      lines.push(
+        `Screenplay in progress: ${state.draft.logline ? `"${state.draft.logline}"` : 'untitled'}` +
+          (state.draft.filmId ? ` (film ${state.draft.filmId})` : '') +
+          `, ${state.draft.beatCount} beat${state.draft.beatCount === 1 ? '' : 's'}` +
+          (state.draft.castNames?.length ? `, cast: ${state.draft.castNames.join(', ')}` : '') +
+          (saved ? `, last saved ${saved}` : '') +
+          '. Your [Screenplay] message in this conversation is your record of it.',
+      );
+    }
   } else if (state.hasPrompt) {
     lines.push('Screenplay: not written yet, but they have a prompt in progress.');
   } else {
@@ -269,6 +325,16 @@ export function renderStateBlock(state) {
           'money spent and nothing learned yet, which is worth nudging.',
       );
     }
+    for (const test of state.recentTests ?? []) {
+      lines.push(
+        `Screen test ${test.takeId}: "${test.question ?? 'unnamed'}" → ` +
+          (test.answer ? `${test.answerLabel ?? test.answer}` : 'not yet answered') +
+          (test.note ? ` — the visitor saw: "${test.note}"` : '') +
+          (test.costUsd != null ? ` (${money(test.costUsd)})` : '') +
+          (test.cid ? `, permanent copy at ipfs://${test.cid}` : '') +
+          '. Your [Screen test] messages in this conversation are your record of it.',
+      );
+    }
     for (const take of state.filmography ?? []) {
       const when = take.settledAt ? new Date(take.settledAt).toISOString().slice(0, 10) : null;
       lines.push(
@@ -276,11 +342,27 @@ export function renderStateBlock(state) {
           (take.costUsd != null ? `, ${money(take.costUsd)}` : '') +
           (when ? `, delivered ${when}` : '') +
           (take.cid ? `, permanent copy at ipfs://${take.cid}` : '') +
+          (take.screenplayCid ? `, screenplay at ipfs://${take.screenplayCid}` : '') +
           '. Your [Filmography] messages in this conversation are your record of it.',
       );
     }
   } else if (state.budgetSet) {
     lines.push('Director: nothing rendered yet. Rendering is available and costs real money per second of footage.');
+  }
+
+  // The Director's outstanding asks. Stated whenever there are any, whether or not anything has
+  // rendered yet — a visitor asking "shall I shoot it?" with tests owed must hear no, and why.
+  if (state.testsOutstanding > 0) {
+    lines.push(
+      `The Director read the screenplay and asked for ${state.testsAsked} screen test${state.testsAsked === 1 ? '' : 's'}; ` +
+        `${state.testsOutstanding} ${state.testsOutstanding === 1 ? 'is' : 'are'} still unanswered` +
+        (state.testsOutstandingUsd ? ` (${money(state.testsOutstandingUsd)} to run)` : '') +
+        `. The film must NOT be shot until they are answered — if they ask to shoot, say so and name the questions` +
+        (state.outstandingQuestions?.length ? `: ${state.outstandingQuestions.map((q) => `"${q}"`).join('; ')}` : '') +
+        '.',
+    );
+  } else if (state.directorRead && state.testsAsked > 0 && (state.takeCount || state.screenTestCount)) {
+    lines.push('Every screen test the Director asked for has been answered; the film may be shot.');
   }
 
   if (state.logline) lines.push(`Their logline, in their words: "${state.logline}"`);

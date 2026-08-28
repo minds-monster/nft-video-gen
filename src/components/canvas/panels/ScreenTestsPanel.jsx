@@ -4,7 +4,7 @@ import CanvasPanel from './CanvasPanel';
 import TakeTile from './TakeTile';
 import { cn } from '../../../lib/cn';
 import { ANSWER_TONE, UNANSWERED_TONE } from '../../../lib/takeTone';
-import { VERDICTS } from '../../../../worker/screen-test.js';
+import { verdictLabel } from '../../../../worker/screen-test.js';
 
 /**
  * What the experiments cost, and what they said.
@@ -49,9 +49,11 @@ const ScreenTestsPanel = ({ id, director, status, tabs, activeTakeId, onPreviewT
           <div>
             <p className="text-sm font-semibold text-white">No tests run</p>
             <p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-slate-500">
-              A screen test buys an answer to one question for about $0.32 — whether a face
-              survives its framing, whether flat art reads as a real object, whether the film holds
-              as one take. The Director proposes them from the hazards it can actually name.
+              A screen test buys an answer to one question for $0.32 to $0.48 — whether a face
+              survives its framing, whether flat art reads as a real object, whether the letters
+              actually become the brain. The Director asks for them from the hazards it can name
+              and from what your prompt asks the model to do, and the film is not shot until they
+              are answered.
             </p>
           </div>
         </div>
@@ -88,7 +90,8 @@ const ScreenTestsPanel = ({ id, director, status, tabs, activeTakeId, onPreviewT
                     ANSWER_TONE[verdict],
                   )}
                 >
-                  {VERDICTS.find((entry) => entry.id === verdict)?.label ?? verdict}
+                  {verdictLabel(test, verdict)}
+                  {test.retest ? ' · run again' : ''}
                 </span>
               ) : test.status === 'ready' ? (
                 // Amber is reserved for a test that CAME BACK and nobody read. One that is still

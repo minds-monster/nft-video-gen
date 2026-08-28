@@ -219,6 +219,28 @@ export const useCanvasComposer = () => {
 
   const clearPreview = useCallback(() => setPreview(null), []);
 
+  /**
+   * Put a saved draft back (src/lib/draftStore.js). Opens the canvas too: a visitor whose work
+   * has just come back from a page load should be looking at it, not at the marketing page.
+   */
+  const restore = useCallback(({ prompt: savedPrompt, cast: savedCast, primaryKey: savedPrimary }) => {
+    setPrompt(typeof savedPrompt === 'string' ? savedPrompt : '');
+    setCast(Array.isArray(savedCast) ? savedCast : []);
+    setPrimaryKey(savedPrimary ?? null);
+    setPreview(null);
+    setOpen(true);
+  }, []);
+
+  /** Back to an empty composer — the "New film" action. Leaves the canvas open. */
+  const clearComposition = useCallback(() => {
+    setPrompt('');
+    setCast([]);
+    setPrimaryKey(null);
+    setPreview(null);
+    setPicker(null);
+    setPickerView(null);
+  }, []);
+
   const removeAsset = useCallback((key) => {
     setCast((current) => current.filter((item) => item.key !== key));
   }, []);
@@ -458,5 +480,7 @@ export const useCanvasComposer = () => {
     browsePrev,
     addPreviewToCast,
     clearPreview,
+    restore,
+    clearComposition,
   };
 };

@@ -88,6 +88,31 @@ export const putProductionState = async (token, state) => {
   return res.json();
 };
 
+// The visitor's draft — prompt, cast, screenplay — kept server-side for a connected Mind so
+// it survives a cleared browser, a second device, and the Stripe round-trip. See
+// src/lib/draftStore.js for the shape and worker/draft.js for the caps applied to it.
+export const getDraft = async (token) => {
+  const res = await fetch('/api/draft', { headers: { authorization: `Bearer ${token}` } });
+  if (!res.ok) throw new Error(`draft read failed: ${res.status}`);
+  return (await res.json()).draft ?? null;
+};
+
+export const putDraft = async (token, draft) => {
+  const res = await fetch('/api/draft', {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+    body: JSON.stringify({ draft }),
+  });
+  if (!res.ok) throw new Error(`draft write failed: ${res.status}`);
+  return res.json();
+};
+
+export const deleteDraft = async (token) => {
+  const res = await fetch('/api/draft', { method: 'DELETE', headers: { authorization: `Bearer ${token}` } });
+  if (!res.ok) throw new Error(`draft delete failed: ${res.status}`);
+  return res.json();
+};
+
 export const mindChatPoll = async (token, after) => {
   const query = after ? `?after=${encodeURIComponent(after)}` : '';
   const res = await fetch(`/api/mind/poll${query}`, { headers: { authorization: `Bearer ${token}` } });

@@ -3,7 +3,7 @@ import { ArrowLeft, Brain, Copy, Download, FileText, Link2, Loader2 } from 'luci
 
 import { cn } from '../../../lib/cn';
 import { ANSWER_TONE } from '../../../lib/takeTone';
-import { VERDICTS } from '../../../../worker/screen-test.js';
+import { VERDICTS, verdictLabel } from '../../../../worker/screen-test.js';
 
 /**
  * A take, played large. The Viewer's body when what is being viewed came out of the Director
@@ -31,6 +31,13 @@ const TakeView = ({ take, index, onJudge, onRemember, onClear }) => {
   // the signed link has expired or the bucket is gone — which is exactly what the CID is for.
   const [useGateway, setUseGateway] = useState(false);
   const [copied, setCopied] = useState(false);
+  // What the visitor saw, in their own words. Goes with the verdict to the Director's read-back
+  // as "What was seen" — the one place a visitor can tell the Director something the three
+  // buttons cannot. Optional, and worth more than the button.
+  const [note, setNote] = useState(take.verdict?.note ?? '');
+  // Answering again — a changed mind, or words added to a bare click. The Director reads the
+  // new answer back exactly as it would a first one.
+  const [reanswering, setReanswering] = useState(false);
 
   const isTest = take.kind === 'screen-test';
   const answered = take.verdict?.answer;
@@ -39,7 +46,9 @@ const TakeView = ({ take, index, onJudge, onRemember, onClear }) => {
   const gatewayUrl = take.ipfs?.gatewayUrl ?? (cid ? `https://gateway.pinata.cloud/ipfs/${cid}` : null);
   const src = useGateway && gatewayUrl ? gatewayUrl : take.url;
 
-  const canRemember = !isTest && take.status === 'ready' && Boolean(onRemember);
+  // Tests too, since 2026-08-28: a rehearsal the visitor liked is production knowledge the Mind
+  // should be able to name, not just a clip in our bucket.
+  const canRemember = take.status === 'ready' && Boolean(onRemember);
   const remembered = take.digestedAt ? new Date(take.digestedAt) : null;
   const remember = async () => {
     setRemembering(true);
@@ -115,27 +124,64 @@ const TakeView = ({ take, index, onJudge, onRemember, onClear }) => {
               ANSWER_TONE[answered],
             )}
           >
-            {VERDICTS.find((entry) => entry.id === answered)?.label ?? answered}
+            {verdictLabel(take, answered)}
             {take.verdict.note ? (
               <span className="font-normal opacity-80"> — {take.verdict.note}</span>
+            ) : null}
+            {!reanswering && (
+              <button
+                type="button"
+                onClick={() => setReanswering(true)}
+                className="ml-2 font-mono text-[9px] font-normal uppercase tracking-wider opacity-70 hover:opacity-100"
+              >
+                Change your answer
+              </button>
+            )}
+          </p>
+        )}
+
+        {isTest && take.review?.finding && (
+          <p className="mt-1 rounded-xl border border-white/10 bg-black/40 px-2 py-1.5 text-[11px] leading-relaxed text-slate-300">
+            <span className="font-mono text-[9px] uppercase tracking-widest text-slate-600">The Director read it back · </span>
+            {take.review.finding}
+            {take.review.revised ? (
+              <span className="text-emerald-200/80"> Changed the {take.review.revised.block} block: {take.review.revised.why}</span>
             ) : null}
           </p>
         )}
 
-        {isTest && !answered && take.status === 'ready' && (
+        {isTest && take.retest && (
+          <p className="mt-1 rounded-xl border border-amber-400/20 bg-amber-500/5 px-2 py-1.5 text-[10px] leading-relaxed text-amber-200/80">
+            The Director read this back and asked for the question to be run again against the
+            revised script.
+          </p>
+        )}
+
+        {isTest && (!answered || reanswering) && take.status === 'ready' && (
           <div className="mt-2">
             <p className="mb-1 font-mono text-[9px] uppercase tracking-widest text-slate-600">
-              You just watched it — now answer
+              You just watched it — tell the Director what you saw
             </p>
+            <textarea
+              value={note}
+              onChange={(event) => setNote(event.target.value)}
+              rows={2}
+              maxLength={600}
+              placeholder='In your own words — e.g. "the letters inflated properly but the brain faded in over them at the end". Optional; the Director reads this before changing the script.'
+              className="scrollbar-subtle mb-1 w-full resize-none rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-[11px] leading-snug text-white placeholder:text-slate-600 focus:border-purple-500/40 focus:outline-none"
+            />
             <div className="flex gap-1">
               {VERDICTS.map((verdict) => (
                 <button
                   key={verdict.id}
                   type="button"
-                  onClick={() => onJudge?.({ takeId: take.takeId, answer: verdict.id })}
+                  onClick={() => {
+                    setReanswering(false);
+                    onJudge?.({ takeId: take.takeId, answer: verdict.id, note: note.trim() || undefined });
+                  }}
                   className="flex-1 rounded-lg border border-white/10 bg-black/40 px-1.5 py-1 text-[10px] text-slate-300 transition-colors hover:border-white/25 hover:text-white"
                 >
-                  {verdict.label}
+                  {verdictLabel(take, verdict.id)}
                 </button>
               ))}
             </div>

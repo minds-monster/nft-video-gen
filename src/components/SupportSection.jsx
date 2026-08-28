@@ -11,7 +11,7 @@ const REASONS = [
   {
     icon: Sparkles,
     title: 'Feature request',
-    body: 'Got an idea for something the swarm should be able to do? A new agent, a style, a shortcut, a whole new way to make a film — tell us. The best ones get built.',
+    body: 'Got an idea for something? A new agent, a style, a shortcut, a whole new way to make a film — tell us.',
   },
   {
     icon: LifeBuoy,

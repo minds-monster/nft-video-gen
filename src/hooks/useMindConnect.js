@@ -6,6 +6,7 @@ import {
   storeSession,
   clearSession,
 } from '../services/mindConnect';
+import { flushDraft } from '../lib/draftStore';
 
 const POLL_INTERVAL_MS = 2_000;
 // Matches worker/connect.js's INIT_TTL_SECONDS — a brand-new Mind's first-ever connect
@@ -132,6 +133,10 @@ export const useMindConnect = () => {
       });
       const data = await response.json();
       if (data.url) {
+        // The visitor is about to leave the document. Whatever they have composed is written
+        // NOW, not on the debounce — this navigation is the exact flow that lost a finished
+        // screenplay once (see src/lib/draftStore.js).
+        flushDraft();
         window.location.href = data.url;
       } else {
         alert(data.error || 'Failed to start checkout. Please try again.');

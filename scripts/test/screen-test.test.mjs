@@ -17,7 +17,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { buildScreenTest, VERDICTS } from '../../worker/screen-test.js';
+import { buildScreenTest, demandAsRisk, isDemandId, VERDICTS, verdictLabel } from '../../worker/screen-test.js';
 import { assessRisks } from '../../worker/director-risks.js';
 import { SCREEN_TEST, MOTION_TEST } from '../../worker/director-risks.js';
 
@@ -130,7 +130,7 @@ test('a risk fixed by rewriting is never turned into a render', () => {
   // Paying to watch MiniMax reject a brand name would be absurd. The register already knows the
   // difference; this asserts the builder respects it.
   const specValue = spec({ beats: ['the Lamborghini Revuelto stands still'] });
-  const castValue = [{ key: 'ape', name: 'Lamborghini Revuelto', dossier: dossier() }];
+  const castValue = [{ key: 'ape', name: 'Lamborghini Revuelto', dossier: dossier({ hazards: ['Lamborghini badge (brand mark)'] }) }];
   const risk = riskFor(specValue, castValue, 'brand-name-in-script');
   assert.ok(risk, 'the hazard is real');
   assert.equal(buildScreenTest(risk, specValue, castValue), null, 'but it is not a render');
@@ -163,4 +163,133 @@ test('every test emits H3 three-field wire format, not a prose blob', () => {
   assert.match(built.script, /overall_soundscape: /);
   assert.match(built.script, /non_diegetic_music: N\/A/);
   assert.ok(built.script.length < 7000, 'H3 caps each field at 7000 characters');
+});
+
+// ------------------------------------------------------------------------------- rehearsals
+//
+// THE THIRD SHAPE, and the opposite of the identity test above: a rehearsal KEEPS the film,
+// because the thing under test is whether the model can DO what the beat asks, in the scene it
+// asks for it in. A rehearsal that came back "held" against a black void would have told the
+// Hollywood-sign film nothing. The second guard is the anti-dissolve line: rule 12's finding is
+// that a transformation gets cheated with a crossfade, and a rehearsal that quietly allowed the
+// cheat would be a false negative.
+
+const brainSpec = (over = {}) =>
+  spec({
+    world: 'Golden hour over dry hills, the white letters of a hillside sign catching low sun.',
+    guard: 'Every character has ordinary skin.',
+    staging: '<Subject 1> is the hillside sign in <Picture 1>.',
+    camera: 'The camera pushes in with medium amplitude at slow speed.',
+    beats: [
+      'the camera closes on the letters',
+      'the letters inflate like balloons and morph into an enormous brain',
+      'the brain pulses',
+    ],
+    referencePlan: [{ key: 'sign', role: 'prop', crop: '' }],
+    ...over,
+  });
+
+const brainCast = [{ key: 'sign', dossier: dossier({ subject: 'a hillside sign of white capital letters' }) }];
+
+const rehearsalRisk = (over = {}) => ({
+  id: 'transformation-faked:2',
+  what: 'beat 2 asks one thing to become another',
+  measured: 'measured',
+  test: {
+    question: 'Does the change in beat 2 physically happen?',
+    params: MOTION_TEST,
+    refKeys: ['sign'],
+    focus: 'rehearsal',
+    beats: [2],
+    ...over,
+  },
+});
+
+test('a rehearsal keeps the world, the staging and the camera, and renders the named beat', () => {
+  const built = buildScreenTest(rehearsalRisk(), brainSpec(), brainCast);
+  assert.ok(built);
+  assert.deepEqual(built.params, MOTION_TEST, 'six seconds — a transformation needs two beats of time');
+  assert.match(built.script, /hillside sign catching low sun/, 'the world survives');
+  assert.match(built.script, /<Subject 1> is the hillside sign/, 'the staging survives');
+  assert.match(built.script, /pushes in with medium amplitude/, 'the camera survives');
+  assert.match(built.script, /Beat 1: the letters inflate like balloons/, 'the named beat, renumbered from 1');
+  assert.doesNotMatch(built.script, /the brain pulses/, 'and only the named beat');
+  assert.deepEqual(built.refKeys, ['sign']);
+});
+
+test('a test carries its own answer labels to the take, and the generic ones are the fallback', () => {
+  const labelled = buildScreenTest(
+    rehearsalRisk({ answers: { held: 'The letters became the brain', failed: 'A brain faded in over them', unclear: 'Cannot tell' } }),
+    brainSpec(),
+    brainCast,
+  );
+  assert.equal(labelled.answers.held, 'The letters became the brain');
+  const generic = buildScreenTest(rehearsalRisk(), brainSpec(), brainCast);
+  assert.equal(generic.answers, null);
+  assert.equal(verdictLabel({ answers: labelled.answers }, 'failed'), 'A brain faded in over them');
+  assert.equal(verdictLabel({}, 'failed'), 'It did not');
+});
+
+test('the register\'s own rule-12 risk builds the same rehearsal', () => {
+  const specValue = brainSpec();
+  const risk = riskFor(specValue, brainCast, 'transformation-faked:2');
+  assert.ok(risk, 'rule 12 fires on the morph');
+  const built = buildScreenTest(risk, specValue, brainCast);
+  assert.match(built.script, /Beat 1: the letters inflate like balloons/);
+  assert.equal(built.riskId, 'transformation-faked:2');
+});
+
+test('a rehearsal forbids the dissolve, so the cheat cannot come back as "held"', () => {
+  const built = buildScreenTest(rehearsalRisk(), brainSpec(), brainCast);
+  assert.match(built.script, /Nothing fades in or out, nothing dissolves, nothing is superimposed/);
+  assert.match(built.script, /one single continuous unbroken shot/);
+});
+
+test('a demand\'s direction replaces the beat text — the constraint is what gets rehearsed', () => {
+  const direction =
+    'The letters are rubber. They inflate, fuse along their seams into one mass, and that mass folds into the ridges of a brain. The camera holds on them throughout.';
+  const built = buildScreenTest(rehearsalRisk({ direction }), brainSpec(), brainCast);
+  assert.match(built.script, /Beat 1: The letters are rubber\. They inflate/);
+  assert.doesNotMatch(built.script, /inflate like balloons/, 'the original beat is not rendered alongside it');
+});
+
+test('a rehearsal with no named beat renders the first beats of the film', () => {
+  const built = buildScreenTest(rehearsalRisk({ beats: [] }), brainSpec(), brainCast);
+  assert.match(built.script, /Beat 1: the camera closes on the letters/);
+  assert.match(built.script, /Beat 2: the letters inflate/);
+  assert.match(built.script, /Beat 3: the brain pulses/);
+});
+
+test('a rehearsal keeps the anti-mannequin guard when the script has none', () => {
+  const built = buildScreenTest(rehearsalRisk(), brainSpec({ guard: '' }), brainCast);
+  assert.match(built.script, /ordinary skin/);
+});
+
+// --------------------------------------------------------------------------------- demands
+
+test('a demand becomes a risk the panel and the test endpoint already understand', () => {
+  const risk = demandAsRisk({
+    id: 'letters-become-brain',
+    question: 'Do the letters physically become the brain?',
+    why: 'the prompt says literally',
+    beats: [2],
+    refKeys: ['sign'],
+    direction: 'The letters are rubber...',
+    onHeld: 'shoot',
+    onFailed: 'split the beat',
+  });
+  assert.equal(risk.id, 'demand:letters-become-brain');
+  assert.ok(isDemandId(risk.id));
+  assert.equal(risk.source, 'director');
+  assert.equal(risk.measured, null, 'judgement is labelled as judgement');
+  assert.equal(risk.judgement, 'the prompt says literally');
+  assert.equal(risk.estUsd, 0.48, 'priced from the parameters, never by the model');
+  assert.equal(risk.test.focus, 'rehearsal');
+  assert.equal(risk.test.direction, 'The letters are rubber...');
+});
+
+test('a demand with no id or question is not a risk', () => {
+  assert.equal(demandAsRisk({ question: 'q?' }), null);
+  assert.equal(demandAsRisk({ id: 'x' }), null);
+  assert.equal(demandAsRisk(null), null);
 });

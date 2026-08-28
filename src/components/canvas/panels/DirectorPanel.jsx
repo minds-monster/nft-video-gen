@@ -4,7 +4,7 @@ import { AlertTriangle, Clapperboard, Check, X } from 'lucide-react';
 import CanvasPanel from './CanvasPanel';
 import { cn } from '../../../lib/cn';
 import { MODES } from '../../../../worker/render-budget.js';
-import { VERDICTS } from '../../../../worker/screen-test.js';
+import { verdictLabel } from '../../../../worker/screen-test.js';
 
 /**
  * The Director's own rail, under the Cast.
@@ -57,10 +57,18 @@ const Risk = ({ risk, onTest, settled, busy }) => {
         )}
       </summary>
       <p className="mt-1.5 border-t border-white/5 pt-1.5 text-[10px] leading-relaxed text-slate-500">
-        {risk.measured}
+        {risk.source === 'director' ? risk.judgement : risk.measured}
       </p>
+      {/* A rehearsal renders the beat as the Director restated it. Shown because it IS the test:
+          what the model is told to do physically, and what it is told not to fake. */}
+      {risk.test?.direction && (
+        <p className="mt-1 text-[10px] leading-relaxed text-slate-500">
+          <span className="font-mono text-[9px] uppercase tracking-wider text-slate-600">The rehearsal · </span>
+          {risk.test.direction}
+        </p>
+      )}
       <p className="mt-1 font-mono text-[9px] uppercase tracking-wider text-slate-600">
-        Rule {risk.rule} · {tone.label}
+        {risk.source === 'director' ? 'The Director’s own judgement' : `Rule ${risk.rule}`} · {tone.label}
         {risk.elevatedBy ? <span className="text-purple-300/60"> · you asked for this</span> : null}
       </p>
 
@@ -74,7 +82,7 @@ const Risk = ({ risk, onTest, settled, busy }) => {
           onClick={() => onTest?.(risk.id)}
           className="mt-1.5 w-full rounded-lg border border-white/10 bg-black/40 px-2 py-1 text-[10px] text-slate-300 transition-colors hover:border-purple-500/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
         >
-          Screen test · {money(risk.estUsd)}
+          {risk.test.focus === 'rehearsal' ? 'Rehearse' : 'Screen test'} · {money(risk.estUsd)}
         </button>
       )}
       {settled && (
@@ -120,20 +128,6 @@ const ShootingPlan = ({ plan }) => {
   return (
     <div className="space-y-1.5 rounded-xl border border-white/10 bg-black/30 p-2">
       {plan.reading && <p className="text-[11px] leading-relaxed text-slate-300">{plan.reading}</p>}
-      {plan.tests?.length > 0 && (
-        <div>
-          <p className="font-mono text-[9px] uppercase tracking-widest text-slate-600">
-            Worth testing · {money(plan.totalTestUsd)}
-          </p>
-          <ul className="mt-0.5 space-y-0.5">
-            {plan.tests.map((test) => (
-              <li key={test.riskId} className="text-[10px] leading-snug text-slate-400">
-                <span className="text-slate-300">{test.question ?? test.riskId}</span> — {test.why}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
       {plan.skip?.length > 0 && (
         <div>
           <p className="font-mono text-[9px] uppercase tracking-widest text-slate-600">Not testing</p>
@@ -144,19 +138,125 @@ const ShootingPlan = ({ plan }) => {
           </ul>
         </div>
       )}
-      {plan.ownConcern && (
-        <p className="rounded-lg border border-white/10 bg-black/40 p-1.5 text-[10px] leading-snug text-slate-400">
-          <span className="font-mono text-[9px] uppercase tracking-wider text-slate-600">Its own hunch · </span>
-          {plan.ownConcern.question} — {plan.ownConcern.why}
-        </p>
-      )}
       {plan.plan && <p className="text-[10px] leading-relaxed text-slate-500">{plan.plan}</p>}
     </div>
   );
 };
 
-/** What the tests actually changed. The loop, made visible. */
-const Revisions = ({ revisions }) => {
+/** How each asked-for test stands, from worker/director-gate.js. */
+const TEST_STATE = {
+  unshot: { label: 'Not yet run', cls: 'border-white/10 text-slate-400' },
+  unjudged: { label: 'Came back — answer it', cls: 'border-amber-400/30 text-amber-300' },
+  failed: { label: 'Failed — run again', cls: 'border-rose-400/30 text-rose-300' },
+  retest: { label: 'Re-test asked for', cls: 'border-amber-400/30 text-amber-300' },
+  cleared: { label: 'Held', cls: 'border-emerald-400/30 text-emerald-300' },
+};
+
+/**
+ * What the Director asked for, and where each ask stands.
+ *
+ * THIS IS THE BLOCK THE HOLLYWOOD FILM NEVER HAD. The Director's tests used to be a list under
+ * "worth testing" with a $0.32 button hidden inside each hazard; a visitor could — and did — go
+ * straight to Shoot. Now the asks are one list with one button that runs them all, the Shoot
+ * button says how many are owed, and the server refuses to shoot until they are answered
+ * (worker/director-gate.js). A test the Director asked for is a precondition, not a suggestion.
+ */
+const AskedTests = ({ plan, gate, onRunAll, onAnswer, busy, batch }) => {
+  const asked = gate?.asked ?? [];
+  if (!asked.length) return null;
+  // Two different next moves, and the difference cost $2.40 in five identical rehearsals: a
+  // clip that came back is ANSWERED (free, in the viewer); only a question with no clip, or a
+  // failed one, is RUN. Answering always comes first, because spending again while an answer is
+  // owed is exactly the loop this block exists to break.
+  const unanswered = gate.unanswered ?? [];
+  const toRun = gate.toRun ?? [];
+  const whyFor = (riskId) =>
+    plan?.tests?.find((test) => test.riskId === riskId)?.why ??
+    plan?.demands?.find((demand) => `demand:${demand.id}` === riskId)?.why ??
+    null;
+
+  return (
+    <div className="space-y-1.5 rounded-xl border border-purple-500/25 bg-purple-950/15 p-2">
+      <p className="font-mono text-[9px] uppercase tracking-widest text-purple-300/70">
+        The Director asks for · {money(asked.reduce((sum, test) => sum + (test.estUsd ?? 0), 0))}
+      </p>
+      <ul className="space-y-1.5">
+        {asked.map((test) => {
+          // A clip waiting to be watched outranks whatever the last answer was.
+          const pill =
+            test.state !== 'cleared' && test.unansweredCount > 0
+              ? TEST_STATE.unjudged
+              : TEST_STATE[test.state] ?? TEST_STATE.unshot;
+          const label = test.state === 'cleared' && test.answer && test.answer !== 'held' ? 'Cannot tell' : pill.label;
+          const why = whyFor(test.riskId);
+          return (
+            <li key={test.riskId} className="text-[10px] leading-snug text-slate-400">
+              <div className="flex items-start justify-between gap-1.5">
+                <span className="min-w-0 flex-1 text-slate-200">{test.question ?? test.riskId}</span>
+                <span className={cn('shrink-0 rounded-full border px-1.5 py-0.5 text-[9px] font-semibold', pill.cls)}>
+                  {label}
+                </span>
+              </div>
+              {why && <p className="mt-0.5 text-slate-500">{why}</p>}
+              {test.finding && (
+                <p className="mt-1 rounded-lg border border-white/10 bg-black/40 p-1.5 text-[10px] leading-snug text-slate-300">
+                  <span className="font-mono text-[9px] uppercase tracking-wider text-slate-600">Read back · </span>
+                  {test.finding}
+                  {test.revised ? <span className="text-emerald-200/70"> — changed {test.revised.block}.</span> : null}
+                </p>
+              )}
+              <p className="mt-0.5 font-mono text-[9px] text-slate-600">
+                {test.source === 'director' ? 'its own judgement' : 'measured'} · {money(test.estUsd)}
+              </p>
+            </li>
+          );
+        })}
+      </ul>
+      {batch ? (
+        <p className="font-mono text-[10px] text-sky-300/70">
+          Running {Math.min(batch.done + 1, batch.total)} of {batch.total} — {batch.current}
+        </p>
+      ) : unanswered.length > 0 ? (
+        <div className="space-y-1">
+          <button
+            type="button"
+            onClick={() => onAnswer?.(unanswered[0].unansweredTakeId)}
+            className="w-full rounded-xl bg-amber-500/90 px-2 py-2 text-[11px] font-semibold text-black transition-colors hover:bg-amber-400"
+          >
+            Watch and answer the test that came back
+          </button>
+          <p className="text-[10px] leading-snug text-slate-500">
+            Free. The Director reads your answer — and anything you type with it — before it
+            changes a word of the script. Nothing more is run until this is answered.
+          </p>
+        </div>
+      ) : toRun.length > 0 ? (
+        <button
+          type="button"
+          disabled={busy}
+          onClick={onRunAll}
+          className="w-full rounded-xl bg-purple-600 px-2 py-2 text-[11px] font-semibold text-white transition-colors hover:bg-purple-500 disabled:cursor-not-allowed disabled:bg-white/5 disabled:text-slate-600"
+        >
+          Run the Director’s {toRun.length} test{toRun.length === 1 ? '' : 's'} · {money(gate.outstandingUsd)}
+        </button>
+      ) : (
+        <p className="text-[10px] leading-relaxed text-emerald-200/70">
+          Every test answered. The Director can shoot this with authority.
+        </p>
+      )}
+    </div>
+  );
+};
+
+/**
+ * What the Director changed. The loop, made visible — and reversible.
+ *
+ * Every row has a ✕, because on 2026-08-28 a visitor watched "the Hollywood sign" get rewritten
+ * out of a film about the Hollywood sign and had no way to take it back. The replacement text is
+ * shown on demand: "removes the prohibited brand name" is a claim, and the visitor is owed the
+ * evidence.
+ */
+const Revisions = ({ revisions, onDrop, busy }) => {
   if (!revisions?.length) return null;
   return (
     <div className="space-y-1 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-2">
@@ -164,9 +264,34 @@ const Revisions = ({ revisions }) => {
         {revisions.length} change{revisions.length === 1 ? '' : 's'} from what it learned
       </p>
       {revisions.map((revision, index) => (
-        <p key={`${revision.block}-${index}`} className="text-[10px] leading-snug text-slate-400">
-          <span className="font-mono text-emerald-200/70">{revision.block}</span> — {revision.why}
-        </p>
+        <details key={`${revision.block}-${revision.at ?? index}`} className="group">
+          <summary className="flex cursor-pointer list-none items-start gap-1.5 text-[10px] leading-snug text-slate-400">
+            <span className="min-w-0 flex-1">
+              <span className="font-mono text-emerald-200/70">{revision.block}</span> — {revision.why}
+              {revision.free ? null : <span className="text-slate-600"> · from a test</span>}
+            </span>
+            {onDrop && revision.at != null && (
+              <button
+                type="button"
+                disabled={busy}
+                aria-label="Drop this change"
+                title="Take this change back off the script"
+                onClick={(event) => {
+                  event.preventDefault();
+                  onDrop(revision.at);
+                }}
+                className="shrink-0 rounded px-1 text-slate-500 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-40"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </summary>
+          {revision.text && (
+            <p className="mt-1 whitespace-pre-wrap border-t border-white/5 pt-1 text-[10px] leading-relaxed text-slate-500">
+              {revision.text}
+            </p>
+          )}
+        </details>
       ))}
     </div>
   );
@@ -242,12 +367,19 @@ const DirectorPanel = ({
   onToggle,
   status,
   onShoot,
+  onAnswerTest,
 }) => {
   const { plan, planning, envelope, job, phaseLabel, elapsedSeconds, error, running, awaitingApproval } = director;
 
   const risks = plan?.risks ?? [];
   const blocking = plan?.blocking ?? [];
   const ready = Boolean(plan?.ready) && Boolean(token) && Boolean(spec?.beats?.length);
+  // Legal to send is not the same as informed enough to pay for. `ready` is the first; the gate
+  // is the second, and the server refuses a Shoot that fails it (worker/director-gate.js).
+  const gate = plan?.gate ?? null;
+  const outstanding = gate?.outstanding?.length ?? 0;
+  const cleared = Boolean(gate?.cleared);
+  const batching = Boolean(director.batch);
 
   const settled = useMemo(
     () => (director.finalTakes ?? []).filter((take) => take.status === 'ready').length,
@@ -261,7 +393,7 @@ const DirectorPanel = ({
     const map = {};
     for (const test of director.screenTests ?? []) {
       if (test.riskId && test.verdict?.answer) {
-        map[test.riskId] = VERDICTS.find((v) => v.id === test.verdict.answer)?.label ?? test.verdict.answer;
+        map[test.riskId] = verdictLabel(test, test.verdict.answer);
       }
     }
     return map;
@@ -271,7 +403,11 @@ const DirectorPanel = ({
     ? `Approve ${money(job?.take?.costUsd)}`
     : running
       ? phaseLabel ?? 'Working'
-      : `Shoot · ${money(plan?.estimate?.finalUsd) ?? '—'}`;
+      : gate?.unread
+        ? 'Shoot · read it first'
+        : outstanding
+          ? `Shoot · ${outstanding} test${outstanding === 1 ? '' : 's'} outstanding`
+          : `Shoot · ${money(plan?.estimate?.finalUsd) ?? '—'}`;
 
   return (
     <CanvasPanel
@@ -317,7 +453,19 @@ const DirectorPanel = ({
             </p>
           )}
           <ShootingPlan plan={director.shootingPlan} />
-          <Revisions revisions={director.revisions} />
+          <AskedTests
+            plan={director.shootingPlan}
+            gate={gate}
+            batch={director.batch}
+            busy={running || awaitingApproval || planning || !token}
+            onRunAll={() => director.runTests?.({ spec, cast, token })}
+            onAnswer={onAnswerTest}
+          />
+          <Revisions
+            revisions={director.revisions}
+            busy={running || awaitingApproval || planning || batching}
+            onDrop={(at) => director.dropRevision?.({ at })}
+          />
           <ThinkingStream text={director.thinking} />
 
           <Budget
@@ -363,10 +511,19 @@ const DirectorPanel = ({
             </div>
           )}
 
+          {/* An empty register is NOT a clean bill of health, and it must never read as one again.
+              The register knows the artwork; only a reading knows the prompt. */}
           {plan && !risks.length && !planning && (
-            <p className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-2 text-[10px] leading-relaxed text-emerald-200/70">
-              Nothing known to be wrong with this one. Every measured hazard was checked and none apply.
-            </p>
+            gate?.unread ? (
+              <p className="rounded-xl border border-white/10 bg-black/30 p-2 text-[10px] leading-relaxed text-slate-400">
+                Nothing in the measured register applies — which says nothing about what the prompt
+                asks the model to do. Have the Director read it before spending.
+              </p>
+            ) : (
+              <p className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-2 text-[10px] leading-relaxed text-emerald-200/70">
+                The Director read the prompt and the register, and asked for no tests.
+              </p>
+            )
           )}
 
           {/* Live. `elapsedSeconds` is the worker's clock where it has one, so joining late shows
@@ -388,6 +545,22 @@ const DirectorPanel = ({
               <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
               <span>{error}</span>
             </p>
+          )}
+
+          {/* The gate, refusing. Only after a refusal is "shoot anyway" offered — a visitor who
+              wants to spend past the Director's questions may, and the take will say they did. */}
+          {director.refusal && !running && !awaitingApproval && (
+            <div className="space-y-1.5 rounded-xl border border-amber-400/20 bg-amber-500/5 p-2">
+              <p className="text-[10px] leading-relaxed text-amber-200/80">{director.refusal.detail}</p>
+              <button
+                type="button"
+                onClick={() => director.shootAnyway?.({ spec, cast, token })}
+                disabled={!ready || batching}
+                className="w-full rounded-lg border border-amber-400/30 px-2 py-1 text-[10px] text-amber-200 transition-colors hover:bg-amber-500/10 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Shoot anyway · {money(plan?.estimate?.finalUsd)}
+              </button>
+            </div>
           )}
 
           {awaitingApproval ? (
@@ -416,16 +589,24 @@ const DirectorPanel = ({
               <button
                 type="button"
                 onClick={() => director.assess({ spec, cast, token })}
-                disabled={!token || running || planning}
+                disabled={!token || running || planning || batching}
                 className="w-full rounded-xl border border-white/10 bg-black/40 px-2 py-1.5 text-[11px] text-slate-300 transition-colors hover:border-purple-500/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {director.shootingPlan ? 'Read it again' : 'Have the Director read it'}
               </button>
+            {/* Primary only once the gate is clear. Before that it is still pressable — the
+                server refuses, says why, and the override appears — but it is not the button
+                the panel is pointing at; "Run the Director's tests" is. */}
             <button
               type="button"
               onClick={() => onShoot?.({ spec, cast, token })}
-              disabled={!ready || running || planning}
-              className="w-full rounded-xl bg-purple-600 px-2 py-2 text-[11px] font-semibold text-white transition-colors hover:bg-purple-500 disabled:cursor-not-allowed disabled:bg-white/5 disabled:text-slate-600"
+              disabled={!ready || running || planning || batching}
+              className={cn(
+                'w-full rounded-xl px-2 py-2 text-[11px] font-semibold transition-colors disabled:cursor-not-allowed disabled:bg-white/5 disabled:text-slate-600',
+                cleared
+                  ? 'bg-purple-600 text-white hover:bg-purple-500'
+                  : 'border border-white/10 bg-black/40 text-slate-400 hover:text-white',
+              )}
             >
               {cta}
             </button>

@@ -59,6 +59,31 @@ const IDENTIFIER_PATTERNS = [
   { pattern: /\btoken\s*#?\d+\b/gi, what: 'a token id' },
 ];
 
+/**
+ * Rule 12. The verbs that ask one thing to physically become another.
+ *
+ * Deliberately NOT bare "become": scripts/launch-prompts.mjs legitimately says the shot "becomes
+ * a distant aerial view", which is a camera move, not a transformation. Softer phrasings the
+ * regex misses are the Director's job — it reads the visitor's prompt and names them as demands
+ * (worker/director-brief.js). This catches the unambiguous ones without a model in the loop, so
+ * a known failure never depends on a model noticing it.
+ */
+export const TRANSFORMATION_VERBS =
+  /\b(transforms?|transforming|morphs?|morphing|mutates?|mutating|metamorphos\w*|turn(?:s|ing)? into|melts? into|melting into|inflates? into|inflating into|reshapes? (?:itself |themselves )?into|dissolves? into|dissolving into)\b/i;
+
+/** The clause around a transformation verb, so the hazard quotes what was actually written. */
+const transformationClause = (text) => {
+  const source = String(text ?? '');
+  const match = TRANSFORMATION_VERBS.exec(source);
+  if (!match) return null;
+  const start = Math.max(0, match.index - 60);
+  const end = Math.min(source.length, match.index + match[0].length + 60);
+  let clause = source.slice(start, end).trim();
+  if (start > 0) clause = `…${clause.replace(/^\S*\s/, '')}`;
+  if (end < source.length) clause = `${clause.replace(/\s\S*$/, '')}…`;
+  return clause;
+};
+
 const uniq = (values) => [...new Set(values.filter(Boolean))];
 
 /** Words, lowercased, in order. Numbers and punctuation are separators. */
@@ -107,13 +132,16 @@ const printedMarks = (cast = []) => {
       bigrams.set(`${printed[i]} ${printed[i + 1]}`, owner);
     }
     for (const word of printed) {
-      if (word.length >= 5 && !palette.has(word)) singles.set(word, owner);
+      if (word.length >= 5 && !palette.has(word)) singles.set(word, { owner, recognised: false });
     }
 
+    // The Casting Director is told outright (DOSSIER brief, rule 1): "If you recognise a brand,
+    // it goes in hazards". A capitalised token there is a brand somebody RECOGNISED, which is a
+    // different grade of evidence from a word that merely happens to be printed on the piece.
     for (const hazard of dossier.hazards ?? []) {
       for (const token of String(hazard).match(/\b[A-Z][A-Za-z_]{3,}\b/g) ?? []) {
         const word = token.toLowerCase();
-        if (!palette.has(word)) singles.set(word, owner);
+        if (!palette.has(word)) singles.set(word, { owner, recognised: true });
       }
     }
   }
@@ -155,14 +183,24 @@ const brandHits = (cast, prose) => {
   const hits = [];
   const lower = prose.toLowerCase();
 
+  // `strength` is what decides whether a hit BLOCKS the shoot or is merely reported:
+  //   printed-phrase  two printed words intact in the script — the measured "bored ape" case
+  //   recognised      a brand the Casting Director named in the dossier's hazards
+  //   printed-word    one word printed on the artwork — a brand, or a sign that says HOLLYWOOD
+  //   name            the cast piece's own name — a marque, or a landmark called what it is
   for (const [bigram, owner] of bigrams) {
     if (new RegExp(`\\b${escapeRegex(bigram)}\\b`).test(lower)) {
-      hits.push({ text: bigram, from: 'printed on the artwork', piece: owner });
+      hits.push({ text: bigram, from: 'printed on the artwork', piece: owner, strength: 'printed-phrase' });
     }
   }
-  for (const [word, owner] of singles) {
+  for (const [word, { owner, recognised }] of singles) {
     if (new RegExp(`\\b${escapeRegex(word)}\\b`).test(lower)) {
-      hits.push({ text: word, from: 'printed on the artwork', piece: owner });
+      hits.push({
+        text: word,
+        from: recognised ? 'recognised as a brand by the Casting Director' : 'printed on the artwork',
+        piece: owner,
+        strength: recognised ? 'recognised' : 'printed-word',
+      });
     }
   }
 
@@ -175,7 +213,7 @@ const brandHits = (cast, prose) => {
     const parts = cleaned.split(/\s+/).filter(Boolean);
     if (parts.length === 1 && safe.has(cleaned.toLowerCase())) continue;
     if (new RegExp(`\\b${escapeRegex(cleaned)}\\b`, 'i').test(prose)) {
-      hits.push({ text: cleaned, from: 'the name of a cast piece', piece: null });
+      hits.push({ text: cleaned, from: 'the name of a cast piece', piece: null, strength: 'name' });
     }
   }
 
@@ -241,7 +279,7 @@ const elevatedBy = (risk, mustHold = []) => {
  * be asked to spend in — and because the top of the list is what the Director will act on if it
  * only gets to act once.
  */
-export const assessRisks = ({ spec, cast = [], preflight = null, mustHold = [] } = {}) => {
+export const assessRisks = ({ spec, cast = [], preflight = null, mustHold = [], prompt = null, intent = null } = {}) => {
   const risks = [];
   const prose = proseOf(spec);
   const referencePlan = spec?.referencePlan ?? [];
@@ -254,21 +292,51 @@ export const assessRisks = ({ spec, cast = [], preflight = null, mustHold = [] }
   // The one failure that costs nothing but stops everything: a rejected request never renders,
   // so it is free — but it is also the most likely single reason a first render fails, because
   // the input to this product is brand artwork and the obvious thing to write is the brand.
-  const named = brandHits(cast, prose);
-  if (named.length) {
+  //
+  // ⚠️ TWO GRADES, AND THE DIFFERENCE COST A FILM. On 2026-08-28 a piece called "Hollywood sign",
+  // printed HOLLYWOOD, had its name scrubbed out of the script by the Director's free fix because
+  // this scan called it a brand — and the film was about the Hollywood sign. A landmark, a place,
+  // a title, or a piece called what it is are not trademarks. The asymmetry decides the rule:
+  // a request MiniMax rejects costs nothing and says why (1026, unbilled); a subject scrubbed
+  // out of the script costs the film. So only the strong evidence blocks — a printed PHRASE, or
+  // a brand the Casting Director RECOGNISED — and the rest is reported, never rewritten.
+  const hits = brandHits(cast, prose);
+  const hard = hits.filter((hit) => hit.strength === 'printed-phrase' || hit.strength === 'recognised');
+  const soft = hits.filter((hit) => !hard.includes(hit));
+  if (hard.length) {
     add({
       id: 'brand-name-in-script',
       rule: 1,
       severity: 'floor',
       what:
-        `The script contains ${named.map((hit) => `"${hit.text}" (${hit.from})`).join(', ')}. ` +
+        `The script contains ${hard.map((hit) => `"${hit.text}" (${hit.from})`).join(', ')}. ` +
         'MiniMax rejects the whole request.',
-      evidence: named,
+      evidence: hard,
       measured:
         'MiniMax error 1026 — the content filter. The reference images carry the marks; the text ' +
         'carries only form, material and colour. "a low, sharply-creased wedge-profile hypercar ' +
         'with Y-shaped running lights", never the manufacturer.',
       fix: 'rewrite',
+      test: null,
+    });
+  } else if (soft.length) {
+    add({
+      id: 'brand-word-in-script',
+      rule: 1,
+      severity: 'note',
+      what:
+        `The script says ${soft.map((hit) => `"${hit.text}" (${hit.from})`).join(' and ')}. ` +
+        'The Casting Director recognised no brand here, so it is left as written — a landmark, a ' +
+        'title or a place is not a trademark. If MiniMax disagrees, the request is rejected for ' +
+        'free and nothing is billed.',
+      evidence: soft,
+      measured:
+        'A piece called "Hollywood sign", printed HOLLYWOOD, had its name rewritten out of its own ' +
+        'film (2026-08-28) because it matched this scan. A rejected request costs nothing (error ' +
+        '1026, unbilled); a scrubbed subject costs the film. Reported, never rewritten.',
+      fix: 'review',
+      // Never handed to the Director as something to rewrite. The whole point.
+      autofix: false,
       test: null,
     });
   }
@@ -350,6 +418,77 @@ export const assessRisks = ({ spec, cast = [], preflight = null, mustHold = [] }
         focus: 'continuity',
       },
     });
+  }
+
+  // ── Rule 12. TRANSFORMATIONS GET FAKED. ────────────────────────────────────────────────────
+  //
+  // The lesson of the Hollywood-sign film (2026-08-28): the letters were to inflate and morph
+  // into a brain, the letters swelled, and then a brain FADED IN over them. Nobody had rehearsed
+  // the one thing the film was about. This is the first hazard in the register that comes from
+  // what the visitor ASKED FOR rather than from the artwork, and it is the reason the test it
+  // proposes is a rehearsal of the real beat rather than a stripped studio shot.
+  //
+  // Beat indices are 1-based here and everywhere a test names a beat, matching `intentTrace`.
+  const TRANSFORMATION_MEASURED =
+    'Measured on a sign whose letters were to inflate and morph into an enormous brain: the ' +
+    'letters swelled, then a brain faded in on top of them as a superimposition. H3 begins a ' +
+    'transformation and then cheats the rest with a dissolve unless the mechanism is stated ' +
+    'as a physical constraint AND the beat is rehearsed first.';
+  const transformationRefKeys = referencePlan.slice(0, 3).map((slot) => slot.key);
+  const TRANSFORMATION_ANSWERS = {
+    held: 'It physically became the other thing',
+    failed: 'The second thing faded in over it',
+    unclear: 'Cannot tell',
+  };
+  let transformationFound = false;
+  beats.forEach((beat, index) => {
+    const clause = transformationClause(beat);
+    if (!clause) return;
+    transformationFound = true;
+    add({
+      id: `transformation-faked:${index + 1}`,
+      rule: 12,
+      severity: 'hazard',
+      what: `Beat ${index + 1} asks one thing to become another ("${clause}"). H3 fakes this with a dissolve unless it is rehearsed and constrained.`,
+      evidence: { beat: index + 1, clause },
+      measured: TRANSFORMATION_MEASURED,
+      fix: 'rewrite-then-test',
+      // ONE yes/no question, and the answers in the film's own words. An either/or question
+      // ("does it happen, or does it fade in?") against buttons that say "It held" was measured
+      // confusing the visitor on the first rehearsal this rule ever asked for.
+      test: {
+        question: `In beat ${index + 1}, does the change physically happen to the thing on screen — "${clause}"?`,
+        answers: TRANSFORMATION_ANSWERS,
+        params: MOTION_TEST,
+        refKeys: transformationRefKeys,
+        focus: 'rehearsal',
+        beats: [index + 1],
+      },
+    });
+  });
+  // The visitor's own words, when the Screenwriter softened them. "Literally transform" that
+  // became "gives way to" in the beats is still a transformation the visitor is paying for.
+  if (!transformationFound) {
+    const asked = transformationClause(prompt) ?? transformationClause(intent);
+    if (asked) {
+      add({
+        id: 'transformation-faked:prompt',
+        rule: 12,
+        severity: 'hazard',
+        what: `The visitor asked for one thing to become another ("${asked}"), and the beats no longer say so. H3 fakes this with a dissolve unless it is rehearsed and constrained.`,
+        evidence: { beat: null, clause: asked },
+        measured: TRANSFORMATION_MEASURED,
+        fix: 'rewrite-then-test',
+        test: {
+          question: `Does the transformation physically happen to the thing on screen — "${asked}"?`,
+          answers: TRANSFORMATION_ANSWERS,
+          params: MOTION_TEST,
+          refKeys: transformationRefKeys,
+          focus: 'rehearsal',
+          beats: [],
+        },
+      });
+    }
   }
 
   // ── Per-piece hazards, straight off the dossier enums. ─────────────────────────────────────

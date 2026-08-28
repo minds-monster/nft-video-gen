@@ -34,7 +34,7 @@ import { extractFrames } from './frames.js';
 import { judgeFrames } from './director-judge.js';
 import { planShoot, reviewTest } from './director-agent.js';
 import { signedMediaUrl } from './signed-media.js';
-import { relayFilmographyDigest } from './filmography.js';
+import { relayFilmographyDigest, relayScreenTestDigest } from './filmography.js';
 
 const jobKey = (mindId, jobId) => `director-job:${mindId}:${jobId}`;
 
@@ -74,6 +74,18 @@ export async function createJob(
     // consumer has no request to re-read them from and the spec is pure client state — nothing
     // server-side stores it.
     spec = null, risks = null, brief = null, finalUsd = 0, remainingUsd = null, riskMeasured = null,
+    // What the screenplay record pinned beside the film carries (see `pinScreenplay`): the prompt
+    // from the visitor's saved draft, the cast by asset key, and the cast by name for the digest.
+    prompt = null, castRefs = null, castNames = null,
+    // A rehearsal's own beat text (worker/screen-test.js), read back by the review step so the
+    // Director knows what the test was told to render, not only what it asked.
+    direction = null,
+    // The verdict buttons in this test's own words ({ held, failed, unclear }), or null for the
+    // generic ones. On the take, because the take is what gets judged.
+    answers = null,
+    // The visitor shooting past the Director's outstanding tests (worker/director-gate.js). On
+    // the take rather than the job, because it is part of what the take IS.
+    override = null,
   },
 ) {
   const record = {
@@ -92,6 +104,10 @@ export async function createJob(
     finalUsd,
     remainingUsd,
     riskMeasured,
+    direction,
+    prompt,
+    castRefs,
+    castNames: castNames ?? [],
     // A Screen Test and a final take are the same machinery — same submit, same poll, same
     // mirror — and differ only in what they are FOR. Keeping them one code path is what makes a
     // test cheap to add; keeping `question` on the record is what makes it worth having run.
@@ -106,6 +122,8 @@ export async function createJob(
       riskId,
       costUsd,
       status: 'pending',
+      ...(answers ? { answers } : {}),
+      ...(override ? { override } : {}),
     },
     events: [],
     attempts: 0,
@@ -171,6 +189,32 @@ export async function appendRevision(env, mindId, filmId, revision) {
   return next;
 }
 
+/**
+ * A fresh reading replaces the last reading's free fixes rather than stacking on them.
+ *
+ * Learned on 2026-08-28: two readings of one film left three revisions on the record, two of
+ * them from a hazard the second reading no longer raised, and there was no way to shed them.
+ * Revisions that came from a TEST are kept — those were paid for and answered something.
+ */
+export async function replaceFreeRevisions(env, mindId, filmId, fixes) {
+  const record = await loadProduction(env, mindId, filmId);
+  const kept = (record.revisions ?? []).filter((revision) => !revision.free);
+  const now = Date.now();
+  const revisions = [...kept, ...fixes.map((fix, index) => ({ ...fix, free: true, at: now + index }))];
+  const next = { ...record, filmId, revisions, updatedAt: now };
+  await env.MIND_CONNECTIONS.put(productionKey(mindId, filmId), JSON.stringify(next));
+  return next;
+}
+
+/** Drop one revision by its timestamp — the reversibility `applyRevisions` promises, made real. */
+export async function dropRevision(env, mindId, filmId, at) {
+  const record = await loadProduction(env, mindId, filmId);
+  const revisions = (record.revisions ?? []).filter((revision) => revision.at !== at);
+  const next = { ...record, filmId, revisions, updatedAt: Date.now() };
+  await env.MIND_CONNECTIONS.put(productionKey(mindId, filmId), JSON.stringify(next));
+  return next;
+}
+
 export async function appendTake(env, mindId, filmId, take) {
   const record = await loadProduction(env, mindId, filmId);
   const takes = [...record.takes.filter((existing) => existing.takeId !== take.takeId), take];
@@ -193,6 +237,32 @@ export async function appendTake(env, mindId, filmId, take) {
 export async function recordTakeIpfs(env, mindId, filmId, takeId, ipfs) {
   const record = await loadProduction(env, mindId, filmId);
   const takes = record.takes.map((take) => (take.takeId === takeId ? { ...take, ipfs } : take));
+  const next = { ...record, filmId, takes, updatedAt: Date.now() };
+  await env.MIND_CONNECTIONS.put(productionKey(mindId, filmId), JSON.stringify(next));
+  return next;
+}
+
+/**
+ * The Director, reading a test back, said the question has to be asked again. On the take, like
+ * the verdict, so the gate (worker/director-gate.js) can see it — and cleared by the next test
+ * against the same question superseding this one, not by editing it away.
+ */
+export async function recordTakeRetest(env, mindId, filmId, takeId, retest) {
+  const record = await loadProduction(env, mindId, filmId);
+  const takes = record.takes.map((take) => (take.takeId === takeId ? { ...take, retest } : take));
+  const next = { ...record, filmId, takes, updatedAt: Date.now() };
+  await env.MIND_CONNECTIONS.put(productionKey(mindId, filmId), JSON.stringify(next));
+  return next;
+}
+
+/**
+ * The Director's read-back of a test, on the take it is about — so the finding outlives the job
+ * log and the visitor can see what their answer changed. Until 2026-08-28 the finding lived only
+ * in a 24-hour job log and a streaming tail nobody who refreshed ever saw.
+ */
+export async function recordTakeReview(env, mindId, filmId, takeId, review) {
+  const record = await loadProduction(env, mindId, filmId);
+  const takes = record.takes.map((take) => (take.takeId === takeId ? { ...take, review } : take));
   const next = { ...record, filmId, takes, updatedAt: Date.now() };
   await env.MIND_CONNECTIONS.put(productionKey(mindId, filmId), JSON.stringify(next));
   return next;
@@ -255,6 +325,7 @@ async function assess(env, record, logger) {
     spec: record.spec,
     risks: record.risks ?? [],
     brief: record.brief ?? null,
+    prompt: record.prompt ?? null,
     finalUsd: record.finalUsd ?? 0,
     remainingUsd: record.remainingUsd ?? null,
     onReasoning: (text) => {
@@ -267,22 +338,32 @@ async function assess(env, record, logger) {
     // inventing hazards is visible in the log rather than merely absent from the bill.
     console.warn(`Director proposed unknown risks: ${plan.dropped.join(', ')}`);
   }
+  if (plan.droppedDemands.length) {
+    console.warn(
+      `Director demands dropped: ${plan.droppedDemands.map((d) => `${d.id} (${d.reason})`).join(', ')}`,
+    );
+  }
+  if (plan.droppedFixes.length) {
+    // A fix against a hazard the register said not to rewrite is the Hollywood failure; it is
+    // refused above and named here so the log shows the model trying.
+    console.warn(`Director fixes dropped: ${plan.droppedFixes.map((f) => `${f.riskId}/${f.block} (${f.reason})`).join(', ')}`);
+    logger.log('dropped-fixes', { fixes: plan.droppedFixes });
+  }
 
   logger.log('reading', { reading: plan.reading, plan: plan.plan });
 
   // Free fixes are applied NOW, as revisions, because a hazard the Director says is "cheap to fix
   // in the script" is only actually fixed if something writes the fix down. Applied before the
   // tests are proposed, so a hazard it just repaired is not also something it asks money for.
-  for (const fix of plan.fixes) {
-    await appendRevision(env, record.mindId, record.filmId, {
-      block: fix.block,
-      text: fix.text,
-      why: fix.why,
-      fromRiskId: fix.riskId,
-      free: true,
-    });
-    logger.log('revision', { block: fix.block, why: fix.why, free: true });
-  }
+  // Applied as a SET: this reading's fixes replace the last reading's, so a hazard that no longer
+  // exists cannot leave its rewrite behind.
+  await replaceFreeRevisions(
+    env,
+    record.mindId,
+    record.filmId,
+    plan.fixes.map((fix) => ({ block: fix.block, text: fix.text, why: fix.why, fromRiskId: fix.riskId })),
+  );
+  for (const fix of plan.fixes) logger.log('revision', { block: fix.block, why: fix.why, free: true });
   for (const test of plan.tests) {
     logger.log('proposed', {
       riskId: test.riskId,
@@ -292,7 +373,20 @@ async function assess(env, record, logger) {
     });
   }
   for (const skipped of plan.skip) logger.log('skipped', skipped);
-  if (plan.ownConcern) logger.log('own-concern', plan.ownConcern);
+  // The Director's own asks. Logged one by one, like the register tests above, because "I need
+  // $0.48 to find out whether the letters actually become a brain" is the line the visitor is
+  // waiting to read — and the one the Hollywood film never got.
+  for (const demand of plan.demands) {
+    logger.log('demand', {
+      riskId: `demand:${demand.id}`,
+      question: demand.question,
+      why: demand.why,
+      estUsd: demand.estUsd,
+    });
+  }
+
+  const registerUsd = plan.tests.reduce((sum, t) => sum + (t.risk?.estUsd ?? 0), 0);
+  const demandUsd = plan.demands.reduce((sum, d) => sum + (d.estUsd ?? 0), 0);
 
   await saveShootingPlan(env, record.mindId, record.filmId, {
     reading: plan.reading,
@@ -305,12 +399,14 @@ async function assess(env, record, logger) {
       estUsd: test.risk?.estUsd ?? 0,
     })),
     skip: plan.skip,
-    ownConcern: plan.ownConcern,
-    totalTestUsd: Math.round(plan.tests.reduce((sum, t) => sum + (t.risk?.estUsd ?? 0), 0) * 100) / 100,
+    // Whole objects, because the test endpoint rebuilds the rehearsal from them: the direction
+    // is the script, and a demand without it is a question with nothing to render.
+    demands: plan.demands,
+    totalTestUsd: Math.round((registerUsd + demandUsd) * 100) / 100,
     at: Date.now(),
   });
 
-  logger.log('result', { tests: plan.tests.length, reading: plan.reading });
+  logger.log('result', { tests: plan.tests.length, demands: plan.demands.length, reading: plan.reading });
   await logger.setStatus('complete');
 }
 
@@ -330,11 +426,21 @@ async function review(env, record, logger) {
 
   logger.log('phase', { phase: 'reviewing', detail: 'Reading the test back against the film.' });
 
+  // Every earlier answer on this film, so a revision builds on what the tests already proved
+  // rather than re-deciding it. The current take is excluded: it is the one being read.
+  const production = await loadProduction(env, record.mindId, record.filmId).catch(() => null);
+  const priorVerdicts = (production?.takes ?? [])
+    .filter((entry) => entry.kind === 'screen-test' && entry.verdict?.answer && entry.takeId !== take.takeId)
+    .map((entry) => ({ question: entry.question, answer: entry.verdict.answer, note: entry.verdict.note ?? null }));
+
   const result = await reviewTest(env, {
     spec: record.spec,
     question: take.question,
     verdict: take.verdict,
     riskMeasured: record.riskMeasured ?? null,
+    prompt: record.prompt ?? null,
+    direction: record.direction ?? null,
+    priorVerdicts,
     onReasoning: (text) => {
       if (text) logger.log('reasoning', { delta: text });
     },
@@ -344,6 +450,7 @@ async function review(env, record, logger) {
     finding: result.finding,
     settled: result.settled,
     readyToShoot: result.readyToShoot,
+    retest: result.retest,
     suppressedRevision: result.suppressedRevision,
   });
 
@@ -356,7 +463,24 @@ async function review(env, record, logger) {
     logger.log('revision', result.revision);
   }
 
-  logger.log('result', { finding: result.finding, revised: Boolean(result.revision) });
+  // Written on the durable take, where the gate reads it. A re-test the Director asked for and
+  // nothing recorded would be a gate that opened on a question still unanswered.
+  if (result.retest) {
+    await recordTakeRetest(env, record.mindId, record.filmId, take.takeId, true);
+    record.take.retest = true;
+    logger.log('retest', { takeId: take.takeId, question: take.question });
+  }
+
+  await recordTakeReview(env, record.mindId, record.filmId, take.takeId, {
+    finding: result.finding,
+    settled: result.settled,
+    readyToShoot: result.readyToShoot,
+    retest: result.retest,
+    revised: result.revision ? { block: result.revision.block, why: result.revision.why } : null,
+    at: Date.now(),
+  });
+
+  logger.log('result', { finding: result.finding, revised: Boolean(result.revision), retest: result.retest });
   await logger.setStatus('complete');
 }
 
@@ -387,7 +511,8 @@ async function submit(env, record, logger, cast) {
   record.step = 'poll';
   // Who was in it, by name. The cast itself lives only on the queue message; the names are kept
   // so the Mind's filmography can say "the one with the astronaut" rather than "take-9f21".
-  record.castNames = (cast ?? []).map((entry) => entry?.name).filter(Boolean);
+  const names = (cast ?? []).map((entry) => entry?.name).filter(Boolean);
+  if (names.length) record.castNames = names;
   await saveJob(env, record.mindId, record);
 
   await recordSpend(env, record.mindId, {
@@ -515,6 +640,10 @@ async function poll(env, record, logger) {
     // the reason is one line: "a good render is worthless if we can't repeat it."
     script: record.script,
     refKeys: record.refKeys,
+    // The job that shot it, so a verdict given from another tab — or after this one is closed —
+    // can still reach the review step (handleDirectorVerdict). Best-effort: the job log expires
+    // in a day, the take does not.
+    jobId: record.jobId,
   });
 
   logger.log('take', {
@@ -534,13 +663,33 @@ async function poll(env, record, logger) {
     await enqueue(env, { mindId: record.mindId, jobId: record.jobId, step: 'review' }, 1);
   }
 
-  // A final take goes on to be pinned and told about. A separate step, after `complete`, because
-  // neither is allowed to cost the visitor the film: the clip is safe and the job is finished
-  // before anything here can fail. Screen tests are evidence, not filmography, and stay out.
-  if (record.take.kind !== 'screen-test') {
-    await enqueue(env, { mindId: record.mindId, jobId: record.jobId, step: 'pin' }, 1);
-  }
+  // Every clip goes on to be pinned and told about — tests included, since 2026-08-28: a visitor
+  // who ran five rehearsals and liked one needs the Mind to be able to name it. A separate step,
+  // after `complete`, because neither is allowed to cost the visitor the film: the clip is safe
+  // and the job is finished before anything here can fail.
+  await enqueue(env, { mindId: record.mindId, jobId: record.jobId, step: 'pin' }, 1);
 }
+
+/**
+ * The cast as a public record: on-chain identity, display name, collection, and one still. This is
+ * what the screenplay document names each <Subject N> by, so anyone holding the record can find
+ * the actual piece — the asset key is `chain:address:tokenId` (src/lib/assetKey.js).
+ */
+export const castRefsFrom = (cast = []) =>
+  (Array.isArray(cast) ? cast : [])
+    .map((entry) => {
+      const [chain = null, address = null, tokenId = null] = String(entry?.key ?? '').split(':');
+      return {
+        key: entry?.key ?? null,
+        chain,
+        address,
+        tokenId,
+        name: entry?.name ?? null,
+        collection: entry?.collectionName ?? null,
+        image: castingStills(entry?.nft)[0] ?? null,
+      };
+    })
+    .filter((ref) => ref.key);
 
 export const sha256Hex = async (bytes) =>
   [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))]
@@ -558,8 +707,49 @@ const PINATA_UPLOAD_URL = 'https://uploads.pinata.cloud/v3/files';
 export const ipfsGatewayUrl = (env, cid) =>
   `${(env.PINATA_GATEWAY ?? 'https://gateway.pinata.cloud').replace(/\/$/, '')}/ipfs/${cid}`;
 
+/** One file to Pinata's v3 Files API, on the public network. */
+async function uploadToPinata(env, { blob, filename, name, keyvalues }) {
+  const form = new FormData();
+  form.append('file', blob, filename);
+  form.append('network', 'public');
+  form.append('name', name);
+  form.append('keyvalues', JSON.stringify(keyvalues));
+
+  const response = await fetch(PINATA_UPLOAD_URL, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${env.PINATA_JWT}` },
+    body: form,
+  });
+  if (!response.ok) {
+    const detail = (await response.text().catch(() => '')).slice(0, 200);
+    throw Object.assign(new Error(`Pinata refused the pin: ${response.status} ${detail}`), {
+      status: response.status,
+      retryable: response.status >= 500 || response.status === 429,
+    });
+  }
+  const payload = await response.json().catch(() => ({}));
+  const cid = payload?.data?.cid ?? null;
+  if (!cid) throw Object.assign(new Error('Pinata returned no CID.'), { retryable: true });
+  return { cid, gatewayUrl: ipfsGatewayUrl(env, cid) };
+}
+
 /**
- * Pin the finished film to IPFS, then tell the Mind.
+ * The screenplay as a public document: what was asked for, what was written, and who was in it.
+ * No mindId in the body — that stays in Pinata's own name/keyvalues, as it does for the film.
+ */
+export const screenplayDocument = (record, { now = Date.now() } = {}) => ({
+  version: 1,
+  filmId: record.filmId,
+  takeId: record.take?.takeId ?? null,
+  prompt: record.prompt ?? null,
+  spec: record.spec ?? null,
+  cast: record.castRefs ?? [],
+  film: record.take?.ipfs?.cid ? { cid: record.take.ipfs.cid, sha256: record.take.sha256 ?? null } : null,
+  createdAt: new Date(now).toISOString(),
+});
+
+/**
+ * Pin the finished film to IPFS, then the screenplay beside it, then tell the Mind.
  *
  * WHY IPFS AT ALL, when R2 already has the bytes. R2 is ours. A signed link expires in seven days
  * and the bucket exists only as long as this site does. A CID is derived from the bytes
@@ -580,43 +770,60 @@ async function pin(env, record, logger) {
     if (!object) throw Object.assign(new Error('The finished film is missing from storage.'), { fatal: true });
     const bytes = await object.arrayBuffer();
 
-    const form = new FormData();
-    form.append('file', new Blob([bytes], { type: 'video/mp4' }), `${record.take.takeId}.mp4`);
-    form.append('network', 'public');
-    form.append('name', `${record.mindId}/${record.filmId}/${record.take.takeId}.mp4`);
-    form.append('keyvalues', JSON.stringify({ mindId: record.mindId, filmId: record.filmId, takeId: record.take.takeId }));
-
-    const response = await fetch(PINATA_UPLOAD_URL, {
-      method: 'POST',
-      headers: { authorization: `Bearer ${env.PINATA_JWT}` },
-      body: form,
+    const { cid, gatewayUrl } = await uploadToPinata(env, {
+      blob: new Blob([bytes], { type: 'video/mp4' }),
+      filename: `${record.take.takeId}.mp4`,
+      name: `${record.mindId}/${record.filmId}/${record.take.takeId}.mp4`,
+      keyvalues: { mindId: record.mindId, filmId: record.filmId, takeId: record.take.takeId },
     });
-    if (!response.ok) {
-      const detail = (await response.text().catch(() => '')).slice(0, 200);
-      throw Object.assign(new Error(`Pinata refused the pin: ${response.status} ${detail}`), {
-        status: response.status,
-        retryable: response.status >= 500 || response.status === 429,
-      });
-    }
-    const payload = await response.json().catch(() => ({}));
-    const cid = payload?.data?.cid ?? null;
-    if (!cid) throw Object.assign(new Error('Pinata returned no CID.'), { retryable: true });
 
-    const ipfs = { cid, provider: 'pinata', pinnedAt: Date.now(), gatewayUrl: ipfsGatewayUrl(env, cid) };
+    const ipfs = { ...(record.take.ipfs ?? {}), cid, provider: 'pinata', pinnedAt: Date.now(), gatewayUrl };
     // Durable first, told second — the same order as the take itself.
     await recordTakeIpfs(env, record.mindId, record.filmId, record.take.takeId, ipfs);
     record.take.ipfs = ipfs;
     await saveJob(env, record.mindId, record);
-    logger.log('ipfs', { takeId: record.take.takeId, cid, gatewayUrl: ipfs.gatewayUrl });
+    logger.log('ipfs', { takeId: record.take.takeId, cid, gatewayUrl });
   }
 
+  // A test's record is its question and answer, carried in the digest; the screenplay document
+  // belongs beside the film, not beside every rehearsal of it.
+  if (record.take.kind !== 'screen-test') await pinScreenplay(env, record, logger);
   await tellTheMind(env, record);
+}
+
+/**
+ * The screenplay, pinned next to the film.
+ *
+ * The film alone is half a record: it shows what came out, not what was asked for. The prompt,
+ * the beats and the cast by asset key are a few KB, so they go up as one JSON document and the
+ * Mind is given both addresses. Best-effort throughout — a screenplay that will not pin is
+ * cosmetic and must never delay telling the Mind about a film that did.
+ */
+async function pinScreenplay(env, record, logger) {
+  if (!env.PINATA_JWT || record.take?.ipfs?.screenplayCid || !record.spec?.beats?.length) return;
+  try {
+    const { cid, gatewayUrl } = await uploadToPinata(env, {
+      blob: new Blob([JSON.stringify(screenplayDocument(record), null, 2)], { type: 'application/json' }),
+      filename: `${record.take.takeId}.screenplay.json`,
+      name: `${record.mindId}/${record.filmId}/${record.take.takeId}.screenplay.json`,
+      keyvalues: { mindId: record.mindId, filmId: record.filmId, takeId: record.take.takeId, kind: 'screenplay' },
+    });
+    const ipfs = { ...(record.take.ipfs ?? {}), screenplayCid: cid, screenplayGatewayUrl: gatewayUrl, screenplayPinnedAt: Date.now() };
+    await recordTakeIpfs(env, record.mindId, record.filmId, record.take.takeId, ipfs);
+    record.take.ipfs = ipfs;
+    await saveJob(env, record.mindId, record);
+    logger.log('ipfs', { takeId: record.take.takeId, screenplayCid: cid, gatewayUrl });
+  } catch (error) {
+    console.warn(`Screenplay pin for ${record.take?.takeId} failed:`, error.message);
+    logger.log('error', { message: `Screenplay pin failed: ${error.message}`, cosmetic: true });
+  }
 }
 
 /** Once per job. The pin step can be retried; the Mind must not be told twice. */
 async function tellTheMind(env, record) {
   if (record.take?.digestedAt) return;
-  const sent = await relayFilmographyDigest(env, record).catch((error) => {
+  const relay = record.take?.kind === 'screen-test' ? relayScreenTestDigest : relayFilmographyDigest;
+  const sent = await relay(env, record).catch((error) => {
     console.warn(`Filmography digest for ${record.take?.takeId} failed:`, error.message);
     return false;
   });
@@ -644,11 +851,14 @@ async function recordTakeDigested(env, mindId, filmId, takeId, digestedAt) {
  * reaches IPFS and the Mind. Sends the digest again even if one was sent before: the visitor
  * pressed the button, and "remind the Mind" is a reasonable thing to mean by it.
  */
-export async function rememberTake(env, mindId, { filmId, takeId, origin = null, logline = null }) {
+export async function rememberTake(
+  env,
+  mindId,
+  { filmId, takeId, origin = null, logline = null, spec = null, prompt = null, castRefs = null, castNames = null },
+) {
   const production = await loadProduction(env, mindId, filmId);
   const take = production.takes.find((entry) => entry.takeId === takeId);
   if (!take) throw Object.assign(new Error('take_not_found'), { status: 404 });
-  if (take.kind === 'screen-test') throw Object.assign(new Error('screen_tests_are_not_filmography'), { status: 400 });
   if (take.status !== 'ready' || !take.r2Key) throw Object.assign(new Error('take_not_ready'), { status: 409 });
 
   const record = {
@@ -658,8 +868,12 @@ export async function rememberTake(env, mindId, { filmId, takeId, origin = null,
     status: 'complete',
     step: 'pin',
     origin,
-    spec: logline ? { logline, beats: [] } : null,
-    castNames: [],
+    // The whole screenplay when the visitor's draft is still this film (worker/draft.js), so the
+    // record pinned beside the take carries it; the logline alone otherwise.
+    spec: spec?.beats?.length ? spec : logline ? { logline, beats: [] } : null,
+    prompt,
+    castRefs,
+    castNames: castNames ?? (castRefs ?? []).map((ref) => ref.name).filter(Boolean),
     params: take.params ?? {},
     script: take.script ?? null,
     take: { ...take, digestedAt: null },
@@ -767,6 +981,10 @@ export async function startTake(
   {
     filmId, script, params, refKeys, cast, kind = 'take', question = null, riskId = null, origin = null,
     spec = null, risks = null, brief = null, finalUsd = 0, remainingUsd = null, riskMeasured = null,
+    // What the screenplay record pinned beside the film carries (see `pinScreenplay`): the prompt
+    // from the visitor's saved draft, the cast by asset key, and the cast by name for the digest.
+    prompt = null, castRefs = null, castNames = null,
+    direction = null, override = null, answers = null,
   },
 ) {
   const costUsd = priceUsd(params) ?? 0;
@@ -803,6 +1021,12 @@ export async function startTake(
     finalUsd,
     remainingUsd,
     riskMeasured,
+    prompt,
+    castRefs,
+    castNames,
+    direction,
+    override,
+    answers,
     status: needsApproval ? 'awaiting-approval' : 'queued',
     step: 'submit',
   });
@@ -829,13 +1053,48 @@ export async function resumeAfterApproval(env, mindId, record, cast) {
 export { getEnvelope };
 
 /**
+ * Read a verdict back when the job that shot the test is gone.
+ *
+ * Jobs expire in a day and, before 2026-08-28, a take did not remember its job — so a visitor
+ * who answered a test after a refresh recorded a verdict the Director never read. The durable
+ * take and the saved draft hold everything the review needs; this rebuilds a job around them,
+ * the way `rememberTake` does for the pin step. Spends nothing.
+ */
+export async function startReview(env, mindId, { filmId, take, spec = null, prompt = null, origin = null }) {
+  if (!take?.verdict?.answer || !spec?.beats?.length) return null;
+  const record = await createJob(env, mindId, {
+    filmId,
+    script: take.script ?? null,
+    params: take.params ?? { model: 'MiniMax-H3', resolution: '768P', duration: 6, ratio: '16:9' },
+    refKeys: take.refKeys ?? [],
+    proposalId: null,
+    costUsd: 0,
+    kind: 'screen-test',
+    question: take.question ?? null,
+    riskId: take.riskId ?? null,
+    origin,
+    spec,
+    prompt,
+    direction: take.direction ?? null,
+    answers: take.answers ?? null,
+    status: 'queued',
+    step: 'review',
+  });
+  // The rebuilt job judges THIS take, not a fresh one: same id, same verdict, already settled.
+  record.take = { ...record.take, ...take, kind: 'screen-test' };
+  await saveJob(env, mindId, record);
+  await enqueue(env, { mindId, jobId: record.jobId, step: 'review' }, 1);
+  return record;
+}
+
+/**
  * Start a planning pass. Spends nothing, so it bypasses the money gate entirely.
  *
  * A job rather than a direct call, purely so the reasoning STREAMS. The panel's whole claim is
  * that you can watch the Director decide how to spend your money; a spinner followed by a
  * finished list would be a different, weaker product.
  */
-export async function startAssessment(env, mindId, { filmId, spec, risks, brief, finalUsd, remainingUsd }) {
+export async function startAssessment(env, mindId, { filmId, spec, risks, brief, prompt = null, finalUsd, remainingUsd }) {
   const record = await createJob(env, mindId, {
     filmId,
     script: null,
@@ -849,6 +1108,7 @@ export async function startAssessment(env, mindId, { filmId, spec, risks, brief,
     spec,
     risks,
     brief,
+    prompt,
     finalUsd,
     remainingUsd,
   });

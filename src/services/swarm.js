@@ -499,12 +499,16 @@ export const getDirectorPlan = async ({ spec, cast, preflight = false }, token) 
 };
 
 /** Open the production and shoot. Returns a job that is either queued or parked for approval —
- * in `ask` mode it is parked every single time, which is the mode working, not failing. */
-export const startDirectorTake = async ({ spec, cast, mode, allowanceUsd }, token) => {
+ * in `ask` mode it is parked every single time, which is the mode working, not failing.
+ *
+ * `override` is the visitor shooting past the Director's outstanding screen tests. Never defaulted
+ * on: without it the server refuses with 409 `untested` / `unread` (worker/director-gate.js), and
+ * the panel offers the override only after that refusal. */
+export const startDirectorTake = async ({ spec, cast, mode, allowanceUsd, override = false }, token) => {
   const response = await fetch('/api/director/start', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ spec, cast: cast.map(forStoryboardWire), mode, allowanceUsd }),
+    body: JSON.stringify({ spec, cast: cast.map(forStoryboardWire), mode, allowanceUsd, override }),
   });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) throw Object.assign(new Error(payload.detail ?? payload.error ?? 'Could not start'), payload);
@@ -612,6 +616,18 @@ export const saveDirectorBrief = async ({ filmId, brief }, token) => {
   });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(payload.detail ?? payload.error ?? 'Could not save that scope');
+  return payload;
+};
+
+/** Take one of the Director's amendments back off the script. `at` is the revision's timestamp. */
+export const dropDirectorRevision = async ({ filmId, at }, token) => {
+  const response = await fetch('/api/director/revision/drop', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filmId, at }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.detail ?? payload.error ?? 'Could not drop that revision');
   return payload;
 };
 

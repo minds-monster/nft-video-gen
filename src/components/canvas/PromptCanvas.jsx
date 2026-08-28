@@ -92,7 +92,7 @@ const readCollapsed = () => {
  * (browser left, viewer/timeline centre, inspector right), each containing the relevant panel,
  * under a pipeline bar that says which agent is working and what happens next.
  */
-const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder, director }) => {
+const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder, director, onStartFresh, budgetBoostUntil = null }) => {
   const {
     open,
     openCanvas,
@@ -144,7 +144,9 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder, director
   // 6-second poll of the same endpoint. One poll, one budget, passed down.
   const { session } = useMindChatContext();
   const token = session?.token;
-  const badge = useMindStatusBadge({ token, active: Boolean(token) && open });
+  // `budgetBoostUntil` is set for a minute or so after a Stripe return, when the credited top-up
+  // is landing via webhook and the visitor is watching the number.
+  const badge = useMindStatusBadge({ token, active: Boolean(token) && open, boostUntil: budgetBoostUntil });
   const budget = badge?.budget;
 
   const pipeline = useProductionPipeline({ composer, screenwriter, storyboarder, director, token, budget });
@@ -261,6 +263,13 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder, director
   }, [prompt, primary, cast, composing, onLaunch]);
 
   const ready = Boolean(prompt.trim()) && Boolean(primary) && composing && workerOk;
+
+  const canStartFresh = Boolean(prompt.trim() || cast.length || screenwriter?.spec);
+  const startFresh = useCallback(() => {
+    // A screenplay is the expensive half of a run; a stray click must not throw one away.
+    if (screenwriter?.spec && !window.confirm('Start a new film? The current screenplay, cast and prompt will be cleared.')) return;
+    onStartFresh?.();
+  }, [screenwriter?.spec, onStartFresh]);
 
   // --------------------------------------------------------------------------- layout state
   //
@@ -702,6 +711,7 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder, director
                           onToggle={() => togglePanel('director')}
                           status={status.director}
                           onShoot={director?.shoot}
+                          onAnswerTest={onPreviewTake}
                         />
                       </Panel>
                     </Group>
@@ -751,6 +761,8 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder, director
                       workerOk={workerOk}
                       readOnly={!composing}
                       onBackToCompose={screenwriter?.backToCompose}
+                      onStartFresh={onStartFresh ? startFresh : undefined}
+                      canStartFresh={canStartFresh}
                       collapsed={collapsed.prompt}
                       onToggle={() => togglePanel('prompt')}
                     />
