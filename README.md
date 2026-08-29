@@ -93,7 +93,7 @@ graph TB
 ### Agent Model Reference
 
 1. **Producer Agent (Core)**: 
-   * *Model*: Deterministic serverless routing logic.
+   * *Model*: `MiniMax-M3` (as served by hellominds.ai)
    * *Role*: Coordinates state transitions, handles Stripe checkout redirects, and drives back-end worker queues.
 2. **Casting Director (Analyst)**:
    * *Model*: `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning` (via NVIDIA NIM)

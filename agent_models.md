@@ -5,7 +5,7 @@ This file contains the list of AI models running behind each agent in the minds.
 ---
 
 ## 1. Swarm Core (Producer Agent)
-* **Model**: None (Deterministic logic on Cloudflare Workers)
+* **Model**: `MiniMax-M3` (as served by hellominds.ai)
 * **Role**: Orchestrates pipeline state, monitors budget limits, and handles queue scheduling.
 
 ## 2. Casting Director (Analyst)
