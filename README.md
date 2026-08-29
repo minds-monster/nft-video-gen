@@ -17,7 +17,7 @@
 ## 🛠️ Tech Stack & Services
 
 * **Frontend**: React + Vite (Vanilla CSS, Lucide icons, Three.js & React Three Fiber for 3D geometry viewing, Glassmorphism UI).
-* **Backend**: Serverless **Cloudflare Workers** running all orchestrations, queue handlers (`storyboard-jobs` and `director-jobs`), and HTTP endpoints.
+* **Backend**: Serverless **Cloudflare Workers** running our agent swarm, deeply integrated with **[hellominds.ai](https://hellominds.ai)** APIs and client library to manage persistent mind states, identity connections, and creative briefings.
 * **Storage / Database**:
   * **Cloudflare KV**: Dossiers, mind configurations, session signing, and progress logs.
   * **Cloudflare R2**: High-speed binary storage for generated storyboard frames and movie files.
