@@ -37,6 +37,17 @@ export const askedTests = (shootingPlan) => {
 const readyTestsFor = (takes, riskId) =>
   (takes ?? []).filter((take) => take?.kind === 'screen-test' && take.riskId === riskId && take.status === 'ready');
 
+/** The last render of this question that FAILED, when nothing has succeeded since. */
+const latestFailureFor = (takes, riskId) => {
+  let failure = null;
+  for (const take of takes ?? []) {
+    if (take?.kind !== 'screen-test' || take.riskId !== riskId) continue;
+    if (take.status === 'failed') failure = take;
+    else if (take.status === 'ready') failure = null;
+  }
+  return failure;
+};
+
 /**
  * What stands between this film and the Shoot button.
  *
@@ -68,7 +79,10 @@ export const testGate = (shootingPlan, takes = [], { knownRiskIds = null } = {})
       const latest = judged[judged.length - 1] ?? null;
       const unjudged = ready.filter((take) => !take.verdict?.answer);
       const answer = latest?.verdict?.answer ?? null;
-      const state = !ready.length
+      const failure = ready.length ? null : latestFailureFor(takes, test.riskId);
+      const state = failure
+        ? 'render-failed'
+        : !ready.length
         ? 'unshot'
         : !latest
           ? 'unjudged'
@@ -88,6 +102,8 @@ export const testGate = (shootingPlan, takes = [], { knownRiskIds = null } = {})
         // The clip waiting to be watched, when there is one — the thing to open, not to re-buy.
         unansweredTakeId: unjudged[unjudged.length - 1]?.takeId ?? null,
         unansweredCount: unjudged.length,
+        // Why the last attempt produced nothing, so the panel can say so instead of "not yet run".
+        failedReason: failure?.reason ?? null,
       };
     });
 

@@ -23,7 +23,8 @@
 // can; a visitor who wants to shoot the screenplay as written can too.
 
 import { requireSession } from './mind-chat.js';
-import { castingStills, fetchImageAsDataUri } from './casting-director.js';
+import { castingStills } from './casting-director.js';
+import { fetchLegalReference } from './reference-legal.js';
 import { compileSceneToH3 } from './scene.js';
 import { filmIdFor } from './film-id.js';
 import { listFilms, loadStoryboard } from './storyboarder.js';
@@ -145,18 +146,47 @@ const gatherReferences = async (spec, cast) => {
   for (const slot of spec?.referencePlan ?? []) {
     const entry = byKey.get(slot.key);
     try {
+      // The first LEGAL still, measured (worker/reference-legal.js); a piece with no legal still
+      // is reported by reason rather than silently passed on to fail after billing.
       // eslint-disable-next-line no-await-in-loop -- sequential against third-party media hosts.
-      const dataUri = await fetchImageAsDataUri(castingStills(entry?.nft));
+      const legal = await fetchLegalReference(castingStills(entry?.nft), { key: slot.key, dossierFraming: entry?.dossier?.framing ?? null });
       references.push({
         key: slot.key,
-        dataUri,
+        dataUri: legal.dataUri,
         dossierFraming: entry?.dossier?.framing ?? null,
       });
     } catch (error) {
-      unreachable.push({ key: slot.key, reason: error.message });
+      unreachable.push({ key: slot.key, reason: error.message, code: error.code ?? 'reference_unreachable' });
     }
   }
   return { references, unreachable };
+};
+
+/**
+ * Measure the references a shot will use, at the moment of spending.
+ *
+ * Returns null when every piece has a legal still; otherwise the refusal to send. This is the
+ * call the Phoenix film needed (2026-08-28): three renders billed and failed on a 140x250
+ * thumbnail that this would have refused for free, by name, with the reason.
+ */
+const refuseIllegalReferences = async (spec, cast, refKeys) => {
+  const wanted = new Set(refKeys ?? []);
+  const scoped = { ...spec, referencePlan: (spec?.referencePlan ?? []).filter((slot) => wanted.has(slot.key)) };
+  const { unreachable } = await gatherReferences(scoped, cast);
+  if (!unreachable.length) return null;
+  const named = new Map(cast.map((entry) => [entry?.key, entry?.name ?? entry?.key]));
+  return json(
+    {
+      error: 'reference_illegal',
+      detail:
+        `${unreachable.map((piece) => `"${named.get(piece.key) ?? piece.key}"`).join(', ')} ` +
+        `${unreachable.length === 1 ? 'has' : 'have'} no still MiniMax will accept, so nothing was sent and nothing was charged. ` +
+        'H3 needs a short side of at least 256px, an aspect between 0.4 and 2.5, and a JPEG, PNG or WebP. ' +
+        'Add a larger image of the piece to the cast, or recast it.',
+      pieces: unreachable,
+    },
+    400,
+  );
 };
 
 /**
@@ -204,6 +234,11 @@ export async function handleDirectorPlan(request, env) {
     const gathered = await gatherReferences(spec, cast);
     unreachable = gathered.unreachable;
     preflight = preflightReferences(gathered.references);
+    // A piece with no legal still is a floor violation of the set, not a footnote beside it.
+    for (const piece of unreachable) {
+      preflight.violations.push({ key: piece.key, code: piece.code ?? 'reference-unusable', severity: 'floor', detail: piece.reason });
+    }
+    preflight.ok = preflight.ok && !unreachable.length;
   }
 
   const [brief, prompt] = await Promise.all([
@@ -415,6 +450,11 @@ export async function handleDirectorStart(request, env) {
 
   const finalUsd = priceUsd(params) ?? 0;
   const castRefs = castRefsFrom(cast);
+
+  // Measured before the envelope opens and before a task is created (see handleDirectorTest).
+  const refused = await refuseIllegalReferences(spec, cast, (spec.referencePlan ?? []).map((slot) => slot.key));
+  if (refused) return refused;
+
   const overrideRecord =
     override && (gate.unread || !gate.cleared)
       ? { unread: gate.unread, outstanding: gate.outstanding.map((test) => test.riskId), at: Date.now() }
@@ -748,6 +788,11 @@ export async function handleDirectorTest(request, env) {
       400,
     );
   }
+
+  // Measured before the envelope opens and before a task is created. A reference H3 refuses is
+  // refused HERE, for free, by name.
+  const refused = await refuseIllegalReferences(spec, cast, test.refKeys);
+  if (refused) return refused;
 
   const castRefs = castRefsFrom(cast);
   try {

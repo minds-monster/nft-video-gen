@@ -8,7 +8,7 @@
 export const PAYMENT = {
   protocol: 'x402',
   chain: 'Base',
-  token: '$TEST402',
+  token: 'Test402',
   priceEth: '1',
   // Unused until the x402 integration lands — see .env.example.
   apiBase: import.meta.env.VITE_X402_API_BASE ?? '',
