@@ -33,8 +33,8 @@ export const PHASE_LABEL = {
   formalising: 'writing it up',
   drafting: 'thinking the film through',
   reviewing: 'checking the cast against the prompt',
-  paying: 'paying NFT creator',
-  paid: 'paid NFT creator',
+  paying: 'paying asset creator',
+  paid: 'paid asset creator',
   payfailed: 'payment failed',
   // Client statuses (src/hooks/useScreenwriter.js), seen only when nothing streamed.
   casting: 'reading the artwork',
@@ -77,13 +77,13 @@ const Header = ({ status, phaseName, label, isLive, isCompiling, phase, message 
       )}
       {phase === 'paid' && message && (
         <a
-          href={`https://sepolia.basescan.org/tx/${message}`}
+          href={message}
           target="_blank"
           rel="noopener noreferrer"
           className="hidden shrink-0 text-xs text-blue-400 hover:text-blue-300 hover:underline @sm:inline"
           onClick={(e) => e.stopPropagation()}
         >
-          · Tx: {message.slice(0, 6)}...{message.slice(-4)}
+          · Tx: {message.split('/').pop().slice(0, 6)}...{message.split('/').pop().slice(-4)}
         </a>
       )}
       {phase === 'payfailed' && message && (
@@ -138,14 +138,7 @@ const AgentThought = ({
     if (!isLive) openedOnStart.current = false;
   }, [isLive]);
 
-  // Auto-open transaction link when paid
-  const openedTxLink = useRef(false);
-  useEffect(() => {
-    if (phase === 'paid' && message && !openedTxLink.current) {
-      openedTxLink.current = true;
-      window.open(message, '_blank', 'noopener,noreferrer');
-    }
-  }, [phase, message]);
+
 
   // No settle handler. Settling is not an instruction to hide the result.
   const handleToggle = (event) => setOpen(event.target.open);
