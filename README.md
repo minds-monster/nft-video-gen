@@ -92,9 +92,9 @@ graph TB
 
 ### Agent Model Reference
 
-1. **Producer Agent (Core)**: 
-   * *Model*: `MiniMax-M3` (as served by hellominds.ai)
-   * *Role*: Coordinates state transitions, handles Stripe checkout redirects, and drives back-end worker queues.
+1. **Producer (Core)**: 
+   * *Model*: `MiniMax-M3` (as served by [hellominds.ai](https://hellominds.ai))
+   * *Role*: Manages visitor session state, enforces credit/budget limits, maintains persistence of screenplay drafts and generated assets, and stages tasks into serverless background queues.
 2. **Casting Director (Analyst)**:
    * *Model*: `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning` (via NVIDIA NIM)
    * *Role*: Analyzes uploaded visual assets and maps NFT metadata to 3D mesh dossiers.
