@@ -33,6 +33,9 @@ export const PHASE_LABEL = {
   formalising: 'writing it up',
   drafting: 'thinking the film through',
   reviewing: 'checking the cast against the prompt',
+  paying: 'paying asset creator',
+  paid: 'paid asset creator',
+  payfailed: 'payment failed',
   // Client statuses (src/hooks/useScreenwriter.js), seen only when nothing streamed.
   casting: 'reading the artwork',
   done: 'known already',
@@ -55,7 +58,7 @@ const StatusDot = ({ status }) => (
   </span>
 );
 
-const Header = ({ status, phaseName, label, isLive, isCompiling }) => (
+const Header = ({ status, phaseName, label, isLive, isCompiling, phase, message }) => (
   <>
     <div className="flex items-center gap-2 min-w-0">
       <ChevronRight
@@ -71,6 +74,20 @@ const Header = ({ status, phaseName, label, isLive, isCompiling }) => (
           showing it in a 200px panel on a 4K display. */}
       {phaseName && (
         <span className="hidden shrink-0 font-normal text-slate-500 @sm:inline">· {phaseName}</span>
+      )}
+      {phase === 'paid' && message && (
+        <a
+          href={message}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hidden shrink-0 text-xs text-blue-400 hover:text-blue-300 hover:underline @sm:inline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          · Tx: {message.split('/').pop().slice(0, 6)}...{message.split('/').pop().slice(-4)}
+        </a>
+      )}
+      {phase === 'payfailed' && message && (
+        <span className="hidden shrink-0 text-xs text-red-400 @sm:inline">· {message}</span>
       )}
     </div>
     <div className="flex items-center gap-1.5 text-slate-500">
@@ -93,6 +110,7 @@ const Header = ({ status, phaseName, label, isLive, isCompiling }) => (
 const AgentThought = ({
   label,
   phase,
+  message,
   status = 'live',
   reasoning,
   content,
@@ -120,6 +138,8 @@ const AgentThought = ({
     if (!isLive) openedOnStart.current = false;
   }, [isLive]);
 
+
+
   // No settle handler. Settling is not an instruction to hide the result.
   const handleToggle = (event) => setOpen(event.target.open);
 
@@ -130,6 +150,8 @@ const AgentThought = ({
       label={label}
       isLive={isLive}
       isCompiling={isCompiling}
+      phase={phase}
+      message={message}
     />
   );
 
@@ -175,10 +197,14 @@ const AgentThought = ({
                 <div className="rounded-lg border border-white/5 bg-white/[0.01] p-3">
                   <div className="mb-2 flex items-center gap-1.5 text-[9px] uppercase tracking-wider text-slate-500">
                     <Activity className="h-3 w-3 shrink-0 animate-pulse text-purple-400" />
-                    <span>Working</span>
+                    <span>{phase === 'paying' ? 'Paying' : 'Working'}</span>
                   </div>
                   <div className="text-sm leading-relaxed text-slate-300">
-                    <RevealText text="" settling placeholder />
+                    {phase === 'paying' && message ? (
+                      <span>{message}</span>
+                    ) : (
+                      <RevealText text="" settling placeholder />
+                    )}
                   </div>
                 </div>
               )}
@@ -186,7 +212,7 @@ const AgentThought = ({
               {!reasoning?.trim() && !content?.trim() && !isCompiling && (
                 <div className="flex items-center justify-center gap-2 py-6 text-xs text-slate-500">
                   <span className="h-1.5 w-1.5 animate-ping rounded-full bg-purple-500" />
-                  <span>Establishing connection…</span>
+                  <span>{phase === 'paying' && message ? message : 'Establishing connection…'}</span>
                 </div>
               )}
             </>

@@ -26,6 +26,7 @@
     "@react-three/fiber": "^9.7.0",
     "alchemy-sdk": "^3.6.5",
     "clsx": "^2.1.1",
+    "ethers": "^6.17.0",
     "framer-motion": "^13.1.0",
     "lucide-react": "^1.31.0",
     "react": "^19.2.8",
