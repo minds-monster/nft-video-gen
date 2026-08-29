@@ -4,9 +4,9 @@ This file contains the list of AI models running behind each agent in the minds.
 
 ---
 
-## 1. Swarm Core (Producer Agent)
-* **Model**: `MiniMax-M3` (as served by hellominds.ai)
-* **Role**: Orchestrates pipeline state, monitors budget limits, and handles queue scheduling.
+## 1. Swarm Core (Producer)
+* **Model**: `MiniMax-M3` (as served by [hellominds.ai](https://hellominds.ai))
+* **Role**: Manages visitor session state, enforces credit/budget limits, maintains persistence of screenplay drafts and generated assets, and stages tasks into serverless background queues.
 
 ## 2. Casting Director (Analyst)
 * **Model**: `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning` (via NVIDIA NIM)
