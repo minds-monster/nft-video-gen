@@ -1,6 +1,6 @@
 # minds.MONSTER — Make Movies with Your Mind
 
-**minds.MONSTER** is a decentralized cinematic video generation platform designed for hackathons, brand IP activation, and automated creative pipelines. It allows collectors and creators to turn their real-world brand assets (NFTs, 3D meshes) into fully-realized cinematic films using an orchestrating swarm of specialized AI agents.
+**minds.MONSTER** is a decentralized cinematic video generation platform designed for creators, brand IP activation, and automated creative pipelines. It allows anyone to turn real-world brand assets (NFT artwork, 3D meshes) into fully-realized cinematic films using an orchestrating swarm of specialized AI agents.
 
 * **Live Site:** [https://minds.monster](https://minds.monster)
 * **Status:** Hackathon Submission Completed & Live in Production
@@ -17,7 +17,7 @@
 ## 🛠️ Tech Stack & Services
 
 * **Frontend**: React + Vite (Vanilla CSS, Lucide icons, Three.js & React Three Fiber for 3D geometry viewing, Glassmorphism UI).
-* **Backend**: Serverless **Cloudflare Workers** running our agent swarm, deeply integrated with **[hellominds.ai](https://hellominds.ai)** APIs and client library to manage persistent mind states, identity connections, and creative briefings.
+* **Backend**: Serverless **Cloudflare Workers** running our agent swarm, integrated with **[hellominds.ai](https://hellominds.ai)** APIs and client library to manage persistent mind states, identity connections, and creative briefings.
 * **Storage / Database**:
   * **Cloudflare KV**: Dossiers, mind configurations, session signing, and progress logs.
   * **Cloudflare R2**: High-speed binary storage for generated storyboard frames and movie files.
