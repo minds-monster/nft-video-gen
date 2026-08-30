@@ -47,6 +47,39 @@ export const PHASE_LABEL = {
   reconnecting: 'Reconnecting — the render is still running',
 };
 
+/**
+ * A job's status only moves forward.
+ *
+ * `GET /api/director/job/:id` reads KV, and a KV read can be up to 60 seconds stale. A record
+ * that still says `awaiting-approval` after the approval was sent would put the Approve button
+ * back on a render that is already running — and the second click then 409s. So a read that
+ * would move a job BACKWARDS keeps the status this tab already knows, and takes the rest.
+ */
+const STATUS_RANK = { 'awaiting-approval': 0, queued: 1, running: 2, cancelled: 3, complete: 3, failed: 3 };
+const mergeJob = (current, next) => {
+  if (!next) return current;
+  if (!current || current.jobId !== next.jobId) return next;
+  const regressed = (STATUS_RANK[next.status] ?? 0) < (STATUS_RANK[current.status] ?? 0);
+  return { ...current, ...next, status: regressed ? current.status : next.status };
+};
+
+/**
+ * Why a run of tests stopped, in the shape the panel shows where the button was.
+ *
+ * `error` is the server's code (`no_budget`, `insufficient_balance`, `unknown_risk`, …) and
+ * `wanted`/`available` its arithmetic, so a money refusal can offer a top-up sized to the gap.
+ */
+const haltFrom = (failure, extra = {}) => ({
+  kind: 'refused',
+  error: failure?.error ?? null,
+  status: failure?.status ?? null,
+  detail: failure?.detail ?? failure?.message ?? 'The test could not be started.',
+  available: failure?.available ?? null,
+  wanted: failure?.wanted ?? null,
+  at: Date.now(),
+  ...extra,
+});
+
 export function useDirector() {
   const [plan, setPlan] = useState(null);
   const [planning, setPlanning] = useState(false);
@@ -69,6 +102,12 @@ export function useDirector() {
   const [refusal, setRefusal] = useState(null);
   // Progress through "run every test the Director asked for": { total, done, current }.
   const [batch, setBatch] = useState(null);
+  // Why the last run of tests stopped before it was done — the server's refusal, or the
+  // visitor's own decline. KEPT APART FROM `error` SO THE PANEL CAN SHOW IT WHERE THE CLICK
+  // WAS. On 2026-08-30 a Mind with no budget pressed "Run the Director's 2 tests"; the 402
+  // landed in `error`, which renders under the whole risk register, and all the visitor saw
+  // was the button come back — three times.
+  const [batchHalt, setBatchHalt] = useState(null);
 
   const abortRef = useRef(null);
   const timerRef = useRef(null);
@@ -99,6 +138,7 @@ export function useDirector() {
       setError(null);
       return next;
     } catch (failure) {
+      console.error('[director] plan failed', failure);
       setError(failure.message);
       return null;
     } finally {
@@ -158,7 +198,7 @@ export function useDirector() {
     while (Date.now() < until) {
       const status = await getDirectorJobStatus(token, jobId).catch(() => null);
       if (status) {
-        setJob(status);
+        setJob((current) => mergeJob(current, status));
         if (status.status === 'complete' || status.status === 'failed') return status;
       }
       await new Promise((done) => setTimeout(done, 5000));
@@ -208,14 +248,15 @@ export function useDirector() {
             else if (type === 'error') setError(data.error);
           },
         });
-      } catch {
+      } catch (failure) {
         // The stream is gone; the render is not. Ask the record directly rather than assuming.
+        console.warn('[director] progress stream dropped, polling the job instead', failure);
         setPhase('reconnecting');
         await recover(jobId, token, deadlineMs - (Date.now() - startedAt));
       } finally {
         stopTimer();
         const status = await getDirectorJobStatus(token, jobId).catch(() => null);
-        if (status) setJob(status);
+        if (status) setJob((current) => mergeJob(current, status));
         if (status?.status === 'complete' || status?.status === 'failed') setPhase(null);
         const { filmId } = contextRef.current;
         if (filmId) await loadProduction({ token, filmId });
@@ -230,6 +271,7 @@ export function useDirector() {
     async ({ spec, cast, token, override = false }) => {
       setError(null);
       setRefusal(null);
+      setBatchHalt(null);
       const filmId = filmIdFor(spec);
       contextRef.current = { spec, cast, token, filmId };
 
@@ -250,6 +292,7 @@ export function useDirector() {
           await loadPlan({ spec, cast, token });
           return null;
         }
+        console.error('[director] shoot refused', failure);
         setError(failure.detail ?? failure.message);
         return null;
       }
@@ -285,6 +328,7 @@ export function useDirector() {
         await loadPlan({ spec, cast, token });
         return started;
       } catch (failure) {
+        console.error('[director] reading failed', failure);
         setError(failure.message);
         return null;
       }
@@ -302,6 +346,7 @@ export function useDirector() {
   const runTest = useCallback(
     async ({ spec, cast, token, riskId }) => {
       setError(null);
+      setBatchHalt(null);
       const filmId = filmIdFor(spec);
       contextRef.current = { spec, cast, token, filmId };
       try {
@@ -316,13 +361,18 @@ export function useDirector() {
         // Six seconds, the longer of the two test shapes: a rehearsal takes 190-333s to settle
         // and a deadline sized for a 4s probe would give up on one that is still rendering.
         await follow(started.jobId, token, { resolution: '768P', duration: 6 });
+        // The clip moves the gate (a question now has an unjudged answer). Re-read it, so the
+        // "run" button does not offer to buy the same answer again.
+        await loadPlan({ spec, cast, token });
         return started;
       } catch (failure) {
+        console.error('[director] screen test could not start', failure);
         setError(failure.detail ?? failure.message);
+        setBatchHalt(haltFrom(failure, { riskId }));
         return null;
       }
     },
-    [allowanceUsd, follow, loadProduction, mode],
+    [allowanceUsd, follow, loadPlan, loadProduction, mode],
   );
 
   /**
@@ -340,21 +390,41 @@ export function useDirector() {
       const outstanding = plan?.gate?.toRun ?? [];
       if (!outstanding.length || !token) return 0;
       setRefusal(null);
+      setBatchHalt(null);
       let done = 0;
+      const total = outstanding.length;
       for (const entry of outstanding) {
-        setBatch({ total: outstanding.length, done, current: entry.question ?? entry.riskId });
+        const question = entry.question ?? entry.riskId;
+        setBatch({ total, done, current: question });
         const started = await runTest({ spec, cast, token, riskId: entry.riskId });
-        if (!started) break;
+        if (!started) {
+          // `runTest` has already recorded WHY (see `batchHalt`); add where in the run it was.
+          setBatchHalt((current) => (current ? { ...current, question, done, total } : current));
+          break;
+        }
         if (started.status === 'awaiting-approval') {
           const approved = await new Promise((resolve) => {
             approvalRef.current = resolve;
           });
-          if (!approved) break;
+          if (!approved) {
+            setBatchHalt({
+              kind: 'declined',
+              error: null,
+              detail: `You declined "${question}". ${total - done - 1 > 0 ? `${total - done - 1} more not run — they are still here to run later.` : 'Nothing more was run.'}`,
+              question,
+              done,
+              total,
+              at: Date.now(),
+            });
+            break;
+          }
         }
         done += 1;
       }
-      setBatch(null);
+      // The refreshed gate lands BEFORE the progress line is taken down, so the stale "run"
+      // button never flashes in between with a count that is about to change.
       await loadPlan({ spec, cast, token });
+      setBatch(null);
       return done;
     },
     [loadPlan, plan?.gate?.toRun, runTest],
@@ -382,6 +452,7 @@ export function useDirector() {
           }, delay);
         }
       } catch (failure) {
+        console.error('[director] verdict not recorded', failure);
         setError(failure.message);
       }
     },
@@ -429,23 +500,42 @@ export function useDirector() {
   /** Approve or decline a parked take. */
   const decide = useCallback(
     async (approved) => {
-      const { token, cast, filmId } = contextRef.current;
+      const { token, cast, filmId, spec } = contextRef.current;
       if (!job?.jobId || !token) return;
       setError(null);
+      const params = job?.take?.kind === 'screen-test' ? { resolution: '768P', duration: 6 } : plan?.params;
+      const refreshPlan = () => (spec?.beats?.length ? loadPlan({ spec, cast: cast ?? [], token }) : null);
       try {
         const result = await approveDirectorTake({ jobId: job.jobId, approved, cast }, token);
         setJob((current) => ({ ...current, status: result.status }));
-        if (approved) await follow(job.jobId, token, job?.take?.kind === 'screen-test' ? { resolution: '768P', duration: 6 } : plan?.params);
-        else await loadProduction({ token, filmId });
+        if (approved) {
+          await follow(job.jobId, token, params);
+          await refreshPlan();
+        } else {
+          await loadProduction({ token, filmId });
+        }
       } catch (failure) {
-        setError(failure.message);
+        console.error('[director] approval failed', failure);
+        // 409 `not_awaiting`: the record has already moved on — a stale read put the Approve
+        // button back on a job that was approved, or the button was pressed twice. A render
+        // that is running is not an error; go and look, and follow it if it is.
+        if (failure.error === 'not_awaiting') {
+          const status = await getDirectorJobStatus(token, job.jobId).catch(() => null);
+          if (status) setJob((current) => mergeJob(current, status));
+          if (status?.status === 'queued' || status?.status === 'running') {
+            await follow(job.jobId, token, params);
+            await refreshPlan();
+            return;
+          }
+        }
+        setError(failure.detail ?? failure.message);
       } finally {
         // A batch of tests waiting on this click (see `runTests`) continues or stops here.
         approvalRef.current?.(approved);
         approvalRef.current = null;
       }
     },
-    [follow, job?.jobId, job?.take?.kind, loadProduction, plan?.params],
+    [follow, job?.jobId, job?.take?.kind, loadPlan, loadProduction, plan?.params],
   );
 
   /**
@@ -513,6 +603,8 @@ export function useDirector() {
     refusal,
     runTests,
     batch,
+    // Why the last run stopped short, if it did — shown by the panel in place of the run button.
+    batchHalt,
     // Whether the film may be shot: read, and every asked test answered (worker/director-gate.js).
     gate: plan?.gate ?? null,
     assess,

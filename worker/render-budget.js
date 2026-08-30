@@ -178,9 +178,20 @@ export async function listEnvelopes(env, mindId) {
  * finish. A film whose allowance cannot cover its own final render is refused HERE, with the
  * arithmetic shown, rather than after three Screen Tests have been paid for.
  */
-export async function openEnvelope(env, mindId, { filmId, mode = DEFAULT_MODE, allowanceUsd = null, finalUsd = 0 }) {
+/**
+ * The refusals a visitor can fix with money. Named here so the panel can offer a top-up for
+ * exactly these and nothing else — a 404 for a test the film no longer has is not a billing
+ * problem, and a "Top up" button beside it would be a lie.
+ */
+export const BUDGET_REFUSALS = new Set(['no_budget', 'insufficient_balance', 'cannot_afford_final']);
+
+export async function openEnvelope(env, mindId, { filmId, mode = DEFAULT_MODE, allowanceUsd: requested = null, finalUsd = 0 }) {
   if (!MODES[mode]) throw Object.assign(new Error('unknown_mode'), { status: 400 });
   const spec = MODES[mode];
+  // A mode with no allowance HAS no allowance. The client keeps a default figure in its state
+  // for the modes that need one and sends it regardless; honouring it in `ask` mode made every
+  // ask-mode film "need" $5 at the open and drew a spend bar against a ceiling nobody set.
+  const allowanceUsd = spec.needsAllowance ? requested : null;
 
   if (spec.needsAllowance && !(allowanceUsd > 0)) {
     throw Object.assign(new Error('allowance_required'), {
@@ -200,14 +211,21 @@ export async function openEnvelope(env, mindId, { filmId, mode = DEFAULT_MODE, a
   const reserved = reservedElsewhere(envelopes, spend, filmId);
   const available = round(globalRemaining - reserved);
 
+  // Every money refusal carries `wanted` and `available`, because the panel sizes the top-up
+  // from them. Found necessary on 2026-08-30: a Mind with no budget row pressed "Run the
+  // Director's 2 tests", this threw in milliseconds, and the visitor saw the button come back.
+  const wanted = allowanceUsd ?? finalUsd;
+
   if (budget?.total == null) {
     throw Object.assign(new Error('no_budget'), {
       status: 402,
       detail: 'The Director needs a budget before it can shoot anything. Top up to give it something to work with.',
+      available: 0,
+      reserved: 0,
+      wanted,
     });
   }
 
-  const wanted = allowanceUsd ?? finalUsd;
   if (wanted > available) {
     throw Object.assign(new Error('insufficient_balance'), {
       status: 402,
@@ -216,6 +234,7 @@ export async function openEnvelope(env, mindId, { filmId, mode = DEFAULT_MODE, a
         (reserved > 0 ? ` — $${reserved.toFixed(2)} is set aside for other films still open.` : '.'),
       available,
       reserved,
+      wanted,
     });
   }
 
@@ -229,6 +248,9 @@ export async function openEnvelope(env, mindId, { filmId, mode = DEFAULT_MODE, a
         `The final render costs $${finalUsd.toFixed(2)}, which is more than ` +
         `${allowanceUsd == null ? 'the balance' : 'the allowance'} of $${(allowanceUsd ?? available).toFixed(2)}. ` +
         'Raise it, or shorten the film — a shorter or lower-resolution take costs proportionally less.',
+      available: allowanceUsd ?? available,
+      reserved,
+      wanted: finalUsd,
     });
   }
 

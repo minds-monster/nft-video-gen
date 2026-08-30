@@ -499,6 +499,7 @@ export async function handleDirectorStart(request, env) {
           detail: error.detail ?? null,
           available: error.available ?? null,
           reserved: error.reserved ?? null,
+          wanted: error.wanted ?? null,
         },
         error.status,
       );
@@ -827,8 +828,19 @@ export async function handleDirectorTest(request, env) {
       costUsd: record.take.costUsd,
     });
   } catch (error) {
+    // The same body shape as /start, arithmetic included. A test is refused for the same money
+    // reasons a take is, and the panel offers the same top-up for both.
     if (error.status) {
-      return json({ error: error.message, detail: error.detail ?? null }, error.status);
+      return json(
+        {
+          error: error.message,
+          detail: error.detail ?? null,
+          available: error.available ?? null,
+          reserved: error.reserved ?? null,
+          wanted: error.wanted ?? null,
+        },
+        error.status,
+      );
     }
     throw error;
   }

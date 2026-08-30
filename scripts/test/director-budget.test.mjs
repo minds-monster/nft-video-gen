@@ -19,6 +19,7 @@ import assert from 'node:assert/strict';
 
 import { recordSpend, setBudget } from '../../worker/budget.js';
 import {
+  BUDGET_REFUSALS,
   DEFAULT_MODE,
   MODES,
   authoriseSpend,
@@ -125,6 +126,40 @@ test('an allowance larger than the balance is refused, with the arithmetic', asy
     () => openEnvelope(env, MIND, { filmId: 'f1', mode: 'allowance', allowanceUsd: 10, finalUsd: 0.48 }),
     (error) => error.message === 'insufficient_balance' && /\$10\.00/.test(error.detail) && /\$5\.00/.test(error.detail),
   );
+});
+
+test('every money refusal carries wanted/available, so a top-up can be sized from it', async () => {
+  // 2026-08-30: a Mind with no budget row pressed "Run the Director's 2 tests" and saw the
+  // button come back. The refusal has to say what would fix it, in numbers.
+  for (const name of ['no_budget', 'insufficient_balance', 'cannot_afford_final']) {
+    assert.ok(BUDGET_REFUSALS.has(name), `${name} is a money refusal`);
+  }
+  assert.equal(BUDGET_REFUSALS.has('unknown_risk'), false, 'a missing test is not fixed with money');
+
+  await assert.rejects(
+    () => openEnvelope(makeEnv(), MIND, { filmId: 'f1', mode: 'ask', finalUsd: 1.95 }),
+    (error) => error.message === 'no_budget' && error.status === 402 && error.wanted === 1.95 && error.available === 0,
+  );
+  const oneDollar = await funded(1);
+  await assert.rejects(
+    () => openEnvelope(oneDollar, MIND, { filmId: 'f1', mode: 'ask', finalUsd: 1.95 }),
+    (error) => error.message === 'insufficient_balance' && error.wanted === 1.95 && error.available === 1,
+  );
+  const twenty = await funded(20);
+  await assert.rejects(
+    () => openEnvelope(twenty, MIND, { filmId: 'f1', mode: 'allowance', allowanceUsd: 1, finalUsd: 1.95 }),
+    (error) => error.message === 'cannot_afford_final' && error.wanted === 1.95 && error.available === 1,
+  );
+});
+
+test('ask mode ignores a stray allowance — the clicks are the ceiling', async () => {
+  // The client keeps a default allowance in state for the modes that need one and sends it
+  // regardless. Honoured, it made an ask-mode film "need" $5 at the open when its final render
+  // cost $0.48, and drew a spend bar against a ceiling nobody set.
+  const env = await funded(3);
+  const envelope = await openEnvelope(env, MIND, { filmId: 'f1', mode: 'ask', allowanceUsd: 5, finalUsd: 0.48 });
+  assert.equal(envelope.allowanceUsd, null);
+  assert.equal((await getEnvelope(env, MIND, 'f1')).remainingUsd, null);
 });
 
 // ------------------------------------------------------------------- derived, never stored

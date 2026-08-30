@@ -6,6 +6,69 @@
 > that turned out to be false in production — read it before trusting any free-tier latency figure
 > in this document.
 
+## ROUND 15: THE RUN-TESTS BUTTON THAT CAME STRAIGHT BACK (2026-08-30)
+
+A visitor pressed **Run the Director's 2 tests · $0.96** on minds.monster, saw "Running 1 of 2",
+and then the same button again, enabled — three times, with no idea whether anything was
+happening. Their hypothesis was that the Producer Mind had run out of cognition.
+
+### 🔴 The findings that matter
+
+**1. IT WAS MONEY, BUT NOT THE MIND'S.** Read straight out of production KV
+(`wrangler kv key get --remote`): the visitor was connected as Mind `749b…`, whose assess job
+at 03:59Z had produced exactly those two $0.48 demands (the second demand's `why` is verbatim
+the text in the recording). `budget:749b…`, `spend:749b…` and `productions:749b…` were all
+**404 — the Mind had never had a budget set on this site.** So `POST /api/director/test` →
+`openEnvelope` → **402 `no_budget`** in milliseconds, before any job existed (no
+`director-job:749b…` key was ever written). The Director never consults the Mind's cognition:
+its only Mind call is the fire-and-forget filmography digest after a take lands. Top-ups for
+the Director are the site's Stripe balance (`budget:<mindId>`), never hellominds.ai.
+
+**2. THE REFUSAL WAS RENDERED WHERE NOBODY LOOKS.** `runTests` breaks on the throw,
+`setBatch(null)` restores the button, and `error` is drawn at the FOOT of the Director rail —
+under Revisions, Thinking, Budget, the estimate and the whole risk register, in a 250px column.
+Nothing reached the console either: `useDirector.js` had no `console.*` at all.
+
+🔑 **A refusal the visitor cannot see is a button that does nothing.** The server was right,
+fast and explicit; the failure was entirely one of placement.
+
+**3. `wrangler kv key get/list` DEFAULT TO THE LOCAL SIMULATOR.** Without `--remote` every
+production key reads "Value not found" and every prefix lists `[]`, with no warning. An hour
+went on believing the namespace was empty. `kv namespace list` is always remote, which is what
+made it look plausible.
+
+**4. ASK MODE WAS CARRYING A $5 ALLOWANCE IT NEVER ASKED FOR.** The client keeps a default
+`allowanceUsd: 5` in state for the modes that need one and sends it regardless; `openEnvelope`
+honoured it, so every ask-mode film "needed" $5 available at the open and drew a spend bar
+against a ceiling nobody set. Now a mode without an allowance has none.
+
+### What changed
+
+- `useDirector` keeps `batchHalt` — why the run stopped (`error` code, `detail`, `wanted`,
+  `available`, which test, how far along) — and `DirectorPanel`'s `AskedTests` renders it **in
+  place of the run button**: the server's sentence, and for `BUDGET_REFUSALS` (`no_budget`,
+  `insufficient_balance`, `cannot_afford_final`, exported from `worker/render-budget.js`) a
+  **Top up on minds.monster** button that calls the same `checkout()` as `BudgetWidget`, sized
+  from `wanted − available`, with copy saying it is not hellominds cognition.
+- A take parked during a run is approved **beside its progress line** ("Waiting for your
+  approval · 1 of 2 — <question>" + Approve/Decline), not only at the foot of the rail.
+- Every money refusal carries `wanted`/`available`/`reserved` on both `/api/director/start` and
+  `/api/director/test`; `swarm.js` attaches the payload and HTTP status to the thrown Error on
+  all three Director calls.
+- Job status only moves forward on the client (`mergeJob`): a ≤60s-stale KV read can no
+  longer put the Approve button back on a running render. A 409 `not_awaiting` on approve now
+  re-reads the job and follows it if it is running, instead of erroring.
+- A single test and an approval re-read the plan when the clip lands, so the gate no longer
+  offers to buy an answer it already has.
+- `console.error('[director] …')` in every catch. `/api/health` reports `hasDirectorQueue`.
+- Tests: `director-budget.test.mjs` (refusal arithmetic, ask-mode allowance) and
+  `director-start.test.mjs` (the 402 body from the test route, the bounce itself). 388 pass.
+
+**Deployed to staging.minds.monster, not production** — round 14's environment exists for
+exactly this. Reproduce there with a fresh Mind and a sandbox Stripe top-up before promoting.
+
+---
+
 ## Start here — ROUND 14: STAGING ENVIRONMENT AND WEBHOOK ISOLATION (2026-08-30)
 
 We have introduced a fully isolated **Staging Environment** (`staging.minds.monster`) on Cloudflare to allow developers to try out bug fixes and new features (like the co-dev's `feat-x402` branch) safely without risking production traffic.

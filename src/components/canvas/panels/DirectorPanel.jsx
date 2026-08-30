@@ -3,7 +3,8 @@ import { AlertTriangle, Clapperboard, Check, X } from 'lucide-react';
 
 import CanvasPanel from './CanvasPanel';
 import { cn } from '../../../lib/cn';
-import { MODES } from '../../../../worker/render-budget.js';
+import { useMindChatContext } from '../../../context/mindChat';
+import { BUDGET_REFUSALS, MODES } from '../../../../worker/render-budget.js';
 import { verdictLabel } from '../../../../worker/screen-test.js';
 
 /**
@@ -153,6 +154,89 @@ const TEST_STATE = {
   cleared: { label: 'Held', cls: 'border-emerald-400/30 text-emerald-300' },
 };
 
+/** The priced approve/decline pair. One shape, wherever a parked take is shown. */
+const ApproveRow = ({ label, onDecide }) => (
+  <div className="flex gap-1.5">
+    <button
+      type="button"
+      onClick={() => onDecide(true)}
+      className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-purple-600 px-2 py-2 text-[11px] font-semibold text-white transition-colors hover:bg-purple-500"
+    >
+      <Check className="h-3 w-3" />
+      {label}
+    </button>
+    <button
+      type="button"
+      onClick={() => onDecide(false)}
+      aria-label="Decline this take"
+      className="chip px-2 py-2 text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+    >
+      <X className="h-3.5 w-3.5" />
+    </button>
+  </div>
+);
+
+/** The smallest top-up offered. Stripe's minimum is lower; a dollar does not buy a single take. */
+const TOP_UP_MIN_USD = 5;
+
+/**
+ * Why the run stopped, IN PLACE OF THE BUTTON THAT STARTED IT.
+ *
+ * On 2026-08-30 a visitor with no budget set pressed "Run the Director's 2 tests" three times.
+ * Each press got a 402 in under a second, the reason rendered under the whole risk register
+ * where nobody looks, and the button simply came back. A refusal the visitor cannot see is a
+ * button that does nothing. A money refusal gets the one thing that fixes it — a top-up on
+ * THIS site's balance, named as such, because "top up" otherwise sends people to their Mind's
+ * cognition at hellominds.ai, which the Director never spends.
+ */
+const Halt = ({ halt, onRetry, onTopUp, busy }) => {
+  const isMoney = BUDGET_REFUSALS.has(halt.error);
+  const gap = isMoney && halt.wanted != null ? Math.max(0, halt.wanted - (halt.available ?? 0)) : null;
+  const suggested = Math.max(TOP_UP_MIN_USD, Math.ceil(gap ?? 0));
+  const remaining = halt.total != null && halt.done != null ? halt.total - halt.done : null;
+  const headline =
+    halt.kind === 'declined'
+      ? 'Stopped — you declined a test.'
+      : isMoney
+        ? 'Nothing was run — the Director has no money to spend.'
+        : 'Nothing was run.';
+
+  return (
+    <div className="space-y-1.5 rounded-xl border border-amber-400/30 bg-amber-500/10 p-2">
+      <p className="flex items-start gap-1.5 text-[10px] leading-relaxed text-amber-200/90">
+        <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+        <span>
+          <span className="font-semibold">{headline}</span> {halt.detail}
+          {remaining > 0 && halt.kind !== 'declined' ? ` ${remaining} of ${halt.total} still to run.` : ''}
+        </span>
+      </p>
+      {isMoney ? (
+        <>
+          <button
+            type="button"
+            onClick={() => onTopUp?.(suggested)}
+            className="w-full rounded-xl bg-amber-500/90 px-2 py-2 text-[11px] font-semibold text-black transition-colors hover:bg-amber-400"
+          >
+            Top up {money(suggested)} on minds.monster
+          </button>
+          <p className="text-[10px] leading-snug text-slate-500">
+            This is the Director’s balance on this site, paid by card. It is not your Mind’s
+            cognition at hellominds.ai — the Director never spends that.
+          </p>
+        </>
+      ) : null}
+      <button
+        type="button"
+        onClick={onRetry}
+        disabled={busy}
+        className="w-full rounded-lg border border-white/10 bg-black/40 px-2 py-1 text-[10px] text-slate-300 transition-colors hover:border-purple-500/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        {halt.kind === 'declined' ? 'Run the remaining tests' : isMoney ? 'Try again after topping up' : 'Try again'}
+      </button>
+    </div>
+  );
+};
+
 /**
  * What the Director asked for, and where each ask stands.
  *
@@ -162,7 +246,24 @@ const TEST_STATE = {
  * button says how many are owed, and the server refuses to shoot until they are answered
  * (worker/director-gate.js). A test the Director asked for is a precondition, not a suggestion.
  */
-const AskedTests = ({ plan, gate, onRunAll, onAnswer, busy, batch }) => {
+const AskedTests = ({
+  plan,
+  gate,
+  onRunAll,
+  onAnswer,
+  busy,
+  batch,
+  halt,
+  onTopUp,
+  // The parked take, while a run of tests is waiting on the click. Approve/Decline is
+  // rendered HERE, under the progress line, because the pair at the foot of the rail sits
+  // below the budget, the estimate and the whole register — off-screen in a 250px column.
+  awaiting,
+  onDecide,
+  running,
+  phaseLabel,
+  elapsedSeconds,
+}) => {
   const asked = gate?.asked ?? [];
   if (!asked.length) return null;
   // Two different next moves, and the difference cost $2.40 in five identical rehearsals: a
@@ -219,9 +320,21 @@ const AskedTests = ({ plan, gate, onRunAll, onAnswer, busy, batch }) => {
         })}
       </ul>
       {batch ? (
-        <p className="font-mono text-[10px] text-sky-300/70">
-          Running {Math.min(batch.done + 1, batch.total)} of {batch.total} — {batch.current}
-        </p>
+        <div className="space-y-1.5">
+          <p className="font-mono text-[10px] text-sky-300/70">
+            {awaiting
+              ? 'Waiting for your approval'
+              : running
+                ? (phaseLabel ?? 'Running')
+                : 'Starting'}
+            {' · '}
+            {Math.min(batch.done + 1, batch.total)} of {batch.total} — {batch.current}
+            {running && elapsedSeconds ? ` · ${elapsed(elapsedSeconds)}` : ''}
+          </p>
+          {awaiting && <ApproveRow label={`Approve ${money(awaiting.costUsd)}`} onDecide={onDecide} />}
+        </div>
+      ) : halt ? (
+        <Halt halt={halt} onRetry={onRunAll} onTopUp={onTopUp} busy={busy} />
       ) : unanswered.length > 0 ? (
         <div className="space-y-1">
           <button
@@ -376,6 +489,9 @@ const DirectorPanel = ({
   onAnswerTest,
 }) => {
   const { plan, planning, envelope, job, phaseLabel, elapsedSeconds, error, running, awaitingApproval } = director;
+  // The site's own top-up (Stripe), the same call BudgetWidget makes. Offered beside a money
+  // refusal so the fix is one click from the failure.
+  const { checkout } = useMindChatContext();
 
   const risks = plan?.risks ?? [];
   const blocking = plan?.blocking ?? [];
@@ -463,9 +579,16 @@ const DirectorPanel = ({
             plan={director.shootingPlan}
             gate={gate}
             batch={director.batch}
+            halt={director.batchHalt}
             busy={running || awaitingApproval || planning || !token}
             onRunAll={() => director.runTests?.({ spec, cast, token })}
             onAnswer={onAnswerTest}
+            onTopUp={(amount) => checkout?.(amount)}
+            awaiting={awaitingApproval ? { costUsd: job?.take?.costUsd } : null}
+            onDecide={director.decide}
+            running={running}
+            phaseLabel={phaseLabel}
+            elapsedSeconds={elapsedSeconds}
           />
           <Revisions
             revisions={director.revisions}
@@ -569,25 +692,10 @@ const DirectorPanel = ({
             </div>
           )}
 
-          {awaitingApproval ? (
-            <div className="flex gap-1.5">
-              <button
-                type="button"
-                onClick={() => director.decide(true)}
-                className="flex flex-1 items-center justify-center gap-1 rounded-xl bg-purple-600 px-2 py-2 text-[11px] font-semibold text-white transition-colors hover:bg-purple-500"
-              >
-                <Check className="h-3 w-3" />
-                {cta}
-              </button>
-              <button
-                type="button"
-                onClick={() => director.decide(false)}
-                aria-label="Decline this take"
-                className="chip px-2 py-2 text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </div>
+          {/* A take parked during a run of tests is approved up in AskedTests, beside its
+              progress line; this pair is for a parked Shoot or a single test. */}
+          {awaitingApproval && !batching ? (
+            <ApproveRow label={cta} onDecide={director.decide} />
           ) : (
             <div className="space-y-1.5">
               {/* Free, so it is never behind the money gate — and offered before Shoot because

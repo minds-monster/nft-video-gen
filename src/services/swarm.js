@@ -511,7 +511,7 @@ export const startDirectorTake = async ({ spec, cast, mode, allowanceUsd, overri
     body: JSON.stringify({ spec, cast: cast.map(forStoryboardWire), mode, allowanceUsd, override }),
   });
   const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw Object.assign(new Error(payload.detail ?? payload.error ?? 'Could not start'), payload);
+  if (!response.ok) throw Object.assign(new Error(payload.detail ?? payload.error ?? 'Could not start'), payload, { status: response.status });
   return payload;
 };
 
@@ -524,7 +524,11 @@ export const approveDirectorTake = async ({ jobId, approved, cast }, token) => {
     body: JSON.stringify({ jobId, approved, cast: (cast ?? []).map(forStoryboardWire) }),
   });
   const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(payload.error ?? `Approval failed: ${response.status}`);
+  // The payload rides on the Error, as it does for a test or a take: a 409 `not_awaiting` is
+  // something the hook can recover from, and it can only do that if it can see the code.
+  if (!response.ok) {
+    throw Object.assign(new Error(payload.detail ?? payload.error ?? `Approval failed: ${response.status}`), payload, { status: response.status });
+  }
   return payload;
 };
 
@@ -590,7 +594,7 @@ export const runScreenTest = async ({ spec, cast, riskId, mode, allowanceUsd }, 
     body: JSON.stringify({ spec, cast: cast.map(forStoryboardWire), riskId, mode, allowanceUsd }),
   });
   const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw Object.assign(new Error(payload.detail ?? payload.error ?? 'Could not run the test'), payload);
+  if (!response.ok) throw Object.assign(new Error(payload.detail ?? payload.error ?? 'Could not run the test'), payload, { status: response.status });
   return payload;
 };
 

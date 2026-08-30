@@ -217,6 +217,26 @@ test('a demand id runs as a rehearsal of the real film, carrying its direction',
   assert.equal(job.params.duration, 6);
 });
 
+test('a Mind with no budget is told so by the test route, with the arithmetic — the 2026-08-30 bounce', async () => {
+  // Measured live: Mind 749b… had read its film and been asked for two $0.48 tests, had no
+  // `budget:` row, and every press of "Run the Director's 2 tests" was a 402 in under a second.
+  const env = await makeEnv();
+  await env.MIND_CONNECTIONS.delete(`budget:${MIND}`);
+  await readWithDemand(env);
+  const response = await handleDirectorTest(
+    await post(env, '/api/director/test', { spec: fixture.spec, cast: CAST, riskId: 'demand:letters-become-brain', mode: 'ask', allowanceUsd: 5 }),
+    env,
+  );
+  const body = await response.json();
+  assert.equal(response.status, 402, JSON.stringify(body));
+  assert.equal(body.error, 'no_budget');
+  assert.match(body.detail, /Top up/);
+  assert.equal(body.available, 0);
+  assert.equal(typeof body.wanted, 'number', 'the panel sizes the top-up from this');
+  assert.ok(body.wanted > 0);
+  assert.deepEqual(env.DIRECTOR_JOBS.sent, [], 'no job, no envelope, no spend');
+});
+
 test('a demand the plan does not have is not on this film', async () => {
   const env = await makeEnv();
   await readWithDemand(env);

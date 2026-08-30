@@ -210,6 +210,9 @@ export default {
         // line here. It lives in .dev.vars locally and `wrangler secret put MINIMAX_API_KEY` in
         // production; until this round it existed only in .env for the build-time scripts.
         hasMinimaxKey: Boolean(env.MINIMAX_API_KEY),
+        // The Director's queue. Without it every Screen Test and take throws at `send` — a 500
+        // that presents exactly like the missing key above: "the button does nothing".
+        hasDirectorQueue: Boolean(env.DIRECTOR_JOBS),
         // The pinning key. Missing it means finished takes still reach the Mind's filmography, but
         // with a 7-day link and no permanent ipfs:// address — degraded, not dead.
         hasPinataKey: Boolean(env.PINATA_JWT),
