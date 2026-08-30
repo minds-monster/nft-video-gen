@@ -250,5 +250,95 @@
 		"OWNER_NOTIFY_EMAIL": "adam@munerate.com",
 		"SITE_ORIGIN": "https://minds.monster",
 		"ANALYTICS_DATASET": "minds_monster_events"
+	},
+	"env": {
+		"staging": {
+			"name": "nft-video-gen-staging",
+			"routes": [
+				{
+					"pattern": "staging.minds.monster",
+					"custom_domain": true
+				}
+			],
+			"assets": {
+				"directory": "./dist",
+				"not_found_handling": "single-page-application",
+				"run_worker_first": [
+					"/api/*",
+					"/__scheduled",
+					"/cdn-cgi/*"
+				]
+			},
+			"analytics_engine_datasets": [
+				{
+					"binding": "ANALYTICS",
+					"dataset": "minds_monster_events_staging"
+				}
+			],
+			"kv_namespaces": [
+				{
+					"binding": "DOSSIERS",
+					"id": "3021893781214008bd7711b42c8f6600"
+				},
+				{
+					"binding": "MIND_CONNECTIONS",
+					"id": "04acd8fdf2304ab1a1ddc333ed441a92"
+				}
+			],
+			"r2_buckets": [
+				{
+					"binding": "STORYBOARD_IMAGES",
+					"bucket_name": "nft-video-gen-storyboards-staging"
+				},
+				{
+					"binding": "RENDERS",
+					"bucket_name": "nft-video-gen-renders-staging"
+				}
+			],
+			"queues": {
+				"producers": [
+					{
+						"queue": "storyboard-jobs-staging",
+						"binding": "STORYBOARD_JOBS"
+					},
+					{
+						"queue": "director-jobs-staging",
+						"binding": "DIRECTOR_JOBS"
+					}
+				],
+				"consumers": [
+					{
+						"queue": "storyboard-jobs-staging",
+						"max_batch_size": 1,
+						"max_batch_timeout": 1,
+						"max_retries": 1
+					},
+					{
+						"queue": "director-jobs-staging",
+						"max_batch_size": 1,
+						"max_batch_timeout": 1,
+						"max_retries": 3
+					}
+				]
+			},
+			"vars": {
+				"NVIDIA_BASE_URL": "https://integrate.api.nvidia.com/v1",
+				"CASTING_MODEL": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+				"SCREENWRITER_MODEL": "nvidia/nemotron-3-super-120b-a12b",
+				"ASSISTANT_MODEL": "minimaxai/minimax-m3",
+				"STORYBOARDER_MODEL": "gpt-5.6-sol",
+				"STORYBOARDER_EFFORT": "high",
+				"OPENROUTER_BASE_URL": "https://openrouter.ai/api/v1",
+				"FREE_STORYBOARD_MODEL": "nvidia/nemotron-3-ultra-550b-a55b:free",
+				"FREE_STORYBOARD_REASONING": "",
+				"FREE_STORYBOARD_SPLIT": "1",
+				"FREE_STORYBOARD_BEAT_CONCURRENCY": "1",
+				"SUPPORT_MIND_ID": "240b453e-f36b-1410-8466-00039ce7df11",
+				"SUPPORT_FROM": "minds.monster Support <support@minds.monster>",
+				"OWNER_NOTIFY_EMAIL": "adam@munerate.com",
+				"SITE_ORIGIN": "https://staging.minds.monster",
+				"ANALYTICS_DATASET": "minds_monster_events_staging"
+			}
+		}
 	}
 }
