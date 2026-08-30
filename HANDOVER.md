@@ -92,6 +92,18 @@ We have introduced a fully isolated **Staging Environment** (`staging.minds.mons
 * **To set Staging Secrets:** Run `npx wrangler secret put <SECRET_NAME> --env staging` (e.g. `STRIPE_WEBHOOK_SECRET`). Staging secrets are completely isolated from production.
 * **Stripe Webhook Endpoint:** Staging payments confirm via the webhook endpoint `https://staging.minds.monster/api/stripe-webhook` (using Test Mode).
 
+### 🔴 Connect Handshake Diagnostics & Gotchas (Crucial for Staging)
+
+When testing the Mind Connection handshake (`/api/connect/init` and `/api/connect/status`) on the staging site, keep these two critical design behaviours in mind:
+
+1. **The "New Conversation Thread" Gotcha**:
+   Each connect request creates a brand new connection ID (UUID) and a new conversation thread on `hellominds.ai` with the alias `connect-<connectionId>`. The approval message must be sent **specifically in that new conversation thread**. If the developer or the Mind's skill replies in a previous connection thread, a general chat, or a different conversation alias, the status poll (which only monitors the new alias) will stay in a `pending` state until it times out.
+
+2. **Strict Regex Word Boundaries on Approval**:
+   The approval parser (`parseApprovalDecision` in `worker/minds.js`) enforces strict word boundaries:
+   `/\b(approve|approved|yes|confirm|ok|accept)\b/`
+   If the Mind replies with a word that wraps these (e.g. `"Connection confirmed"`, which has the `-ed` suffix on `confirm`), it will not match the standalone word `confirm` and the status will remain `pending`. Ensure the Mind's response is an exact standalone match like `"APPROVE"`, `"yes"`, `"ok"`, or `"I confirm"`.
+
 ## ROUND 13: SUPPORT, THE OWNER AREA, AND ANALYTICS (2026-08-27)
 
 A visitor who needs help can now tell Adam; the website owner can see every ticket's state,
