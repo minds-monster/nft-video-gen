@@ -2,11 +2,34 @@
 
 > **Next round is scoped in `HANDOVER-ROUND9.md`** — making the cast real in the previz
 > (proportioned primitives vs billboard impostors vs image-to-3D meshes), with the measured
-> resource inventory behind it. Rounds 1-8 are built and live. Round 13 (support + owner area) is the newest section. **Round 11 (below) corrects three claims in the round-8 section**
+> resource inventory behind it. Rounds 1-8 are built and live. Round 14 (staging site) is the newest section. **Round 11 (below) corrects three claims in the round-8 section**
 > that turned out to be false in production — read it before trusting any free-tier latency figure
 > in this document.
 
-## Start here — ROUND 13: SUPPORT, THE OWNER AREA, AND ANALYTICS (2026-08-27)
+## Start here — ROUND 14: STAGING ENVIRONMENT AND WEBHOOK ISOLATION (2026-08-30)
+
+We have introduced a fully isolated **Staging Environment** (`staging.minds.monster`) on Cloudflare to allow developers to try out bug fixes and new features (like the co-dev's `feat-x402` branch) safely without risking production traffic.
+
+### 🔴 The findings that matter
+
+**1. COMPLETELY ISOLATED INFRASTRUCTURE.** Staging uses its own Cloudflare Worker (`nft-video-gen-staging`) bound to `staging.minds.monster`. The staging environment block in `wrangler.jsonc` (`env.staging`) maps isolated R2 buckets (`nft-video-gen-storyboards-staging`, `nft-video-gen-renders-staging`), isolated Queues (`storyboard-jobs-staging`, `director-jobs-staging`), and staging KV namespaces.
+
+**2. SAVED KV INSTANCES.** On first deployment, Cloudflare provisioned the staging KV namespaces:
+  * `DOSSIERS` ID: `3021893781214008bd7711b42c8f6600`
+  * `MIND_CONNECTIONS` ID: `04acd8fdf2304ab1a1ddc333ed441a92`
+  These are explicitly saved in the `env.staging` block of `wrangler.jsonc` so that subsequent builds link to the same state.
+
+**3. WEBHOOK AND CONNECTIONS BYPASS.** The staging environment has `STRIPE_ACCOUNT_ID` removed from its secrets. The `stripe.js` client logic only uses `Stripe-Context` if `STRIPE_ACCOUNT_ID` is present. Deleting this environment secret allows checkout sessions to run directly on the main Stripe account in test mode. This completely bypasses the need for mock Connect platform onboarding in test mode, allowing the webhook destination to use the standard "Your account" scope.
+
+**4. AUTOMATIC ROUTING VIA VITE.** The Vite bundle uses relative paths (`/api/*`), meaning it automatically routes all payment actions and agent API calls to the staging Worker when loaded on `staging.minds.monster`, and to the production Worker when loaded on `minds.monster`. No frontend environment variables or client rebuilds are needed.
+
+### How to use Staging (For future coding agents)
+
+* **To deploy to Staging:** Run `npm run deploy:staging`. This builds the frontend into `dist/` and deploys the bundle and Worker assets under the Cloudflare `staging` environment.
+* **To set Staging Secrets:** Run `npx wrangler secret put <SECRET_NAME> --env staging` (e.g. `STRIPE_WEBHOOK_SECRET`). Staging secrets are completely isolated from production.
+* **Stripe Webhook Endpoint:** Staging payments confirm via the webhook endpoint `https://staging.minds.monster/api/stripe-webhook` (using Test Mode).
+
+## ROUND 13: SUPPORT, THE OWNER AREA, AND ANALYTICS (2026-08-27)
 
 A visitor who needs help can now tell Adam; the website owner can see every ticket's state,
 whether the reply actually went out, and the site's own numbers — at `/#/owner`. 302 tests pass
