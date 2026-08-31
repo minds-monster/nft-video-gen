@@ -24,7 +24,7 @@
 
 ## 🤖 Swarm Agent Architecture & x402 Protocol
 
-The swarm operates with a central coordinator (the Producer) driving specialized microservice agents. The system is designed to integrate the **x402 Licensing Protocol**, which automatically handles split micro-payments in `$TEST402` tokens when agents invoke registered brand assets.
+The swarm operates with a central coordinator (the Producer) driving specialized microservice agents. The system is designed to integrate the **x402 Attribution Protocol**, which automatically handles split micro-payments in `$TEST402` tokens when agents invoke registered brand assets.
 
 ```mermaid
 graph TB
@@ -77,7 +77,7 @@ graph TB
         Director
     end
 
-    subgraph licensing_layer ["Licensing Layer (x402)"]
+    subgraph attribution_layer ["Attribution Layer (x402)"]
         AssetRegistry
         X402
     end
