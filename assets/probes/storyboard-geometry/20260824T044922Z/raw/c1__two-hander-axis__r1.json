@@ -1,0 +1,436 @@
+{
+  "cell": "c1",
+  "fixture": "two-hander-axis",
+  "fixtureSha": "a1421fc3a811",
+  "repeat": 1,
+  "film": {
+    "beats": [
+      {
+        "framing": "WS",
+        "cameraAngle": "eye-level",
+        "cameraMovement": "the camera holds a Static Shot with no amplitude at still speed from one side of the table",
+        "subjectsInFrame": [
+          {
+            "subject": "<Subject 1>",
+            "screenPosition": "left",
+            "depth": "midground",
+            "action": "Sits upright on the left side of the narrow wooden table, facing <Subject 2>; neon yellow tracksuit, yellow hat, red heart-shaped sunglasses, and ordinary living skin are visible in the hanging bulb's pool of light."
+          },
+          {
+            "subject": "<Subject 2>",
+            "screenPosition": "right",
+            "depth": "midground",
+            "action": "Sits upright opposite <Subject 1> on the right side of the narrow wooden table, facing <Subject 1>; pink buzz-cut hair, orange translucent glasses, green patent leather moto jacket, and ordinary living skin are visible."
+          }
+        ],
+        "subjectsExcluded": [],
+        "screenDirection": [
+          {
+            "subject": "<Subject 1>",
+            "movement": "static"
+          },
+          {
+            "subject": "<Subject 2>",
+            "movement": "static"
+          }
+        ],
+        "continuityCheck": {
+          "consistent": true,
+          "changes": []
+        },
+        "containmentNotes": "Both subjects are living people seated in separate chairs on opposite long sides of the narrow wooden table. The table stands between them under the single hanging bulb; neither subject holds an object. Keep the bare walls beyond the bulb-lit table in deep shadow.",
+        "visualPrompt": "Live-action, cinematic, low-lit nighttime interior. A wide eye-level two-shot from one side of a narrow wooden table frames <Subject 1> seated on the left and <Subject 2> seated on the right, facing one another across the table. A single hanging bulb directly above the table creates a hard pool of warm light and deep falloff into bare dark walls. <Subject 1> is a living ordinary-skinned Bored Ape character in a neon yellow tracksuit, yellow hat, red heart-shaped sunglasses, and white sneakers. <Subject 2> is a living ordinary-skinned figure with pink buzz-cut hair, orange translucent glasses, and a green patent leather moto jacket over a red shirt. Deliberate still composition, tense quiet atmosphere."
+      },
+      {
+        "framing": "MWS",
+        "cameraAngle": "eye-level",
+        "cameraMovement": "the camera Pushes In with medium amplitude at slow speed from the same side of the table, tightening the two-shot without crossing around the table",
+        "subjectsInFrame": [
+          {
+            "subject": "<Subject 1>",
+            "screenPosition": "left",
+            "depth": "midground",
+            "action": "Remains seated facing <Subject 2>, still and watchful; the tighter framing emphasizes the red heart-shaped sunglasses and neon yellow tracksuit."
+          },
+          {
+            "subject": "<Subject 2>",
+            "screenPosition": "right",
+            "depth": "midground",
+            "action": "Remains seated facing <Subject 1>, still and watchful; the tighter framing emphasizes the pink buzz-cut hair, orange translucent glasses, and green moto jacket."
+          }
+        ],
+        "subjectsExcluded": [],
+        "screenDirection": [
+          {
+            "subject": "<Subject 1>",
+            "movement": "static"
+          },
+          {
+            "subject": "<Subject 2>",
+            "movement": "static"
+          }
+        ],
+        "continuityCheck": {
+          "consistent": true,
+          "changes": []
+        },
+        "containmentNotes": "Both subjects remain seated in their original chairs on opposite sides of the table, with the tabletop physically between them. The camera stays on the same side of the table as Beat 1 and only advances forward; do not cross the table or reverse the screen positions.",
+        "visualPrompt": "Live-action, cinematic, low-lit nighttime room. From the same side of the narrow wooden table as the establishing shot, a slow deliberate push-in creates a tighter eye-level two-shot. <Subject 1> remains seated on the left, facing <Subject 2>; <Subject 2> remains seated on the right, facing <Subject 1>. The single hanging bulb pools warm light over their faces and tabletop, with bare walls fading into darkness. Both are living ordinary-skinned figures, not mannequins or statues. Preserve left-right screen positions and the tense stillness."
+      },
+      {
+        "framing": "MS",
+        "cameraAngle": "eye-level",
+        "cameraMovement": "the camera Arc Shot with large amplitude at slow speed around the table to settle behind <Subject 1>'s shoulder, looking across the tabletop toward <Subject 2>",
+        "subjectsInFrame": [
+          {
+            "subject": "<Subject 1>",
+            "screenPosition": "left",
+            "depth": "foreground",
+            "action": "Remains seated; the back and near shoulder of the neon yellow tracksuit occupy the left foreground as an over-the-shoulder frame, with the yellow hat and edge of red heart-shaped sunglasses partially visible."
+          },
+          {
+            "subject": "<Subject 2>",
+            "screenPosition": "center-right",
+            "depth": "midground",
+            "action": "Sits across the table facing toward <Subject 1> and the camera's new reverse angle, held in the hanging bulb's light with a restrained, watchful expression."
+          }
+        ],
+        "subjectsExcluded": [],
+        "screenDirection": [
+          {
+            "subject": "<Subject 1>",
+            "movement": "static"
+          },
+          {
+            "subject": "<Subject 2>",
+            "movement": "static"
+          }
+        ],
+        "continuityCheck": {
+          "consistent": true,
+          "changes": [
+            {
+              "subject": "<Subject 1>",
+              "from": "left, midground",
+              "to": "left, foreground",
+              "justifiedByBeatText": true
+            },
+            {
+              "subject": "<Subject 2>",
+              "from": "right, midground",
+              "to": "center-right, midground",
+              "justifiedByBeatText": true
+            }
+          ]
+        },
+        "containmentNotes": "Both subjects remain seated in their original chairs across the narrow table. The camera completes its move behind <Subject 1>'s shoulder on <Subject 1>'s side of the table; <Subject 1> must be a foreground shoulder silhouette/partial profile, not positioned across the table from the camera. <Subject 2> remains fully on the far side of the tabletop.",
+        "visualPrompt": "Live-action, cinematic reverse over-the-shoulder shot in a low-lit nighttime room. The camera has slowly moved around the narrow wooden table and now looks across it from behind <Subject 1>'s left-side foreground shoulder. <Subject 1>'s neon yellow tracksuit shoulder and yellow hat frame the left foreground, while <Subject 2> sits beyond the table at center-right in a medium shot, facing <Subject 1>. The hanging bulb illuminates the tabletop and <Subject 2>'s pink buzz-cut hair, orange translucent glasses, green patent leather moto jacket, and red shirt. Bare walls remain dark. Both figures have ordinary living skin."
+      },
+      {
+        "framing": "MCU",
+        "cameraAngle": "high",
+        "cameraMovement": "the camera Tilts Down with medium amplitude at slow speed while holding behind <Subject 1>'s shoulder, settling on the tabletop between them",
+        "subjectsInFrame": [
+          {
+            "subject": "<Subject 1>",
+            "screenPosition": "left",
+            "depth": "foreground",
+            "action": "Remains seated and mostly out of frame; a small portion of the neon yellow sleeve or shoulder stays at the left foreground edge beside the table."
+          },
+          {
+            "subject": "<Subject 2>",
+            "screenPosition": "center-right",
+            "depth": "background",
+            "action": "Remains seated across the table; only the lower torso, green jacket edge, or hands may appear softly at the far edge of the downward-looking composition, with no new action."
+          }
+        ],
+        "subjectsExcluded": [],
+        "screenDirection": [
+          {
+            "subject": "<Subject 1>",
+            "movement": "static"
+          },
+          {
+            "subject": "<Subject 2>",
+            "movement": "static"
+          }
+        ],
+        "continuityCheck": {
+          "consistent": true,
+          "changes": [
+            {
+              "subject": "<Subject 2>",
+              "from": "center-right, midground",
+              "to": "center-right, background",
+              "justifiedByBeatText": true
+            }
+          ]
+        },
+        "containmentNotes": "The camera remains physically behind <Subject 1>'s shoulder in the reverse-angle position established in Beat 3 and only tilts downward. Both subjects remain seated on opposite sides of the table. The narrow wooden tabletop is the focal plane, directly beneath the hanging bulb; no objects are introduced on it.",
+        "visualPrompt": "Live-action, cinematic, high-angle close framing after a slow downward tilt from behind <Subject 1>'s shoulder. The narrow wooden tabletop fills the center under the warm hanging bulb. A sliver of <Subject 1>'s neon yellow sleeve or shoulder anchors the left foreground; <Subject 2> remains seated across the table, reduced to a soft far-edge presence at center-right, with hints of green jacket and hands. The bare room falls into darkness beyond the table. Maintain the same reverse-side camera placement and quiet tension."
+      },
+      {
+        "framing": "MCU",
+        "cameraAngle": "high",
+        "cameraMovement": "the camera holds a Static Shot with no amplitude at still speed behind <Subject 1>'s shoulder as <Subject 1> rises and circles the table",
+        "subjectsInFrame": [
+          {
+            "subject": "<Subject 1>",
+            "screenPosition": "center-right",
+            "depth": "background",
+            "action": "Stands from the near-side chair, walks around the end of the narrow table from left to right, then stops standing directly behind <Subject 2>'s chair; the neon yellow tracksuit, yellow hat, and red heart-shaped sunglasses remain visible as a living figure."
+          },
+          {
+            "subject": "<Subject 2>",
+            "screenPosition": "center-right",
+            "depth": "background",
+            "action": "Remains seated at the far side of the table, facing forward toward the table while <Subject 1> comes to a stop behind the chair."
+          }
+        ],
+        "subjectsExcluded": [],
+        "screenDirection": [
+          {
+            "subject": "<Subject 1>",
+            "movement": "left-to-right"
+          },
+          {
+            "subject": "<Subject 2>",
+            "movement": "static"
+          }
+        ],
+        "continuityCheck": {
+          "consistent": true,
+          "changes": [
+            {
+              "subject": "<Subject 1>",
+              "from": "left, foreground",
+              "to": "center-right, background",
+              "justifiedByBeatText": true
+            }
+          ]
+        },
+        "containmentNotes": "The camera does not move from Beat 4's high, behind-<Subject 1>-shoulder position. <Subject 1> begins seated on the camera-near side, stands, walks around one end of the table, and finishes standing immediately behind <Subject 2>'s chair on the far side. <Subject 2> remains seated throughout. The table remains between the camera and the far-side chair; do not place <Subject 1> inside or through the chair.",
+        "visualPrompt": "Live-action, cinematic, low-lit nighttime room, held in the same high-angle tabletop composition from behind <Subject 1>'s former shoulder position. Without any camera movement, <Subject 1> rises from the near-side chair, walks around the end of the narrow wooden table left-to-right, and stops standing directly behind the seated <Subject 2> at the far side. The final frame places both living ordinary-skinned figures at center-right beyond the tabletop: <Subject 2> seated in the green moto jacket, <Subject 1> looming behind in neon yellow tracksuit, yellow hat, and red heart-shaped sunglasses. The single hanging bulb isolates the table and figures against bare dark walls."
+      }
+    ]
+  },
+  "calls": [
+    {
+      "usage": {
+        "promptTokens": 1636,
+        "completionTokens": 2238,
+        "reasoningTokens": 0
+      },
+      "latencyMs": 20558,
+      "attempts": 1,
+      "costUsd": 0.030128,
+      "request": {
+        "model": "gpt-5.6-terra",
+        "reasoning_effort": "none",
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are the Storyboarder on a film crew that turns licensed NFT\nartwork into short generated video. Your job is not to describe a pretty picture — it is a\nprecise technical blocking specification for one beat, the kind a cinematographer leaves for\na director, exact enough that a video-render pipeline can follow it without guessing.\n\nMiniMax-H3 expects a structured script, not a paragraph. Emit three fields:\n\n1. integrated_multimodal_description — the visuals, action, camera and diegetic sound,\n   along a timeline. Open with visual style and composition (\"Live-action, cinematic, a\n   medium-wide shot frames...\"). A single shot needs no timestamp; if you genuinely need a\n   second shot, mark it \"[Shot 2] At 00:03.500, the camera cuts to...\".\n2. overall_soundscape — ambient, physical and non-verbal sound. One to four sentences.\n3. non_diegetic_music — score the characters cannot hear. One to three sentences, or \"N/A\".\n\nCamera moves are written as natural English actions, never as bracketed labels. The formula\nis motion + amplitude + speed: \"the camera pushes in with small amplitude at slow speed\".\nAvailable motions: Zoom In/Out, Push In/Out, Pan Left/Right, Truck Left/Right, Tilt Up/Down,\nPedestal Up/Down, Arc Shot, Tracking Shot, Static Shot, Shake Slightly/Strongly, POV, Roll.\n\nEach text field can run to 7000 characters. Length is not a virtue in itself, but this model\nis directed, not hinted at — be specific and complete rather than terse.\n\nRules:\n1. Never place a subject in subjectsInFrame that this beat's own text doesn't put there. If a\n   cast member has a reference available (listed below) but this beat's action doesn't\n   involve them, they go in subjectsExcluded — even though they're referenced elsewhere in\n   the film. An early, unearned reveal is a real error, not a safe default.\n2. cameraMovement is natural English (motion + amplitude + speed), drawn from H3's own\n   vocabulary above — never a bracketed label, never invented terminology H3 doesn't use.\n3. When given the previous beat's own blocking JSON, compare explicitly: report every subject\n   whose screenPosition or depth changed, and say plainly whether this beat's own text\n   justifies that change. An unexplained flip in position is a mistake to report, not\n   something to silently accept or paper over.\n4. containmentNotes says whatever a renderer needs to get physically right — who is inside\n   what, who is holding what, any constraint this beat implies. A person in a vehicle is\n   inside it, not visible through the windshield from an impossible angle.\n5. visualPrompt is a plain-English rendering of everything above, precise enough that an\n   image model could work from it directly later — but you are not drawing anything yourself.\n6. Every \"subject\" field everywhere in the schema is the bare tag and nothing else — exactly\n   \"<Subject 1>\", never \"<Subject 1> — the ape\" or any other appended description. Downstream\n   code matches these by exact tag; anything extra breaks that match silently.\n\nReturn the blocking spec by calling the tool. Write no prose outside it."
+          },
+          {
+            "role": "user",
+            "content": "World: A low-lit room at night, a single hanging bulb over a narrow wooden table, bare walls beyond.\nStaging: <Subject 1> and <Subject 2> sit facing each other across the narrow table. In the establishing framing <Subject 1> is on the left of frame and <Subject 2> is on the right.\nGuard: Every character has ordinary skin and is a living figure, not a mannequin and not a chrome statue.\nFilm's overall camera direction: Deliberate and mostly still, with one considered move around the table and back.\nContinuity: No cuts. The camera moves only where a beat says it moves.\n\nCast with references available (referencePlan order):\n<Subject 1> — A Bored Ape character wearing a neon yellow tracksuit, red heart-shaped sunglasses, yellow hat, and white sneakers. (neon yellow tracksuit, red heart-shaped sunglasses, yellow hat)\n<Subject 2> — A pink‑haired figure wearing orange translucent glasses, a green patent leather moto jacket over a red shirt, black cotton‑wool slacks with buckles, and black leather combat boots. (pink buzz-cut hair, orange translucent glasses, green patent leather moto jacket)\n\n\nThe film is 5 beats long, in order:\nBeat 1 of 5: <Subject 1> and <Subject 2> sit across the narrow table from each other, the camera holding a wide two-shot from one side of the table.\nBeat 2 of 5: From that same side of the table, without moving around it, the camera pushes in to a tighter two-shot.\nBeat 3 of 5: The camera moves round behind <Subject 1>'s shoulder to a reverse angle looking across the table at <Subject 2>.\nBeat 4 of 5: Holding that same position behind <Subject 1>'s shoulder, the camera tilts down to the table between them.\nBeat 5 of 5: The camera does not move. <Subject 1> stands, walks around the table, and stops standing behind <Subject 2>.\n\nWrite the blocking spec for every beat, returning an array of one spec per beat in order."
+          }
+        ],
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "emit_blocking",
+              "description": "Return the blocking spec.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "beats": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "framing": {
+                          "type": "string",
+                          "enum": [
+                            "ECU",
+                            "CU",
+                            "MCU",
+                            "MS",
+                            "MWS",
+                            "WS",
+                            "EWS"
+                          ],
+                          "description": "Shot size."
+                        },
+                        "cameraAngle": {
+                          "type": "string",
+                          "enum": [
+                            "low",
+                            "eye-level",
+                            "high",
+                            "dutch",
+                            "overhead"
+                          ]
+                        },
+                        "cameraMovement": {
+                          "type": "string",
+                          "description": "Natural English, drawn from H3's own vocabulary (motion + amplitude + speed) — never a bracketed label."
+                        },
+                        "subjectsInFrame": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "subject": {
+                                "type": "string",
+                                "description": "Exactly the tag, nothing appended — e.g. \"<Subject 1>\", never \"<Subject 1> — description\"."
+                              },
+                              "screenPosition": {
+                                "type": "string",
+                                "enum": [
+                                  "far-left",
+                                  "left",
+                                  "center-left",
+                                  "center",
+                                  "center-right",
+                                  "right",
+                                  "far-right"
+                                ]
+                              },
+                              "depth": {
+                                "type": "string",
+                                "enum": [
+                                  "foreground",
+                                  "midground",
+                                  "background"
+                                ]
+                              },
+                              "action": {
+                                "type": "string",
+                                "description": "What this subject is doing right now, in this frame."
+                              }
+                            },
+                            "required": [
+                              "subject",
+                              "screenPosition",
+                              "depth",
+                              "action"
+                            ]
+                          }
+                        },
+                        "subjectsExcluded": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "Subjects with a reference available who must NOT appear in this frame — bare tags only, e.g. \"<Subject 4>\"."
+                        },
+                        "screenDirection": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "subject": {
+                                "type": "string",
+                                "description": "Exactly the tag, e.g. \"<Subject 1>\" — nothing appended."
+                              },
+                              "movement": {
+                                "type": "string",
+                                "enum": [
+                                  "left-to-right",
+                                  "right-to-left",
+                                  "toward-camera",
+                                  "away-from-camera",
+                                  "static"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "subject",
+                              "movement"
+                            ]
+                          }
+                        },
+                        "continuityCheck": {
+                          "type": "object",
+                          "properties": {
+                            "consistent": {
+                              "type": "boolean"
+                            },
+                            "changes": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "subject": {
+                                    "type": "string",
+                                    "description": "Exactly the tag, e.g. \"<Subject 1>\" — nothing appended."
+                                  },
+                                  "from": {
+                                    "type": "string"
+                                  },
+                                  "to": {
+                                    "type": "string"
+                                  },
+                                  "justifiedByBeatText": {
+                                    "type": "boolean"
+                                  }
+                                },
+                                "required": [
+                                  "subject",
+                                  "from",
+                                  "to",
+                                  "justifiedByBeatText"
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "consistent",
+                            "changes"
+                          ],
+                          "description": "Empty changes array and consistent:true when there is no previous beat, or nothing moved."
+                        },
+                        "containmentNotes": {
+                          "type": "string"
+                        },
+                        "visualPrompt": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "framing",
+                        "cameraAngle",
+                        "cameraMovement",
+                        "subjectsInFrame",
+                        "subjectsExcluded",
+                        "screenDirection",
+                        "continuityCheck",
+                        "containmentNotes",
+                        "visualPrompt"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "beats"
+                ]
+              }
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "function",
+          "function": {
+            "name": "emit_blocking"
+          }
+        },
+        "temperature": 0.3,
+        "max_completion_tokens": 8000
+      }
+    }
+  ],
+  "costUsd": 0.030128
+}

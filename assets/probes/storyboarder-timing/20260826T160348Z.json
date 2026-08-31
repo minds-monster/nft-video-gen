@@ -1,0 +1,419 @@
+{
+  "runId": "20260826T160348Z",
+  "startedAt": "2026-08-26T16:03:49.251Z",
+  "fixture": "scale-extremes",
+  "reps": 1,
+  "quotaBefore": {
+    "usage": 0.0391357,
+    "limit": null,
+    "limitRemaining": null,
+    "isFreeTier": true,
+    "rateLimit": {
+      "requests": -1,
+      "interval": "10s",
+      "note": "This field is deprecated and safe to ignore."
+    }
+  },
+  "results": [
+    {
+      "id": "reasoning-off",
+      "label": "Ultra · reasoning:{enabled:false}",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "beatCount": 3,
+      "reasoning": {
+        "enabled": false
+      },
+      "reps": [
+        {
+          "rep": 1,
+          "ok": false,
+          "latencyMs": 5493,
+          "error": "NVIDIA 502: Upstream error from Nvidia: Service temporarily overloaded",
+          "status": 502,
+          "meta": [
+            {
+              "status": 200,
+              "attempt": 0,
+              "headers": {}
+            },
+            {
+              "status": 200,
+              "attempt": 0,
+              "softError": "NVIDIA 502: Upstream error from Nvidia: Service temporarily overloaded",
+              "retryable": true,
+              "headers": {}
+            },
+            {
+              "status": 200,
+              "attempt": 1,
+              "headers": {}
+            },
+            {
+              "status": 200,
+              "attempt": 1,
+              "softError": "NVIDIA 502: Upstream error from Nvidia: Service temporarily overloaded",
+              "retryable": true,
+              "headers": {}
+            }
+          ]
+        }
+      ],
+      "medianLatencyMs": null,
+      "medianTokensPerSecond": null,
+      "medianReasoningShare": null,
+      "floorPassRate": 0
+    },
+    {
+      "id": "reasoning-low",
+      "label": "Ultra · reasoning:{effort:low}",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "beatCount": 3,
+      "reasoning": {
+        "effort": "low"
+      },
+      "reps": [
+        {
+          "rep": 1,
+          "ok": false,
+          "latencyMs": 6465,
+          "error": "NVIDIA 502: Upstream error from Nvidia: Service temporarily overloaded",
+          "status": 502,
+          "meta": [
+            {
+              "status": 200,
+              "attempt": 0,
+              "headers": {}
+            },
+            {
+              "status": 200,
+              "attempt": 0,
+              "softError": "NVIDIA 502: Upstream error from Nvidia: Service temporarily overloaded",
+              "retryable": true,
+              "headers": {}
+            },
+            {
+              "status": 200,
+              "attempt": 1,
+              "headers": {}
+            },
+            {
+              "status": 200,
+              "attempt": 1,
+              "softError": "NVIDIA 502: Upstream error from Nvidia: Service temporarily overloaded",
+              "retryable": true,
+              "headers": {}
+            }
+          ]
+        }
+      ],
+      "medianLatencyMs": null,
+      "medianTokensPerSecond": null,
+      "medianReasoningShare": null,
+      "floorPassRate": 0
+    },
+    {
+      "id": "reasoning-cap",
+      "label": "Ultra · reasoning:{max_tokens:1500}",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "beatCount": 3,
+      "reasoning": {
+        "max_tokens": 1500
+      },
+      "reps": [
+        {
+          "rep": 1,
+          "ok": false,
+          "latencyMs": 5013,
+          "error": "NVIDIA 502: Upstream error from Nvidia: Service temporarily overloaded",
+          "status": 502,
+          "meta": [
+            {
+              "status": 200,
+              "attempt": 0,
+              "headers": {}
+            },
+            {
+              "status": 200,
+              "attempt": 0,
+              "softError": "NVIDIA 502: Upstream error from Nvidia: Service temporarily overloaded",
+              "retryable": true,
+              "headers": {}
+            },
+            {
+              "status": 200,
+              "attempt": 1,
+              "headers": {}
+            },
+            {
+              "status": 200,
+              "attempt": 1,
+              "softError": "NVIDIA 502: Upstream error from Nvidia: Service temporarily overloaded",
+              "retryable": true,
+              "headers": {}
+            }
+          ]
+        }
+      ],
+      "medianLatencyMs": null,
+      "medianTokensPerSecond": null,
+      "medianReasoningShare": null,
+      "floorPassRate": 0
+    },
+    {
+      "id": "super",
+      "label": "Super 120B · non-streamed",
+      "model": "nvidia/nemotron-3-super-120b-a12b:free",
+      "beatCount": 3,
+      "reps": [
+        {
+          "rep": 1,
+          "ok": true,
+          "latencyMs": 92689,
+          "firstPlanAtMs": null,
+          "adherence": null,
+          "marks": [],
+          "tokensPerSecond": 68.3,
+          "usage": {
+            "promptTokens": 4664,
+            "completionTokens": 6332,
+            "reasoningTokens": 3975
+          },
+          "answerTokens": 2357,
+          "reasoningShare": 0.628,
+          "reasoningChars": null,
+          "floorViolations": [
+            {
+              "beatIndex": 2,
+              "code": "subject-behind-lens",
+              "detail": "<Subject 1> is listed in frame but sits behind the lens."
+            }
+          ],
+          "passesFloor": false,
+          "distinctBands": 3,
+          "bands": [
+            "EWS",
+            "WS",
+            "ECU"
+          ],
+          "meta": [
+            {
+              "status": 200,
+              "attempt": 0,
+              "headers": {}
+            }
+          ],
+          "film": {
+            "units": "metres",
+            "aspect": 1.7778,
+            "sceneScaleNote": "The salt flat extends at least 200 m in each direction, providing a vast empty space.",
+            "beats": [
+              {
+                "beatIndex": 0,
+                "kind": "shot",
+                "transitionText": null,
+                "camera": {
+                  "start": {
+                    "position": {
+                      "x": 0,
+                      "y": 1.6,
+                      "z": 50
+                    },
+                    "lookAt": {
+                      "x": 0,
+                      "y": 1,
+                      "z": 0
+                    }
+                  },
+                  "end": {
+                    "position": {
+                      "x": 0,
+                      "y": 1.6,
+                      "z": 50
+                    },
+                    "lookAt": {
+                      "x": 0,
+                      "y": 1,
+                      "z": 0
+                    }
+                  },
+                  "focalStartMm": 35,
+                  "focalEndMm": 35,
+                  "rollDeg": 0,
+                  "motion": "Static Shot",
+                  "amplitude": "small",
+                  "speed": "slow",
+                  "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+                },
+                "subjects": [
+                  {
+                    "subject": "<Subject 1>",
+                    "x": 0,
+                    "z": 0,
+                    "endX": 0,
+                    "endZ": 0,
+                    "groundOffsetM": 0,
+                    "heightM": 1.7,
+                    "widthM": 0.6,
+                    "yawDeg": 0,
+                    "containerId": null,
+                    "action": "stands still as a speck in the vast flat",
+                    "screenPosition": "center",
+                    "depth": "background"
+                  }
+                ],
+                "principalSubject": "<Subject 1>",
+                "framing": "EWS",
+                "changes": [],
+                "containmentNotes": "Figure stands on the salt flat; no containment.",
+                "proseNote": "A static, wide shot captures the lone figure as a tiny speck at the far end of an endless white salt flat under a huge pale sky. The camera is far back, emphasizing the figure's isolation against the vast emptiness."
+              },
+              {
+                "beatIndex": 1,
+                "kind": "shot",
+                "transitionText": null,
+                "camera": {
+                  "start": {
+                    "position": {
+                      "x": 0,
+                      "y": 1.6,
+                      "z": 20
+                    },
+                    "lookAt": {
+                      "x": 0,
+                      "y": 1,
+                      "z": 0
+                    }
+                  },
+                  "end": {
+                    "position": {
+                      "x": 0,
+                      "y": 1.6,
+                      "z": 20
+                    },
+                    "lookAt": {
+                      "x": 0,
+                      "y": 1,
+                      "z": 0
+                    }
+                  },
+                  "focalStartMm": 85,
+                  "focalEndMm": 85,
+                  "rollDeg": 0,
+                  "motion": "Static Shot",
+                  "amplitude": "small",
+                  "speed": "slow",
+                  "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+                },
+                "subjects": [
+                  {
+                    "subject": "<Subject 1>",
+                    "x": 0,
+                    "z": 0,
+                    "endX": 0,
+                    "endZ": 5,
+                    "groundOffsetM": 0,
+                    "heightM": 1.7,
+                    "widthM": 0.6,
+                    "yawDeg": 0,
+                    "containerId": null,
+                    "action": "walks toward the camera across the salt flat",
+                    "screenPosition": "center",
+                    "depth": "midground"
+                  }
+                ],
+                "principalSubject": "<Subject 1>",
+                "framing": "WS",
+                "changes": [
+                  {
+                    "subject": "<Subject 1>",
+                    "what": "position",
+                    "justifiedByBeatText": true
+                  }
+                ],
+                "containmentNotes": "Figure walks on the flat; no containment.",
+                "proseNote": "The figure strides across the salt flat toward the viewer, still small against the endless expanse. The camera remains static, keeping the figure centered as it moves closer."
+              },
+              {
+                "beatIndex": 2,
+                "kind": "shot",
+                "transitionText": null,
+                "camera": {
+                  "start": {
+                    "position": {
+                      "x": 0,
+                      "y": 1.65,
+                      "z": 1
+                    },
+                    "lookAt": {
+                      "x": 0,
+                      "y": 1.65,
+                      "z": 0
+                    }
+                  },
+                  "end": {
+                    "position": {
+                      "x": 0,
+                      "y": 1.65,
+                      "z": 1
+                    },
+                    "lookAt": {
+                      "x": 0,
+                      "y": 1.65,
+                      "z": 0
+                    }
+                  },
+                  "focalStartMm": 85,
+                  "focalEndMm": 85,
+                  "rollDeg": 0,
+                  "motion": "Static Shot",
+                  "amplitude": "small",
+                  "speed": "slow",
+                  "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+                },
+                "subjects": [
+                  {
+                    "subject": "<Subject 1>",
+                    "x": 0,
+                    "z": 5,
+                    "endX": 0,
+                    "endZ": 5,
+                    "groundOffsetM": 0,
+                    "heightM": 1.7,
+                    "widthM": 0.6,
+                    "yawDeg": 0,
+                    "containerId": null,
+                    "action": "opens her eye, iris filling the frame",
+                    "screenPosition": "center",
+                    "depth": "foreground"
+                  }
+                ],
+                "principalSubject": "<Subject 1>",
+                "framing": "ECU",
+                "changes": [],
+                "containmentNotes": "Figure stands on the salt flat; no containment.",
+                "proseNote": "An extreme close‑up fills the frame with the figure’s eye as the lid lifts, the iris and its flecks dominating the view. The camera is positioned just in front of the eye, emphasizing the intense detail."
+              }
+            ]
+          }
+        }
+      ],
+      "medianLatencyMs": 92689,
+      "medianTokensPerSecond": 68.3,
+      "medianReasoningShare": 0.628,
+      "floorPassRate": 0
+    }
+  ],
+  "quotaAfter": {
+    "usage": 0.0391357,
+    "limit": null,
+    "limitRemaining": null,
+    "isFreeTier": true,
+    "rateLimit": {
+      "requests": -1,
+      "interval": "10s",
+      "note": "This field is deprecated and safe to ignore."
+    }
+  },
+  "finishedAt": "2026-08-26T16:05:51.161Z",
+  "silentRetries": 6
+}

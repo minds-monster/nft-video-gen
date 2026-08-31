@@ -1,0 +1,64 @@
+import { chromium } from '@playwright/test';
+
+const ADAM_MIND_ID = '240b453e-f36b-1410-8466-00039ce7df11';
+
+const browser = await chromium.launch({ headless: true });
+const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+
+const errors = [];
+page.on('pageerror', (err) => errors.push(err.message));
+page.on('console', (msg) => {
+  if (msg.type() === 'error' && !msg.text().includes('Failed to load resource')) errors.push(msg.text());
+});
+
+await page.goto('http://localhost:5173/', { waitUntil: 'domcontentloaded', timeout: 60000 });
+
+await page.locator('header button:has-text("Connect Mind")').first().click();
+const dialog = page.locator('[role="dialog"]');
+const mindIdInput = dialog.locator('input[placeholder*="240b453e"]').first();
+await mindIdInput.waitFor({ timeout: 5000 });
+await mindIdInput.fill(ADAM_MIND_ID);
+await dialog.locator('button[type="submit"]').first().click();
+
+console.log('Waiting up to 3 minutes for connection...');
+let connected = false;
+for (let i = 0; i < 18; i++) {
+  await page.waitForTimeout(10_000);
+  const text = await page.locator('body').innerText();
+  if (text.includes('Connected ·')) { connected = true; break; }
+  if (text.includes('Connection denied')) { console.log('Denied this time.'); break; }
+}
+console.log('Connected:', connected);
+if (!connected) { await browser.close(); process.exit(1); }
+
+await dialog.locator('button[aria-label="Close"]').first().click();
+await page.waitForTimeout(500);
+
+const textarea = page.locator('textarea[aria-label="Describe your film"]').first();
+await textarea.waitFor({ timeout: 10000 });
+await textarea.click();
+await page.waitForTimeout(1500);
+
+for (const title of ['Casting Director', 'Screenwriter', 'Screenplay', 'Storyboarder']) {
+  await page.locator(`button[aria-label="Collapse ${title}"]`).first().click();
+  await page.waitForTimeout(300);
+}
+await page.waitForTimeout(500);
+
+const producerForm = page.locator('form:has(input[aria-label="Direct the film…"])').first();
+const producerInput = producerForm.locator('input[aria-label="Direct the film…"]').first();
+await producerInput.fill(`Final regression test ${new Date().toISOString()}: how much Producer space do we have now?`);
+await producerForm.locator('button[aria-label="Generate"]').first().click();
+
+console.log('Waiting up to 2 minutes for a reply...');
+let replied = false;
+for (let i = 0; i < 12; i++) {
+  await page.waitForTimeout(10_000);
+  const count = await page.locator('p.whitespace-pre-wrap').count();
+  if (count > 1) { replied = true; break; }
+}
+console.log('Reply rendered:', replied);
+
+await page.screenshot({ path: '/tmp/final-regression.png' });
+console.log('Errors:', JSON.stringify(errors));
+await browser.close();

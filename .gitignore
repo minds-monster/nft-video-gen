@@ -23,3 +23,22 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Worker secrets for `wrangler dev`. The deployed equivalent is `wrangler secret put`.
+.dev.vars
+.wrangler
+
+# Hero-video working files. Reference art downloaded from chain (scripts/prep-refs.mjs)
+# and raw MiniMax renders (scripts/gen-video.mjs). Large, reproducible, and only the
+# encoded result belongs in git — see public/hero/.
+assets/refs/
+assets/renders/
+assets/audio/candidates/
+# Generated 3D assets, wherever they land. Meshes are large (3-15MB each), reproducible from
+# scripts/probe-mesh.mjs and the recorded task ids, and in production they live in R2 rather than
+# in the repo at all. Ignored by EXTENSION rather than by directory on purpose: the round-9 rule
+# only covered assets/probes/mesh-round9/, so the next round writing to mesh-round10/ would have
+# committed 80MB of binaries without anyone noticing.
+*.glb
+*.gltf
+assets/probes/mesh-round9/

@@ -1,0 +1,136 @@
+{
+  "runId": "20260826T163846Z",
+  "totalUsd": 0,
+  "entries": [
+    {
+      "tag": "ultra-or-film__captured__r0",
+      "cell": "ultra-or-film",
+      "fixture": "captured",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "ultra-or-film__grid-launch__r0",
+      "cell": "ultra-or-film",
+      "fixture": "grid-launch",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "ultra-or-film__two-hander-axis__r0",
+      "cell": "ultra-or-film",
+      "fixture": "two-hander-axis",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "ultra-or-film__cut-to-black__r0",
+      "cell": "ultra-or-film",
+      "fixture": "cut-to-black",
+      "repeat": 0,
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "costUsd": 0,
+      "calls": 1,
+      "promptTokens": 4853,
+      "completionTokens": 15651,
+      "reasoningTokens": 9554,
+      "wallMs": 759081
+    },
+    {
+      "tag": "ultra-or-film__scale-extremes__r0",
+      "cell": "ultra-or-film",
+      "fixture": "scale-extremes",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "super-or-film__captured__r0",
+      "cell": "super-or-film",
+      "fixture": "captured",
+      "repeat": 0,
+      "model": "nvidia/nemotron-3-super-120b-a12b:free",
+      "costUsd": 0,
+      "calls": 1,
+      "promptTokens": 5252,
+      "completionTokens": 24773,
+      "reasoningTokens": 17361,
+      "wallMs": 379174
+    },
+    {
+      "tag": "super-or-film__grid-launch__r0",
+      "cell": "super-or-film",
+      "fixture": "grid-launch",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "super-or-film__two-hander-axis__r0",
+      "cell": "super-or-film",
+      "fixture": "two-hander-axis",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "super-or-film__cut-to-black__r0",
+      "cell": "super-or-film",
+      "fixture": "cut-to-black",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "super-or-film__scale-extremes__r0",
+      "cell": "super-or-film",
+      "fixture": "scale-extremes",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "split-or__captured__r0",
+      "cell": "split-or",
+      "fixture": "captured",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "split-or__grid-launch__r0",
+      "cell": "split-or",
+      "fixture": "grid-launch",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "split-or__two-hander-axis__r0",
+      "cell": "split-or",
+      "fixture": "two-hander-axis",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "split-or__cut-to-black__r0",
+      "cell": "split-or",
+      "fixture": "cut-to-black",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "split-or__scale-extremes__r0",
+      "cell": "split-or",
+      "fixture": "scale-extremes",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    }
+  ]
+}

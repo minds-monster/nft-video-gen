@@ -1,0 +1,264 @@
+// A thin OpenAI-compatible client for NVIDIA's hosted NIM endpoints.
+//
+// Deliberately thin, and deliberately the ONLY place that knows the provider's shape. Two
+// reasons, both from the research that produced this build:
+//
+//  1. NVIDIA removed its credit system in 2025 — the "1,000 free credits" figure in every
+//     blog post is stale. What's left is a rate limit (community-observed ~40 RPM per
+//     model, account-level) with no free-tier increases available.
+//  2. The API Trial terms are evaluation-only. Prototyping is fine; production traffic is
+//     not.
+//
+// So the exit has to be cheap. Base URL and model ids are `vars` in wrangler.jsonc, and
+// every request goes through here — pointing the stack at OpenRouter (which serves the
+// same weights) is a config change, not a rewrite.
+
+/** Thrown for a non-2xx from the provider, carrying the status so callers can see a 429. */
+/** A 429 that says the DAILY allowance is gone, not that requests are arriving too fast.
+ * OpenRouter's free tier is 50 requests/day below 10 credits and 1000 above it, and running out
+ * reads as the same status code as a burst limit. */
+const DAILY_CAP = /free-models-per-day|per-day|daily limit|Add \d+ credits/i;
+
+export class NvidiaError extends Error {
+  constructor(status, body) {
+    super(`NVIDIA ${status}: ${String(body).slice(0, 400)}`);
+    this.name = 'NvidiaError';
+    this.status = status;
+    // A DAILY CAP IS NOT A RATE LIMIT, and conflating them costs real time.
+    //
+    // Round 7 learned this shape on the paid side: an exhausted OpenAI credit balance arrives
+    // as a 429, the same status as a burst limit, so it was being retried three times for a
+    // condition that would never clear. `OpenAIError.outOfCredit` split them. The free side had
+    // the identical bug and it went unnoticed until 2026-08-26, when a probe run met the
+    // free-models-per-day cap and then spent nine more films politely backing off and retrying
+    // against a quota that does not replenish until midnight UTC.
+    //
+    // 🔑 The distinction is whether waiting can help. A rate limit clears on its own; a
+    // quota does not, and a billing problem never does.
+    this.quotaExhausted = status === 429 && DAILY_CAP.test(String(body));
+    this.retryable = (status === 429 && !this.quotaExhausted) || status >= 500;
+  }
+}
+
+const sleep = (ms) => new Promise((done) => setTimeout(done, ms));
+
+/**
+ * POST /chat/completions.
+ *
+ * `body` is passed through as-is apart from `model`, so callers own the provider-specific
+ * parts — `nvext.guided_json`, `chat_template_kwargs`, tool definitions. Keeping those at
+ * the call site rather than abstracting them is intentional: they differ per model and the
+ * abstraction would have to be unpicked the first time one of them changes.
+ */
+const jitter = (ms) => ms + Math.floor(Math.random() * Math.min(ms, 2000));
+
+/** The response headers worth keeping off a completion. On the Zero Budget tier the rate limit
+ * is the currency, and nothing in this repo has ever recorded it — so a run throttled into three
+ * multi-minute replays and a run that was simply slow are indistinguishable in our own data.
+ * Reported through `onMeta` rather than returned, so the shape every caller reads is unchanged. */
+const RATE_LIMIT_HEADERS = [
+  "x-ratelimit-limit-requests",
+  "x-ratelimit-remaining-requests",
+  "x-ratelimit-reset-requests",
+  "x-ratelimit-limit-tokens",
+  "x-ratelimit-remaining-tokens",
+  "retry-after",
+];
+
+const metaOf = (response, attempt) => ({
+  status: response.status,
+  attempt,
+  headers: Object.fromEntries(
+    RATE_LIMIT_HEADERS.map((h) => [h, response.headers.get(h)]).filter(([, v]) => v != null),
+  ),
+});
+
+export const chat = async (env, { model, signal, retries = 5, apiKey, baseUrl, onMeta, ...body }) => {
+  // Overridable per call: most callers share env.NVIDIA_API_KEY, but a model can live
+  // on a different key within the same NIM account (see worker/assistant.js, whose
+  // model was only ever reachable on a separately-issued key — confirmed empirically,
+  // not assumed) without this file needing to know why.
+  const key = apiKey ?? env.NVIDIA_API_KEY;
+  if (!key) {
+    throw new Error(
+      'NVIDIA_API_KEY is not set. Locally it goes in .dev.vars; in production use ' +
+        '`wrangler secret put NVIDIA_API_KEY`. It is never VITE_-prefixed.',
+    );
+  }
+
+  // Overridable per call for the same reason `apiKey` is: worker/openrouter.js serves the SAME
+  // Nemotron weights from a different origin, and round 7 established that origin is the whole
+  // free-tier decision (NVIDIA's trial terms are evaluation-only, and its hosted throughput
+  // degraded under sustained use until film-length requests 504'd). Pointing a call elsewhere is
+  // an argument, not a fork of this client.
+  const url = `${baseUrl ?? env.NVIDIA_BASE_URL}/chat/completions`;
+
+  let last;
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    const response = await fetch(url, {
+      method: 'POST',
+      signal,
+      headers: {
+        Authorization: `Bearer ${key}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({ model, ...body }),
+    });
+
+    onMeta?.(metaOf(response, attempt));
+
+    if (response.ok) {
+      const payload = await response.json();
+      // A 200 IS NOT SUCCESS ON THIS WIRE FORMAT. Measured against OpenRouter, 2026-08-25: an
+      // upstream failure comes back as **HTTP 200** carrying `{ error: { message, code } }` and no
+      // `choices` at all —
+      //     {"error":{"message":"Upstream error from Nvidia: Service temporarily overloaded","code":502}}
+      // Treating the status alone as the verdict means the retry loop never engages for exactly
+      // the transient failures it exists to absorb, and the caller instead throws something
+      // meaningless about a missing tool call. Unwrapping it here, at the layer that owns the
+      // provider's wire format, gives every caller the real code and the normal backoff.
+      if (payload?.error) {
+        last = new NvidiaError(payload.error.code ?? 502, payload.error.message ?? 'upstream error');
+        // A 200 that is really a failure is INVISIBLE in latency data unless it is reported: the
+        // retry replays a multi-minute call, and the caller only ever sees one big number. This
+        // is how a "slow model" and "the provider bounced us once and we quietly went again"
+        // came to look identical in every free-tier figure this repo has published.
+        onMeta?.({ status: 200, attempt, softError: last.message, retryable: last.retryable, headers: {} });
+        if (!last.retryable || attempt === retries) throw last;
+        await sleep(jitter(Math.min(15000, 500 * 2 ** attempt)));
+        continue;
+      }
+      return payload;
+    }
+
+    const bodyText = await response.text();
+    last = new NvidiaError(response.status, bodyText);
+    if (!last.retryable || attempt === retries) throw last;
+
+    // The Zero Budget's rate limit is the expected failure here, not the exceptional one: a
+    // cold seven-card cast is seven requests in a burst against ~40 RPM. Backing off is
+    // the normal path, so it must not surface as a broken treatment.
+    const retryAfter = Number(response.headers.get('retry-after')) || 0;
+    const base = retryAfter * 1000 || Math.min(15000, 500 * 2 ** attempt);
+    await sleep(jitter(base));
+  }
+  throw last;
+};
+
+/**
+ * Stream a completion, calling `onDelta` for each fragment as it arrives.
+ *
+ * Measured, and it is the constraint the whole streaming design bends around: this endpoint
+ * only streams when there is **no forced tool call**. With `tool_choice` set, the same
+ * request returns the entire answer in two chunks after a two-second pause — nothing to
+ * animate. Without tools, and with thinking enabled, it emits hundreds of deltas starting
+ * ~50ms in, and it exposes the model's actual reasoning on a separate `reasoning_content`
+ * channel.
+ *
+ * So structure and liveness cannot come from one call. Callers run a streamed thinking pass
+ * for the second channel and a forced tool call for the first — and the thinking is not
+ * thrown away, it becomes the input to the formalising call.
+ *
+ * Deliberately not retried. A retry would replay text the user has already watched appear.
+ */
+export const streamChat = async (env, { model, signal, apiKey, ...body }, onDelta) => {
+  const key = apiKey ?? env.NVIDIA_API_KEY;
+  if (!key) throw new Error('NVIDIA_API_KEY is not set.');
+
+  const response = await fetch(`${env.NVIDIA_BASE_URL}/chat/completions`, {
+    method: 'POST',
+    signal,
+    headers: {
+      Authorization: `Bearer ${key}`,
+      'Content-Type': 'application/json',
+      Accept: 'text/event-stream',
+    },
+    body: JSON.stringify({ model, ...body, stream: true }),
+  });
+
+  if (!response.ok) throw new NvidiaError(response.status, await response.text());
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let reasoning = '';
+  let content = '';
+
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    // A chunk can split mid-line, so the trailing partial is carried to the next read.
+    const lines = buffer.split('\n');
+    buffer = lines.pop() ?? '';
+
+    for (const line of lines) {
+      if (!line.startsWith('data:')) continue;
+      const payload = line.slice(5).trim();
+      if (!payload || payload === '[DONE]') continue;
+
+      let parsed;
+      try {
+        parsed = JSON.parse(payload);
+      } catch {
+        continue;
+      }
+
+      const delta = parsed.choices?.[0]?.delta;
+      if (!delta) continue;
+
+      // Two channels. `reasoning_content` is the model working the problem out; `content`
+      // is what it decided. They are shown differently, so they stay separate all the way
+      // to the UI rather than being concatenated here.
+      if (delta.reasoning_content) {
+        reasoning += delta.reasoning_content;
+        onDelta({ reasoning: delta.reasoning_content });
+      }
+      if (delta.content) {
+        content += delta.content;
+        onDelta({ content: delta.content });
+      }
+    }
+  }
+
+  return { reasoning, content };
+};
+
+/**
+ * The single JSON object a model was asked to produce.
+ *
+ * Two extraction paths because the two models in this stack are forced into JSON by
+ * different mechanisms — the Casting Director by a tool call (the omni model has no structured
+ * output), the Screenwriter by `nvext.guided_json`. Both land here.
+ */
+export const jsonFrom = (completion) => {
+  const message = completion?.choices?.[0]?.message;
+  if (!message) throw new Error('No message in completion');
+
+  const call = message.tool_calls?.[0];
+  if (call?.function?.arguments) return JSON.parse(call.function.arguments);
+
+  let text = message.content;
+  if (typeof text !== 'string' || !text.trim()) {
+    throw new Error('Completion had neither a tool call nor text content');
+  }
+
+  // Some endpoints return JSON wrapped in markdown fences even when asked not to.
+  text = text.replace(/^```json\s*/, '').replace(/\s*```$/, '').trim();
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    // Guided decoding should make this unreachable, but a reasoning model that ignores the
+    // constraint tends to wrap the object in prose rather than mangle it — so recovering
+    // the outermost braces is worth one attempt before failing the request.
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    if (start === -1 || end <= start) {
+      throw new Error(`Expected JSON, got: ${text.slice(0, 200)}`);
+    }
+    return JSON.parse(text.slice(start, end + 1));
+  }
+};

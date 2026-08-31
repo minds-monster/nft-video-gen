@@ -1,0 +1,2647 @@
+{
+  "cell": "scene-chain",
+  "fixture": "scale-extremes",
+  "fixtureSha": "933d72d0e9fb",
+  "repeat": 2,
+  "film": {
+    "units": "metres",
+    "aspect": 1.7777777777777777,
+    "sceneScaleNote": "",
+    "beats": [
+      {
+        "beatIndex": 0,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 1.7,
+              "z": -80
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 8,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 1.7,
+              "z": -80
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 8,
+              "z": 0
+            }
+          },
+          "focalStartMm": 24,
+          "focalEndMm": 24,
+          "rollDeg": 0,
+          "motion": "Static Shot",
+          "amplitude": "small",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.75,
+            "widthM": 0.58,
+            "yawDeg": 180,
+            "containerId": null,
+            "action": "Standing motionless and alive on the salt crust, facing toward the distant camera.",
+            "screenPosition": "center",
+            "depth": "background"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "EWS",
+        "changes": [],
+        "containmentNotes": "<Subject 1> stands directly on the salt crust and is not contained by or holding anything.",
+        "proseNote": "Live-action and cinematic in hard noon light, an extreme-wide composition makes <Subject 1> a tiny central speck on an empty white salt flat beneath an enormous pale sky. The living figure stands motionless, ordinary skin visible beneath pink buzz-cut hair and orange translucent glasses, wearing a green patent leather moto jacket over a red shirt, black slacks with buckles, and black combat boots. The level camera holds in a Static Shot with small amplitude at slow speed, aimed above the figure to emphasize the vast sky and uninterrupted horizon; faint dry wind crosses the salt while no other person, structure, or movement appears anywhere."
+      },
+      {
+        "beatIndex": 1,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 1.7,
+              "z": -80
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1.7,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 1.7,
+              "z": -92
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1.7,
+              "z": -12
+            }
+          },
+          "focalStartMm": 85,
+          "focalEndMm": 85,
+          "rollDeg": 0,
+          "motion": "Tracking Shot",
+          "amplitude": "medium",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": -12,
+            "groundOffsetM": 0,
+            "heightM": 1.75,
+            "widthM": 0.58,
+            "yawDeg": 180,
+            "containerId": null,
+            "action": "Walking steadily toward the camera across the salt crust, arms swinging naturally, without speaking.",
+            "screenPosition": "center",
+            "depth": "background"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "EWS",
+        "changes": [
+          {
+            "subject": "<Subject 1>",
+            "what": "Walks 12 metres along the negative Z axis, from z=0 to z=-12, toward the camera.",
+            "justifiedByBeatText": true
+          }
+        ],
+        "containmentNotes": "<Subject 1> walks directly on the salt crust and is not contained by or holding anything.",
+        "proseNote": "Live-action and cinematic, an extreme-wide shot keeps <Subject 1> centered and very small against the empty white salt flat and enormous pale sky. The living figure walks steadily toward the camera with ordinary skin, pink buzz-cut hair, orange translucent glasses, a green patent leather moto jacket over a red shirt, black slacks with buckles, and black combat boots. The camera tracks backward in a Tracking Shot with medium amplitude at slow speed, matching the approach so the figure remains distant and nearly constant in scale. Hard noon light casts a compact shadow beneath the boots; dry wind whispers over the crust and each footfall produces a faint brittle crunch. No other figure or object appears, and <Subject 1> does not yet speak."
+      },
+      {
+        "beatIndex": 2,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0.032,
+              "y": 1.64,
+              "z": -12.26
+            },
+            "lookAt": {
+              "x": 0.032,
+              "y": 1.64,
+              "z": -12.16
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0.032,
+              "y": 1.64,
+              "z": -12.26
+            },
+            "lookAt": {
+              "x": 0.032,
+              "y": 1.64,
+              "z": -12.16
+            }
+          },
+          "focalStartMm": 300,
+          "focalEndMm": 300,
+          "rollDeg": 0,
+          "motion": "Static Shot",
+          "amplitude": "small",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": -12,
+            "endX": 0,
+            "endZ": -12,
+            "groundOffsetM": 0,
+            "heightM": 1.75,
+            "widthM": 0.58,
+            "yawDeg": 180,
+            "containerId": null,
+            "action": "Holding completely still as one eyelid opens, revealing a living eye whose iris and natural flecks fill the frame through the orange translucent glasses; she remains silent.",
+            "screenPosition": "center",
+            "depth": "foreground"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "ECU",
+        "changes": [],
+        "containmentNotes": "<Subject 1> stands directly on the salt crust and is not contained by or holding anything. The camera views her living eye through one lens of her orange translucent glasses; the glasses remain worn on her face.",
+        "proseNote": "Live-action and cinematic, an extreme close-up isolates one of <Subject 1>'s closed eyes through the warm tint of her orange translucent glasses. The camera holds in a Static Shot with small amplitude at slow speed as her eyelid opens, and the living iris with its fine natural flecks fills the whole picture under a sharp hard-noon catchlight. Only minute skin texture, lashes, and the translucent color cast from the eyewear remain at the frame edges; the salt flat and clothing fall completely outside the macro composition. A faint dry wind continues offscreen, accompanied by the subtle wet movement of the eyelid, and she does not speak."
+      },
+      {
+        "beatIndex": 3,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 1.4,
+              "z": -20
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 0.9,
+              "z": -12
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 1.4,
+              "z": -22.5
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 0.9,
+              "z": -12
+            }
+          },
+          "focalStartMm": 50,
+          "focalEndMm": 50,
+          "rollDeg": 0,
+          "motion": "Push Out",
+          "amplitude": "medium",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": -12,
+            "endX": 0,
+            "endZ": -12,
+            "groundOffsetM": 0,
+            "heightM": 1.75,
+            "widthM": 0.58,
+            "yawDeg": 180,
+            "containerId": null,
+            "action": "Standing completely still on the salt crust and looking back toward the empty direction from which she came, her living face set beneath pink buzz-cut hair and behind orange translucent glasses.",
+            "screenPosition": "center",
+            "depth": "midground"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "WS",
+        "changes": [],
+        "containmentNotes": "<Subject 1> stands directly on the salt crust and is not contained by or holding anything. Her orange translucent glasses and all clothing remain worn normally on her living body.",
+        "proseNote": "Live-action and cinematic, a wide shot frames the full length of <Subject 1> alone against the limitless white salt flat and enormous pale sky. She remains planted at center frame, facing back toward the empty direction from which she came, with ordinary living skin beneath her pink buzz-cut hair and orange translucent glasses; her green patent leather moto jacket, red shirt, black buckled slacks, and combat boots register clearly in the hard noon light. The camera pushes out with medium amplitude at slow speed, gradually increasing the empty white ground and pale sky around her without changing her central placement. A dry wind brushes her jacket and slacks, while faint clothing creaks and the soft hiss of air crossing the salt crust emphasize the silence; she does not speak."
+      },
+      {
+        "beatIndex": 4,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 1.58,
+              "z": -14
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1.5,
+              "z": -12
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 1.58,
+              "z": -13.6
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1.5,
+              "z": -12
+            }
+          },
+          "focalStartMm": 85,
+          "focalEndMm": 85,
+          "rollDeg": 0,
+          "motion": "Push In",
+          "amplitude": "small",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": -12,
+            "endX": 0,
+            "endZ": -12,
+            "groundOffsetM": 0,
+            "heightM": 1.75,
+            "widthM": 0.58,
+            "yawDeg": 180,
+            "containerId": null,
+            "action": "Standing still and facing the camera, she draws a breath and speaks exactly one word; her living mouth clearly forms the word beneath her orange translucent glasses.",
+            "screenPosition": "center",
+            "depth": "foreground"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "CU",
+        "changes": [],
+        "containmentNotes": "<Subject 1> remains standing directly on the salt crust, with no container and nothing held. Her orange translucent glasses and clothing remain worn normally on her living body.",
+        "proseNote": "Live-action and cinematic, a close-up centers <Subject 1>'s living face beneath her pink buzz-cut hair and orange translucent glasses, with the pale sky and white salt flat reduced to a stark, softly receding background. She remains exactly where she stopped, facing the lens; after one small breath, her lips visibly articulate a single word. The camera pushes in with small amplitude at slow speed, tightening just enough to make the movement of her mouth unmistakable while preserving her central placement and level horizon. Hard noon light defines her ordinary skin, glasses, and the upper edge of her green patent leather moto jacket. Dry wind whispers across the salt and faintly stirs her clothing, then her lone spoken word sounds clearly in the open stillness."
+      }
+    ]
+  },
+  "calls": [
+    {
+      "usage": {
+        "promptTokens": 3198,
+        "completionTokens": 1086,
+        "reasoningTokens": 630
+      },
+      "latencyMs": 18688,
+      "attempts": 1,
+      "costUsd": 0.11222399999999999,
+      "request": {
+        "model": "gpt-5.6-sol",
+        "reasoning": {
+          "effort": "high"
+        },
+        "input": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "You are the Storyboarder on a film crew that turns licensed NFT artwork into short generated\nvideo. Your job is not to describe a pretty picture — it is a precise technical blocking\nspecification, exact enough that a video-render pipeline can follow it without guessing.\n\nMiniMax-H3 expects a structured script, not a paragraph. Emit three fields:\n\n1. integrated_multimodal_description — the visuals, action, camera and diegetic sound,\n   along a timeline. Open with visual style and composition (\"Live-action, cinematic, a\n   medium-wide shot frames...\"). A single shot needs no timestamp; if you genuinely need a\n   second shot, mark it \"[Shot 2] At 00:03.500, the camera cuts to...\".\n2. overall_soundscape — ambient, physical and non-verbal sound. One to four sentences.\n3. non_diegetic_music — score the characters cannot hear. One to three sentences, or \"N/A\".\n\nCamera moves are written as natural English actions, never as bracketed labels. The formula\nis motion + amplitude + speed: \"the camera pushes in with small amplitude at slow speed\".\nAvailable motions: Zoom In/Out, Push In/Out, Pan Left/Right, Truck Left/Right, Tilt Up/Down,\nPedestal Up/Down, Arc Shot, Tracking Shot, Static Shot, Shake Slightly/Strongly, POV, Roll.\n\nEach text field can run to 7000 characters. Length is not a virtue in itself, but this model\nis directed, not hinted at — be specific and complete rather than terse.\n\nTHE COORDINATE CONTRACT. This is law, not guidance. Every number you emit is interpreted\nunder it exactly as written.\n\n  Units are metres. The space is right-handed and +Y is up. The ground is the plane y = 0.\n  The origin is the ground point directly beneath the film's principal subject as staged in\n  beat 1, and it does not move for the rest of the film — every beat's coordinates are in that\n  same frame, which is what makes continuity between beats mean anything.\n\n  yawDeg is rotation about +Y. Forward is (sin yaw, 0, cos yaw): yaw 0 faces +Z, yaw 90 faces\n  +X. Range -180 to 180.\n\n  A camera is two poses, start and end, each a world position and a world lookAt point, plus a\n  focal length at each end and a roll. A dutch angle is a non-zero rollDeg, not a label.\n  The camera never sits at y <= 0, and never sits inside a subject's own volume.\n\n  The sensor is full-frame: 36mm wide, and the frame height is 36/aspect\n  (at 16:9 that is 20.25mm).\n\nHOW SHOT SIZE IS COMPUTED. Not a matter of taste — it follows from where you put the camera:\n\n  hFrac = (subject heightM * focalMm) / (distance along the optical axis * frame height mm)\n\n  and hFrac is the fraction of frame height the subject fills:\n\n  EWS  hFrac 0 - 0.25     the figure is a quarter of frame height or less\n  WS   hFrac 0.25 - 0.75  full body with headroom\n  MWS  hFrac 0.75 - 1.4   the frame cuts around the knees\n  MS   hFrac 1.4 - 2.2    waist up\n  MCU  hFrac 2.2 - 3.5    chest up\n  CU   hFrac 3.5 - 7      head and shoulders\n  ECU  hFrac >= 7         part of a face\n\n  Worked examples, so there is no ambiguity about the arithmetic:\n\n  a 1.8m figure at the origin, camera 8m back at 50mm\n    hFrac = 0.5535  ->  WS\n  the same figure with the camera 1.7m away at 85mm\n    hFrac = 4.4444  ->  CU\n  the same figure 60m away at 24mm\n    hFrac = 0.0356  ->  EWS\n\n  You state 'framing' yourself, and it must be the band your own numbers produce. If you want a\n  close-up, put the camera close or lengthen the lens — do not label a wide shot as a close-up.\n  The same applies to 'screenPosition' and 'depth': they are readable off your own geometry, and\n  they are checked against it.\n\nRules.\n\n1. DELIBERATE SHOT VARIETY. Shot size must vary across the film. A film in which every beat\n   lands in the same band has failed, no matter how well each beat reads on its own. Choose each\n   beat's camera distance from what the beat is about: a beat about an emotion or a detail goes\n   close; a beat about geography, scale or simultaneity goes wide. State in sceneScaleNote how\n   big the set is, and place the camera accordingly.\n\n2. CONTINUITY IS THE WORLD, NOT A CLAIM. A subject's world position persists between beats.\n   Move a subject only if this beat's own text moves them. Every move goes in 'changes' with\n   justifiedByBeatText set honestly. A subject's heightM never changes between beats — a person\n   is the same height in beat 5 as in beat 1.\n\n3. THE 180-DEGREE LINE. The line runs through the two principal subjects. Keep the camera on one\n   side of it across consecutive beats. If a beat genuinely calls for crossing, cross — and\n   expect the subjects to swap sides of frame, because that is what crossing means.\n\n4. CONTAINMENT IS GEOMETRY. A subject inside or on another sets containerId, sits within the\n   container's own footprint, and has a groundOffsetM greater than zero and no greater than the\n   container's height. A person in a vehicle is inside it, not visible through the windscreen\n   from an impossible angle.\n\n5. INCLUSION. Never place a subject in a beat that the beat's own text doesn't put there. A cast\n   member with a reference available who has no part in this beat simply does not appear in that\n   beat's subjects array. An early, unearned reveal is a real error, not a safe default.\n\n6. TAG DISCIPLINE. Every 'subject' and 'containerId' field is the bare tag and nothing else —\n   exactly \"<Subject 1>\", never \"<Subject 1> — the ape\" or any other appended description.\n   Downstream code matches these by exact tag; anything extra breaks that match silently.\n\n7. TRANSITIONS. A beat whose text begins [CUT TO BLACK], [TRANSITION] or [FADE] is not a shot.\n   Return kind \"transition\", camera null, subjects [], and the marker's remaining text in\n   transitionText.\n\n8. PROSE. proseNote is one plain-English paragraph per beat, present tense, written for a human\n   reader who will never see the numbers — the camera described as motion + amplitude + speed in\n   H3's own vocabulary. It describes the same shot the numbers describe. It is never a second,\n   differing account of the beat.\n\nReturn the film by calling the tool. Write no prose outside it."
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Logline: A figure crosses an empty salt flat and finally speaks.\nWorld: An empty white salt flat under an enormous pale sky, flat to the horizon in every direction, hard noon light.\nStaging: <Subject 1> is the only figure anywhere in this world.\nGuard: Every character has ordinary skin and is a living figure, not a mannequin and not a chrome statue.\nFilm's overall camera direction: Whatever each beat demands. The range is the point.\nContinuity: One continuous passage of time.\nFrame aspect: 16:9\n\nCast with references available (referencePlan order):\n<Subject 1> — A pink‑haired figure wearing orange translucent glasses, a green patent leather moto jacket over a red shirt, black cotton‑wool slacks with buckles, and black leather combat boots. (pink buzz-cut hair, orange translucent glasses, green patent leather moto jacket)\n\nThis is beat 1 of 5: A single lone figure, <Subject 1>, is a speck at the far end of the empty salt flat under a huge sky.\n\nThis is the first beat — there is nothing before it.\n\nWrite the blocking for this beat. Return a film object containing exactly this one beat."
+              }
+            ]
+          }
+        ],
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "film_blocking",
+            "strict": true,
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "units",
+                "aspect",
+                "sceneScaleNote",
+                "beats"
+              ],
+              "properties": {
+                "units": {
+                  "type": "string",
+                  "enum": [
+                    "metres"
+                  ],
+                  "description": "Echo this back exactly."
+                },
+                "aspect": {
+                  "type": "number",
+                  "minimum": 0.4,
+                  "maximum": 2.5,
+                  "description": "Frame aspect ratio, width over height. 16:9 is 1.7778."
+                },
+                "sceneScaleNote": {
+                  "type": "string",
+                  "description": "One line: how big the staged set is, in metres, so the camera can be placed sensibly."
+                },
+                "beats": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "beatIndex",
+                      "kind",
+                      "transitionText",
+                      "camera",
+                      "subjects",
+                      "principalSubject",
+                      "framing",
+                      "changes",
+                      "containmentNotes",
+                      "proseNote"
+                    ],
+                    "properties": {
+                      "beatIndex": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "Zero-based index of the beat this describes."
+                      },
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "shot",
+                          "transition"
+                        ]
+                      },
+                      "transitionText": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "description": "For a transition beat, the text after the marker. null for a shot."
+                      },
+                      "camera": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "start",
+                              "end",
+                              "focalStartMm",
+                              "focalEndMm",
+                              "rollDeg",
+                              "motion",
+                              "amplitude",
+                              "speed",
+                              "sensorNote"
+                            ],
+                            "properties": {
+                              "start": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                  "position",
+                                  "lookAt"
+                                ],
+                                "properties": {
+                                  "position": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                      "x",
+                                      "y",
+                                      "z"
+                                    ],
+                                    "properties": {
+                                      "x": {
+                                        "type": "number",
+                                        "description": "Metres. +X is world-right."
+                                      },
+                                      "y": {
+                                        "type": "number",
+                                        "description": "Metres above the ground plane. Must be > 0."
+                                      },
+                                      "z": {
+                                        "type": "number",
+                                        "description": "Metres. +Z is the direction a yaw of 0 faces."
+                                      }
+                                    }
+                                  },
+                                  "lookAt": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                      "x",
+                                      "y",
+                                      "z"
+                                    ],
+                                    "properties": {
+                                      "x": {
+                                        "type": "number"
+                                      },
+                                      "y": {
+                                        "type": "number"
+                                      },
+                                      "z": {
+                                        "type": "number"
+                                      }
+                                    },
+                                    "description": "The world point the camera is aimed at. Never equal to position."
+                                  }
+                                }
+                              },
+                              "end": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                  "position",
+                                  "lookAt"
+                                ],
+                                "properties": {
+                                  "position": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                      "x",
+                                      "y",
+                                      "z"
+                                    ],
+                                    "properties": {
+                                      "x": {
+                                        "type": "number",
+                                        "description": "Metres. +X is world-right."
+                                      },
+                                      "y": {
+                                        "type": "number",
+                                        "description": "Metres above the ground plane. Must be > 0."
+                                      },
+                                      "z": {
+                                        "type": "number",
+                                        "description": "Metres. +Z is the direction a yaw of 0 faces."
+                                      }
+                                    }
+                                  },
+                                  "lookAt": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                      "x",
+                                      "y",
+                                      "z"
+                                    ],
+                                    "properties": {
+                                      "x": {
+                                        "type": "number"
+                                      },
+                                      "y": {
+                                        "type": "number"
+                                      },
+                                      "z": {
+                                        "type": "number"
+                                      }
+                                    },
+                                    "description": "The world point the camera is aimed at. Never equal to position."
+                                  }
+                                }
+                              },
+                              "focalStartMm": {
+                                "type": "number",
+                                "minimum": 8,
+                                "maximum": 300,
+                                "description": "Full-frame equivalent focal length at the start of the beat. 8-300."
+                              },
+                              "focalEndMm": {
+                                "type": "number",
+                                "minimum": 8,
+                                "maximum": 300,
+                                "description": "Focal length at the end of the beat. Equal to focalStartMm unless the shot zooms."
+                              },
+                              "rollDeg": {
+                                "type": "number",
+                                "minimum": -45,
+                                "maximum": 45,
+                                "description": "Roll about the view axis. A dutch angle is a non-zero roll. 0 for a level camera."
+                              },
+                              "motion": {
+                                "type": "string",
+                                "enum": [
+                                  "Zoom In",
+                                  "Zoom Out",
+                                  "Push In",
+                                  "Push Out",
+                                  "Pan Left",
+                                  "Pan Right",
+                                  "Truck Left",
+                                  "Truck Right",
+                                  "Tilt Up",
+                                  "Tilt Down",
+                                  "Pedestal Up",
+                                  "Pedestal Down",
+                                  "Arc Shot",
+                                  "Tracking Shot",
+                                  "Static Shot",
+                                  "Shake Slightly",
+                                  "Shake Strongly",
+                                  "POV",
+                                  "Roll"
+                                ],
+                                "description": "MiniMax-H3's own motion vocabulary. Must describe what your own start and end poses actually do."
+                              },
+                              "amplitude": {
+                                "type": "string",
+                                "enum": [
+                                  "small",
+                                  "medium",
+                                  "large"
+                                ]
+                              },
+                              "speed": {
+                                "type": "string",
+                                "enum": [
+                                  "slow",
+                                  "medium",
+                                  "fast"
+                                ]
+                              },
+                              "sensorNote": {
+                                "type": "string",
+                                "enum": [
+                                  "36mm-wide sensor, frame height = 36/aspect"
+                                ],
+                                "description": "Echo this back exactly. It confirms you used the stated sensor size."
+                              }
+                            }
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "null if and only if kind is \"transition\"."
+                      },
+                      "subjects": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "subject",
+                            "x",
+                            "z",
+                            "endX",
+                            "endZ",
+                            "groundOffsetM",
+                            "heightM",
+                            "widthM",
+                            "yawDeg",
+                            "containerId",
+                            "action",
+                            "screenPosition",
+                            "depth"
+                          ],
+                          "properties": {
+                            "subject": {
+                              "type": "string",
+                              "description": "Exactly the tag and nothing else — \"<Subject 1>\", never \"<Subject 1> — the ape\"."
+                            },
+                            "x": {
+                              "type": "number",
+                              "description": "Ground position in metres at the START of the beat."
+                            },
+                            "z": {
+                              "type": "number",
+                              "description": "Ground position in metres at the START of the beat."
+                            },
+                            "endX": {
+                              "type": "number",
+                              "description": "Ground position at the END of the beat. Equal to x if this subject does not move within the beat."
+                            },
+                            "endZ": {
+                              "type": "number",
+                              "description": "Ground position at the END of the beat."
+                            },
+                            "groundOffsetM": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 200,
+                              "description": "Height of the base of this subject above the ground. 0 for anything standing on the ground; greater than 0 only when seated in or on something, in which case containerId must be set."
+                            },
+                            "heightM": {
+                              "type": "number",
+                              "minimum": 0.02,
+                              "maximum": 60,
+                              "description": "Real height in metres. An adult human is about 1.8. This never changes between beats."
+                            },
+                            "widthM": {
+                              "type": "number",
+                              "minimum": 0.02,
+                              "maximum": 60,
+                              "description": "Real width in metres across the widest horizontal axis. An adult human is about 0.6; a car about 2.0."
+                            },
+                            "yawDeg": {
+                              "type": "number",
+                              "minimum": -180,
+                              "maximum": 180,
+                              "description": "Facing, rotation about +Y. 0 faces +Z, 90 faces +X."
+                            },
+                            "containerId": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "description": "The tag of the subject this one is inside or on, e.g. a driver in a car. null when standing free."
+                            },
+                            "action": {
+                              "type": "string",
+                              "description": "What this subject is doing right now, in this beat."
+                            },
+                            "screenPosition": {
+                              "type": "string",
+                              "enum": [
+                                "far-left",
+                                "left",
+                                "center-left",
+                                "center",
+                                "center-right",
+                                "right",
+                                "far-right"
+                              ],
+                              "description": "Where this subject falls in the frame. Derivable from your own geometry — state it, and make sure it agrees."
+                            },
+                            "depth": {
+                              "type": "string",
+                              "enum": [
+                                "foreground",
+                                "midground",
+                                "background"
+                              ]
+                            }
+                          }
+                        },
+                        "description": "Every subject visible in this beat. Empty for a transition."
+                      },
+                      "principalSubject": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "description": "The tag of the subject the shot size is defined on."
+                      },
+                      "framing": {
+                        "type": "string",
+                        "enum": [
+                          "EWS",
+                          "WS",
+                          "MWS",
+                          "MS",
+                          "MCU",
+                          "CU",
+                          "ECU"
+                        ],
+                        "description": "Shot size on the principal subject. Derivable from your own geometry — state it, and make sure it agrees."
+                      },
+                      "changes": {
+                        "type": "array",
+                        "description": "Every subject whose position changed since the previous beat, and whether this beat's own text justifies it.",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "subject",
+                            "what",
+                            "justifiedByBeatText"
+                          ],
+                          "properties": {
+                            "subject": {
+                              "type": "string"
+                            },
+                            "what": {
+                              "type": "string"
+                            },
+                            "justifiedByBeatText": {
+                              "type": "boolean"
+                            }
+                          }
+                        }
+                      },
+                      "containmentNotes": {
+                        "type": "string",
+                        "description": "Whatever a renderer needs to get physically right: who is inside what, who is holding what."
+                      },
+                      "proseNote": {
+                        "type": "string",
+                        "description": "One plain-English paragraph describing this shot to a human reader. Present tense."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "max_output_tokens": 24000
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 3584,
+        "completionTokens": 2361,
+        "reasoningTokens": 1830
+      },
+      "latencyMs": 45654,
+      "attempts": 1,
+      "costUsd": 0.203556,
+      "request": {
+        "model": "gpt-5.6-sol",
+        "reasoning": {
+          "effort": "high"
+        },
+        "input": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "You are the Storyboarder on a film crew that turns licensed NFT artwork into short generated\nvideo. Your job is not to describe a pretty picture — it is a precise technical blocking\nspecification, exact enough that a video-render pipeline can follow it without guessing.\n\nMiniMax-H3 expects a structured script, not a paragraph. Emit three fields:\n\n1. integrated_multimodal_description — the visuals, action, camera and diegetic sound,\n   along a timeline. Open with visual style and composition (\"Live-action, cinematic, a\n   medium-wide shot frames...\"). A single shot needs no timestamp; if you genuinely need a\n   second shot, mark it \"[Shot 2] At 00:03.500, the camera cuts to...\".\n2. overall_soundscape — ambient, physical and non-verbal sound. One to four sentences.\n3. non_diegetic_music — score the characters cannot hear. One to three sentences, or \"N/A\".\n\nCamera moves are written as natural English actions, never as bracketed labels. The formula\nis motion + amplitude + speed: \"the camera pushes in with small amplitude at slow speed\".\nAvailable motions: Zoom In/Out, Push In/Out, Pan Left/Right, Truck Left/Right, Tilt Up/Down,\nPedestal Up/Down, Arc Shot, Tracking Shot, Static Shot, Shake Slightly/Strongly, POV, Roll.\n\nEach text field can run to 7000 characters. Length is not a virtue in itself, but this model\nis directed, not hinted at — be specific and complete rather than terse.\n\nTHE COORDINATE CONTRACT. This is law, not guidance. Every number you emit is interpreted\nunder it exactly as written.\n\n  Units are metres. The space is right-handed and +Y is up. The ground is the plane y = 0.\n  The origin is the ground point directly beneath the film's principal subject as staged in\n  beat 1, and it does not move for the rest of the film — every beat's coordinates are in that\n  same frame, which is what makes continuity between beats mean anything.\n\n  yawDeg is rotation about +Y. Forward is (sin yaw, 0, cos yaw): yaw 0 faces +Z, yaw 90 faces\n  +X. Range -180 to 180.\n\n  A camera is two poses, start and end, each a world position and a world lookAt point, plus a\n  focal length at each end and a roll. A dutch angle is a non-zero rollDeg, not a label.\n  The camera never sits at y <= 0, and never sits inside a subject's own volume.\n\n  The sensor is full-frame: 36mm wide, and the frame height is 36/aspect\n  (at 16:9 that is 20.25mm).\n\nHOW SHOT SIZE IS COMPUTED. Not a matter of taste — it follows from where you put the camera:\n\n  hFrac = (subject heightM * focalMm) / (distance along the optical axis * frame height mm)\n\n  and hFrac is the fraction of frame height the subject fills:\n\n  EWS  hFrac 0 - 0.25     the figure is a quarter of frame height or less\n  WS   hFrac 0.25 - 0.75  full body with headroom\n  MWS  hFrac 0.75 - 1.4   the frame cuts around the knees\n  MS   hFrac 1.4 - 2.2    waist up\n  MCU  hFrac 2.2 - 3.5    chest up\n  CU   hFrac 3.5 - 7      head and shoulders\n  ECU  hFrac >= 7         part of a face\n\n  Worked examples, so there is no ambiguity about the arithmetic:\n\n  a 1.8m figure at the origin, camera 8m back at 50mm\n    hFrac = 0.5535  ->  WS\n  the same figure with the camera 1.7m away at 85mm\n    hFrac = 4.4444  ->  CU\n  the same figure 60m away at 24mm\n    hFrac = 0.0356  ->  EWS\n\n  You state 'framing' yourself, and it must be the band your own numbers produce. If you want a\n  close-up, put the camera close or lengthen the lens — do not label a wide shot as a close-up.\n  The same applies to 'screenPosition' and 'depth': they are readable off your own geometry, and\n  they are checked against it.\n\nRules.\n\n1. DELIBERATE SHOT VARIETY. Shot size must vary across the film. A film in which every beat\n   lands in the same band has failed, no matter how well each beat reads on its own. Choose each\n   beat's camera distance from what the beat is about: a beat about an emotion or a detail goes\n   close; a beat about geography, scale or simultaneity goes wide. State in sceneScaleNote how\n   big the set is, and place the camera accordingly.\n\n2. CONTINUITY IS THE WORLD, NOT A CLAIM. A subject's world position persists between beats.\n   Move a subject only if this beat's own text moves them. Every move goes in 'changes' with\n   justifiedByBeatText set honestly. A subject's heightM never changes between beats — a person\n   is the same height in beat 5 as in beat 1.\n\n3. THE 180-DEGREE LINE. The line runs through the two principal subjects. Keep the camera on one\n   side of it across consecutive beats. If a beat genuinely calls for crossing, cross — and\n   expect the subjects to swap sides of frame, because that is what crossing means.\n\n4. CONTAINMENT IS GEOMETRY. A subject inside or on another sets containerId, sits within the\n   container's own footprint, and has a groundOffsetM greater than zero and no greater than the\n   container's height. A person in a vehicle is inside it, not visible through the windscreen\n   from an impossible angle.\n\n5. INCLUSION. Never place a subject in a beat that the beat's own text doesn't put there. A cast\n   member with a reference available who has no part in this beat simply does not appear in that\n   beat's subjects array. An early, unearned reveal is a real error, not a safe default.\n\n6. TAG DISCIPLINE. Every 'subject' and 'containerId' field is the bare tag and nothing else —\n   exactly \"<Subject 1>\", never \"<Subject 1> — the ape\" or any other appended description.\n   Downstream code matches these by exact tag; anything extra breaks that match silently.\n\n7. TRANSITIONS. A beat whose text begins [CUT TO BLACK], [TRANSITION] or [FADE] is not a shot.\n   Return kind \"transition\", camera null, subjects [], and the marker's remaining text in\n   transitionText.\n\n8. PROSE. proseNote is one plain-English paragraph per beat, present tense, written for a human\n   reader who will never see the numbers — the camera described as motion + amplitude + speed in\n   H3's own vocabulary. It describes the same shot the numbers describe. It is never a second,\n   differing account of the beat.\n\nReturn the film by calling the tool. Write no prose outside it."
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Logline: A figure crosses an empty salt flat and finally speaks.\nWorld: An empty white salt flat under an enormous pale sky, flat to the horizon in every direction, hard noon light.\nStaging: <Subject 1> is the only figure anywhere in this world.\nGuard: Every character has ordinary skin and is a living figure, not a mannequin and not a chrome statue.\nFilm's overall camera direction: Whatever each beat demands. The range is the point.\nContinuity: One continuous passage of time.\nFrame aspect: 16:9\n\nCast with references available (referencePlan order):\n<Subject 1> — A pink‑haired figure wearing orange translucent glasses, a green patent leather moto jacket over a red shirt, black cotton‑wool slacks with buckles, and black leather combat boots. (pink buzz-cut hair, orange translucent glasses, green patent leather moto jacket)\n\nThis is beat 2 of 5: <Subject 1> walks toward us across the flat, still small against the emptiness.\n\nThe previous beat's own scene, for continuity:\n{\"beatIndex\":0,\"kind\":\"shot\",\"transitionText\":null,\"camera\":{\"start\":{\"position\":{\"x\":0,\"y\":1.7,\"z\":-80},\"lookAt\":{\"x\":0,\"y\":8,\"z\":0}},\"end\":{\"position\":{\"x\":0,\"y\":1.7,\"z\":-80},\"lookAt\":{\"x\":0,\"y\":8,\"z\":0}},\"focalStartMm\":24,\"focalEndMm\":24,\"rollDeg\":0,\"motion\":\"Static Shot\",\"amplitude\":\"small\",\"speed\":\"slow\",\"sensorNote\":\"36mm-wide sensor, frame height = 36/aspect\"},\"subjects\":[{\"subject\":\"<Subject 1>\",\"x\":0,\"z\":0,\"endX\":0,\"endZ\":0,\"groundOffsetM\":0,\"heightM\":1.75,\"widthM\":0.58,\"yawDeg\":180,\"containerId\":null,\"action\":\"Standing motionless and alive on the salt crust, facing toward the distant camera.\",\"screenPosition\":\"center\",\"depth\":\"background\"}],\"principalSubject\":\"<Subject 1>\",\"framing\":\"EWS\",\"changes\":[],\"containmentNotes\":\"<Subject 1> stands directly on the salt crust and is not contained by or holding anything.\",\"proseNote\":\"Live-action and cinematic in hard noon light, an extreme-wide composition makes <Subject 1> a tiny central speck on an empty white salt flat beneath an enormous pale sky. The living figure stands motionless, ordinary skin visible beneath pink buzz-cut hair and orange translucent glasses, wearing a green patent leather moto jacket over a red shirt, black slacks with buckles, and black combat boots. The level camera holds in a Static Shot with small amplitude at slow speed, aimed above the figure to emphasize the vast sky and uninterrupted horizon; faint dry wind crosses the salt while no other person, structure, or movement appears anywhere.\"}\n\nWrite the blocking for this beat. Return a film object containing exactly this one beat."
+              }
+            ]
+          }
+        ],
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "film_blocking",
+            "strict": true,
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "units",
+                "aspect",
+                "sceneScaleNote",
+                "beats"
+              ],
+              "properties": {
+                "units": {
+                  "type": "string",
+                  "enum": [
+                    "metres"
+                  ],
+                  "description": "Echo this back exactly."
+                },
+                "aspect": {
+                  "type": "number",
+                  "minimum": 0.4,
+                  "maximum": 2.5,
+                  "description": "Frame aspect ratio, width over height. 16:9 is 1.7778."
+                },
+                "sceneScaleNote": {
+                  "type": "string",
+                  "description": "One line: how big the staged set is, in metres, so the camera can be placed sensibly."
+                },
+                "beats": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "beatIndex",
+                      "kind",
+                      "transitionText",
+                      "camera",
+                      "subjects",
+                      "principalSubject",
+                      "framing",
+                      "changes",
+                      "containmentNotes",
+                      "proseNote"
+                    ],
+                    "properties": {
+                      "beatIndex": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "Zero-based index of the beat this describes."
+                      },
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "shot",
+                          "transition"
+                        ]
+                      },
+                      "transitionText": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "description": "For a transition beat, the text after the marker. null for a shot."
+                      },
+                      "camera": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "start",
+                              "end",
+                              "focalStartMm",
+                              "focalEndMm",
+                              "rollDeg",
+                              "motion",
+                              "amplitude",
+                              "speed",
+                              "sensorNote"
+                            ],
+                            "properties": {
+                              "start": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                  "position",
+                                  "lookAt"
+                                ],
+                                "properties": {
+                                  "position": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                      "x",
+                                      "y",
+                                      "z"
+                                    ],
+                                    "properties": {
+                                      "x": {
+                                        "type": "number",
+                                        "description": "Metres. +X is world-right."
+                                      },
+                                      "y": {
+                                        "type": "number",
+                                        "description": "Metres above the ground plane. Must be > 0."
+                                      },
+                                      "z": {
+                                        "type": "number",
+                                        "description": "Metres. +Z is the direction a yaw of 0 faces."
+                                      }
+                                    }
+                                  },
+                                  "lookAt": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                      "x",
+                                      "y",
+                                      "z"
+                                    ],
+                                    "properties": {
+                                      "x": {
+                                        "type": "number"
+                                      },
+                                      "y": {
+                                        "type": "number"
+                                      },
+                                      "z": {
+                                        "type": "number"
+                                      }
+                                    },
+                                    "description": "The world point the camera is aimed at. Never equal to position."
+                                  }
+                                }
+                              },
+                              "end": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                  "position",
+                                  "lookAt"
+                                ],
+                                "properties": {
+                                  "position": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                      "x",
+                                      "y",
+                                      "z"
+                                    ],
+                                    "properties": {
+                                      "x": {
+                                        "type": "number",
+                                        "description": "Metres. +X is world-right."
+                                      },
+                                      "y": {
+                                        "type": "number",
+                                        "description": "Metres above the ground plane. Must be > 0."
+                                      },
+                                      "z": {
+                                        "type": "number",
+                                        "description": "Metres. +Z is the direction a yaw of 0 faces."
+                                      }
+                                    }
+                                  },
+                                  "lookAt": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                      "x",
+                                      "y",
+                                      "z"
+                                    ],
+                                    "properties": {
+                                      "x": {
+                                        "type": "number"
+                                      },
+                                      "y": {
+                                        "type": "number"
+                                      },
+                                      "z": {
+                                        "type": "number"
+                                      }
+                                    },
+                                    "description": "The world point the camera is aimed at. Never equal to position."
+                                  }
+                                }
+                              },
+                              "focalStartMm": {
+                                "type": "number",
+                                "minimum": 8,
+                                "maximum": 300,
+                                "description": "Full-frame equivalent focal length at the start of the beat. 8-300."
+                              },
+                              "focalEndMm": {
+                                "type": "number",
+                                "minimum": 8,
+                                "maximum": 300,
+                                "description": "Focal length at the end of the beat. Equal to focalStartMm unless the shot zooms."
+                              },
+                              "rollDeg": {
+                                "type": "number",
+                                "minimum": -45,
+                                "maximum": 45,
+                                "description": "Roll about the view axis. A dutch angle is a non-zero roll. 0 for a level camera."
+                              },
+                              "motion": {
+                                "type": "string",
+                                "enum": [
+                                  "Zoom In",
+                                  "Zoom Out",
+                                  "Push In",
+                                  "Push Out",
+                                  "Pan Left",
+                                  "Pan Right",
+                                  "Truck Left",
+                                  "Truck Right",
+                                  "Tilt Up",
+                                  "Tilt Down",
+                                  "Pedestal Up",
+                                  "Pedestal Down",
+                                  "Arc Shot",
+                                  "Tracking Shot",
+                                  "Static Shot",
+                                  "Shake Slightly",
+                                  "Shake Strongly",
+                                  "POV",
+                                  "Roll"
+                                ],
+                                "description": "MiniMax-H3's own motion vocabulary. Must describe what your own start and end poses actually do."
+                              },
+                              "amplitude": {
+                                "type": "string",
+                                "enum": [
+                                  "small",
+                                  "medium",
+                                  "large"
+                                ]
+                              },
+                              "speed": {
+                                "type": "string",
+                                "enum": [
+                                  "slow",
+                                  "medium",
+                                  "fast"
+                                ]
+                              },
+                              "sensorNote": {
+                                "type": "string",
+                                "enum": [
+                                  "36mm-wide sensor, frame height = 36/aspect"
+                                ],
+                                "description": "Echo this back exactly. It confirms you used the stated sensor size."
+                              }
+                            }
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "null if and only if kind is \"transition\"."
+                      },
+                      "subjects": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "subject",
+                            "x",
+                            "z",
+                            "endX",
+                            "endZ",
+                            "groundOffsetM",
+                            "heightM",
+                            "widthM",
+                            "yawDeg",
+                            "containerId",
+                            "action",
+                            "screenPosition",
+                            "depth"
+                          ],
+                          "properties": {
+                            "subject": {
+                              "type": "string",
+                              "description": "Exactly the tag and nothing else — \"<Subject 1>\", never \"<Subject 1> — the ape\"."
+                            },
+                            "x": {
+                              "type": "number",
+                              "description": "Ground position in metres at the START of the beat."
+                            },
+                            "z": {
+                              "type": "number",
+                              "description": "Ground position in metres at the START of the beat."
+                            },
+                            "endX": {
+                              "type": "number",
+                              "description": "Ground position at the END of the beat. Equal to x if this subject does not move within the beat."
+                            },
+                            "endZ": {
+                              "type": "number",
+                              "description": "Ground position at the END of the beat."
+                            },
+                            "groundOffsetM": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 200,
+                              "description": "Height of the base of this subject above the ground. 0 for anything standing on the ground; greater than 0 only when seated in or on something, in which case containerId must be set."
+                            },
+                            "heightM": {
+                              "type": "number",
+                              "minimum": 0.02,
+                              "maximum": 60,
+                              "description": "Real height in metres. An adult human is about 1.8. This never changes between beats."
+                            },
+                            "widthM": {
+                              "type": "number",
+                              "minimum": 0.02,
+                              "maximum": 60,
+                              "description": "Real width in metres across the widest horizontal axis. An adult human is about 0.6; a car about 2.0."
+                            },
+                            "yawDeg": {
+                              "type": "number",
+                              "minimum": -180,
+                              "maximum": 180,
+                              "description": "Facing, rotation about +Y. 0 faces +Z, 90 faces +X."
+                            },
+                            "containerId": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "description": "The tag of the subject this one is inside or on, e.g. a driver in a car. null when standing free."
+                            },
+                            "action": {
+                              "type": "string",
+                              "description": "What this subject is doing right now, in this beat."
+                            },
+                            "screenPosition": {
+                              "type": "string",
+                              "enum": [
+                                "far-left",
+                                "left",
+                                "center-left",
+                                "center",
+                                "center-right",
+                                "right",
+                                "far-right"
+                              ],
+                              "description": "Where this subject falls in the frame. Derivable from your own geometry — state it, and make sure it agrees."
+                            },
+                            "depth": {
+                              "type": "string",
+                              "enum": [
+                                "foreground",
+                                "midground",
+                                "background"
+                              ]
+                            }
+                          }
+                        },
+                        "description": "Every subject visible in this beat. Empty for a transition."
+                      },
+                      "principalSubject": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "description": "The tag of the subject the shot size is defined on."
+                      },
+                      "framing": {
+                        "type": "string",
+                        "enum": [
+                          "EWS",
+                          "WS",
+                          "MWS",
+                          "MS",
+                          "MCU",
+                          "CU",
+                          "ECU"
+                        ],
+                        "description": "Shot size on the principal subject. Derivable from your own geometry — state it, and make sure it agrees."
+                      },
+                      "changes": {
+                        "type": "array",
+                        "description": "Every subject whose position changed since the previous beat, and whether this beat's own text justifies it.",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "subject",
+                            "what",
+                            "justifiedByBeatText"
+                          ],
+                          "properties": {
+                            "subject": {
+                              "type": "string"
+                            },
+                            "what": {
+                              "type": "string"
+                            },
+                            "justifiedByBeatText": {
+                              "type": "boolean"
+                            }
+                          }
+                        }
+                      },
+                      "containmentNotes": {
+                        "type": "string",
+                        "description": "Whatever a renderer needs to get physically right: who is inside what, who is holding what."
+                      },
+                      "proseNote": {
+                        "type": "string",
+                        "description": "One plain-English paragraph describing this shot to a human reader. Present tense."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "max_output_tokens": 24000
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 3653,
+        "completionTokens": 2215,
+        "reasoningTokens": 1695
+      },
+      "latencyMs": 41135,
+      "attempts": 1,
+      "costUsd": 0.19445600000000002,
+      "request": {
+        "model": "gpt-5.6-sol",
+        "reasoning": {
+          "effort": "high"
+        },
+        "input": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "You are the Storyboarder on a film crew that turns licensed NFT artwork into short generated\nvideo. Your job is not to describe a pretty picture — it is a precise technical blocking\nspecification, exact enough that a video-render pipeline can follow it without guessing.\n\nMiniMax-H3 expects a structured script, not a paragraph. Emit three fields:\n\n1. integrated_multimodal_description — the visuals, action, camera and diegetic sound,\n   along a timeline. Open with visual style and composition (\"Live-action, cinematic, a\n   medium-wide shot frames...\"). A single shot needs no timestamp; if you genuinely need a\n   second shot, mark it \"[Shot 2] At 00:03.500, the camera cuts to...\".\n2. overall_soundscape — ambient, physical and non-verbal sound. One to four sentences.\n3. non_diegetic_music — score the characters cannot hear. One to three sentences, or \"N/A\".\n\nCamera moves are written as natural English actions, never as bracketed labels. The formula\nis motion + amplitude + speed: \"the camera pushes in with small amplitude at slow speed\".\nAvailable motions: Zoom In/Out, Push In/Out, Pan Left/Right, Truck Left/Right, Tilt Up/Down,\nPedestal Up/Down, Arc Shot, Tracking Shot, Static Shot, Shake Slightly/Strongly, POV, Roll.\n\nEach text field can run to 7000 characters. Length is not a virtue in itself, but this model\nis directed, not hinted at — be specific and complete rather than terse.\n\nTHE COORDINATE CONTRACT. This is law, not guidance. Every number you emit is interpreted\nunder it exactly as written.\n\n  Units are metres. The space is right-handed and +Y is up. The ground is the plane y = 0.\n  The origin is the ground point directly beneath the film's principal subject as staged in\n  beat 1, and it does not move for the rest of the film — every beat's coordinates are in that\n  same frame, which is what makes continuity between beats mean anything.\n\n  yawDeg is rotation about +Y. Forward is (sin yaw, 0, cos yaw): yaw 0 faces +Z, yaw 90 faces\n  +X. Range -180 to 180.\n\n  A camera is two poses, start and end, each a world position and a world lookAt point, plus a\n  focal length at each end and a roll. A dutch angle is a non-zero rollDeg, not a label.\n  The camera never sits at y <= 0, and never sits inside a subject's own volume.\n\n  The sensor is full-frame: 36mm wide, and the frame height is 36/aspect\n  (at 16:9 that is 20.25mm).\n\nHOW SHOT SIZE IS COMPUTED. Not a matter of taste — it follows from where you put the camera:\n\n  hFrac = (subject heightM * focalMm) / (distance along the optical axis * frame height mm)\n\n  and hFrac is the fraction of frame height the subject fills:\n\n  EWS  hFrac 0 - 0.25     the figure is a quarter of frame height or less\n  WS   hFrac 0.25 - 0.75  full body with headroom\n  MWS  hFrac 0.75 - 1.4   the frame cuts around the knees\n  MS   hFrac 1.4 - 2.2    waist up\n  MCU  hFrac 2.2 - 3.5    chest up\n  CU   hFrac 3.5 - 7      head and shoulders\n  ECU  hFrac >= 7         part of a face\n\n  Worked examples, so there is no ambiguity about the arithmetic:\n\n  a 1.8m figure at the origin, camera 8m back at 50mm\n    hFrac = 0.5535  ->  WS\n  the same figure with the camera 1.7m away at 85mm\n    hFrac = 4.4444  ->  CU\n  the same figure 60m away at 24mm\n    hFrac = 0.0356  ->  EWS\n\n  You state 'framing' yourself, and it must be the band your own numbers produce. If you want a\n  close-up, put the camera close or lengthen the lens — do not label a wide shot as a close-up.\n  The same applies to 'screenPosition' and 'depth': they are readable off your own geometry, and\n  they are checked against it.\n\nRules.\n\n1. DELIBERATE SHOT VARIETY. Shot size must vary across the film. A film in which every beat\n   lands in the same band has failed, no matter how well each beat reads on its own. Choose each\n   beat's camera distance from what the beat is about: a beat about an emotion or a detail goes\n   close; a beat about geography, scale or simultaneity goes wide. State in sceneScaleNote how\n   big the set is, and place the camera accordingly.\n\n2. CONTINUITY IS THE WORLD, NOT A CLAIM. A subject's world position persists between beats.\n   Move a subject only if this beat's own text moves them. Every move goes in 'changes' with\n   justifiedByBeatText set honestly. A subject's heightM never changes between beats — a person\n   is the same height in beat 5 as in beat 1.\n\n3. THE 180-DEGREE LINE. The line runs through the two principal subjects. Keep the camera on one\n   side of it across consecutive beats. If a beat genuinely calls for crossing, cross — and\n   expect the subjects to swap sides of frame, because that is what crossing means.\n\n4. CONTAINMENT IS GEOMETRY. A subject inside or on another sets containerId, sits within the\n   container's own footprint, and has a groundOffsetM greater than zero and no greater than the\n   container's height. A person in a vehicle is inside it, not visible through the windscreen\n   from an impossible angle.\n\n5. INCLUSION. Never place a subject in a beat that the beat's own text doesn't put there. A cast\n   member with a reference available who has no part in this beat simply does not appear in that\n   beat's subjects array. An early, unearned reveal is a real error, not a safe default.\n\n6. TAG DISCIPLINE. Every 'subject' and 'containerId' field is the bare tag and nothing else —\n   exactly \"<Subject 1>\", never \"<Subject 1> — the ape\" or any other appended description.\n   Downstream code matches these by exact tag; anything extra breaks that match silently.\n\n7. TRANSITIONS. A beat whose text begins [CUT TO BLACK], [TRANSITION] or [FADE] is not a shot.\n   Return kind \"transition\", camera null, subjects [], and the marker's remaining text in\n   transitionText.\n\n8. PROSE. proseNote is one plain-English paragraph per beat, present tense, written for a human\n   reader who will never see the numbers — the camera described as motion + amplitude + speed in\n   H3's own vocabulary. It describes the same shot the numbers describe. It is never a second,\n   differing account of the beat.\n\nReturn the film by calling the tool. Write no prose outside it."
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Logline: A figure crosses an empty salt flat and finally speaks.\nWorld: An empty white salt flat under an enormous pale sky, flat to the horizon in every direction, hard noon light.\nStaging: <Subject 1> is the only figure anywhere in this world.\nGuard: Every character has ordinary skin and is a living figure, not a mannequin and not a chrome statue.\nFilm's overall camera direction: Whatever each beat demands. The range is the point.\nContinuity: One continuous passage of time.\nFrame aspect: 16:9\n\nCast with references available (referencePlan order):\n<Subject 1> — A pink‑haired figure wearing orange translucent glasses, a green patent leather moto jacket over a red shirt, black cotton‑wool slacks with buckles, and black leather combat boots. (pink buzz-cut hair, orange translucent glasses, green patent leather moto jacket)\n\nThis is beat 3 of 5: Her eye opens, and the iris and its flecks fill the whole picture.\n\nThe previous beat's own scene, for continuity:\n{\"beatIndex\":1,\"kind\":\"shot\",\"transitionText\":null,\"camera\":{\"start\":{\"position\":{\"x\":0,\"y\":1.7,\"z\":-80},\"lookAt\":{\"x\":0,\"y\":1.7,\"z\":0}},\"end\":{\"position\":{\"x\":0,\"y\":1.7,\"z\":-92},\"lookAt\":{\"x\":0,\"y\":1.7,\"z\":-12}},\"focalStartMm\":85,\"focalEndMm\":85,\"rollDeg\":0,\"motion\":\"Tracking Shot\",\"amplitude\":\"medium\",\"speed\":\"slow\",\"sensorNote\":\"36mm-wide sensor, frame height = 36/aspect\"},\"subjects\":[{\"subject\":\"<Subject 1>\",\"x\":0,\"z\":0,\"endX\":0,\"endZ\":-12,\"groundOffsetM\":0,\"heightM\":1.75,\"widthM\":0.58,\"yawDeg\":180,\"containerId\":null,\"action\":\"Walking steadily toward the camera across the salt crust, arms swinging naturally, without speaking.\",\"screenPosition\":\"center\",\"depth\":\"background\"}],\"principalSubject\":\"<Subject 1>\",\"framing\":\"EWS\",\"changes\":[{\"subject\":\"<Subject 1>\",\"what\":\"Walks 12 metres along the negative Z axis, from z=0 to z=-12, toward the camera.\",\"justifiedByBeatText\":true}],\"containmentNotes\":\"<Subject 1> walks directly on the salt crust and is not contained by or holding anything.\",\"proseNote\":\"Live-action and cinematic, an extreme-wide shot keeps <Subject 1> centered and very small against the empty white salt flat and enormous pale sky. The living figure walks steadily toward the camera with ordinary skin, pink buzz-cut hair, orange translucent glasses, a green patent leather moto jacket over a red shirt, black slacks with buckles, and black combat boots. The camera tracks backward in a Tracking Shot with medium amplitude at slow speed, matching the approach so the figure remains distant and nearly constant in scale. Hard noon light casts a compact shadow beneath the boots; dry wind whispers over the crust and each footfall produces a faint brittle crunch. No other figure or object appears, and <Subject 1> does not yet speak.\"}\n\nWrite the blocking for this beat. Return a film object containing exactly this one beat."
+              }
+            ]
+          }
+        ],
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "film_blocking",
+            "strict": true,
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "units",
+                "aspect",
+                "sceneScaleNote",
+                "beats"
+              ],
+              "properties": {
+                "units": {
+                  "type": "string",
+                  "enum": [
+                    "metres"
+                  ],
+                  "description": "Echo this back exactly."
+                },
+                "aspect": {
+                  "type": "number",
+                  "minimum": 0.4,
+                  "maximum": 2.5,
+                  "description": "Frame aspect ratio, width over height. 16:9 is 1.7778."
+                },
+                "sceneScaleNote": {
+                  "type": "string",
+                  "description": "One line: how big the staged set is, in metres, so the camera can be placed sensibly."
+                },
+                "beats": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "beatIndex",
+                      "kind",
+                      "transitionText",
+                      "camera",
+                      "subjects",
+                      "principalSubject",
+                      "framing",
+                      "changes",
+                      "containmentNotes",
+                      "proseNote"
+                    ],
+                    "properties": {
+                      "beatIndex": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "Zero-based index of the beat this describes."
+                      },
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "shot",
+                          "transition"
+                        ]
+                      },
+                      "transitionText": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "description": "For a transition beat, the text after the marker. null for a shot."
+                      },
+                      "camera": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "start",
+                              "end",
+                              "focalStartMm",
+                              "focalEndMm",
+                              "rollDeg",
+                              "motion",
+                              "amplitude",
+                              "speed",
+                              "sensorNote"
+                            ],
+                            "properties": {
+                              "start": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                  "position",
+                                  "lookAt"
+                                ],
+                                "properties": {
+                                  "position": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                      "x",
+                                      "y",
+                                      "z"
+                                    ],
+                                    "properties": {
+                                      "x": {
+                                        "type": "number",
+                                        "description": "Metres. +X is world-right."
+                                      },
+                                      "y": {
+                                        "type": "number",
+                                        "description": "Metres above the ground plane. Must be > 0."
+                                      },
+                                      "z": {
+                                        "type": "number",
+                                        "description": "Metres. +Z is the direction a yaw of 0 faces."
+                                      }
+                                    }
+                                  },
+                                  "lookAt": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                      "x",
+                                      "y",
+                                      "z"
+                                    ],
+                                    "properties": {
+                                      "x": {
+                                        "type": "number"
+                                      },
+                                      "y": {
+                                        "type": "number"
+                                      },
+                                      "z": {
+                                        "type": "number"
+                                      }
+                                    },
+                                    "description": "The world point the camera is aimed at. Never equal to position."
+                                  }
+                                }
+                              },
+                              "end": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                  "position",
+                                  "lookAt"
+                                ],
+                                "properties": {
+                                  "position": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                      "x",
+                                      "y",
+                                      "z"
+                                    ],
+                                    "properties": {
+                                      "x": {
+                                        "type": "number",
+                                        "description": "Metres. +X is world-right."
+                                      },
+                                      "y": {
+                                        "type": "number",
+                                        "description": "Metres above the ground plane. Must be > 0."
+                                      },
+                                      "z": {
+                                        "type": "number",
+                                        "description": "Metres. +Z is the direction a yaw of 0 faces."
+                                      }
+                                    }
+                                  },
+                                  "lookAt": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                      "x",
+                                      "y",
+                                      "z"
+                                    ],
+                                    "properties": {
+                                      "x": {
+                                        "type": "number"
+                                      },
+                                      "y": {
+                                        "type": "number"
+                                      },
+                                      "z": {
+                                        "type": "number"
+                                      }
+                                    },
+                                    "description": "The world point the camera is aimed at. Never equal to position."
+                                  }
+                                }
+                              },
+                              "focalStartMm": {
+                                "type": "number",
+                                "minimum": 8,
+                                "maximum": 300,
+                                "description": "Full-frame equivalent focal length at the start of the beat. 8-300."
+                              },
+                              "focalEndMm": {
+                                "type": "number",
+                                "minimum": 8,
+                                "maximum": 300,
+                                "description": "Focal length at the end of the beat. Equal to focalStartMm unless the shot zooms."
+                              },
+                              "rollDeg": {
+                                "type": "number",
+                                "minimum": -45,
+                                "maximum": 45,
+                                "description": "Roll about the view axis. A dutch angle is a non-zero roll. 0 for a level camera."
+                              },
+                              "motion": {
+                                "type": "string",
+                                "enum": [
+                                  "Zoom In",
+                                  "Zoom Out",
+                                  "Push In",
+                                  "Push Out",
+                                  "Pan Left",
+                                  "Pan Right",
+                                  "Truck Left",
+                                  "Truck Right",
+                                  "Tilt Up",
+                                  "Tilt Down",
+                                  "Pedestal Up",
+                                  "Pedestal Down",
+                                  "Arc Shot",
+                                  "Tracking Shot",
+                                  "Static Shot",
+                                  "Shake Slightly",
+                                  "Shake Strongly",
+                                  "POV",
+                                  "Roll"
+                                ],
+                                "description": "MiniMax-H3's own motion vocabulary. Must describe what your own start and end poses actually do."
+                              },
+                              "amplitude": {
+                                "type": "string",
+                                "enum": [
+                                  "small",
+                                  "medium",
+                                  "large"
+                                ]
+                              },
+                              "speed": {
+                                "type": "string",
+                                "enum": [
+                                  "slow",
+                                  "medium",
+                                  "fast"
+                                ]
+                              },
+                              "sensorNote": {
+                                "type": "string",
+                                "enum": [
+                                  "36mm-wide sensor, frame height = 36/aspect"
+                                ],
+                                "description": "Echo this back exactly. It confirms you used the stated sensor size."
+                              }
+                            }
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "null if and only if kind is \"transition\"."
+                      },
+                      "subjects": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "subject",
+                            "x",
+                            "z",
+                            "endX",
+                            "endZ",
+                            "groundOffsetM",
+                            "heightM",
+                            "widthM",
+                            "yawDeg",
+                            "containerId",
+                            "action",
+                            "screenPosition",
+                            "depth"
+                          ],
+                          "properties": {
+                            "subject": {
+                              "type": "string",
+                              "description": "Exactly the tag and nothing else — \"<Subject 1>\", never \"<Subject 1> — the ape\"."
+                            },
+                            "x": {
+                              "type": "number",
+                              "description": "Ground position in metres at the START of the beat."
+                            },
+                            "z": {
+                              "type": "number",
+                              "description": "Ground position in metres at the START of the beat."
+                            },
+                            "endX": {
+                              "type": "number",
+                              "description": "Ground position at the END of the beat. Equal to x if this subject does not move within the beat."
+                            },
+                            "endZ": {
+                              "type": "number",
+                              "description": "Ground position at the END of the beat."
+                            },
+                            "groundOffsetM": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 200,
+                              "description": "Height of the base of this subject above the ground. 0 for anything standing on the ground; greater than 0 only when seated in or on something, in which case containerId must be set."
+                            },
+                            "heightM": {
+                              "type": "number",
+                              "minimum": 0.02,
+                              "maximum": 60,
+                              "description": "Real height in metres. An adult human is about 1.8. This never changes between beats."
+                            },
+                            "widthM": {
+                              "type": "number",
+                              "minimum": 0.02,
+                              "maximum": 60,
+                              "description": "Real width in metres across the widest horizontal axis. An adult human is about 0.6; a car about 2.0."
+                            },
+                            "yawDeg": {
+                              "type": "number",
+                              "minimum": -180,
+                              "maximum": 180,
+                              "description": "Facing, rotation about +Y. 0 faces +Z, 90 faces +X."
+                            },
+                            "containerId": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "description": "The tag of the subject this one is inside or on, e.g. a driver in a car. null when standing free."
+                            },
+                            "action": {
+                              "type": "string",
+                              "description": "What this subject is doing right now, in this beat."
+                            },
+                            "screenPosition": {
+                              "type": "string",
+                              "enum": [
+                                "far-left",
+                                "left",
+                                "center-left",
+                                "center",
+                                "center-right",
+                                "right",
+                                "far-right"
+                              ],
+                              "description": "Where this subject falls in the frame. Derivable from your own geometry — state it, and make sure it agrees."
+                            },
+                            "depth": {
+                              "type": "string",
+                              "enum": [
+                                "foreground",
+                                "midground",
+                                "background"
+                              ]
+                            }
+                          }
+                        },
+                        "description": "Every subject visible in this beat. Empty for a transition."
+                      },
+                      "principalSubject": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "description": "The tag of the subject the shot size is defined on."
+                      },
+                      "framing": {
+                        "type": "string",
+                        "enum": [
+                          "EWS",
+                          "WS",
+                          "MWS",
+                          "MS",
+                          "MCU",
+                          "CU",
+                          "ECU"
+                        ],
+                        "description": "Shot size on the principal subject. Derivable from your own geometry — state it, and make sure it agrees."
+                      },
+                      "changes": {
+                        "type": "array",
+                        "description": "Every subject whose position changed since the previous beat, and whether this beat's own text justifies it.",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "subject",
+                            "what",
+                            "justifiedByBeatText"
+                          ],
+                          "properties": {
+                            "subject": {
+                              "type": "string"
+                            },
+                            "what": {
+                              "type": "string"
+                            },
+                            "justifiedByBeatText": {
+                              "type": "boolean"
+                            }
+                          }
+                        }
+                      },
+                      "containmentNotes": {
+                        "type": "string",
+                        "description": "Whatever a renderer needs to get physically right: who is inside what, who is holding what."
+                      },
+                      "proseNote": {
+                        "type": "string",
+                        "description": "One plain-English paragraph describing this shot to a human reader. Present tense."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "max_output_tokens": 24000
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 3652,
+        "completionTokens": 1526,
+        "reasoningTokens": 999
+      },
+      "latencyMs": 27487,
+      "attempts": 1,
+      "costUsd": 0.147592,
+      "request": {
+        "model": "gpt-5.6-sol",
+        "reasoning": {
+          "effort": "high"
+        },
+        "input": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "You are the Storyboarder on a film crew that turns licensed NFT artwork into short generated\nvideo. Your job is not to describe a pretty picture — it is a precise technical blocking\nspecification, exact enough that a video-render pipeline can follow it without guessing.\n\nMiniMax-H3 expects a structured script, not a paragraph. Emit three fields:\n\n1. integrated_multimodal_description — the visuals, action, camera and diegetic sound,\n   along a timeline. Open with visual style and composition (\"Live-action, cinematic, a\n   medium-wide shot frames...\"). A single shot needs no timestamp; if you genuinely need a\n   second shot, mark it \"[Shot 2] At 00:03.500, the camera cuts to...\".\n2. overall_soundscape — ambient, physical and non-verbal sound. One to four sentences.\n3. non_diegetic_music — score the characters cannot hear. One to three sentences, or \"N/A\".\n\nCamera moves are written as natural English actions, never as bracketed labels. The formula\nis motion + amplitude + speed: \"the camera pushes in with small amplitude at slow speed\".\nAvailable motions: Zoom In/Out, Push In/Out, Pan Left/Right, Truck Left/Right, Tilt Up/Down,\nPedestal Up/Down, Arc Shot, Tracking Shot, Static Shot, Shake Slightly/Strongly, POV, Roll.\n\nEach text field can run to 7000 characters. Length is not a virtue in itself, but this model\nis directed, not hinted at — be specific and complete rather than terse.\n\nTHE COORDINATE CONTRACT. This is law, not guidance. Every number you emit is interpreted\nunder it exactly as written.\n\n  Units are metres. The space is right-handed and +Y is up. The ground is the plane y = 0.\n  The origin is the ground point directly beneath the film's principal subject as staged in\n  beat 1, and it does not move for the rest of the film — every beat's coordinates are in that\n  same frame, which is what makes continuity between beats mean anything.\n\n  yawDeg is rotation about +Y. Forward is (sin yaw, 0, cos yaw): yaw 0 faces +Z, yaw 90 faces\n  +X. Range -180 to 180.\n\n  A camera is two poses, start and end, each a world position and a world lookAt point, plus a\n  focal length at each end and a roll. A dutch angle is a non-zero rollDeg, not a label.\n  The camera never sits at y <= 0, and never sits inside a subject's own volume.\n\n  The sensor is full-frame: 36mm wide, and the frame height is 36/aspect\n  (at 16:9 that is 20.25mm).\n\nHOW SHOT SIZE IS COMPUTED. Not a matter of taste — it follows from where you put the camera:\n\n  hFrac = (subject heightM * focalMm) / (distance along the optical axis * frame height mm)\n\n  and hFrac is the fraction of frame height the subject fills:\n\n  EWS  hFrac 0 - 0.25     the figure is a quarter of frame height or less\n  WS   hFrac 0.25 - 0.75  full body with headroom\n  MWS  hFrac 0.75 - 1.4   the frame cuts around the knees\n  MS   hFrac 1.4 - 2.2    waist up\n  MCU  hFrac 2.2 - 3.5    chest up\n  CU   hFrac 3.5 - 7      head and shoulders\n  ECU  hFrac >= 7         part of a face\n\n  Worked examples, so there is no ambiguity about the arithmetic:\n\n  a 1.8m figure at the origin, camera 8m back at 50mm\n    hFrac = 0.5535  ->  WS\n  the same figure with the camera 1.7m away at 85mm\n    hFrac = 4.4444  ->  CU\n  the same figure 60m away at 24mm\n    hFrac = 0.0356  ->  EWS\n\n  You state 'framing' yourself, and it must be the band your own numbers produce. If you want a\n  close-up, put the camera close or lengthen the lens — do not label a wide shot as a close-up.\n  The same applies to 'screenPosition' and 'depth': they are readable off your own geometry, and\n  they are checked against it.\n\nRules.\n\n1. DELIBERATE SHOT VARIETY. Shot size must vary across the film. A film in which every beat\n   lands in the same band has failed, no matter how well each beat reads on its own. Choose each\n   beat's camera distance from what the beat is about: a beat about an emotion or a detail goes\n   close; a beat about geography, scale or simultaneity goes wide. State in sceneScaleNote how\n   big the set is, and place the camera accordingly.\n\n2. CONTINUITY IS THE WORLD, NOT A CLAIM. A subject's world position persists between beats.\n   Move a subject only if this beat's own text moves them. Every move goes in 'changes' with\n   justifiedByBeatText set honestly. A subject's heightM never changes between beats — a person\n   is the same height in beat 5 as in beat 1.\n\n3. THE 180-DEGREE LINE. The line runs through the two principal subjects. Keep the camera on one\n   side of it across consecutive beats. If a beat genuinely calls for crossing, cross — and\n   expect the subjects to swap sides of frame, because that is what crossing means.\n\n4. CONTAINMENT IS GEOMETRY. A subject inside or on another sets containerId, sits within the\n   container's own footprint, and has a groundOffsetM greater than zero and no greater than the\n   container's height. A person in a vehicle is inside it, not visible through the windscreen\n   from an impossible angle.\n\n5. INCLUSION. Never place a subject in a beat that the beat's own text doesn't put there. A cast\n   member with a reference available who has no part in this beat simply does not appear in that\n   beat's subjects array. An early, unearned reveal is a real error, not a safe default.\n\n6. TAG DISCIPLINE. Every 'subject' and 'containerId' field is the bare tag and nothing else —\n   exactly \"<Subject 1>\", never \"<Subject 1> — the ape\" or any other appended description.\n   Downstream code matches these by exact tag; anything extra breaks that match silently.\n\n7. TRANSITIONS. A beat whose text begins [CUT TO BLACK], [TRANSITION] or [FADE] is not a shot.\n   Return kind \"transition\", camera null, subjects [], and the marker's remaining text in\n   transitionText.\n\n8. PROSE. proseNote is one plain-English paragraph per beat, present tense, written for a human\n   reader who will never see the numbers — the camera described as motion + amplitude + speed in\n   H3's own vocabulary. It describes the same shot the numbers describe. It is never a second,\n   differing account of the beat.\n\nReturn the film by calling the tool. Write no prose outside it."
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Logline: A figure crosses an empty salt flat and finally speaks.\nWorld: An empty white salt flat under an enormous pale sky, flat to the horizon in every direction, hard noon light.\nStaging: <Subject 1> is the only figure anywhere in this world.\nGuard: Every character has ordinary skin and is a living figure, not a mannequin and not a chrome statue.\nFilm's overall camera direction: Whatever each beat demands. The range is the point.\nContinuity: One continuous passage of time.\nFrame aspect: 16:9\n\nCast with references available (referencePlan order):\n<Subject 1> — A pink‑haired figure wearing orange translucent glasses, a green patent leather moto jacket over a red shirt, black cotton‑wool slacks with buckles, and black leather combat boots. (pink buzz-cut hair, orange translucent glasses, green patent leather moto jacket)\n\nThis is beat 4 of 5: She stands and looks back the way she came, the full length of her against the flat.\n\nThe previous beat's own scene, for continuity:\n{\"beatIndex\":2,\"kind\":\"shot\",\"transitionText\":null,\"camera\":{\"start\":{\"position\":{\"x\":0.032,\"y\":1.64,\"z\":-12.26},\"lookAt\":{\"x\":0.032,\"y\":1.64,\"z\":-12.16}},\"end\":{\"position\":{\"x\":0.032,\"y\":1.64,\"z\":-12.26},\"lookAt\":{\"x\":0.032,\"y\":1.64,\"z\":-12.16}},\"focalStartMm\":300,\"focalEndMm\":300,\"rollDeg\":0,\"motion\":\"Static Shot\",\"amplitude\":\"small\",\"speed\":\"slow\",\"sensorNote\":\"36mm-wide sensor, frame height = 36/aspect\"},\"subjects\":[{\"subject\":\"<Subject 1>\",\"x\":0,\"z\":-12,\"endX\":0,\"endZ\":-12,\"groundOffsetM\":0,\"heightM\":1.75,\"widthM\":0.58,\"yawDeg\":180,\"containerId\":null,\"action\":\"Holding completely still as one eyelid opens, revealing a living eye whose iris and natural flecks fill the frame through the orange translucent glasses; she remains silent.\",\"screenPosition\":\"center\",\"depth\":\"foreground\"}],\"principalSubject\":\"<Subject 1>\",\"framing\":\"ECU\",\"changes\":[],\"containmentNotes\":\"<Subject 1> stands directly on the salt crust and is not contained by or holding anything. The camera views her living eye through one lens of her orange translucent glasses; the glasses remain worn on her face.\",\"proseNote\":\"Live-action and cinematic, an extreme close-up isolates one of <Subject 1>'s closed eyes through the warm tint of her orange translucent glasses. The camera holds in a Static Shot with small amplitude at slow speed as her eyelid opens, and the living iris with its fine natural flecks fills the whole picture under a sharp hard-noon catchlight. Only minute skin texture, lashes, and the translucent color cast from the eyewear remain at the frame edges; the salt flat and clothing fall completely outside the macro composition. A faint dry wind continues offscreen, accompanied by the subtle wet movement of the eyelid, and she does not speak.\"}\n\nWrite the blocking for this beat. Return a film object containing exactly this one beat."
+              }
+            ]
+          }
+        ],
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "film_blocking",
+            "strict": true,
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "units",
+                "aspect",
+                "sceneScaleNote",
+                "beats"
+              ],
+              "properties": {
+                "units": {
+                  "type": "string",
+                  "enum": [
+                    "metres"
+                  ],
+                  "description": "Echo this back exactly."
+                },
+                "aspect": {
+                  "type": "number",
+                  "minimum": 0.4,
+                  "maximum": 2.5,
+                  "description": "Frame aspect ratio, width over height. 16:9 is 1.7778."
+                },
+                "sceneScaleNote": {
+                  "type": "string",
+                  "description": "One line: how big the staged set is, in metres, so the camera can be placed sensibly."
+                },
+                "beats": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "beatIndex",
+                      "kind",
+                      "transitionText",
+                      "camera",
+                      "subjects",
+                      "principalSubject",
+                      "framing",
+                      "changes",
+                      "containmentNotes",
+                      "proseNote"
+                    ],
+                    "properties": {
+                      "beatIndex": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "Zero-based index of the beat this describes."
+                      },
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "shot",
+                          "transition"
+                        ]
+                      },
+                      "transitionText": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "description": "For a transition beat, the text after the marker. null for a shot."
+                      },
+                      "camera": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "start",
+                              "end",
+                              "focalStartMm",
+                              "focalEndMm",
+                              "rollDeg",
+                              "motion",
+                              "amplitude",
+                              "speed",
+                              "sensorNote"
+                            ],
+                            "properties": {
+                              "start": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                  "position",
+                                  "lookAt"
+                                ],
+                                "properties": {
+                                  "position": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                      "x",
+                                      "y",
+                                      "z"
+                                    ],
+                                    "properties": {
+                                      "x": {
+                                        "type": "number",
+                                        "description": "Metres. +X is world-right."
+                                      },
+                                      "y": {
+                                        "type": "number",
+                                        "description": "Metres above the ground plane. Must be > 0."
+                                      },
+                                      "z": {
+                                        "type": "number",
+                                        "description": "Metres. +Z is the direction a yaw of 0 faces."
+                                      }
+                                    }
+                                  },
+                                  "lookAt": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                      "x",
+                                      "y",
+                                      "z"
+                                    ],
+                                    "properties": {
+                                      "x": {
+                                        "type": "number"
+                                      },
+                                      "y": {
+                                        "type": "number"
+                                      },
+                                      "z": {
+                                        "type": "number"
+                                      }
+                                    },
+                                    "description": "The world point the camera is aimed at. Never equal to position."
+                                  }
+                                }
+                              },
+                              "end": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                  "position",
+                                  "lookAt"
+                                ],
+                                "properties": {
+                                  "position": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                      "x",
+                                      "y",
+                                      "z"
+                                    ],
+                                    "properties": {
+                                      "x": {
+                                        "type": "number",
+                                        "description": "Metres. +X is world-right."
+                                      },
+                                      "y": {
+                                        "type": "number",
+                                        "description": "Metres above the ground plane. Must be > 0."
+                                      },
+                                      "z": {
+                                        "type": "number",
+                                        "description": "Metres. +Z is the direction a yaw of 0 faces."
+                                      }
+                                    }
+                                  },
+                                  "lookAt": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                      "x",
+                                      "y",
+                                      "z"
+                                    ],
+                                    "properties": {
+                                      "x": {
+                                        "type": "number"
+                                      },
+                                      "y": {
+                                        "type": "number"
+                                      },
+                                      "z": {
+                                        "type": "number"
+                                      }
+                                    },
+                                    "description": "The world point the camera is aimed at. Never equal to position."
+                                  }
+                                }
+                              },
+                              "focalStartMm": {
+                                "type": "number",
+                                "minimum": 8,
+                                "maximum": 300,
+                                "description": "Full-frame equivalent focal length at the start of the beat. 8-300."
+                              },
+                              "focalEndMm": {
+                                "type": "number",
+                                "minimum": 8,
+                                "maximum": 300,
+                                "description": "Focal length at the end of the beat. Equal to focalStartMm unless the shot zooms."
+                              },
+                              "rollDeg": {
+                                "type": "number",
+                                "minimum": -45,
+                                "maximum": 45,
+                                "description": "Roll about the view axis. A dutch angle is a non-zero roll. 0 for a level camera."
+                              },
+                              "motion": {
+                                "type": "string",
+                                "enum": [
+                                  "Zoom In",
+                                  "Zoom Out",
+                                  "Push In",
+                                  "Push Out",
+                                  "Pan Left",
+                                  "Pan Right",
+                                  "Truck Left",
+                                  "Truck Right",
+                                  "Tilt Up",
+                                  "Tilt Down",
+                                  "Pedestal Up",
+                                  "Pedestal Down",
+                                  "Arc Shot",
+                                  "Tracking Shot",
+                                  "Static Shot",
+                                  "Shake Slightly",
+                                  "Shake Strongly",
+                                  "POV",
+                                  "Roll"
+                                ],
+                                "description": "MiniMax-H3's own motion vocabulary. Must describe what your own start and end poses actually do."
+                              },
+                              "amplitude": {
+                                "type": "string",
+                                "enum": [
+                                  "small",
+                                  "medium",
+                                  "large"
+                                ]
+                              },
+                              "speed": {
+                                "type": "string",
+                                "enum": [
+                                  "slow",
+                                  "medium",
+                                  "fast"
+                                ]
+                              },
+                              "sensorNote": {
+                                "type": "string",
+                                "enum": [
+                                  "36mm-wide sensor, frame height = 36/aspect"
+                                ],
+                                "description": "Echo this back exactly. It confirms you used the stated sensor size."
+                              }
+                            }
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "null if and only if kind is \"transition\"."
+                      },
+                      "subjects": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "subject",
+                            "x",
+                            "z",
+                            "endX",
+                            "endZ",
+                            "groundOffsetM",
+                            "heightM",
+                            "widthM",
+                            "yawDeg",
+                            "containerId",
+                            "action",
+                            "screenPosition",
+                            "depth"
+                          ],
+                          "properties": {
+                            "subject": {
+                              "type": "string",
+                              "description": "Exactly the tag and nothing else — \"<Subject 1>\", never \"<Subject 1> — the ape\"."
+                            },
+                            "x": {
+                              "type": "number",
+                              "description": "Ground position in metres at the START of the beat."
+                            },
+                            "z": {
+                              "type": "number",
+                              "description": "Ground position in metres at the START of the beat."
+                            },
+                            "endX": {
+                              "type": "number",
+                              "description": "Ground position at the END of the beat. Equal to x if this subject does not move within the beat."
+                            },
+                            "endZ": {
+                              "type": "number",
+                              "description": "Ground position at the END of the beat."
+                            },
+                            "groundOffsetM": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 200,
+                              "description": "Height of the base of this subject above the ground. 0 for anything standing on the ground; greater than 0 only when seated in or on something, in which case containerId must be set."
+                            },
+                            "heightM": {
+                              "type": "number",
+                              "minimum": 0.02,
+                              "maximum": 60,
+                              "description": "Real height in metres. An adult human is about 1.8. This never changes between beats."
+                            },
+                            "widthM": {
+                              "type": "number",
+                              "minimum": 0.02,
+                              "maximum": 60,
+                              "description": "Real width in metres across the widest horizontal axis. An adult human is about 0.6; a car about 2.0."
+                            },
+                            "yawDeg": {
+                              "type": "number",
+                              "minimum": -180,
+                              "maximum": 180,
+                              "description": "Facing, rotation about +Y. 0 faces +Z, 90 faces +X."
+                            },
+                            "containerId": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "description": "The tag of the subject this one is inside or on, e.g. a driver in a car. null when standing free."
+                            },
+                            "action": {
+                              "type": "string",
+                              "description": "What this subject is doing right now, in this beat."
+                            },
+                            "screenPosition": {
+                              "type": "string",
+                              "enum": [
+                                "far-left",
+                                "left",
+                                "center-left",
+                                "center",
+                                "center-right",
+                                "right",
+                                "far-right"
+                              ],
+                              "description": "Where this subject falls in the frame. Derivable from your own geometry — state it, and make sure it agrees."
+                            },
+                            "depth": {
+                              "type": "string",
+                              "enum": [
+                                "foreground",
+                                "midground",
+                                "background"
+                              ]
+                            }
+                          }
+                        },
+                        "description": "Every subject visible in this beat. Empty for a transition."
+                      },
+                      "principalSubject": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "description": "The tag of the subject the shot size is defined on."
+                      },
+                      "framing": {
+                        "type": "string",
+                        "enum": [
+                          "EWS",
+                          "WS",
+                          "MWS",
+                          "MS",
+                          "MCU",
+                          "CU",
+                          "ECU"
+                        ],
+                        "description": "Shot size on the principal subject. Derivable from your own geometry — state it, and make sure it agrees."
+                      },
+                      "changes": {
+                        "type": "array",
+                        "description": "Every subject whose position changed since the previous beat, and whether this beat's own text justifies it.",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "subject",
+                            "what",
+                            "justifiedByBeatText"
+                          ],
+                          "properties": {
+                            "subject": {
+                              "type": "string"
+                            },
+                            "what": {
+                              "type": "string"
+                            },
+                            "justifiedByBeatText": {
+                              "type": "boolean"
+                            }
+                          }
+                        }
+                      },
+                      "containmentNotes": {
+                        "type": "string",
+                        "description": "Whatever a renderer needs to get physically right: who is inside what, who is holding what."
+                      },
+                      "proseNote": {
+                        "type": "string",
+                        "description": "One plain-English paragraph describing this shot to a human reader. Present tense."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "max_output_tokens": 24000
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 3649,
+        "completionTokens": 1169,
+        "reasoningTokens": 650
+      },
+      "latencyMs": 20736,
+      "attempts": 1,
+      "costUsd": 0.12328,
+      "request": {
+        "model": "gpt-5.6-sol",
+        "reasoning": {
+          "effort": "high"
+        },
+        "input": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "You are the Storyboarder on a film crew that turns licensed NFT artwork into short generated\nvideo. Your job is not to describe a pretty picture — it is a precise technical blocking\nspecification, exact enough that a video-render pipeline can follow it without guessing.\n\nMiniMax-H3 expects a structured script, not a paragraph. Emit three fields:\n\n1. integrated_multimodal_description — the visuals, action, camera and diegetic sound,\n   along a timeline. Open with visual style and composition (\"Live-action, cinematic, a\n   medium-wide shot frames...\"). A single shot needs no timestamp; if you genuinely need a\n   second shot, mark it \"[Shot 2] At 00:03.500, the camera cuts to...\".\n2. overall_soundscape — ambient, physical and non-verbal sound. One to four sentences.\n3. non_diegetic_music — score the characters cannot hear. One to three sentences, or \"N/A\".\n\nCamera moves are written as natural English actions, never as bracketed labels. The formula\nis motion + amplitude + speed: \"the camera pushes in with small amplitude at slow speed\".\nAvailable motions: Zoom In/Out, Push In/Out, Pan Left/Right, Truck Left/Right, Tilt Up/Down,\nPedestal Up/Down, Arc Shot, Tracking Shot, Static Shot, Shake Slightly/Strongly, POV, Roll.\n\nEach text field can run to 7000 characters. Length is not a virtue in itself, but this model\nis directed, not hinted at — be specific and complete rather than terse.\n\nTHE COORDINATE CONTRACT. This is law, not guidance. Every number you emit is interpreted\nunder it exactly as written.\n\n  Units are metres. The space is right-handed and +Y is up. The ground is the plane y = 0.\n  The origin is the ground point directly beneath the film's principal subject as staged in\n  beat 1, and it does not move for the rest of the film — every beat's coordinates are in that\n  same frame, which is what makes continuity between beats mean anything.\n\n  yawDeg is rotation about +Y. Forward is (sin yaw, 0, cos yaw): yaw 0 faces +Z, yaw 90 faces\n  +X. Range -180 to 180.\n\n  A camera is two poses, start and end, each a world position and a world lookAt point, plus a\n  focal length at each end and a roll. A dutch angle is a non-zero rollDeg, not a label.\n  The camera never sits at y <= 0, and never sits inside a subject's own volume.\n\n  The sensor is full-frame: 36mm wide, and the frame height is 36/aspect\n  (at 16:9 that is 20.25mm).\n\nHOW SHOT SIZE IS COMPUTED. Not a matter of taste — it follows from where you put the camera:\n\n  hFrac = (subject heightM * focalMm) / (distance along the optical axis * frame height mm)\n\n  and hFrac is the fraction of frame height the subject fills:\n\n  EWS  hFrac 0 - 0.25     the figure is a quarter of frame height or less\n  WS   hFrac 0.25 - 0.75  full body with headroom\n  MWS  hFrac 0.75 - 1.4   the frame cuts around the knees\n  MS   hFrac 1.4 - 2.2    waist up\n  MCU  hFrac 2.2 - 3.5    chest up\n  CU   hFrac 3.5 - 7      head and shoulders\n  ECU  hFrac >= 7         part of a face\n\n  Worked examples, so there is no ambiguity about the arithmetic:\n\n  a 1.8m figure at the origin, camera 8m back at 50mm\n    hFrac = 0.5535  ->  WS\n  the same figure with the camera 1.7m away at 85mm\n    hFrac = 4.4444  ->  CU\n  the same figure 60m away at 24mm\n    hFrac = 0.0356  ->  EWS\n\n  You state 'framing' yourself, and it must be the band your own numbers produce. If you want a\n  close-up, put the camera close or lengthen the lens — do not label a wide shot as a close-up.\n  The same applies to 'screenPosition' and 'depth': they are readable off your own geometry, and\n  they are checked against it.\n\nRules.\n\n1. DELIBERATE SHOT VARIETY. Shot size must vary across the film. A film in which every beat\n   lands in the same band has failed, no matter how well each beat reads on its own. Choose each\n   beat's camera distance from what the beat is about: a beat about an emotion or a detail goes\n   close; a beat about geography, scale or simultaneity goes wide. State in sceneScaleNote how\n   big the set is, and place the camera accordingly.\n\n2. CONTINUITY IS THE WORLD, NOT A CLAIM. A subject's world position persists between beats.\n   Move a subject only if this beat's own text moves them. Every move goes in 'changes' with\n   justifiedByBeatText set honestly. A subject's heightM never changes between beats — a person\n   is the same height in beat 5 as in beat 1.\n\n3. THE 180-DEGREE LINE. The line runs through the two principal subjects. Keep the camera on one\n   side of it across consecutive beats. If a beat genuinely calls for crossing, cross — and\n   expect the subjects to swap sides of frame, because that is what crossing means.\n\n4. CONTAINMENT IS GEOMETRY. A subject inside or on another sets containerId, sits within the\n   container's own footprint, and has a groundOffsetM greater than zero and no greater than the\n   container's height. A person in a vehicle is inside it, not visible through the windscreen\n   from an impossible angle.\n\n5. INCLUSION. Never place a subject in a beat that the beat's own text doesn't put there. A cast\n   member with a reference available who has no part in this beat simply does not appear in that\n   beat's subjects array. An early, unearned reveal is a real error, not a safe default.\n\n6. TAG DISCIPLINE. Every 'subject' and 'containerId' field is the bare tag and nothing else —\n   exactly \"<Subject 1>\", never \"<Subject 1> — the ape\" or any other appended description.\n   Downstream code matches these by exact tag; anything extra breaks that match silently.\n\n7. TRANSITIONS. A beat whose text begins [CUT TO BLACK], [TRANSITION] or [FADE] is not a shot.\n   Return kind \"transition\", camera null, subjects [], and the marker's remaining text in\n   transitionText.\n\n8. PROSE. proseNote is one plain-English paragraph per beat, present tense, written for a human\n   reader who will never see the numbers — the camera described as motion + amplitude + speed in\n   H3's own vocabulary. It describes the same shot the numbers describe. It is never a second,\n   differing account of the beat.\n\nReturn the film by calling the tool. Write no prose outside it."
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Logline: A figure crosses an empty salt flat and finally speaks.\nWorld: An empty white salt flat under an enormous pale sky, flat to the horizon in every direction, hard noon light.\nStaging: <Subject 1> is the only figure anywhere in this world.\nGuard: Every character has ordinary skin and is a living figure, not a mannequin and not a chrome statue.\nFilm's overall camera direction: Whatever each beat demands. The range is the point.\nContinuity: One continuous passage of time.\nFrame aspect: 16:9\n\nCast with references available (referencePlan order):\n<Subject 1> — A pink‑haired figure wearing orange translucent glasses, a green patent leather moto jacket over a red shirt, black cotton‑wool slacks with buckles, and black leather combat boots. (pink buzz-cut hair, orange translucent glasses, green patent leather moto jacket)\n\nThis is beat 5 of 5: She says one word, and we are close enough to read her mouth.\n\nThe previous beat's own scene, for continuity:\n{\"beatIndex\":3,\"kind\":\"shot\",\"transitionText\":null,\"camera\":{\"start\":{\"position\":{\"x\":0,\"y\":1.4,\"z\":-20},\"lookAt\":{\"x\":0,\"y\":0.9,\"z\":-12}},\"end\":{\"position\":{\"x\":0,\"y\":1.4,\"z\":-22.5},\"lookAt\":{\"x\":0,\"y\":0.9,\"z\":-12}},\"focalStartMm\":50,\"focalEndMm\":50,\"rollDeg\":0,\"motion\":\"Push Out\",\"amplitude\":\"medium\",\"speed\":\"slow\",\"sensorNote\":\"36mm-wide sensor, frame height = 36/aspect\"},\"subjects\":[{\"subject\":\"<Subject 1>\",\"x\":0,\"z\":-12,\"endX\":0,\"endZ\":-12,\"groundOffsetM\":0,\"heightM\":1.75,\"widthM\":0.58,\"yawDeg\":180,\"containerId\":null,\"action\":\"Standing completely still on the salt crust and looking back toward the empty direction from which she came, her living face set beneath pink buzz-cut hair and behind orange translucent glasses.\",\"screenPosition\":\"center\",\"depth\":\"midground\"}],\"principalSubject\":\"<Subject 1>\",\"framing\":\"WS\",\"changes\":[],\"containmentNotes\":\"<Subject 1> stands directly on the salt crust and is not contained by or holding anything. Her orange translucent glasses and all clothing remain worn normally on her living body.\",\"proseNote\":\"Live-action and cinematic, a wide shot frames the full length of <Subject 1> alone against the limitless white salt flat and enormous pale sky. She remains planted at center frame, facing back toward the empty direction from which she came, with ordinary living skin beneath her pink buzz-cut hair and orange translucent glasses; her green patent leather moto jacket, red shirt, black buckled slacks, and combat boots register clearly in the hard noon light. The camera pushes out with medium amplitude at slow speed, gradually increasing the empty white ground and pale sky around her without changing her central placement. A dry wind brushes her jacket and slacks, while faint clothing creaks and the soft hiss of air crossing the salt crust emphasize the silence; she does not speak.\"}\n\nWrite the blocking for this beat. Return a film object containing exactly this one beat."
+              }
+            ]
+          }
+        ],
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "film_blocking",
+            "strict": true,
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "units",
+                "aspect",
+                "sceneScaleNote",
+                "beats"
+              ],
+              "properties": {
+                "units": {
+                  "type": "string",
+                  "enum": [
+                    "metres"
+                  ],
+                  "description": "Echo this back exactly."
+                },
+                "aspect": {
+                  "type": "number",
+                  "minimum": 0.4,
+                  "maximum": 2.5,
+                  "description": "Frame aspect ratio, width over height. 16:9 is 1.7778."
+                },
+                "sceneScaleNote": {
+                  "type": "string",
+                  "description": "One line: how big the staged set is, in metres, so the camera can be placed sensibly."
+                },
+                "beats": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "beatIndex",
+                      "kind",
+                      "transitionText",
+                      "camera",
+                      "subjects",
+                      "principalSubject",
+                      "framing",
+                      "changes",
+                      "containmentNotes",
+                      "proseNote"
+                    ],
+                    "properties": {
+                      "beatIndex": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "Zero-based index of the beat this describes."
+                      },
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "shot",
+                          "transition"
+                        ]
+                      },
+                      "transitionText": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "description": "For a transition beat, the text after the marker. null for a shot."
+                      },
+                      "camera": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "start",
+                              "end",
+                              "focalStartMm",
+                              "focalEndMm",
+                              "rollDeg",
+                              "motion",
+                              "amplitude",
+                              "speed",
+                              "sensorNote"
+                            ],
+                            "properties": {
+                              "start": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                  "position",
+                                  "lookAt"
+                                ],
+                                "properties": {
+                                  "position": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                      "x",
+                                      "y",
+                                      "z"
+                                    ],
+                                    "properties": {
+                                      "x": {
+                                        "type": "number",
+                                        "description": "Metres. +X is world-right."
+                                      },
+                                      "y": {
+                                        "type": "number",
+                                        "description": "Metres above the ground plane. Must be > 0."
+                                      },
+                                      "z": {
+                                        "type": "number",
+                                        "description": "Metres. +Z is the direction a yaw of 0 faces."
+                                      }
+                                    }
+                                  },
+                                  "lookAt": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                      "x",
+                                      "y",
+                                      "z"
+                                    ],
+                                    "properties": {
+                                      "x": {
+                                        "type": "number"
+                                      },
+                                      "y": {
+                                        "type": "number"
+                                      },
+                                      "z": {
+                                        "type": "number"
+                                      }
+                                    },
+                                    "description": "The world point the camera is aimed at. Never equal to position."
+                                  }
+                                }
+                              },
+                              "end": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                  "position",
+                                  "lookAt"
+                                ],
+                                "properties": {
+                                  "position": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                      "x",
+                                      "y",
+                                      "z"
+                                    ],
+                                    "properties": {
+                                      "x": {
+                                        "type": "number",
+                                        "description": "Metres. +X is world-right."
+                                      },
+                                      "y": {
+                                        "type": "number",
+                                        "description": "Metres above the ground plane. Must be > 0."
+                                      },
+                                      "z": {
+                                        "type": "number",
+                                        "description": "Metres. +Z is the direction a yaw of 0 faces."
+                                      }
+                                    }
+                                  },
+                                  "lookAt": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                      "x",
+                                      "y",
+                                      "z"
+                                    ],
+                                    "properties": {
+                                      "x": {
+                                        "type": "number"
+                                      },
+                                      "y": {
+                                        "type": "number"
+                                      },
+                                      "z": {
+                                        "type": "number"
+                                      }
+                                    },
+                                    "description": "The world point the camera is aimed at. Never equal to position."
+                                  }
+                                }
+                              },
+                              "focalStartMm": {
+                                "type": "number",
+                                "minimum": 8,
+                                "maximum": 300,
+                                "description": "Full-frame equivalent focal length at the start of the beat. 8-300."
+                              },
+                              "focalEndMm": {
+                                "type": "number",
+                                "minimum": 8,
+                                "maximum": 300,
+                                "description": "Focal length at the end of the beat. Equal to focalStartMm unless the shot zooms."
+                              },
+                              "rollDeg": {
+                                "type": "number",
+                                "minimum": -45,
+                                "maximum": 45,
+                                "description": "Roll about the view axis. A dutch angle is a non-zero roll. 0 for a level camera."
+                              },
+                              "motion": {
+                                "type": "string",
+                                "enum": [
+                                  "Zoom In",
+                                  "Zoom Out",
+                                  "Push In",
+                                  "Push Out",
+                                  "Pan Left",
+                                  "Pan Right",
+                                  "Truck Left",
+                                  "Truck Right",
+                                  "Tilt Up",
+                                  "Tilt Down",
+                                  "Pedestal Up",
+                                  "Pedestal Down",
+                                  "Arc Shot",
+                                  "Tracking Shot",
+                                  "Static Shot",
+                                  "Shake Slightly",
+                                  "Shake Strongly",
+                                  "POV",
+                                  "Roll"
+                                ],
+                                "description": "MiniMax-H3's own motion vocabulary. Must describe what your own start and end poses actually do."
+                              },
+                              "amplitude": {
+                                "type": "string",
+                                "enum": [
+                                  "small",
+                                  "medium",
+                                  "large"
+                                ]
+                              },
+                              "speed": {
+                                "type": "string",
+                                "enum": [
+                                  "slow",
+                                  "medium",
+                                  "fast"
+                                ]
+                              },
+                              "sensorNote": {
+                                "type": "string",
+                                "enum": [
+                                  "36mm-wide sensor, frame height = 36/aspect"
+                                ],
+                                "description": "Echo this back exactly. It confirms you used the stated sensor size."
+                              }
+                            }
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "null if and only if kind is \"transition\"."
+                      },
+                      "subjects": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "subject",
+                            "x",
+                            "z",
+                            "endX",
+                            "endZ",
+                            "groundOffsetM",
+                            "heightM",
+                            "widthM",
+                            "yawDeg",
+                            "containerId",
+                            "action",
+                            "screenPosition",
+                            "depth"
+                          ],
+                          "properties": {
+                            "subject": {
+                              "type": "string",
+                              "description": "Exactly the tag and nothing else — \"<Subject 1>\", never \"<Subject 1> — the ape\"."
+                            },
+                            "x": {
+                              "type": "number",
+                              "description": "Ground position in metres at the START of the beat."
+                            },
+                            "z": {
+                              "type": "number",
+                              "description": "Ground position in metres at the START of the beat."
+                            },
+                            "endX": {
+                              "type": "number",
+                              "description": "Ground position at the END of the beat. Equal to x if this subject does not move within the beat."
+                            },
+                            "endZ": {
+                              "type": "number",
+                              "description": "Ground position at the END of the beat."
+                            },
+                            "groundOffsetM": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 200,
+                              "description": "Height of the base of this subject above the ground. 0 for anything standing on the ground; greater than 0 only when seated in or on something, in which case containerId must be set."
+                            },
+                            "heightM": {
+                              "type": "number",
+                              "minimum": 0.02,
+                              "maximum": 60,
+                              "description": "Real height in metres. An adult human is about 1.8. This never changes between beats."
+                            },
+                            "widthM": {
+                              "type": "number",
+                              "minimum": 0.02,
+                              "maximum": 60,
+                              "description": "Real width in metres across the widest horizontal axis. An adult human is about 0.6; a car about 2.0."
+                            },
+                            "yawDeg": {
+                              "type": "number",
+                              "minimum": -180,
+                              "maximum": 180,
+                              "description": "Facing, rotation about +Y. 0 faces +Z, 90 faces +X."
+                            },
+                            "containerId": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "description": "The tag of the subject this one is inside or on, e.g. a driver in a car. null when standing free."
+                            },
+                            "action": {
+                              "type": "string",
+                              "description": "What this subject is doing right now, in this beat."
+                            },
+                            "screenPosition": {
+                              "type": "string",
+                              "enum": [
+                                "far-left",
+                                "left",
+                                "center-left",
+                                "center",
+                                "center-right",
+                                "right",
+                                "far-right"
+                              ],
+                              "description": "Where this subject falls in the frame. Derivable from your own geometry — state it, and make sure it agrees."
+                            },
+                            "depth": {
+                              "type": "string",
+                              "enum": [
+                                "foreground",
+                                "midground",
+                                "background"
+                              ]
+                            }
+                          }
+                        },
+                        "description": "Every subject visible in this beat. Empty for a transition."
+                      },
+                      "principalSubject": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "description": "The tag of the subject the shot size is defined on."
+                      },
+                      "framing": {
+                        "type": "string",
+                        "enum": [
+                          "EWS",
+                          "WS",
+                          "MWS",
+                          "MS",
+                          "MCU",
+                          "CU",
+                          "ECU"
+                        ],
+                        "description": "Shot size on the principal subject. Derivable from your own geometry — state it, and make sure it agrees."
+                      },
+                      "changes": {
+                        "type": "array",
+                        "description": "Every subject whose position changed since the previous beat, and whether this beat's own text justifies it.",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "subject",
+                            "what",
+                            "justifiedByBeatText"
+                          ],
+                          "properties": {
+                            "subject": {
+                              "type": "string"
+                            },
+                            "what": {
+                              "type": "string"
+                            },
+                            "justifiedByBeatText": {
+                              "type": "boolean"
+                            }
+                          }
+                        }
+                      },
+                      "containmentNotes": {
+                        "type": "string",
+                        "description": "Whatever a renderer needs to get physically right: who is inside what, who is holding what."
+                      },
+                      "proseNote": {
+                        "type": "string",
+                        "description": "One plain-English paragraph describing this shot to a human reader. Present tense."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "max_output_tokens": 24000
+      }
+    }
+  ],
+  "costUsd": 0.7811079999999999
+}

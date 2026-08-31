@@ -1,0 +1,497 @@
+{
+  "runId": "20260826T155647Z",
+  "startedAt": "2026-08-26T15:56:48.533Z",
+  "fixture": "scale-extremes",
+  "reps": 1,
+  "quotaBefore": {
+    "usage": 0.0391357,
+    "limit": null,
+    "limitRemaining": null,
+    "isFreeTier": true,
+    "rateLimit": {
+      "requests": -1,
+      "interval": "10s",
+      "note": "This field is deprecated and safe to ignore."
+    }
+  },
+  "results": [
+    {
+      "id": "split",
+      "label": "Ultra · SPLIT plan + parallel beats",
+      "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "split": true,
+      "beatCount": 3,
+      "reps": [
+        {
+          "rep": 1,
+          "ok": true,
+          "latencyMs": 407918,
+          "firstPlanAtMs": 26757,
+          "adherence": {
+            "checked": 2,
+            "matched": 2,
+            "rate": 1,
+            "drifted": [],
+            "distinctPlanned": 3,
+            "distinctEmitted": 2
+          },
+          "marks": [
+            {
+              "type": "heartbeat",
+              "data": {
+                "phase": "planning",
+                "elapsedSeconds": 15
+              },
+              "atMs": 15000
+            },
+            {
+              "type": "beat-plan",
+              "data": {
+                "beatIndex": 0,
+                "framing": "EWS",
+                "principalSubject": "<Subject 1>",
+                "motion": "Static Shot",
+                "intent": "Establish the crushing scale and isolation of the figure as a speck in the vast landscape."
+              },
+              "atMs": 26757
+            },
+            {
+              "type": "beat-plan",
+              "data": {
+                "beatIndex": 1,
+                "framing": "WS",
+                "principalSubject": "<Subject 1>",
+                "motion": "Push In",
+                "intent": "Show the figure's determined approach across the emptiness, gradually revealing human scale."
+              },
+              "atMs": 26757
+            },
+            {
+              "type": "beat-plan",
+              "data": {
+                "beatIndex": 2,
+                "framing": "ECU",
+                "principalSubject": "<Subject 1>",
+                "motion": "Static Shot",
+                "intent": "Reveal the intimate detail of consciousness — the eye opening as arrival."
+              },
+              "atMs": 26757
+            },
+            {
+              "type": "phase",
+              "data": {
+                "phase": "drafting",
+                "planned": 3
+              },
+              "atMs": 26757
+            },
+            {
+              "type": "beat-drawn",
+              "data": {
+                "beatIndex": 1,
+                "framing": null,
+                "failed": true,
+                "error": "NVIDIA 502: Upstream error from Nvidia: Service temporarily overloaded",
+                "attempts": 4
+              },
+              "atMs": 31143
+            },
+            {
+              "type": "heartbeat",
+              "data": {
+                "phase": "drafting",
+                "elapsedSeconds": 15
+              },
+              "atMs": 41758
+            },
+            {
+              "type": "heartbeat",
+              "data": {
+                "phase": "drafting",
+                "elapsedSeconds": 30
+              },
+              "atMs": 56759
+            },
+            {
+              "type": "heartbeat",
+              "data": {
+                "phase": "drafting",
+                "elapsedSeconds": 45
+              },
+              "atMs": 71760
+            },
+            {
+              "type": "heartbeat",
+              "data": {
+                "phase": "drafting",
+                "elapsedSeconds": 60
+              },
+              "atMs": 86762
+            },
+            {
+              "type": "heartbeat",
+              "data": {
+                "phase": "drafting",
+                "elapsedSeconds": 75
+              },
+              "atMs": 101763
+            },
+            {
+              "type": "heartbeat",
+              "data": {
+                "phase": "drafting",
+                "elapsedSeconds": 90
+              },
+              "atMs": 116764
+            },
+            {
+              "type": "heartbeat",
+              "data": {
+                "phase": "drafting",
+                "elapsedSeconds": 105
+              },
+              "atMs": 131765
+            },
+            {
+              "type": "heartbeat",
+              "data": {
+                "phase": "drafting",
+                "elapsedSeconds": 120
+              },
+              "atMs": 146768
+            },
+            {
+              "type": "beat-drawn",
+              "data": {
+                "beatIndex": 0,
+                "framing": "EWS",
+                "ms": 131982,
+                "attempts": 2
+              },
+              "atMs": 158740
+            },
+            {
+              "type": "heartbeat",
+              "data": {
+                "phase": "drafting",
+                "elapsedSeconds": 135
+              },
+              "atMs": 161770
+            },
+            {
+              "type": "heartbeat",
+              "data": {
+                "phase": "drafting",
+                "elapsedSeconds": 150
+              },
+              "atMs": 176771
+            },
+            {
+              "type": "heartbeat",
+              "data": {
+                "phase": "drafting",
+                "elapsedSeconds": 165
+              },
+              "atMs": 191773
+            },
+            {
+              "type": "heartbeat",
+              "data": {
+                "phase": "drafting",
+                "elapsedSeconds": 180
+              },
+              "atMs": 206773
+            },
+            {
+              "type": "heartbeat",
+              "data": {
+                "phase": "drafting",
+                "elapsedSeconds": 195
+              },
+              "atMs": 221775
+            },
+            {
+              "type": "heartbeat",
+              "data": {
+                "phase": "drafting",
+                "elapsedSeconds": 210
+              },
+              "atMs": 236777
+            },
+            {
+              "type": "heartbeat",
+              "data": {
+                "phase": "drafting",
+                "elapsedSeconds": 225
+              },
+              "atMs": 251777
+            },
+            {
+              "type": "heartbeat",
+              "data": {
+                "phase": "drafting",
+                "elapsedSeconds": 240
+              },
+              "atMs": 266780
+            },
+            {
+              "type": "heartbeat",
+              "data": {
+                "phase": "drafting",
+                "elapsedSeconds": 255
+              },
+              "atMs": 281781
+            },
+            {
+              "type": "heartbeat",
+              "data": {
+                "phase": "drafting",
+                "elapsedSeconds": 270
+              },
+              "atMs": 296783
+            },
+            {
+              "type": "heartbeat",
+              "data": {
+                "phase": "drafting",
+                "elapsedSeconds": 285
+              },
+              "atMs": 311785
+            },
+            {
+              "type": "heartbeat",
+              "data": {
+                "phase": "drafting",
+                "elapsedSeconds": 300
+              },
+              "atMs": 326787
+            },
+            {
+              "type": "heartbeat",
+              "data": {
+                "phase": "drafting",
+                "elapsedSeconds": 315
+              },
+              "atMs": 341788
+            },
+            {
+              "type": "heartbeat",
+              "data": {
+                "phase": "drafting",
+                "elapsedSeconds": 330
+              },
+              "atMs": 356790
+            },
+            {
+              "type": "heartbeat",
+              "data": {
+                "phase": "drafting",
+                "elapsedSeconds": 345
+              },
+              "atMs": 371791
+            },
+            {
+              "type": "heartbeat",
+              "data": {
+                "phase": "drafting",
+                "elapsedSeconds": 360
+              },
+              "atMs": 386794
+            },
+            {
+              "type": "heartbeat",
+              "data": {
+                "phase": "drafting",
+                "elapsedSeconds": 375
+              },
+              "atMs": 401797
+            },
+            {
+              "type": "beat-drawn",
+              "data": {
+                "beatIndex": 2,
+                "framing": "ECU",
+                "ms": 376775,
+                "attempts": 2
+              },
+              "atMs": 407918
+            }
+          ],
+          "tokensPerSecond": 23.3,
+          "usage": {
+            "promptTokens": 11320,
+            "completionTokens": 9502,
+            "reasoningTokens": 6696
+          },
+          "answerTokens": 2806,
+          "reasoningShare": 0.705,
+          "reasoningChars": null,
+          "floorViolations": [
+            {
+              "beatIndex": 1,
+              "code": "missing-beat",
+              "detail": "No geometry returned for this beat."
+            }
+          ],
+          "passesFloor": false,
+          "distinctBands": 2,
+          "bands": [
+            "EWS",
+            "ECU"
+          ],
+          "meta": [],
+          "film": {
+            "units": "metres",
+            "aspect": 1.7778,
+            "sceneScaleNote": "Salt flat staging area ~500m × 500m; figure 1.7m tall at far edge in beat 1, walks toward camera.",
+            "beats": [
+              {
+                "beatIndex": 0,
+                "kind": "shot",
+                "transitionText": null,
+                "camera": {
+                  "start": {
+                    "position": {
+                      "x": 0,
+                      "y": 1.6,
+                      "z": 500
+                    },
+                    "lookAt": {
+                      "x": 0,
+                      "y": 1,
+                      "z": 0
+                    }
+                  },
+                  "end": {
+                    "position": {
+                      "x": 0,
+                      "y": 1.6,
+                      "z": 500
+                    },
+                    "lookAt": {
+                      "x": 0,
+                      "y": 1,
+                      "z": 0
+                    }
+                  },
+                  "focalStartMm": 24,
+                  "focalEndMm": 24,
+                  "rollDeg": 0,
+                  "motion": "Static Shot",
+                  "amplitude": "small",
+                  "speed": "slow",
+                  "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+                },
+                "subjects": [
+                  {
+                    "subject": "<Subject 1>",
+                    "x": 0,
+                    "z": 0,
+                    "endX": 0,
+                    "endZ": 0,
+                    "groundOffsetM": 0,
+                    "heightM": 1.7,
+                    "widthM": 0.6,
+                    "yawDeg": 0,
+                    "containerId": null,
+                    "action": "stands motionless at the far edge of the salt flat, a solitary speck against the white ground and enormous pale sky",
+                    "screenPosition": "center",
+                    "depth": "background"
+                  }
+                ],
+                "principalSubject": "<Subject 1>",
+                "framing": "EWS",
+                "changes": [],
+                "containmentNotes": "No containment; <Subject 1> stands free on the salt flat.",
+                "proseNote": "Live-action, cinematic, an extreme wide shot frames the lone figure as a barely visible speck at the centre of a blinding white salt flat that stretches to the horizon in every direction. The camera sits at the near edge of the flat, five hundred metres back, level at 1.6 metres, aimed at the figure's torso with a 24mm lens. The camera holds perfectly static, the vast pale sky dominating the upper three-quarters of the frame, the figure centred and tiny, yielding an EWS where the 1.7-metre figure occupies roughly four-tenths of one percent of frame height. Hard noon light casts no shadows; the air is still and silent."
+              },
+              {
+                "beatIndex": 2,
+                "kind": "shot",
+                "transitionText": null,
+                "camera": {
+                  "start": {
+                    "position": {
+                      "x": 0,
+                      "y": 1.6,
+                      "z": 201.2
+                    },
+                    "lookAt": {
+                      "x": 0,
+                      "y": 1.6,
+                      "z": 200
+                    }
+                  },
+                  "end": {
+                    "position": {
+                      "x": 0,
+                      "y": 1.6,
+                      "z": 201.2
+                    },
+                    "lookAt": {
+                      "x": 0,
+                      "y": 1.6,
+                      "z": 200
+                    }
+                  },
+                  "focalStartMm": 100,
+                  "focalEndMm": 100,
+                  "rollDeg": 0,
+                  "motion": "Static Shot",
+                  "amplitude": "small",
+                  "speed": "slow",
+                  "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+                },
+                "subjects": [
+                  {
+                    "subject": "<Subject 1>",
+                    "x": 0,
+                    "z": 200,
+                    "endX": 0,
+                    "endZ": 200,
+                    "groundOffsetM": 0,
+                    "heightM": 1.7,
+                    "widthM": 0.6,
+                    "yawDeg": 0,
+                    "containerId": null,
+                    "action": "eye opens, iris and flecks revealed filling the frame",
+                    "screenPosition": "center",
+                    "depth": "foreground"
+                  }
+                ],
+                "principalSubject": "<Subject 1>",
+                "framing": "ECU",
+                "changes": [
+                  {
+                    "subject": "<Subject 1>",
+                    "what": "position z from ~150 to 200 (approached camera across beats 1–2)",
+                    "justifiedByBeatText": false
+                  }
+                ],
+                "containmentNotes": "Subject stands free on salt flat; no containment relationships.",
+                "proseNote": "Live-action, cinematic, an extreme close-up holds static on the figure's right eye as it opens; the iris and its fine flecks expand to fill the entire frame. The camera rests at 1.2 metres from the subject at 100mm, level with the eye line at 1.6 metres, yielding an ECU where the full 1.7-metre figure would stand seven times the frame height. No camera movement — the stillness mirrors the held breath of arrival. The salt-dusted coat and skin are visible only as blurred texture at the periphery of the iris, the pale sky reflected in the wet surface of the eye."
+              }
+            ]
+          }
+        }
+      ],
+      "medianLatencyMs": 407918,
+      "medianTokensPerSecond": 23.3,
+      "medianReasoningShare": 0.705,
+      "floorPassRate": 0
+    }
+  ],
+  "quotaAfter": {
+    "usage": 0.0391357,
+    "limit": null,
+    "limitRemaining": null,
+    "isFreeTier": true,
+    "rateLimit": {
+      "requests": -1,
+      "interval": "10s",
+      "note": "This field is deprecated and safe to ignore."
+    }
+  },
+  "finishedAt": "2026-08-26T16:03:40.287Z",
+  "silentRetries": 0
+}

@@ -1,0 +1,423 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Cast inspector</title>
+<!--
+  A DEV TOOL, and deliberately not part of the app.
+
+  It lives at the project root rather than in public/, which means Vite serves it in development
+  and the production build never includes it — dev-only by construction rather than by a flag
+  somebody has to remember.
+
+  Where a piece carries a strip of PROBE meshes underneath, those are experiments run by hand and
+  labelled with how they turned out — including the ones that failed, because a record that keeps
+  only the wins is a record of nothing. They are not something the pipeline produces.
+
+  It exists because of a gap in how this round was checked. Every judgement the pipeline makes
+  about a piece — its real height, its body plan, whether it may honestly have a mesh — was
+  verifiable only by generating a whole film, or by taking my word from a screenshot. This puts
+  the card and the mesh side by side, at the size they are actually looked at, with the reason
+  printed underneath. A gate you cannot inspect is a gate nobody should trust.
+
+    npm run dev   ->   http://localhost:5173/cast-inspector.html
+-->
+<style>
+  :root { color-scheme: dark; }
+  body { margin:0; background:#0b0a14; color:#cbd5e1;
+         font:14px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; }
+  header { padding:20px 24px 8px; border-bottom:1px solid #1e1b3a; }
+  h1 { margin:0 0 4px; font-size:16px; letter-spacing:.22em; text-transform:uppercase; color:#c4b5fd; }
+  .sub { color:#64748b; font-size:12px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(520px,1fr)); gap:16px; padding:16px 24px 60px; }
+  .card { border:1px solid #1e1b3a; border-radius:14px; background:#0f0d1e; overflow:hidden; }
+  .head { padding:10px 12px; border-bottom:1px solid #1e1b3a; }
+  .subject { font-size:13px; color:#e2e8f0; }
+  .key { font:11px ui-monospace,monospace; color:#475569; word-break:break-all; margin-top:2px; }
+  .views { display:flex; gap:1px; background:#1e1b3a; }
+  .view { flex:1; aspect-ratio:1; background:#0b0a14; position:relative; display:flex; align-items:center; justify-content:center; }
+  .view canvas, .view img { max-width:100%; max-height:100%; display:block; }
+  .tag { position:absolute; top:6px; left:6px; font-size:9px; letter-spacing:.14em; text-transform:uppercase;
+         background:#000a; padding:2px 6px; border-radius:99px; color:#64748b; }
+  .meta { padding:10px 12px; display:flex; flex-wrap:wrap; gap:6px; font-size:11px; }
+  .pill { padding:2px 8px; border-radius:99px; background:#1e1b3a; color:#a5b4fc; }
+  .pill.warn { background:#422006; color:#fbbf24; }
+  .pill.good { background:#052e16; color:#4ade80; }
+  .reason { padding:0 12px 12px; font-size:11px; color:#64748b; line-height:1.5; }
+  .film { padding:0 12px 10px; font-size:11px; color:#7dd3fc; line-height:1.5; }
+  .film .label { color:#38bdf8; letter-spacing:.1em; text-transform:uppercase; font-size:9px; }
+  /* Share the width rather than scroll. A probe that is off the edge of a strip is a probe
+     nobody knows exists, and the failures are the half most worth not losing. */
+  .probes { display:flex; gap:1px; background:#1e1b3a; }
+  .probes .view { flex:1 1 0; aspect-ratio:1; min-width:0; }
+  .pnote { padding:8px 12px 0; font-size:11px; line-height:1.5; color:#64748b; }
+  .pnote b { color:#a5b4fc; font-weight:600; }
+  .v { display:inline-block; margin-left:6px; padding:0 6px; border-radius:99px; font-size:9px;
+       letter-spacing:.1em; text-transform:uppercase; }
+  .v.best{background:#052e16;color:#4ade80}.v.better{background:#1e3a5f;color:#7dd3fc}
+  .v.mixed{background:#422006;color:#fbbf24}.v.worse{background:#3f1d1d;color:#fca5a5}
+  .v.broken{background:#450a0a;color:#f87171}
+  .flag { margin:0 12px 12px; padding:8px 10px; border-radius:8px; font-size:11px; line-height:1.5;
+          background:#082f49; color:#7dd3fc; border:1px solid #0c4a6e; }
+  .empty { padding:40px 24px; color:#475569; }
+  .view[data-mesh] { cursor:zoom-in; }
+  .hint { position:absolute; bottom:6px; right:6px; font-size:9px; letter-spacing:.12em;
+          text-transform:uppercase; color:#3f3f5a; }
+  dialog { border:none; background:#0b0a14; padding:0; width:min(96vw,1100px); height:min(92vh,820px);
+           border-radius:16px; color:#cbd5e1; }
+  dialog::backdrop { background:#000c; }
+  .stage { position:relative; width:100%; height:100%; }
+  .stage canvas { width:100%; height:100%; display:block; }
+  .bar { position:absolute; top:10px; left:10px; right:10px; display:flex; gap:8px; align-items:center; }
+  .bar .title { flex:1; font-size:12px; color:#94a3b8; }
+  button { font:inherit; font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+           background:#1e1b3a; color:#a5b4fc; border:none; border-radius:99px; padding:6px 12px; cursor:pointer; }
+  button:hover { background:#2d2856; color:#c7d2fe; }
+  button[aria-pressed="true"] { background:#4c1d95; color:#ede9fe; }
+  .foot { position:absolute; bottom:10px; left:12px; font-size:10px; color:#475569; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Cast inspector</h1>
+  <div class="sub" id="sub">loading…</div>
+</header>
+<div class="grid" id="grid"></div>
+
+<dialog id="viewer">
+  <div class="stage">
+    <div class="bar">
+      <span class="title" id="v-title"></span>
+      <button id="v-wire" aria-pressed="true">Wireframe</button>
+      <button id="v-spin" aria-pressed="true">Spin</button>
+      <button id="v-close">Close</button>
+    </div>
+    <div class="foot" id="v-foot"></div>
+  </div>
+</dialog>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { buildCastTexture, castArtUrl } from './src/lib/castTexture.js';
+
+const grid = document.getElementById('grid');
+const sub = document.getElementById('sub');
+
+/**
+ * Meshes made by hand during a probe, NOT by the pipeline, shown beside the pipeline's own answer.
+ *
+ * Listed explicitly rather than discovered, because the labelling is the point: these are not
+ * something the system produces today, and a panel that let them pass for pipeline output would
+ * misrepresent the state of the build. The ape is here because it is the case that shows the
+ * medium gate judging the wrong thing — refused on its still, and reconstructed cleanly from one
+ * frame of its own turntable.
+ */
+const PROBE_MESHES = {
+  'eth-mainnet:0x28472a58a490c5e09a238847f66a68a47cc76f0f:1': [
+    {
+      file: 'ape-FROM-VIDEO-FRAME.glb',
+      label: 'from a video frame',
+      verdict: 'best',
+      note: 'The still is a card, so the pipeline built a standee. One frame of the token\'s own turntable gave the character in the round.',
+    },
+  ],
+  'eth-mainnet:0xd71b53fe1df51075c5a965956cdc87421c2ffed7:3': [
+    {
+      file: 'dg-jacket-GARMENT-ONLY.glb',
+      label: 'rectangle crop',
+      verdict: 'better',
+      note: 'Head and legs gone. The chrome NECK survives inside the collar — a rectangle cannot follow the edge of a garment.',
+    },
+    {
+      file: 'dg-jacket-MANNEQUIN-KEYED.glb',
+      label: 'hue key + white fill',
+      verdict: 'best',
+      note: 'Chrome removed by colour (the bust is blue, the garment gold). Clean jacket — but compositing the hole onto white made the collar reconstruct as a lid.',
+    },
+    {
+      file: 'dg-jacket-ALPHA-open-collar-but-speckled.glb',
+      label: 'wide key + alpha',
+      verdict: 'mixed',
+      note: 'Background AND neck both to alpha: a GENUINE open collar, which proves alpha is honoured. But the key was wide enough to eat the garment\'s blue sequins.',
+    },
+    {
+      file: 'dg-jacket-ALPHA-neck-only-COLLAPSED.glb',
+      label: 'alpha neck, opaque bg',
+      verdict: 'broken',
+      note: 'Clean key, alpha left intact, background still opaque. Collapses to a flat slab: a transparent hole inside an opaque subject is something the segmenter has no reading of.',
+    },
+    {
+      file: 'dg-jacket-MULTIVIEW-from-film.glb',
+      label: 'multiview from film',
+      verdict: 'worse',
+      note: 'Front + side + back sampled from the token\'s film. Worse than the still alone — the film is 500px against a high-res still, its frames are lit completely differently, and the azimuths were guessed.',
+    },
+  ],
+};
+
+const PROBE_DIR = '/assets/probes/mesh-round9/';
+
+/** The cut-out, drawn exactly as the renderer builds it — same module, no reimplementation. */
+const drawCard = async (host, assetKey) => {
+  try {
+    const built = await buildCastTexture(castArtUrl(assetKey));
+    built.canvas.style.maxWidth = '100%';
+    built.canvas.style.maxHeight = '100%';
+    host.appendChild(built.canvas);
+    host.insertAdjacentHTML('beforeend',
+      `<span class="tag">card ${built.keyed ? '· keyed' : '· not keyed'}</span>`);
+  } catch (error) {
+    host.innerHTML = `<span class="tag">card</span><span style="color:#475569;font-size:11px;padding:12px;text-align:center">${error.message}</span>`;
+  }
+};
+
+/** The mesh, turning, so the back of it is not something you have to take on trust. */
+const drawMesh = async (host, url, piece, label = 'mesh') => {
+  const response = await fetch(url);
+  const type = response.headers.get('content-type') ?? '';
+  if (!type.includes('gltf') && !url.endsWith('.glb')) {
+    const body = await response.json().catch(() => ({}));
+    host.innerHTML = `<span class="tag">${label}</span><span style="color:#475569;font-size:11px;padding:14px;text-align:center">${body.status ?? 'none'}</span>`;
+    return;
+  }
+
+  const buffer = await response.arrayBuffer();
+  const gltf = await new Promise((res, rej) => new GLTFLoader().parse(buffer, '', res, rej));
+
+  const size = 260;
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(size, size);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  host.appendChild(renderer.domElement);
+  host.insertAdjacentHTML('beforeend', `<span class="tag">${label}</span>`);
+
+  const scene = new THREE.Scene();
+  scene.add(new THREE.AmbientLight(0xffffff, 2.2));
+  const key = new THREE.DirectionalLight(0xffffff, 1.3);
+  key.position.set(2, 3, 2);
+  scene.add(key);
+
+  const object = gltf.scene;
+  const box = new THREE.Box3().setFromObject(object);
+  const extent = box.getSize(new THREE.Vector3());
+  const centre = box.getCenter(new THREE.Vector3());
+  object.position.sub(centre);
+  const pivot = new THREE.Group();
+  pivot.add(object);
+  scene.add(pivot);
+
+  // Framed off the BOUNDING SPHERE, not the largest axis. A car is four times longer than it is
+  // tall, and fitting it by its longest edge parks the camera so far back that the thing you are
+  // being asked to judge is a smudge in the middle of the frame.
+  const radius = extent.length() / 2;
+  const fov = 35;
+  const camera = new THREE.PerspectiveCamera(fov, 1, radius / 100, radius * 20);
+  // Never closer than the bounding sphere needs, with a little to spare. 0.62 filled the panel
+  // nicely for a car and guillotined every standing figure at the shins; 0.92 still grazed the
+  // hat. The arithmetic says a height-dominated subject needs ~0.97, so this sits just past it —
+  // a thumbnail with margin beats one that crops, because the cropping is not obvious until you
+  // already trust what you are looking at.
+  const distance = (radius / Math.sin((fov * Math.PI) / 360)) * 1.02;
+  camera.position.set(0, radius * 0.32, distance);
+  camera.lookAt(0, 0, 0);
+
+  // Turning on its own, because the whole question a mesh has to answer is what it looks like
+  // from the angles the source artwork never showed.
+  const spin = () => {
+    pivot.rotation.y += 0.006;
+    renderer.render(scene, camera);
+    requestAnimationFrame(spin);
+  };
+  spin();
+
+  host.insertAdjacentHTML('beforeend', '<span class="hint">click to inspect</span>');
+  host.onclick = () => openViewer(gltf, piece);
+};
+
+/**
+ * The full viewer: drag to orbit, scroll to zoom, and a wireframe toggle.
+ *
+ * The tile thumbnails auto-spin, which is enough to see THAT a mesh has a back but not enough to
+ * judge it. Judging means stopping on the angle you are suspicious of and looking, which is a
+ * thing a fixed animation cannot do.
+ *
+ * WIREFRAME IS NOT A GIMMICK HERE. Texture hides geometry: the Lamborghini's rear reads as
+ * "slightly soft" with its PBR maps on and as "the reconstructor had no evidence here" with them
+ * off. Since what we are deciding is whether a mesh is HONEST rather than whether it is pretty,
+ * being able to strip the paint off is the more useful of the two views.
+ */
+const viewer = document.getElementById('viewer');
+let active = null;
+
+const openViewer = (gltf, piece) => {
+  document.getElementById('v-title').textContent = piece.subject ?? piece.assetKey;
+  document.getElementById('v-foot').textContent =
+    `${piece.assetKey}  ·  ${piece.mesh.bytes ? (piece.mesh.bytes / 1048576).toFixed(2) + ' MB' : ''}`;
+
+  const stage = viewer.querySelector('.stage');
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  stage.insertBefore(renderer.domElement, stage.firstChild);
+
+  const scene = new THREE.Scene();
+  scene.add(new THREE.AmbientLight(0xffffff, 2.0));
+  const key = new THREE.DirectionalLight(0xffffff, 1.4);
+  key.position.set(3, 4, 2);
+  scene.add(key);
+  const fill = new THREE.DirectionalLight(0x8b5cf6, 0.6);
+  fill.position.set(-3, 1, -2);
+  scene.add(fill);
+
+  const object = gltf.scene.clone(true);
+  const box = new THREE.Box3().setFromObject(object);
+  const extent = box.getSize(new THREE.Vector3());
+  object.position.sub(box.getCenter(new THREE.Vector3()));
+  scene.add(object);
+
+  const radius = extent.length() / 2;
+  const camera = new THREE.PerspectiveCamera(35, 1, radius / 200, radius * 40);
+  camera.position.set(radius * 0.9, radius * 0.5, radius * 1.9);
+
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+
+  // Both materials are kept, so toggling is instant and neither is rebuilt on every click.
+  const originals = new Map();
+  object.traverse((node) => {
+    if (node.isMesh) originals.set(node, node.material);
+  });
+  const wireMaterial = new THREE.MeshBasicMaterial({ color: 0xc4b5fd, wireframe: true, transparent: true, opacity: 0.55 });
+
+  let wire = false;
+  let spin = true;
+  const wireButton = document.getElementById('v-wire');
+  const spinButton = document.getElementById('v-spin');
+
+  const setWire = (on) => {
+    wire = on;
+    wireButton.setAttribute('aria-pressed', String(on));
+    for (const [node, material] of originals) node.material = on ? wireMaterial : material;
+  };
+  const setSpin = (on) => {
+    spin = on;
+    spinButton.setAttribute('aria-pressed', String(on));
+  };
+  wireButton.onclick = () => setWire(!wire);
+  spinButton.onclick = () => setSpin(!spin);
+  // Dragging means you want to look at something specific — so it stops spinning on its own
+  // rather than fighting you back to its own idea of a good angle.
+  controls.addEventListener('start', () => setSpin(false));
+
+  let running = true;
+  const tick = () => {
+    if (!running) return;
+    const { clientWidth: w, clientHeight: h } = stage;
+    if (renderer.domElement.width !== w || renderer.domElement.height !== h) {
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+    if (spin) object.rotation.y += 0.005;
+    controls.update();
+    renderer.render(scene, camera);
+    requestAnimationFrame(tick);
+  };
+
+  active = {
+    close: () => {
+      running = false;
+      controls.dispose();
+      renderer.dispose();
+      renderer.domElement.remove();
+    },
+  };
+  // WIREFRAME BY DEFAULT (Adam's call). The storyboard's whole visual language is schematic, and
+  // for judging a shot the geometry is the thing — paint is what you turn ON when you want to
+  // check identity rather than form. Colour is one click away and the toggle remembers nothing,
+  // so every mesh opens the same way.
+  setWire(true);
+  setSpin(true);
+  viewer.showModal();
+  tick();
+};
+
+document.getElementById('v-close').onclick = () => viewer.close();
+viewer.addEventListener('close', () => {
+  active?.close();
+  active = null;
+});
+
+const render = async () => {
+  const { pieces } = await (await fetch('/api/cast/list')).json();
+  const meshed = pieces.filter((p) => p.mesh.status === 'ready').length;
+  const inferred = pieces.filter((p) => p.mesh.inference === 'high').length;
+  const cards = pieces.filter((p) => p.medium === 'trading-card' && p.film?.watched).length;
+  sub.textContent =
+    `${pieces.length} piece(s) · ${meshed} with a mesh · ${inferred} of them mostly INFERRED · ` +
+    `${pieces.length - meshed} not generated yet` +
+    (cards ? `  ·  ${cards} card still(s) with footage of the real subject` : '');
+
+  if (!pieces.length) {
+    grid.innerHTML = '<div class="empty">No pieces at dossier v5 yet. Cast something, or run scripts/backfill-profiles.mjs.</div>';
+    return;
+  }
+
+  for (const piece of pieces) {
+    const profile = piece.profile;
+    const probes = PROBE_MESHES[piece.assetKey] ?? [];
+    // The signal worth acting on: the pipeline said no on the strength of a still, and a film
+    // exists that it never consulted. That is a question rather than a verdict.
+    // Not "was it refused" any more — nothing is. This is "the still may show the wrong subject,
+    // and there is footage that shows the right one".
+    const opportunity = piece.medium === 'trading-card' && piece.film?.watched;
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="head">
+        <div class="subject">${piece.subject ?? '(no subject)'}</div>
+        <div class="key">${piece.assetKey}</div>
+      </div>
+      <div class="views">
+        <div class="view" data-card></div>
+        <div class="view" data-mesh></div>
+      </div>
+      ${probes.length ? `<div class="probes">${probes.map((_, i) => `<div class="view" data-probe="${i}"></div>`).join('')}</div>` : ''}
+      <div class="meta">
+        <span class="pill">${piece.medium ?? '?'}</span>
+        ${profile ? `<span class="pill">${profile.bodyPlan}</span>` : ''}
+        ${profile ? `<span class="pill">${profile.heightM}m × ${profile.widthM}m × ${profile.depthM}m</span>` : '<span class="pill warn">no profile</span>'}
+        ${profile?.headRatio ? `<span class="pill">head ratio ${profile.headRatio}</span>` : ''}
+        ${profile ? `<span class="pill">${profile.heightConfidence}</span>` : ''}
+        <span class="pill ${piece.mesh.status === 'ready' ? 'good' : ''}">
+          mesh: ${piece.mesh.status}${piece.mesh.bytes ? ` · ${(piece.mesh.bytes / 1048576).toFixed(1)}MB` : ''}
+        </span>
+        ${piece.mesh.inference ? `<span class="pill ${piece.mesh.inference === 'low' ? '' : 'warn'}">${piece.mesh.inference} inference</span>` : ''}
+      </div>
+      ${piece.mesh.caveat ? `<div class="reason">${piece.mesh.caveat}</div>` : ''}
+      ${piece.mesh.reason ? `<div class="reason">${piece.mesh.reason}</div>` : ''}
+      ${piece.film?.motionNotes ? `<div class="film"><span class="label">film</span> ${piece.film.motionNotes}</div>` : ''}
+      ${opportunity ? `<div class="flag">The still is a card, so a mesh from it models the CARD — but this piece has footage of the subject itself.${probes.length ? ' The strip below is what that footage makes possible.' : ''}</div>` : ''}
+      ${probes.map((pr) => `<div class="pnote"><b>${pr.label}</b><span class="v ${pr.verdict}">${pr.verdict}</span><br>${pr.note}</div>`).join('')}
+      ${probes.length ? '<div style="height:12px"></div>' : ''}
+    `;
+    grid.appendChild(card);
+    drawCard(card.querySelector('[data-card]'), piece.assetKey);
+    drawMesh(card.querySelector('[data-mesh]'), `/api/cast/mesh?asset=${encodeURIComponent(piece.assetKey)}`, piece).catch((error) => {
+      card.querySelector('[data-mesh]').innerHTML = `<span class="tag">mesh</span><span style="color:#475569;font-size:11px;padding:12px">${error.message}</span>`;
+    });
+    probes.forEach((pr, i) => {
+      const host = card.querySelector(`[data-probe="${i}"]`);
+      drawMesh(host, PROBE_DIR + pr.file, piece, pr.label).catch((error) => {
+        host.innerHTML = `<span class="tag">${pr.label}</span><span style="color:#475569;font-size:10px;padding:10px">${error.message}</span>`;
+      });
+    });
+  }
+};
+
+render();
+</script>
+</body>
+</html>

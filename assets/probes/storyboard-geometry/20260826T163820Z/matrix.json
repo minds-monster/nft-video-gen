@@ -1,0 +1,84 @@
+{
+  "runId": "20260826T163820Z",
+  "gitHead": "0f521e2f2f4b5373fc884131fc3ad8c414080d7c",
+  "startedAt": "2026-08-26T16:38:20.997Z",
+  "cells": {
+    "scene-film": {
+      "label": "world-space scene graph, whole film in one call, sol @ high reasoning",
+      "kind": "scene",
+      "scope": "film",
+      "transport": "responses",
+      "model": "gpt-5.6-sol",
+      "effort": "high"
+    },
+    "scene-chain": {
+      "label": "world-space scene graph, one beat at a time (today's context discipline), sol @ high",
+      "kind": "scene",
+      "scope": "chain",
+      "transport": "responses",
+      "model": "gpt-5.6-sol",
+      "effort": "high"
+    },
+    "c0": {
+      "label": "CONTROL: today's exact production request, verbatim",
+      "kind": "legacy",
+      "scope": "chain",
+      "transport": "chat",
+      "model": "gpt-5.6-terra",
+      "temperature": 0.3,
+      "maxCompletionTokens": 1500
+    },
+    "c1": {
+      "label": "CONTROL: today's schema, whole film in one call (the scope ablation)",
+      "kind": "legacy",
+      "scope": "film",
+      "transport": "chat",
+      "model": "gpt-5.6-terra",
+      "temperature": 0.3,
+      "maxCompletionTokens": 8000
+    }
+  },
+  "fixtures": [
+    {
+      "id": "captured",
+      "sha": "2b3a0fa3b229",
+      "beats": 4
+    },
+    {
+      "id": "grid-launch",
+      "sha": "b2d6f4830c1e",
+      "beats": 6
+    },
+    {
+      "id": "two-hander-axis",
+      "sha": "a1421fc3a811",
+      "beats": 5
+    },
+    {
+      "id": "cut-to-black",
+      "sha": "0f9426ef9a65",
+      "beats": 5
+    },
+    {
+      "id": "scale-extremes",
+      "sha": "933d72d0e9fb",
+      "beats": 5
+    }
+  ],
+  "repeats": 3,
+  "prices": {
+    "gpt-5.6-sol": {
+      "in": 4,
+      "out": 20
+    },
+    "gpt-5.6-terra": {
+      "in": 2,
+      "out": 12
+    },
+    "gpt-5.6-luna": {
+      "in": 0.2,
+      "out": 1.2
+    }
+  },
+  "maxSpend": 250
+}

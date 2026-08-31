@@ -1,13 +1,28 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>nft-video-gen</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <!-- The old favicon was a lightning bolt on an off-brand purple, from before the
+       octopus mark existed. Cut from the same artwork as the header lockup, so the tab
+       and the header now show the same creature. Raster because the source art is. -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/brand/mark-32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/brand/mark-180.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>minds.MONSTER — Make movies with your mind</title>
+  <meta name="description"
+    content="Generate cinematic video from real brand IP. Every frame automatically attributed, from the creators that made it." />
+  <meta name="theme-color" content="#09040f" />
+
+  <!-- The hero poster is the LCP element by design: the background film loads on idle,
+       after first paint, and only on a desktop viewport with a decent connection (see
+       src/components/HeroBackdrop.jsx). So the poster is what needs to arrive fast. -->
+  <link rel="preload" as="image" href="/hero/hero.v3.poster.webp" fetchpriority="high" />
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
 </html>

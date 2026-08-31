@@ -1,0 +1,344 @@
+{
+	"$schema": "./node_modules/wrangler/config-schema.json",
+	"name": "nft-video-gen",
+	"main": "worker/index.js",
+	"compatibility_date": "2026-08-01",
+	"routes": [
+		{
+			"pattern": "minds.monster",
+			"custom_domain": true
+		},
+		{
+			"pattern": "www.minds.monster",
+			"custom_domain": true
+		}
+	],
+	// One deploy serves both halves: `dist/` (the Vite build) as static assets, and the
+	// Worker for /api/*. `run_worker_first` is what keeps them from fighting — without it
+	// the asset router answers /api/* with the SPA's index.html and the fetch handler is
+	// never reached.
+	//
+	// `single-page-application` matters for the hash routes in useStudioSelection.js: a
+	// deep link must return index.html rather than a 404.
+	"assets": {
+		"directory": "./dist",
+		"not_found_handling": "single-page-application",
+		"run_worker_first": [
+			"/api/*",
+			// `wrangler dev --test-scheduled` fires the cron via GET /__scheduled. Without this
+			// the asset router answers it with index.html and the cron never runs locally.
+			"/__scheduled",
+			"/cdn-cgi/*"
+		]
+	},
+	// Workers have no background timer, and the support watcher has to NOTICE a Mind's
+	// [auto-replied] marker to email the visitor. Two schedules, matched by string in
+	// worker/index.js `scheduled` — rename one here and the other side stops running:
+	//   */5  worker/support-sync.js — re-derive open tickets, relay unrelayed replies
+	//   03:00 worker/analytics.js rollupDay for yesterday + the owner Mind snapshot
+	"triggers": {
+		"crons": [
+			"*/5 * * * *",
+			"0 3 * * *"
+		]
+	},
+	// Site analytics. Analytics Engine rather than KV counters, because a KV counter under
+	// real traffic loses most of its increments (60s edge-cached reads, ~1 write/s per key).
+	// writeDataPoint is not a subrequest and never contends; the nightly cron rolls each day
+	// into one KV key for long-term retention. See worker/analytics.js.
+	"analytics_engine_datasets": [
+		{
+			"binding": "ANALYTICS",
+			"dataset": "minds_monster_events"
+		}
+	],
+	// The Casting Director's dossier cache. A dossier describes artwork that can never change, so
+	// entries are written without a TTL — this is a permanent store keyed by
+	// assetKey(chain, address, tokenId), not an expiring cache.
+	//
+	// No `id` on purpose: Wrangler provisions the namespace on first deploy and writes the
+	// id back here. `wrangler dev` simulates it locally under .wrangler/state regardless.
+	//
+	// MIND_CONNECTIONS holds two unrelated things, both worker/mind-chat.js and
+	// worker/assistant.js — never pending handshakes, which are reconstructed from
+	// conversation history instead (see the header comment in worker/connect.js):
+	//   - `briefed:<mindId>` — permanent, no TTL, "has this Mind ever gotten the
+	//     Producer briefing" flag.
+	//   - `assistant:<threadId>` — a visitor's assistant transcript, 24h expirationTtl,
+	//     scoped to that one thread only (see worker/assistant.js's privacy note).
+	// No session data lives here either way — sessions are self-verifying HMAC tokens,
+	// see worker/session.js.
+	//
+	// Support and the owner area (worker/support.js has the full key inventory):
+	//   - `support:ticket|derived|open|index|visitor|email|emailed:*` — tickets, no TTL.
+	//   - `rl:<scope>:<id>:<window>` — public-route rate limits, worker/rate-limit.js.
+	//   - `metrics:rollup:<day>` — one analytics record per day, 400-day TTL.
+	//   - `owner:mind-snapshot` — the support Mind's cognition/skills, refreshed nightly.
+	//   - `briefed:support:<mindId>` — the support briefing's once-ever flag.
+	"kv_namespaces": [
+		{
+			"binding": "DOSSIERS"
+		},
+		{
+			"binding": "MIND_CONNECTIONS"
+		}
+	],
+	// Storyboard frame images (gpt-image-1 output, worker/storyboarder.js). R2 rather than
+	// KV: these are binary blobs, not JSON, and KV's per-value size/read-speed profile isn't
+	// built for that — the storyboard's own metadata (prompt, cost, regen history) stays in
+	// MIND_CONNECTIONS as JSON, keyed `storyboard:<mindId>`, alongside the R2 object key.
+	"r2_buckets": [
+		{
+			"binding": "STORYBOARD_IMAGES",
+			"bucket_name": "nft-video-gen-storyboards"
+		},
+		// The Director's output: MiniMax clips, and the frames sampled out of them. A separate
+		// bucket rather than a prefix under STORYBOARD_IMAGES, because a binding name is read by
+		// people as well as by code and "storyboard images" holding finished films would be a lie.
+		//
+		// MiniMax result URLs are SHORT-LIVED, so the bytes are mirrored here the moment a task
+		// settles rather than linked. Keys are director/<mindId>/<filmId>/<takeId>/video.mp4 —
+		// scoped by mind, so the same prefix check that guards a storyboard image guards these.
+		//
+		// Renamed from the `nft_video_gen_renders` wrangler generates on `r2 bucket create`:
+		// every other binding in this file is SCREAMING_CASE and reads as a constant at the call
+		// site, which is what `env.RENDERS` should look like beside `env.STORYBOARD_IMAGES`.
+		{
+			"binding": "RENDERS",
+			"bucket_name": "nft-video-gen-renders"
+		}
+	],
+	"observability": {
+		"enabled": true
+	},
+	// Pin the local dev port so Vite's /api proxy has a stable target. 8787 is Wrangler's
+	// default and is often still held by a stale workerd from a previous session; picking an
+	// explicit non-default port avoids the silent fallback that breaks the proxy.
+	"dev": {
+		"port": 8789
+	},
+	// Storyboard generation is long-running (3-8 min), so it cannot live under ctx.waitUntil
+	// on an HTTP request. A Queue consumer gives it up to 15 minutes and survives client
+	// disconnects. The same Worker is both producer and consumer.
+	"queues": {
+		"producers": [
+			{
+				"queue": "storyboard-jobs",
+				"binding": "STORYBOARD_JOBS"
+			},
+			{
+				"queue": "director-jobs",
+				"binding": "DIRECTOR_JOBS"
+			}
+		],
+		"consumers": [
+			{
+				"queue": "storyboard-jobs",
+				"max_batch_size": 1,
+				"max_batch_timeout": 1,
+				"max_retries": 1
+			},
+			// The Director is a STEP MACHINE, and this retry budget is for genuine failures only —
+			// never for waiting.
+			//
+			// A 2K/15s render was measured at 941-1123 SECONDS, and a Queue invocation gets 15
+			// minutes, so a single render can outlive a single invocation. Each message therefore
+			// performs ONE step and enqueues the next with an explicit `delaySeconds`; a poll is a
+			// fresh message, never a retry. Spending the retry budget on waiting would leave
+			// nothing for the transient 5xx it exists to absorb.
+			//
+			// ⚠️ 3 here is matched to the condition in worker/director.js. The storyboard consumer
+			// above sets 1 while its own handler branches on `attempts <= 2`, so its second retry
+			// can never fire — a live inconsistency, left alone rather than changed blind, but
+			// deliberately not copied here.
+			{
+				"queue": "director-jobs",
+				"max_batch_size": 1,
+				"max_batch_timeout": 1,
+				"max_retries": 3
+			}
+		]
+	},
+	"vars": {
+		// Overridable per-environment so the whole stack can be pointed at OpenRouter (which
+		// serves the same weights) when NVIDIA's evaluation-only trial tier stops being
+		// appropriate. See the free-tier note in the plan.
+		"NVIDIA_BASE_URL": "https://integrate.api.nvidia.com/v1",
+		"CASTING_MODEL": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+		"SCREENWRITER_MODEL": "nvidia/nemotron-3-super-120b-a12b",
+		// Intended to be DeepSeek — the user's own choice — but every DeepSeek model
+		// actually reachable from the account's main NVIDIA key was unusable when tried
+		// directly: deepseek-v3.1-terminus isn't in the catalog at all, deepseek-coder-6.7b
+		// 404s as "not found for account", and deepseek-v4-flash-0731 hung with zero
+		// response even after 170s using its own dedicated key and its own sample request
+		// shape. minimax-m3 is what the user pointed at next, on yet another dedicated key
+		// (ASSISTANT_API_KEY, in .dev.vars / `wrangler secret put`, deliberately separate
+		// from NVIDIA_API_KEY — see worker/nvidia.js's `apiKey` override) — confirmed
+		// empirically to respond in a few seconds and to discriminate correctly on a
+		// forced tool_choice call. Revisit if a DeepSeek id is ever confirmed working.
+		"ASSISTANT_MODEL": "minimaxai/minimax-m3",
+		// The storyboarder's two tiers. Both are vars rather than constants so a tier can be
+		// re-pointed without a code change — which is exactly what round 7 needed when NVIDIA's
+		// own hosting of the free weights turned out to be the problem rather than the weights.
+		//
+		// PAID: gpt-5.6-sol at high reasoning effort, via /v1/responses. Round 7 measured 76% of
+		// its output tokens going to reasoning, so this task is reasoning-bound and the effort
+		// setting is load-bearing, not a knob.
+		//
+		// FREE: the same Nemotron weights NVIDIA hosts, served from OpenRouter — ~12x faster on
+		// identical weights, and not restricted to evaluation use. See worker/openrouter.js.
+		"STORYBOARDER_MODEL": "gpt-5.6-sol",
+		"STORYBOARDER_EFFORT": "high",
+		"OPENROUTER_BASE_URL": "https://openrouter.ai/api/v1",
+		"FREE_STORYBOARD_MODEL": "nvidia/nemotron-3-ultra-550b-a55b:free",
+		// How hard the free model is allowed to think, using OpenRouter's OWN unified `reasoning`
+		// parameter. This is NOT the same lever as `enable_thinking`, which was measured to do
+		// nothing at all: a three-beat film with `chat_template_kwargs: { enable_thinking: false }`
+		// still spent 3,588 tokens reasoning (probe 20260826T090334Z).
+		//
+		// It matters because reasoning is 57-76% of every token this tier generates, on a route
+		// that runs at ~40 tok/s — it is the largest single component of the wait. Accepted values
+		// are a JSON object: {"enabled":false}, {"effort":"low"}, {"max_tokens":1500}. Empty means
+		// send nothing and let the model default.
+		//
+		// A var rather than a constant for the same reason FREE_STORYBOARD_MODEL is one: the depth
+		// that is worth it depends on the model AND its host, and both have changed under us once
+		// already. It stays EMPTY until the probe scores a suppressed cell against validateScene —
+		// round 7's rule is that if a fix requires dropping a gate, the fix is wrong, and cheaper
+		// reasoning that fails the floor is exactly that.
+		"FREE_STORYBOARD_REASONING": "",
+		// "1" runs the plan-then-parallel-beats path in worker/film-plan.js; "0" reverts to the
+		// single whole-film call.
+		//
+		// THE VARIETY GATE PASSED (run 20260826T180432Z, 20 films, 4 cells, all on OpenRouter so
+		// the origin matches production). Against the same model and origin running a whole film
+		// in one call: 4.00 mean distinct shot bands vs 3.67, and framing self-agreement of 1.00
+		// vs 0.75 — both clear of round 7's c1 benchmark of 3.1. The clearest single demonstration
+		// is Super on cut-to-black, which collapsed to WS/MWS/MWS/MWS whole-film and returned four
+		// distinct bands under the split. Deciding shot sizes in a separate pass is what removes
+		// the collapse.
+		//
+		// IT IS STILL A TRADE, NOT A WIN, and that is why the feature is opt-in and marked Beta in
+		// the UI rather than being the default path. The split is 1.8-3x slower (mean 1030s vs
+		// 348s), makes ~5.5 calls per film instead of 1, and burns ~3x the tokens. Its mean latency
+		// EXCEEDS the 12-minute FILM_BUDGET_MS guard in worker/storyboarder.js, so some films the
+		// probe completed would be truncated in production. Those costs now land only on visitors
+		// who deliberately chose the path.
+		//
+		// Quota: a split film is one request per beat plus one for the plan. Immaterial at the
+		// 1000/day allowance this account is now on; it would be ~12 films a day across ALL
+		// visitors at the 50/day free-tier cap. Check the tier before assuming headroom.
+		"FREE_STORYBOARD_SPLIT": "1",
+		// How many beats the split may have in flight at once. NOT a tuning knob for our own
+		// throughput — a property of the provider, and measured rather than chosen. On 2026-08-26
+		// this route SHED a beat with `502 Service temporarily overloaded` at concurrency 3 AND at
+		// concurrency 2 (the latter through three attempts), while single film-sized calls
+		// succeeded. It serves one at a time and refuses the rest, so 1 is the honest default:
+		// raising it today buys refused beats, not speed.
+		//
+		// The split is still worth it at 1 — the shot plan lands in ~25s with real per-beat facts,
+		// the timeline fills in beat by beat, and one bad response costs one beat instead of the
+		// whole film. Raise this when the route stops shedding; re-measure first, do not assume.
+		"FREE_STORYBOARD_BEAT_CONCURRENCY": "1",
+		// Support. The Mind that receives tickets (Adam's, by his own design — see
+		// worker/support-briefing.js); a var so the role can move without a code change. The
+		// sender must be on a domain Resend has verified (SPF/DKIM DNS on minds.monster), and
+		// OWNER_NOTIFY_EMAIL is where a visitor's "speak to a human" goes. SITE_ORIGIN builds
+		// the signed ticket links in emails the cron sends, where there is no request URL.
+		"SUPPORT_MIND_ID": "240b453e-f36b-1410-8466-00039ce7df11",
+		"SUPPORT_FROM": "minds.monster Support <support@minds.monster>",
+		"OWNER_NOTIFY_EMAIL": "adam@munerate.com",
+		"SITE_ORIGIN": "https://minds.monster",
+		"ANALYTICS_DATASET": "minds_monster_events"
+	},
+	"env": {
+		"staging": {
+			"name": "nft-video-gen-staging",
+			"routes": [
+				{
+					"pattern": "staging.minds.monster",
+					"custom_domain": true
+				}
+			],
+			"assets": {
+				"directory": "./dist",
+				"not_found_handling": "single-page-application",
+				"run_worker_first": [
+					"/api/*",
+					"/__scheduled",
+					"/cdn-cgi/*"
+				]
+			},
+			"analytics_engine_datasets": [
+				{
+					"binding": "ANALYTICS",
+					"dataset": "minds_monster_events_staging"
+				}
+			],
+			"kv_namespaces": [
+				{
+					"binding": "DOSSIERS",
+					"id": "3021893781214008bd7711b42c8f6600"
+				},
+				{
+					"binding": "MIND_CONNECTIONS",
+					"id": "04acd8fdf2304ab1a1ddc333ed441a92"
+				}
+			],
+			"r2_buckets": [
+				{
+					"binding": "STORYBOARD_IMAGES",
+					"bucket_name": "nft-video-gen-storyboards-staging"
+				},
+				{
+					"binding": "RENDERS",
+					"bucket_name": "nft-video-gen-renders-staging"
+				}
+			],
+			"queues": {
+				"producers": [
+					{
+						"queue": "storyboard-jobs-staging",
+						"binding": "STORYBOARD_JOBS"
+					},
+					{
+						"queue": "director-jobs-staging",
+						"binding": "DIRECTOR_JOBS"
+					}
+				],
+				"consumers": [
+					{
+						"queue": "storyboard-jobs-staging",
+						"max_batch_size": 1,
+						"max_batch_timeout": 1,
+						"max_retries": 1
+					},
+					{
+						"queue": "director-jobs-staging",
+						"max_batch_size": 1,
+						"max_batch_timeout": 1,
+						"max_retries": 3
+					}
+				]
+			},
+			"vars": {
+				"NVIDIA_BASE_URL": "https://integrate.api.nvidia.com/v1",
+				"CASTING_MODEL": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+				"SCREENWRITER_MODEL": "nvidia/nemotron-3-super-120b-a12b",
+				"ASSISTANT_MODEL": "minimaxai/minimax-m3",
+				"STORYBOARDER_MODEL": "gpt-5.6-sol",
+				"STORYBOARDER_EFFORT": "high",
+				"OPENROUTER_BASE_URL": "https://openrouter.ai/api/v1",
+				"FREE_STORYBOARD_MODEL": "nvidia/nemotron-3-ultra-550b-a55b:free",
+				"FREE_STORYBOARD_REASONING": "",
+				"FREE_STORYBOARD_SPLIT": "1",
+				"FREE_STORYBOARD_BEAT_CONCURRENCY": "1",
+				"SUPPORT_MIND_ID": "240b453e-f36b-1410-8466-00039ce7df11",
+				"SUPPORT_FROM": "minds.monster Support <support@minds.monster>",
+				"OWNER_NOTIFY_EMAIL": "adam@munerate.com",
+				"SITE_ORIGIN": "https://staging.minds.monster",
+				"ANALYTICS_DATASET": "minds_monster_events_staging"
+			}
+		}
+	}
+}

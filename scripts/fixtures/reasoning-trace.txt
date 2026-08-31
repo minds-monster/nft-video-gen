@@ -1,0 +1,128 @@
+Let me plan this film carefully. I need to create 3 beats with proper camera positions, subject positions, and continuity.
+
+First, let me understand the world and coordinate system:
+- Endless white salt flat, ground plane y=0
+- Origin is ground point beneath principal subject in beat 1
+- Audience sits on +Z side looking toward -Z
+- Camera should be at positive Z looking toward -Z (ordinary setup)
+- Larger x = further right in frame when camera looks toward -Z
+
+Beat 1: Wide on salt flat. Ape is distant speck walking toward camera.
+- Principal subject: <Subject 1> (ape)
+- Shot size: EWS or WS (ape is distant speck)
+- Ape walking toward camera (toward +Z direction since camera is at +Z looking toward -Z)
+- So ape starts at negative Z and moves toward origin/positive Z
+
+Beat 2: Close on ape as he stops and squints into light.
+- Principal subject: <Subject 1>
+- Shot size: CU or MCU (close on ape)
+- Ape stops, squints
+- Camera much closer
+
+Beat 3: Ape reaches battered sedan and climbs in behind wheel.
+- Principal subject: <Subject 1> (or maybe <Subject 2> for the car reveal)
+- Shot size: MS or MCU (ape climbing into car)
+- Car (<Subject 2>) appears - but wait, rule 5 says never place a subject in a beat that the beat's own text doesn't put there. Beat 3 text says "The ape reaches a battered sedan and climbs in behind the wheel" - so car appears in beat 3.
+- Ape gets into car (containment: ape inside car)
+
+Let me plan positions:
+
+Beat 1: 
+- Origin is beneath ape in beat 1. But ape is "distant speck walking toward camera". If origin is beneath ape at beat 1 start, then ape starts at (0, 0, 0) ground position. But then "walking toward camera" - camera is at +Z looking toward -Z, so toward camera means moving in +Z direction.
+- Wait, if origin is beneath principal subject in beat 1, and ape is the principal subject, then at beat 1 start, ape is at (0, 0, 0). But the text says "ape is a distant speck" - so camera must be far away.
+- Let me place camera at (0, 1.6, 100) looking at (0, 1.0, 0) - very far for EWS.
+- Ape at (0, 0, 0) start, walking toward camera (+Z direction), so endZ positive.
+- Ape height ~1.8m (weathered ape, roughly human height)
+- Let's say ape walks 10m toward camera during beat: endZ = 10.
+
+Beat 2:
+- Close on ape. Ape has been walking toward camera, so now at z=10 (from beat 1 end).
+- But wait - continuity: ape's world position persists. At end of beat 1, ape at z=10. Beat 2 starts with ape at z=10.
+- Camera moves close for CU. Let's say camera at (0, 1.6, 3) looking at ape at (0, 1.0, 10)? No, that's 7m distance.
+- For CU on 1.8m figure: hFrac = (1.8 * focal) / (distance * 20.25). Want hFrac 3.5-7.
+- At 85mm, distance = (1.8 * 85) / (4 * 20.25) ≈ 153 / 81 ≈ 1.9m for CU.
+- So camera at z = 10 + 1.9 = 11.9, looking at ape at z=10.
+- Ape stops and squints - so endZ = 10 (stays at z=10).
+
+Beat 3:
+- Ape reaches sedan and climbs in. Car must be at ape's position or nearby.
+- At end of beat 2, ape at z=10. Car appears there.
+- Car: battered sand-coloured sedan. Height ~1.3m, width ~2.0m, length ~4.5m.
+- Ape climbs into car - so ape goes from standing beside car to inside car.
+- Container: ape inside car (containerId = "<Subject 2>")
+- Ground offset for ape when in car: car seat height ~0.5m? So groundOffsetM = 0.5.
+- Camera: maybe MS or MCU on ape climbing in. Or could be wider to show car.
+- Let's do MS on ape (waist up) as he climbs in. Distance ~3-4m at 50mm.
+- Camera at (2, 1.6, 13) looking at (0, 1.0, 10) - slightly to side to see car and ape.
+
+Wait, I need to think about the 180-degree line. Principal subjects are ape and car. Line runs through them. In beat 1-2, only ape. Beat 3 introduces car. Camera should stay on one side.
+
+Let me also think about x positions. In beat 1, ape at x=0. In beat 2, ape at x=0. In beat 3, car at x=0, ape at x=0 (climbing in from driver side). Driver side is typically left side of car (in countries driving on right). But car orientation matters.
+
+Car yaw: if car is parked facing some direction. Let's say car faces +X direction (yaw=90) or -X (yaw=270/-90) or +Z (yaw=0) or -Z (yaw=180).
+
+If car faces +Z (yaw=0), driver door on left (negative x side). Ape approaches from front? Or side?
+
+Simpler: car at origin (0,0,10) facing +Z (yaw=0). Driver door on left (negative x). Ape at x=-1.5 (left of car) climbing in.
+
+But in beat 2, ape at x=0, z=10. In beat 3, ape moves to x=-1.5, z=10 to enter car. That's a move justified by beat text ("reaches a battered sedan and climbs in").
+
+Car appears at beat 3 - justified by beat text.
+
+Let me calculate shot sizes precisely.
+
+Beat 1: EWS on ape.
+- Ape at (0,0,0), height 1.8m.
+- Camera at (0, 1.6, 80) looking at (0, 1.0, 0). Distance along optical axis = 80m (camera z - lookAt z = 80 - 0 = 80).
+- Focal: 24mm (wide).
+- hFrac = (1.8 * 24) / (80 * 20.25) = 43.2 / 1620 = 0.0267 -> EWS (0-0.25). Good.
+
+Beat 2: CU on ape.
+- Ape at (0,0,10), height 1.8m.
+- Camera at (0, 1.6, 12) looking at (0, 1.0, 10). Distance = 2m.
+- Focal: 85mm.
+- hFrac = (1.8 * 85) / (2 * 20.25) = 153 / 40.5 = 3.78 -> CU (3.5-7). Good.
+
+Beat 3: MS on ape climbing into car.
+- Ape at start: (0,0,10) standing beside car. End: inside car at (-1.5, 0.5, 10) roughly.
+- Principal subject: ape. Shot size MS (waist up, hFrac 1.4-2.2).
+- Camera at (-2, 1.6, 13) looking at (-1, 1.0, 10). Distance = sqrt((13-10)^2 + (-2 - -1)^2) = sqrt(9+1) = 3.16m. But optical axis distance is along camera forward vector.
+- Camera position (-2, 1.6, 13), lookAt (-1, 1.0, 10). Vector = (1, -0.6, -3). Distance = sqrt(1+0.36+9) = sqrt(10.36) = 3.22m.
+- Focal: 50mm.
+- hFrac = (1.8 * 50) / (3.22 * 20.25) = 90 / 65.2 = 1.38 -> close to MS (1.4-2.2). Slightly under. Let's use 55mm or move closer.
+- Camera at (-1.5, 1.6, 12.5) looking at (-1, 1.0, 10). Vector = (0.5, -0.6, -2.5). Dist = sqrt(0.25+0.36+6.25) = sqrt(6.86) = 2.62m.
+- hFrac = (1.8 * 50) / (2.62 * 20.25) = 90 / 53.05 = 1.70 -> MS. Good.
+
+Now screen positions:
+Beat 1: Camera at (0,1.6,80) looking at (0,1,0). Ape at (0,0,0). x=0 -> center.
+Beat 2: Camera at (0,1.6,12) looking at (0,1,10). Ape at (0,0,10). x=0 -> center.
+Beat 3: Camera at (-1.5,1.6,12.5) looking at (-1,1,10). Ape start at (0,0,10). Relative to camera: ape x=0, camera x=-1.5. LookAt x=-1. Camera forward vector approx (0.5, -0.6, -2.5). Right vector is cross(forward, up). Up is (0,1,0). Right = forward x up = (-2.5, 0, -0.5) normalized. Ape relative to camera: (1.5, -1.6, -2.5). Dot with right: 1.5*(-2.5) + (-2.5)*(-0.5) = -3.75 + 1.25 = -2.5. Negative means left of center. So ape starts left of center.
+Car at (0,0,10) center? Car width 2m, so extends x=-1 to x=1. Camera at x=-1.5. Car center at x=0. Relative x = 1.5. Dot with right: 1.5*(-2.5) = -3.75 -> left. Hmm.
+
+Actually, let me simplify. For screenPosition, I just need to estimate based on x relative to camera and lookAt.
+
+In beat 3, camera at x=-1.5, lookAt x=-1. So camera looking toward slightly positive x. Ape at x=0 (start) and x=-1.5 (end, inside car). Car at x=0.
+
+Since camera is at x=-1.5 looking at x=-1 (so looking toward +x direction), objects with larger x appear more right. Ape at x=0 > car at x=0? Same. But ape moves to x=-1.5 (same as camera x).
+
+Let me just assign reasonable screen positions.
+
+Beat 1: ape center (distant speck in middle)
+Beat 2: ape center (close up)
+Beat 3: ape center-left to center, car center-right? Or both center.
+
+Actually, for beat 3, if camera is offset to left (x=-1.5) looking at car center (x=0), then car is center-right, ape starts center-right then moves to center as he enters.
+
+Let me just write the spec now.
+
+Changes between beats:
+Beat 1 to 2: ape moved from z=0 to z=10 (walked toward camera). Justified by beat 1 text "walking toward camera".
+Beat 2 to 3: ape moved from x=0 to x=-1.5 (moved to car door), and groundOffsetM from 0 to 0.5 (climbed in). Car appeared at (0,0,10). Justified by beat 3 text.
+
+Containment: beat 3, ape inside car (containerId="<Subject 2>"), groundOffsetM=0.5.
+
+Scene scale: salt flat endless, but staged area ~100m depth for beat 1, then intimate for beats 2-3.
+
+Aspect: 16:9 = 1.7778.
+
+Let me write the emit_film call.

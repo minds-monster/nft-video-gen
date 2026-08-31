@@ -1,0 +1,412 @@
+{
+  "cell": "split-or-super",
+  "fixture": "scale-extremes",
+  "fixtureSha": "933d72d0e9fb",
+  "repeat": 0,
+  "film": {
+    "units": "metres",
+    "aspect": 1.7777777777777777,
+    "sceneScaleNote": "The salt flat spans at least 500 m in every direction; the figure’s distance from camera varies from extreme far distance to close‑up.",
+    "beats": [
+      {
+        "beatIndex": 0,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 50
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1.6,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 50
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1.6,
+              "z": 0
+            }
+          },
+          "focalStartMm": 24,
+          "focalEndMm": 24,
+          "rollDeg": 0,
+          "motion": "Static Shot",
+          "amplitude": "small",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "Standing still, facing the camera",
+            "screenPosition": "center",
+            "depth": "background"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "EWS",
+        "changes": [],
+        "containmentNotes": "<Subject 1> stands on the salt flat, not inside any container.",
+        "proseNote": "A static shot captures the tiny pink‑haired figure as a speck on the endless white salt flat, the camera positioned far back on the axis with a wide lens, holding steady as the figure stands motionless under the hard noon light."
+      },
+      {
+        "beatIndex": 1,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 6.222
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 10.222
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 0,
+              "z": 4
+            }
+          },
+          "focalStartMm": 35,
+          "focalEndMm": 35,
+          "rollDeg": 0,
+          "motion": "Tracking Shot",
+          "amplitude": "small",
+          "speed": "medium",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 4,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "walks toward the camera",
+            "screenPosition": "center",
+            "depth": "midground"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "WS",
+        "changes": [
+          {
+            "subject": "<Subject 1>",
+            "what": "position",
+            "justifiedByBeatText": true
+          }
+        ],
+        "containmentNotes": "No containment; subject stands on ground.",
+        "proseNote": "Live-action, cinematic, a medium-wide shot frames the pink‑haired figure in orange translucent glasses, a green patent leather moto jacket over a red shirt, black cotton‑wool slacks with buckles, and black leather combat boots as she walks toward the camera across the endless white salt flat under a pale, hard‑noon sky. The camera executes a tracking shot, moving backward at the same pace as the figure’s advance so that she remains centered, her full body visible from head to toe with modest headroom. The only diegetic sound is the soft crunch of salt crystals beneath her boots."
+      },
+      {
+        "beatIndex": 2,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 1.65,
+              "z": 1.5
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1.65,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 1.65,
+              "z": 1.5
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1.65,
+              "z": 0
+            }
+          },
+          "focalStartMm": 84.375,
+          "focalEndMm": 135,
+          "rollDeg": 0,
+          "motion": "Zoom In",
+          "amplitude": "large",
+          "speed": "medium",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "She opens her eye, revealing the iris and flecks.",
+            "screenPosition": "center",
+            "depth": "foreground"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "ECU",
+        "changes": [],
+        "containmentNotes": "Subject stands on the salt flat; no containment.",
+        "proseNote": "The camera stays fixed at a distance of 1.5 meters from the figure’s eye, level with her gaze, and zooms in from 84mm to 135mm with a large amplitude at medium speed, tightening the frame from a chest‑up view of her face to an extreme close‑up where her iris and its flecks fill the entire view."
+      },
+      {
+        "beatIndex": 3,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 6.22
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1.6,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 6.22
+            },
+            "lookAt": {
+              "x": -1,
+              "y": 1.6,
+              "z": 0
+            }
+          },
+          "focalStartMm": 35,
+          "focalEndMm": 35,
+          "rollDeg": 0,
+          "motion": "Pan Left",
+          "amplitude": "medium",
+          "speed": "medium",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 180,
+            "containerId": null,
+            "action": "stands and looks back the way she came",
+            "screenPosition": "center",
+            "depth": "midground"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "WS",
+        "changes": [],
+        "containmentNotes": "",
+        "proseNote": "The camera pans left with a medium amplitude at medium speed, keeping the pink‑haired figure in a wide shot as she stands on the endless white salt flat and looks back the way she came under the hard noon light."
+      },
+      {
+        "beatIndex": 4,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 3.666
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 0.825
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          },
+          "focalStartMm": 100,
+          "focalEndMm": 100,
+          "rollDeg": 0,
+          "motion": "Push In",
+          "amplitude": "medium",
+          "speed": "medium",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "She speaks the single word.",
+            "screenPosition": "center",
+            "depth": "foreground"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "CU",
+        "changes": [],
+        "containmentNotes": "",
+        "proseNote": "The camera pushes in slowly from a medium close‑up to a tight close‑up on the pink‑haired figure, keeping her centered as she utters the single word. The lens holds at 100 mm while the camera advances along its line of sight, reducing the distance from about four metres to under two metres, so her mouth fills the frame and the salt flat recedes into a blurred white backdrop."
+      }
+    ]
+  },
+  "calls": [
+    {
+      "usage": {
+        "promptTokens": 1527,
+        "completionTokens": 1047,
+        "reasoningTokens": 692
+      },
+      "latencyMs": 11266,
+      "attempts": 1,
+      "costUsd": 0,
+      "rateLimitHits": 0,
+      "usedToolCall": true,
+      "request": {
+        "model": "nvidia/nemotron-3-super-120b-a12b:free"
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 5017,
+        "completionTokens": 2694,
+        "reasoningTokens": 1828
+      },
+      "latencyMs": 88191,
+      "attempts": 1,
+      "costUsd": 0,
+      "rateLimitHits": 0,
+      "usedToolCall": true,
+      "request": {
+        "model": "nvidia/nemotron-3-super-120b-a12b:free"
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 5006,
+        "completionTokens": 4276,
+        "reasoningTokens": 3608
+      },
+      "latencyMs": 54579,
+      "attempts": 1,
+      "costUsd": 0,
+      "rateLimitHits": 0,
+      "usedToolCall": true,
+      "request": {
+        "model": "nvidia/nemotron-3-super-120b-a12b:free"
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 5005,
+        "completionTokens": 4192,
+        "reasoningTokens": 3162
+      },
+      "latencyMs": 69099,
+      "attempts": 1,
+      "costUsd": 0,
+      "rateLimitHits": 0,
+      "usedToolCall": true,
+      "request": {
+        "model": "nvidia/nemotron-3-super-120b-a12b:free"
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 5006,
+        "completionTokens": 4178,
+        "reasoningTokens": 3384
+      },
+      "latencyMs": 182211,
+      "attempts": 1,
+      "costUsd": 0,
+      "rateLimitHits": 0,
+      "usedToolCall": true,
+      "request": {
+        "model": "nvidia/nemotron-3-super-120b-a12b:free"
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 5002,
+        "completionTokens": 3826,
+        "reasoningTokens": 2549
+      },
+      "latencyMs": 96893,
+      "attempts": 1,
+      "costUsd": 0,
+      "rateLimitHits": 0,
+      "usedToolCall": true,
+      "request": {
+        "model": "nvidia/nemotron-3-super-120b-a12b:free"
+      }
+    }
+  ],
+  "costUsd": 0
+}

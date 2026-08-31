@@ -1,0 +1,387 @@
+{
+  "cell": "c1",
+  "fixture": "scale-extremes",
+  "fixtureSha": "933d72d0e9fb",
+  "repeat": 0,
+  "film": {
+    "beats": [
+      {
+        "framing": "EWS",
+        "cameraAngle": "eye-level",
+        "cameraMovement": "Static Shot with no amplitude at slow speed.",
+        "subjectsInFrame": [
+          {
+            "subject": "<Subject 1>",
+            "screenPosition": "center",
+            "depth": "background",
+            "action": "A lone living figure stands as a tiny, nearly silhouetted speck at the far horizon of the white salt flat, facing toward the camera; pink buzz-cut hair, orange translucent glasses, green patent leather moto jacket, red shirt, black buckled slacks, and black combat boots are present but too distant to resolve clearly."
+          }
+        ],
+        "subjectsExcluded": [],
+        "screenDirection": [
+          {
+            "subject": "<Subject 1>",
+            "movement": "static"
+          }
+        ],
+        "continuityCheck": {
+          "consistent": true,
+          "changes": []
+        },
+        "containmentNotes": "<Subject 1> is the only figure in the entire salt-flat world. She stands directly on the dry, level white salt crust, fully outdoors, with no vehicles, structures, props, or other people anywhere in frame. Hard noon sunlight casts only a very short shadow beneath her.",
+        "visualPrompt": "Live-action, cinematic, an extreme-wide eye-level composition frames an empty white salt flat extending perfectly flat to every horizon beneath an enormous pale sky in hard noon light. At dead center on the far horizon, <Subject 1> is the sole tiny living human figure, facing camera and standing still; her pink buzz cut, orange translucent glasses, green patent leather moto jacket over a red shirt, black buckled slacks, and black combat boots are only barely discernible at this distance. The camera remains static, emphasizing her isolation and the overwhelming scale of sky and salt."
+      },
+      {
+        "framing": "EWS",
+        "cameraAngle": "eye-level",
+        "cameraMovement": "Push In with large amplitude at slow speed, keeping <Subject 1> centered as she advances.",
+        "subjectsInFrame": [
+          {
+            "subject": "<Subject 1>",
+            "screenPosition": "center",
+            "depth": "background",
+            "action": "She walks steadily toward the camera across the bare salt crust, arms moving naturally at her sides; she remains small against the immense empty landscape, though her pink hair and glossy green jacket begin to separate from the white horizon."
+          }
+        ],
+        "subjectsExcluded": [],
+        "screenDirection": [
+          {
+            "subject": "<Subject 1>",
+            "movement": "toward-camera"
+          }
+        ],
+        "continuityCheck": {
+          "consistent": true,
+          "changes": [
+            {
+              "subject": "<Subject 1>",
+              "from": "center, background, static at the far horizon",
+              "to": "center, background, walking toward camera across the salt flat",
+              "justifiedByBeatText": true
+            }
+          ]
+        },
+        "containmentNotes": "<Subject 1> remains the only figure and is walking directly on the open, dry, level salt flat. There are no objects, vehicles, tracks, buildings, or other people to introduce. Keep her fully outdoors and distant; do not make her foreground-sized.",
+        "visualPrompt": "Live-action, cinematic, an extreme-wide eye-level shot holds a vast empty white salt flat and enormous pale noon sky. <Subject 1>, the only living person anywhere, walks directly toward the camera from center frame while still small and distant in the background. Her pink buzz-cut hair, orange translucent glasses, green patent leather moto jacket over a red shirt, black cotton-wool slacks with buckles, and black leather combat boots become slightly more legible as she approaches. The camera pushes in with large amplitude at slow speed while preserving the immense emptiness around her; hard noon light and a short shadow anchor her to the salt."
+      },
+      {
+        "framing": "ECU",
+        "cameraAngle": "eye-level",
+        "cameraMovement": "Zoom In with large amplitude at fast speed, ending on the open eye.",
+        "subjectsInFrame": [
+          {
+            "subject": "<Subject 1>",
+            "screenPosition": "center",
+            "depth": "foreground",
+            "action": "Her eyelid opens once, revealing an iris whose color, radial texture, and tiny reflective flecks expand until the eye fills the entire frame; the edge of her orange translucent glasses is only a faint peripheral hint, if visible at all."
+          }
+        ],
+        "subjectsExcluded": [],
+        "screenDirection": [
+          {
+            "subject": "<Subject 1>",
+            "movement": "static"
+          }
+        ],
+        "continuityCheck": {
+          "consistent": true,
+          "changes": [
+            {
+              "subject": "<Subject 1>",
+              "from": "center, background, walking toward camera",
+              "to": "center, foreground, eye filling the frame as her eyelid opens",
+              "justifiedByBeatText": true
+            }
+          ]
+        },
+        "containmentNotes": "This is an extreme close view of <Subject 1>'s living eye only; she is not a mannequin, statue, or reflective object. The iris flecks are natural eye detail and catch hard daylight. Do not introduce any other subject or environmental object into the eye reflection.",
+        "visualPrompt": "Live-action, cinematic, an extreme close-up at eye level isolates <Subject 1>'s living eye. Her eyelid opens once, and a rapid large-amplitude zoom brings the iris and its intricate radial texture, moist highlight, and tiny natural flecks forward until they fill the whole picture. Preserve realistic human skin, eyelashes, and eye moisture; a subtle edge of orange translucent glasses may appear only at the frame edge. No other person, object, or landscape is visible."
+      },
+      {
+        "framing": "WS",
+        "cameraAngle": "eye-level",
+        "cameraMovement": "Static Shot with no amplitude at slow speed.",
+        "subjectsInFrame": [
+          {
+            "subject": "<Subject 1>",
+            "screenPosition": "center",
+            "depth": "midground",
+            "action": "Shown full length, she has stopped and stands upright on the salt flat with her back angled toward the camera, head turned to look back the way she came toward the distant horizon. Her green patent leather moto jacket, red shirt, black buckled slacks, and black combat boots are clearly visible."
+          }
+        ],
+        "subjectsExcluded": [],
+        "screenDirection": [
+          {
+            "subject": "<Subject 1>",
+            "movement": "static"
+          }
+        ],
+        "continuityCheck": {
+          "consistent": true,
+          "changes": [
+            {
+              "subject": "<Subject 1>",
+              "from": "center, foreground, isolated eye filling the frame",
+              "to": "center, midground, full-length figure standing and looking back",
+              "justifiedByBeatText": true
+            }
+          ]
+        },
+        "containmentNotes": "<Subject 1> is alone, standing full length on the open salt crust. She has stopped walking and looks back toward the route she crossed; keep her body physically grounded, with both combat boots on the flat surface and a short hard-noon shadow. No other figures, vehicles, or structures appear behind or around her.",
+        "visualPrompt": "Live-action, cinematic, a wide eye-level shot frames <Subject 1> full length at center on an empty white salt flat under an enormous pale sky. She stands still in the midground after her approach, her back angled toward camera and her head turned to look back the way she came across the blank horizon. Her pink buzz cut, orange translucent glasses, glossy green patent leather moto jacket over a red shirt, black cotton-wool slacks with buckles, and black leather combat boots are clear. The camera stays static; hard noon light creates a compact shadow at her feet, and no other figure or object exists in the landscape."
+      },
+      {
+        "framing": "CU",
+        "cameraAngle": "eye-level",
+        "cameraMovement": "Push In with small amplitude at slow speed, settling close enough to read her lips.",
+        "subjectsInFrame": [
+          {
+            "subject": "<Subject 1>",
+            "screenPosition": "center",
+            "depth": "foreground",
+            "action": "She faces the camera in close view and says one word; her lips form the word clearly enough to read, while her orange translucent glasses, pink buzz-cut hair, and composed living expression remain sharply visible."
+          }
+        ],
+        "subjectsExcluded": [],
+        "screenDirection": [
+          {
+            "subject": "<Subject 1>",
+            "movement": "static"
+          }
+        ],
+        "continuityCheck": {
+          "consistent": true,
+          "changes": [
+            {
+              "subject": "<Subject 1>",
+              "from": "center, midground, full-length and looking back",
+              "to": "center, foreground, facing camera in close-up",
+              "justifiedByBeatText": true
+            }
+          ]
+        },
+        "containmentNotes": "<Subject 1> remains alone and outdoors on the salt flat. Frame her head and mouth closely enough for precise lip readability; do not add another speaker, listener, prop, or reflected figure. Her spoken word is diegetic and should be delivered naturally by a living person.",
+        "visualPrompt": "Live-action, cinematic, a close-up at eye level centers <Subject 1>'s face against a softly blurred pale salt-flat horizon and sky. She faces camera and says a single word, with her mouth and lip movement clear enough to read. Her pink buzz-cut hair, orange translucent glasses, ordinary living skin, and green patent leather moto jacket collar are visible. The camera pushes in with small amplitude at slow speed, ending intimate and steady; hard noon daylight remains clean and stark."
+      }
+    ]
+  },
+  "calls": [
+    {
+      "usage": {
+        "promptTokens": 1509,
+        "completionTokens": 1788,
+        "reasoningTokens": 0
+      },
+      "latencyMs": 18586,
+      "attempts": 1,
+      "costUsd": 0.024474000000000003,
+      "request": {
+        "model": "gpt-5.6-terra",
+        "reasoning_effort": "none",
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are the Storyboarder on a film crew that turns licensed NFT\nartwork into short generated video. Your job is not to describe a pretty picture — it is a\nprecise technical blocking specification for one beat, the kind a cinematographer leaves for\na director, exact enough that a video-render pipeline can follow it without guessing.\n\nMiniMax-H3 expects a structured script, not a paragraph. Emit three fields:\n\n1. integrated_multimodal_description — the visuals, action, camera and diegetic sound,\n   along a timeline. Open with visual style and composition (\"Live-action, cinematic, a\n   medium-wide shot frames...\"). A single shot needs no timestamp; if you genuinely need a\n   second shot, mark it \"[Shot 2] At 00:03.500, the camera cuts to...\".\n2. overall_soundscape — ambient, physical and non-verbal sound. One to four sentences.\n3. non_diegetic_music — score the characters cannot hear. One to three sentences, or \"N/A\".\n\nCamera moves are written as natural English actions, never as bracketed labels. The formula\nis motion + amplitude + speed: \"the camera pushes in with small amplitude at slow speed\".\nAvailable motions: Zoom In/Out, Push In/Out, Pan Left/Right, Truck Left/Right, Tilt Up/Down,\nPedestal Up/Down, Arc Shot, Tracking Shot, Static Shot, Shake Slightly/Strongly, POV, Roll.\n\nEach text field can run to 7000 characters. Length is not a virtue in itself, but this model\nis directed, not hinted at — be specific and complete rather than terse.\n\nRules:\n1. Never place a subject in subjectsInFrame that this beat's own text doesn't put there. If a\n   cast member has a reference available (listed below) but this beat's action doesn't\n   involve them, they go in subjectsExcluded — even though they're referenced elsewhere in\n   the film. An early, unearned reveal is a real error, not a safe default.\n2. cameraMovement is natural English (motion + amplitude + speed), drawn from H3's own\n   vocabulary above — never a bracketed label, never invented terminology H3 doesn't use.\n3. When given the previous beat's own blocking JSON, compare explicitly: report every subject\n   whose screenPosition or depth changed, and say plainly whether this beat's own text\n   justifies that change. An unexplained flip in position is a mistake to report, not\n   something to silently accept or paper over.\n4. containmentNotes says whatever a renderer needs to get physically right — who is inside\n   what, who is holding what, any constraint this beat implies. A person in a vehicle is\n   inside it, not visible through the windshield from an impossible angle.\n5. visualPrompt is a plain-English rendering of everything above, precise enough that an\n   image model could work from it directly later — but you are not drawing anything yourself.\n6. Every \"subject\" field everywhere in the schema is the bare tag and nothing else — exactly\n   \"<Subject 1>\", never \"<Subject 1> — the ape\" or any other appended description. Downstream\n   code matches these by exact tag; anything extra breaks that match silently.\n\nReturn the blocking spec by calling the tool. Write no prose outside it."
+          },
+          {
+            "role": "user",
+            "content": "World: An empty white salt flat under an enormous pale sky, flat to the horizon in every direction, hard noon light.\nStaging: <Subject 1> is the only figure anywhere in this world.\nGuard: Every character has ordinary skin and is a living figure, not a mannequin and not a chrome statue.\nFilm's overall camera direction: Whatever each beat demands. The range is the point.\nContinuity: One continuous passage of time.\n\nCast with references available (referencePlan order):\n<Subject 1> — A pink‑haired figure wearing orange translucent glasses, a green patent leather moto jacket over a red shirt, black cotton‑wool slacks with buckles, and black leather combat boots. (pink buzz-cut hair, orange translucent glasses, green patent leather moto jacket)\n\n\nThe film is 5 beats long, in order:\nBeat 1 of 5: A single lone figure, <Subject 1>, is a speck at the far end of the empty salt flat under a huge sky.\nBeat 2 of 5: <Subject 1> walks toward us across the flat, still small against the emptiness.\nBeat 3 of 5: Her eye opens, and the iris and its flecks fill the whole picture.\nBeat 4 of 5: She stands and looks back the way she came, the full length of her against the flat.\nBeat 5 of 5: She says one word, and we are close enough to read her mouth.\n\nWrite the blocking spec for every beat, returning an array of one spec per beat in order."
+          }
+        ],
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "emit_blocking",
+              "description": "Return the blocking spec.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "beats": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "framing": {
+                          "type": "string",
+                          "enum": [
+                            "ECU",
+                            "CU",
+                            "MCU",
+                            "MS",
+                            "MWS",
+                            "WS",
+                            "EWS"
+                          ],
+                          "description": "Shot size."
+                        },
+                        "cameraAngle": {
+                          "type": "string",
+                          "enum": [
+                            "low",
+                            "eye-level",
+                            "high",
+                            "dutch",
+                            "overhead"
+                          ]
+                        },
+                        "cameraMovement": {
+                          "type": "string",
+                          "description": "Natural English, drawn from H3's own vocabulary (motion + amplitude + speed) — never a bracketed label."
+                        },
+                        "subjectsInFrame": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "subject": {
+                                "type": "string",
+                                "description": "Exactly the tag, nothing appended — e.g. \"<Subject 1>\", never \"<Subject 1> — description\"."
+                              },
+                              "screenPosition": {
+                                "type": "string",
+                                "enum": [
+                                  "far-left",
+                                  "left",
+                                  "center-left",
+                                  "center",
+                                  "center-right",
+                                  "right",
+                                  "far-right"
+                                ]
+                              },
+                              "depth": {
+                                "type": "string",
+                                "enum": [
+                                  "foreground",
+                                  "midground",
+                                  "background"
+                                ]
+                              },
+                              "action": {
+                                "type": "string",
+                                "description": "What this subject is doing right now, in this frame."
+                              }
+                            },
+                            "required": [
+                              "subject",
+                              "screenPosition",
+                              "depth",
+                              "action"
+                            ]
+                          }
+                        },
+                        "subjectsExcluded": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "Subjects with a reference available who must NOT appear in this frame — bare tags only, e.g. \"<Subject 4>\"."
+                        },
+                        "screenDirection": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "subject": {
+                                "type": "string",
+                                "description": "Exactly the tag, e.g. \"<Subject 1>\" — nothing appended."
+                              },
+                              "movement": {
+                                "type": "string",
+                                "enum": [
+                                  "left-to-right",
+                                  "right-to-left",
+                                  "toward-camera",
+                                  "away-from-camera",
+                                  "static"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "subject",
+                              "movement"
+                            ]
+                          }
+                        },
+                        "continuityCheck": {
+                          "type": "object",
+                          "properties": {
+                            "consistent": {
+                              "type": "boolean"
+                            },
+                            "changes": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "subject": {
+                                    "type": "string",
+                                    "description": "Exactly the tag, e.g. \"<Subject 1>\" — nothing appended."
+                                  },
+                                  "from": {
+                                    "type": "string"
+                                  },
+                                  "to": {
+                                    "type": "string"
+                                  },
+                                  "justifiedByBeatText": {
+                                    "type": "boolean"
+                                  }
+                                },
+                                "required": [
+                                  "subject",
+                                  "from",
+                                  "to",
+                                  "justifiedByBeatText"
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "consistent",
+                            "changes"
+                          ],
+                          "description": "Empty changes array and consistent:true when there is no previous beat, or nothing moved."
+                        },
+                        "containmentNotes": {
+                          "type": "string"
+                        },
+                        "visualPrompt": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "framing",
+                        "cameraAngle",
+                        "cameraMovement",
+                        "subjectsInFrame",
+                        "subjectsExcluded",
+                        "screenDirection",
+                        "continuityCheck",
+                        "containmentNotes",
+                        "visualPrompt"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "beats"
+                ]
+              }
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "function",
+          "function": {
+            "name": "emit_blocking"
+          }
+        },
+        "temperature": 0.3,
+        "max_completion_tokens": 8000
+      }
+    }
+  ],
+  "costUsd": 0.024474000000000003
+}

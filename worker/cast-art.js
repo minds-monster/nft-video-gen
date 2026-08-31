@@ -1,0 +1,186 @@
+// The cast's own pixels, served to the previz renderer.
+//
+// WHAT THIS IS NOT, and the measurement that decided it. The plan for this round called for an
+// AI cut-out: hand the artwork to an image model, ask for the subject on a transparent
+// background. Probed on 2026-08-25 against google/gemini-2.5-flash-image, and it failed in the
+// most instructive way available — it returned an opaque RGB PNG with a CHECKERBOARD PAINTED
+// INTO THE PIXELS. It had reproduced the visual convention for transparency rather than
+// producing an alpha channel, because a checkerboard is what "transparent background" looks like
+// in its training data. It also cost $0.039 per image, not the fractions of a cent the plan
+// assumed.
+//
+// So the cut-out is not bought, it is COMPUTED — and it turns out to be computable exactly for
+// the case that matters most. A PFP on a flat background has a background colour that can be
+// read off its own corner pixels, and a subject whose outline is then every pixel that is not
+// that colour. That is arithmetic: free, instant, and EXACT where a model was approximate. It
+// also cannot fabricate, which matters more here than the money — see the medium gate.
+//
+// The keying itself lives in the browser (src/lib/castTexture.js), where a canvas gives pixel
+// access that a Worker has no image library for. This module's whole job is to get the bytes
+// there: resolve the piece's own artwork, cache it, and serve it same-origin so the canvas is
+// not tainted and the pixels can actually be read.
+//
+// PROVENANCE IS THE OTHER HALF OF THE JOB. Every response names the exact source URL it was
+// derived from, so a card on screen is traceable to the artwork it came from without anyone
+// having to trust that it is.
+
+import { fetchArtwork } from './artwork.js';
+
+const R2_PREFIX = 'cast';
+
+/** A year, immutable. The artwork behind a token id cannot change — the same reasoning that
+ * makes a dossier permanent rather than cached. */
+const CACHE_CONTROL = 'public, max-age=31536000, immutable';
+
+// Matches src/lib/assetKey.js: `chain:address:tokenId`. Token ids are decimal strings that can
+// run to 78 digits, hence the generous tail.
+export const ASSET_KEY = /^[a-z0-9-]{1,32}:0x[a-fA-F0-9]{40}:[A-Za-z0-9_-]{1,96}$/;
+
+const json = (data, status = 200) =>
+  new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8' } });
+
+/**
+ * The dossier for a piece, at whichever schema version is current.
+ *
+ * Deliberately reads the CURRENT version only. An older dossier does not carry
+ * `sourceImageUrls` — that field arrived with v5 — so there is nothing here to serve from it,
+ * and quietly falling back to one would produce a confident 404-shaped success. Running the
+ * backfill is what fixes those, and saying so is more useful than guessing.
+ */
+const dossierFor = async (env, assetKey, version) => {
+  if (!env.DOSSIERS) return null;
+  return env.DOSSIERS.get(`dossier:v${version}:${assetKey}`, 'json');
+};
+
+/**
+ * One cast member's artwork, same-origin.
+ *
+ * SAME-ORIGIN IS THE ENTIRE POINT, not a caching nicety. The renderer has to READ these pixels
+ * to key the background out, and a cross-origin image taints the canvas so that reading them
+ * throws. Alchemy's CDN happens to send permissive CORS today; IPFS gateways and creator CDNs
+ * variously do not, and a representation that works for some pieces and silently fails for
+ * others is worse than one that works for none.
+ */
+export async function handleCastArt(request, env) {
+  const { searchParams } = new URL(request.url);
+  const assetKey = searchParams.get('asset');
+
+  if (!assetKey || !ASSET_KEY.test(assetKey)) {
+    return json({ error: 'asset must be a chain:address:tokenId key' }, 400);
+  }
+
+  const version = Number(searchParams.get('v') || env.DOSSIER_SCHEMA_VERSION || 5);
+  const r2Key = `${R2_PREFIX}/${assetKey}/source`;
+
+  // Served from R2 on every request after the first. The bucket is the same one storyboard
+  // sketches use; the `cast/` prefix is what keeps the two apart, here and in the route guard
+  // on /api/storyboard/image.
+  const cached = env.STORYBOARD_IMAGES ? await env.STORYBOARD_IMAGES.get(r2Key) : null;
+  if (cached) {
+    return new Response(cached.body, {
+      headers: {
+        'content-type': cached.httpMetadata?.contentType ?? 'image/png',
+        'cache-control': CACHE_CONTROL,
+        'access-control-allow-origin': '*',
+        'x-source-url': cached.customMetadata?.sourceUrl ?? '',
+        'x-cache': 'r2',
+      },
+    });
+  }
+
+  const dossier = await dossierFor(env, assetKey, version);
+  if (!dossier) {
+    return json({ error: `No v${version} dossier for ${assetKey}. Cast the piece, or run scripts/backfill-profiles.mjs.` }, 404);
+  }
+
+  const candidates = dossier.sourceImageUrls ?? [];
+  if (!candidates.length) {
+    return json({ error: `The dossier for ${assetKey} records no source artwork.` }, 404);
+  }
+
+  let artwork;
+  try {
+    artwork = await fetchArtwork(candidates);
+  } catch (error) {
+    return json({ error: `Could not fetch the artwork for ${assetKey}: ${error.message}` }, 502);
+  }
+
+  if (env.STORYBOARD_IMAGES) {
+    await env.STORYBOARD_IMAGES.put(r2Key, artwork.bytes, {
+      httpMetadata: { contentType: artwork.contentType },
+      // The source is recorded ON the stored object, not only in the dossier. A derivative that
+      // travels without its provenance is a derivative nobody can check.
+      customMetadata: { sourceUrl: artwork.url, assetKey },
+    });
+  }
+
+  return new Response(artwork.bytes, {
+    headers: {
+      'content-type': artwork.contentType,
+      'cache-control': CACHE_CONTROL,
+      'access-control-allow-origin': '*',
+      'x-source-url': artwork.url,
+      'x-cache': 'miss',
+    },
+  });
+}
+
+/**
+ * Every piece the store knows about, with what has been decided about it.
+ *
+ * Read-only and non-sensitive — it lists artwork that is already public on chain, plus the
+ * judgements this build has made about it. It exists so the cast can be LOOKED AT: a decision
+ * like "this piece gets a card, not a mesh" is only trustworthy if someone can put the card and
+ * the mesh side by side and check, and until now that required a full film to be generated.
+ */
+export async function handleCastList(request, env) {
+  const version = Number(new URL(request.url).searchParams.get('v') || 5);
+  if (!env.DOSSIERS) return json({ pieces: [] });
+
+  const prefix = `dossier:v${version}:`;
+  const listed = await env.DOSSIERS.list({ prefix, limit: 200 });
+
+  const pieces = await Promise.all(
+    listed.keys.map(async ({ name }) => {
+      const assetKey = name.slice(prefix.length);
+      const [dossier, mesh] = await Promise.all([
+        env.DOSSIERS.get(name, 'json'),
+        env.DOSSIERS.get(`castmesh:v1:${assetKey}`, 'json'),
+      ]);
+      return {
+        assetKey,
+        subject: dossier?.subject ?? null,
+        medium: dossier?.medium ?? null,
+        framing: dossier?.framing ?? null,
+        // WHETHER THIS PIECE HAS FOOTAGE, AND WHAT IT SHOWS. Surfaced because it is the one
+        // thing that can overturn a mesh refusal: `medium` describes the STILL, and a piece
+        // whose still is a card may have a film that shows the subject in the round. Measured on
+        // the adidas ape — refused on its still, reconstructs cleanly from one frame of its own
+        // turntable. A refusal standing next to an unwatched film is a question, not a verdict.
+        film: {
+          watched: Boolean(dossier?.watchedFilm),
+          motionNotes: dossier?.motionNotes || null,
+        },
+        identityMarkers: dossier?.identityMarkers ?? [],
+        profile: dossier?.physicalProfile ?? null,
+        sourceUrl: dossier?.sourceImageUrls?.[0] ?? null,
+        mesh: mesh
+          ? {
+              // A refusal written by the old medium gate is a decision since overturned, not a
+              // fact about the piece — read it as "never generated". See worker/mesh.js.
+              status: mesh.status === 'ineligible' || mesh.meshEligible === false
+                ? 'absent'
+                : mesh.status ?? (mesh.r2Key ? 'ready' : 'absent'),
+              representation: mesh.representation ?? null,
+              inference: mesh.inference ?? null,
+              caveat: mesh.caveat ?? null,
+              reason: mesh.reason ?? null,
+              bytes: mesh.bytes ?? null,
+            }
+          : { status: 'undecided', representation: null, inference: null, caveat: null, reason: null, bytes: null },
+      };
+    }),
+  );
+
+  return json({ pieces, truncated: !listed.list_complete });
+}

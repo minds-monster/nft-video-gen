@@ -1,0 +1,17 @@
+I was showing the UI of the neural canvas over a whatsapp group for the hackathon and realized that it's actually kind of sucking balls right now
+
+We need to take this to the next level with a serious design overhaul that makes this into a powerful tool for movie composition
+
+I was looking at Final Cut Pro to get some inspiration and realized we can essentially arrange the entire swarm as a series of different components that organizes into a final view for all of the featured elements of the swarm
+
+I took a screenshot of final cut and organized how I could imagine each of the different sections - IF there is a way to render these assets so that they could fold into each other so that the experience gets introduced sequentially that would be awesome
+
+As in at the beginning when you only have the prompt and the NFTs it could be more like it is now but with just the prompt window in the middle and the NFTs over on the left side and the producer (the mind) occupying the right side and then once you've locked in the cast the casting director takes over some of the screen real estate (actually I've made a set of images to explain this) the point is that each of the agents has it's own area as does an associated canvas (potentially these could be opened and closed with little arrows or maybe they could even be dragged opened or closed completely (i.e. they would become completely minimized))
+
+In some ways I think the attached images will be a better way to understand what I'm talking about it - but the main point is to have a UI that is tightly organized of every part of the process and encapsulates every component of the video production process
+
+What you need to dig out is a perfect library to render this in a browser and also be ready for mobile compatibility as it's possible people can be using on thier mobile - it needs to be lightweight - what I realized when watching back a video recording of the casting director working and then the screenwriter is currently there is zero organization to the process - anything can basically render anywhere - we want to fix that with constraints that mean specific elements are boxed in and a more casul user could also choose to not dig into the details of the thinking and reasoning process if they wish - or even if they are seeing it - it has the effect of being more like a process log in one box on the page while there are other things going on
+
+So you'll need to find a library and figure out how a design like this could be actualized - this is really an opportunity to completely re-design the neural canvas - my ideal is to still live within the prompt box that expands out as it does currently - and still look perfectly organized when it opens
+
+If I have missed anything in this explanation and things are unclear you can just ask me and I will answer - I am more interested in making it work within the design constraints I've outlined than trying to make something work that will never practically render because there is too much going on etc - it needs to be clean and cool - inheriting the better parts of what we have and just losing what doesn't work

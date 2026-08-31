@@ -1,0 +1,337 @@
+{
+  "cell": "super-or-film",
+  "fixture": "scale-extremes",
+  "fixtureSha": "933d72d0e9fb",
+  "repeat": 0,
+  "film": {
+    "units": "metres",
+    "aspect": 1.7778,
+    "sceneScaleNote": "The salt flat stretches at least 200 metres in each direction, providing ample space for the figure’s passage.",
+    "beats": [
+      {
+        "beatIndex": 0,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 50
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 50
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1,
+              "z": 0
+            }
+          },
+          "focalStartMm": 35,
+          "focalEndMm": 35,
+          "rollDeg": 0,
+          "motion": "Static Shot",
+          "amplitude": "small",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "stands still as a tiny speck",
+            "screenPosition": "center",
+            "depth": "background"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "EWS",
+        "changes": [],
+        "containmentNotes": "",
+        "proseNote": "The camera holds static, small amplitude, slow speed, capturing the figure as a speck on the endless white plain under a huge sky."
+      },
+      {
+        "beatIndex": 1,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 50
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 50
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1,
+              "z": 0
+            }
+          },
+          "focalStartMm": 35,
+          "focalEndMm": 35,
+          "rollDeg": 0,
+          "motion": "Static Shot",
+          "amplitude": "small",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 10,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "walks toward the camera across the flat",
+            "screenPosition": "center",
+            "depth": "background"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "EWS",
+        "changes": [
+          {
+            "subject": "<Subject 1>",
+            "what": "position",
+            "justifiedByBeatText": true
+          }
+        ],
+        "containmentNotes": "",
+        "proseNote": "The camera holds static, small amplitude, slow speed, while the figure walks forward ten metres toward the lens, growing slightly but still a tiny speck against the emptiness."
+      },
+      {
+        "beatIndex": 2,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 50
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 11
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1.6,
+              "z": 10
+            }
+          },
+          "focalStartMm": 35,
+          "focalEndMm": 85,
+          "rollDeg": 0,
+          "motion": "Push In",
+          "amplitude": "large",
+          "speed": "medium",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 10,
+            "endX": 0,
+            "endZ": 10,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "opens her eye, revealing the iris and its flecks",
+            "screenPosition": "center",
+            "depth": "foreground"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "ECU",
+        "changes": [],
+        "containmentNotes": "",
+        "proseNote": "The camera pushes in with large amplitude at medium speed, zooming from 35 mm to 85 mm, closing from fifty metres to just over one metre to fill the frame with the figure’s eye and its iris flecks."
+      },
+      {
+        "beatIndex": 3,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 11
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1.6,
+              "z": 10
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 25
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 0.9,
+              "z": 10
+            }
+          },
+          "focalStartMm": 85,
+          "focalEndMm": 85,
+          "rollDeg": 0,
+          "motion": "Push Out",
+          "amplitude": "large",
+          "speed": "medium",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 10,
+            "endX": 0,
+            "endZ": 10,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 180,
+            "containerId": null,
+            "action": "stands and looks back the way she came",
+            "screenPosition": "center",
+            "depth": "midground"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "WS",
+        "changes": [],
+        "containmentNotes": "",
+        "proseNote": "The camera pushes out with large amplitude at medium speed, pulling back from one metre to fifteen metres while tilting down to reveal the figure’s full length as she turns to look back across the flat."
+      },
+      {
+        "beatIndex": 4,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 25
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 0.9,
+              "z": 10
+            }
+          },
+          "end": {
+            "position": {
+              "x": 0,
+              "y": 1.6,
+              "z": 12.5
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 1.2,
+              "z": 10
+            }
+          },
+          "focalStartMm": 85,
+          "focalEndMm": 85,
+          "rollDeg": 0,
+          "motion": "Push In",
+          "amplitude": "large",
+          "speed": "medium",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": 0,
+            "z": 10,
+            "endX": 0,
+            "endZ": 10,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.6,
+            "yawDeg": 180,
+            "containerId": null,
+            "action": "speaks one word, mouth visible close enough to read",
+            "screenPosition": "center",
+            "depth": "foreground"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "MCU",
+        "changes": [],
+        "containmentNotes": "",
+        "proseNote": "The camera pushes in with large amplitude at medium speed, moving from fifteen metres to about two and a half metres and tilting up to frame the figure’s mouth closely enough to read her spoken word."
+      }
+    ]
+  },
+  "calls": [
+    {
+      "usage": {
+        "promptTokens": 4731,
+        "completionTokens": 15181,
+        "reasoningTokens": 10484
+      },
+      "latencyMs": 184334,
+      "attempts": 1,
+      "costUsd": 0,
+      "rateLimitHits": 0,
+      "usedToolCall": true,
+      "request": {
+        "model": "nvidia/nemotron-3-super-120b-a12b:free"
+      }
+    }
+  ],
+  "costUsd": 0
+}

@@ -5,21 +5,40 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:worker": "wrangler dev",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "test:scene": "node --test \"scripts/test/*.test.mjs\"",
+    "preview": "vite preview",
+    "deploy": "vite build && wrangler deploy",
+    "deploy:staging": "vite build && wrangler deploy --env staging",
+    "verify:brands": "node --env-file-if-exists=.env scripts/verify-brands.mjs",
+    "prep:refs": "node --env-file-if-exists=.env scripts/prep-refs.mjs",
+    "gen:video": "node --env-file-if-exists=.env scripts/gen-video.mjs",
+    "encode:hero": "bash scripts/encode-hero.sh",
+    "assemble:hero": "bash scripts/assemble-hero.sh",
+    "verify:hero": "node scripts/verify-hero.mjs"
   },
   "dependencies": {
     "@animocabrands/minds-client-lib": "^0.1.3",
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource/anton": "^5.3.0",
+    "@react-three/drei": "^10.7.8",
+    "@react-three/fiber": "^9.7.0",
     "alchemy-sdk": "^3.6.5",
     "clsx": "^2.1.1",
+    "ethers": "^6.17.0",
     "framer-motion": "^13.1.0",
     "lucide-react": "^1.31.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "tailwind-merge": "^3.6.0"
+    "react-resizable-panels": "^4.12.3",
+    "stripe": "^22.5.0",
+    "tailwind-merge": "^3.6.0",
+    "three": "^0.185.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
@@ -28,6 +47,7 @@
     "oxlint": "^1.75.0",
     "postcss": "^8.5.26",
     "tailwindcss": "^4.3.3",
-    "vite": "^8.2.0"
+    "vite": "^8.2.0",
+    "wrangler": "^4.123.0"
   }
 }

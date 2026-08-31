@@ -1,0 +1,1013 @@
+{
+  "cell": "c0",
+  "fixture": "cut-to-black",
+  "fixtureSha": "0f9426ef9a65",
+  "repeat": 2,
+  "film": {
+    "beats": [
+      {
+        "framing": "MWS",
+        "cameraAngle": "eye-level",
+        "cameraMovement": "Static Shot with no amplitude at slow speed.",
+        "subjectsInFrame": [
+          {
+            "subject": "<Subject 2>",
+            "screenPosition": "center",
+            "depth": "foreground",
+            "action": "Parked on the rain-slick street at the tower's base, its white rounded body facing three-quarters toward camera; all four circular LED headlamps glow softly and reflect in the wet pavement."
+          },
+          {
+            "subject": "<Subject 1>",
+            "screenPosition": "center",
+            "depth": "foreground",
+            "action": "Sits alive and still in the driver's seat inside the parked car, visible through the driver-side window in a neon yellow tracksuit, yellow hat, and red heart-shaped sunglasses; hands rest near the steering wheel with a bored, waiting posture."
+          },
+          {
+            "subject": "<Subject 3>",
+            "screenPosition": "center",
+            "depth": "background",
+            "action": "Rises immovably behind the car, its enormous weathered brutalist concrete mass, stepped balconies, recessed small rectangular windows, and vertical upper-block staining dominating the dusk skyline."
+          }
+        ],
+        "subjectsExcluded": [],
+        "screenDirection": [
+          {
+            "subject": "<Subject 1>",
+            "movement": "static"
+          },
+          {
+            "subject": "<Subject 2>",
+            "movement": "static"
+          },
+          {
+            "subject": "<Subject 3>",
+            "movement": "static"
+          }
+        ],
+        "continuityCheck": {
+          "consistent": true,
+          "changes": []
+        },
+        "containmentNotes": "<Subject 1> is physically inside <Subject 2>, seated in its driver's seat behind the steering wheel; show the figure only through the side glass/open side-window view, never standing outside or appearing through an impossible windshield angle. <Subject 2> is parked at street level directly at the foot of <Subject 3>. <Subject 3> is a fixed building and does not move. Keep <Subject 1> an ordinary-skinned living figure, not a mannequin, statue, or chrome object.",
+        "visualPrompt": "Live-action, cinematic, a medium-wide eye-level shot frames a deserted city street at dusk after rain. A white rounded-silhouette sports car is parked centered in the foreground at the foot of a single enormous brutalist concrete tower. The car is seen three-quarters from the driver-side/front, with four circular LED headlamps, a shield-shaped hood badge, and a black rectangular front bumper with large air intakes; its softly glowing lamps shimmer in puddles on the wet asphalt. Inside the driver’s seat, visible naturally through the driver-side window, <Subject 1> is a living ordinary-skinned Bored Ape character in a neon yellow tracksuit, yellow hat, red heart-shaped sunglasses, and white sneakers, sitting bored and motionless with hands near the steering wheel. Behind the car, <Subject 3> dominates the entire skyline: massive rough weathered concrete, stepped balconies, recessed small rectangular windows, and vertical staining on its upper block. The empty street, damp pavement, muted blue-violet dusk, and sparse reflected city light emphasize isolation. The camera remains locked off."
+      },
+      {
+        "framing": "MWS",
+        "cameraAngle": "eye-level",
+        "cameraMovement": "Static Shot with no amplitude at slow speed.",
+        "subjectsInFrame": [
+          {
+            "subject": "<Subject 2>",
+            "screenPosition": "center-right",
+            "depth": "midground",
+            "action": "Accelerates smoothly away from the tower and drives down the empty rain-slick street toward the right side of frame; its four round LED headlamps cast elongated reflections across the wet pavement."
+          },
+          {
+            "subject": "<Subject 1>",
+            "screenPosition": "center-right",
+            "depth": "midground",
+            "action": "Remains physically inside the driver's seat of the moving car, alive and ordinary-skinned, steering forward with a restrained bored posture; neon yellow tracksuit, yellow hat, red heart-shaped sunglasses, and white sneakers are visible naturally through the driver-side window as the car passes."
+          },
+          {
+            "subject": "<Subject 3>",
+            "screenPosition": "center-left",
+            "depth": "background",
+            "action": "Stands immovably at the street's origin behind the departing car, its massive weathered brutalist concrete facade, stepped balconies, recessed windows, and vertical upper-block staining dominating the dusk skyline."
+          }
+        ],
+        "subjectsExcluded": [],
+        "screenDirection": [
+          {
+            "subject": "<Subject 1>",
+            "movement": "left-to-right"
+          },
+          {
+            "subject": "<Subject 2>",
+            "movement": "left-to-right"
+          },
+          {
+            "subject": "<Subject 3>",
+            "movement": "static"
+          }
+        ],
+        "continuityCheck": {
+          "consistent": true,
+          "changes": [
+            {
+              "subject": "<Subject 1>",
+              "from": "center, foreground",
+              "to": "center-right, midground",
+              "justifiedByBeatText": true
+            },
+            {
+              "subject": "<Subject 2>",
+              "from": "center, foreground",
+              "to": "center-right, midground",
+              "justifiedByBeatText": true
+            },
+            {
+              "subject": "<Subject 3>",
+              "from": "center, background",
+              "to": "center-left, background",
+              "justifiedByBeatText": true
+            }
+          ]
+        },
+        "containmentNotes": "<Subject 1> is physically inside <Subject 2> throughout, seated behind the steering wheel in the driver's seat; show the living ordinary-skinned figure only through the driver-side glass/open side-window view, never outside the vehicle and never through an impossible windshield angle. <Subject 2> begins at street level near the base of <Subject 3>, then pulls away and travels left-to-right down the empty street. <Subject 3> remains a fixed building at the departure point and never moves. No other people, vehicles, mannequins, statues, or chrome figures appear.",
+        "visualPrompt": "Live-action, cinematic, a medium-wide eye-level locked-off shot frames a deserted city street at blue-violet dusk after rain. The enormous brutalist concrete tower occupies the center-left background, fixed and imposing, with rough weathered concrete, stepped balconies, recessed small rectangular windows, and vertical staining on the upper block. From the tower's base, a white rounded-silhouette sports car pulls away and drives smoothly left-to-right into the center-right midground along the empty wet street. Its four circular LED headlamps glow, with a shield-shaped badge on the hood and a black rectangular front bumper with large air intakes; headlamp light stretches in shimmering reflections over puddled asphalt. Inside the driver's seat, naturally visible through the driver-side window, <Subject 1> is a living ordinary-skinned Bored Ape character wearing a neon yellow tracksuit, yellow hat, red heart-shaped sunglasses, and white sneakers, steering with an understated bored expression. The car recedes slightly as it leaves the tower behind; the camera remains still. Diegetic sound: a low engine note rises gently, tires hiss through shallow water, and distant wind moves through the empty city. Overall soundscape: sparse dusk wind, faint rainwater drip, soft engine acceleration, and wet tire spray echo between concrete buildings. Non-diegetic music: a minimal, low pulsing synth begins quietly and sustains the lonely departure."
+      },
+      {
+        "transition": true,
+        "transitionText": "the screen holds black for a long moment before the world returns."
+      },
+      {
+        "framing": "MWS",
+        "cameraAngle": "eye-level",
+        "cameraMovement": "Static Shot with no amplitude at slow speed.",
+        "subjectsInFrame": [
+          {
+            "subject": "<Subject 1>",
+            "screenPosition": "center",
+            "depth": "midground",
+            "action": "Stands alone near the open center of a wet rooftop, facing the distant deserted city skyline; the neon yellow tracksuit, yellow hat, red heart-shaped sunglasses, and white sneakers are visible. The living figure remains still, with a subtle natural shift of weight in the dusk wind."
+          }
+        ],
+        "subjectsExcluded": [
+          "<Subject 2>",
+          "<Subject 3>"
+        ],
+        "screenDirection": [
+          {
+            "subject": "<Subject 1>",
+            "movement": "static"
+          }
+        ],
+        "continuityCheck": {
+          "consistent": true,
+          "changes": []
+        },
+        "containmentNotes": "<Subject 1> is standing on the exposed rooftop surface, fully outside any vehicle or structure interior. <Subject 2> does not appear anywhere in frame or on the rooftop. <Subject 3> does not appear in frame. Keep the rooftop empty apart from <Subject 1>; no other people, vehicles, or figures are present.",
+        "visualPrompt": "Live-action, cinematic, a medium-wide eye-level shot frames <Subject 1> alone on an empty wet rooftop at dusk, high above a deserted city. The living Bored Ape character wears a neon yellow tracksuit, yellow hat, red heart-shaped sunglasses, and white sneakers, standing centered in the midground and facing the distant skyline. Rain-darkened concrete reflects faint violet-blue dusk light and scattered city glow; low wind stirs the tracksuit fabric. The skyline is broad and empty, with no car and no massive tower visible in this composition. The camera remains locked off, emphasizing isolation, wet rooftop texture, and the enormous height above silent streets."
+      },
+      {
+        "framing": "MWS",
+        "cameraAngle": "high",
+        "cameraMovement": "Static Shot with no amplitude at slow speed.",
+        "subjectsInFrame": [
+          {
+            "subject": "<Subject 1>",
+            "screenPosition": "center",
+            "depth": "midground",
+            "action": "Walks from the open rooftop toward the parapet at a measured pace, reaches the wet concrete edge, stops with both white sneakers safely behind the low parapet, then leans forward slightly and looks down toward the deserted street far below. The living figure wears a neon yellow tracksuit, yellow hat, and red heart-shaped sunglasses; dusk wind lightly stirs the tracksuit fabric."
+          }
+        ],
+        "subjectsExcluded": [
+          "<Subject 2>",
+          "<Subject 3>"
+        ],
+        "screenDirection": [
+          {
+            "subject": "<Subject 1>",
+            "movement": "away-from-camera"
+          }
+        ],
+        "continuityCheck": {
+          "consistent": true,
+          "changes": [
+            {
+              "subject": "<Subject 1>",
+              "from": "center, midground, standing near the open center of the rooftop",
+              "to": "center, midground, at the rooftop parapet looking down",
+              "justifiedByBeatText": true
+            }
+          ]
+        },
+        "containmentNotes": "<Subject 1> remains on the exposed rooftop, fully outside any vehicle or building interior. <Subject 1> is not inside <Subject 2>; <Subject 2> must not appear. <Subject 3> must not appear in frame. The parapet is a solid, low concrete safety barrier at the roof edge; <Subject 1> stays on the roof side of it and does not step over or hang from it. Keep the rooftop and street below empty of all other people, vehicles, and figures.",
+        "visualPrompt": "Live-action, cinematic, a medium-wide high-angle shot frames <Subject 1> alone on an empty rain-darkened rooftop at dusk. Centered in the midground, the living Bored Ape character in a neon yellow tracksuit, yellow hat, red heart-shaped sunglasses, and white sneakers walks away from the camera toward a low wet concrete parapet. He stops safely behind the edge and leans forward slightly to look down at the deserted wet street far below, visible as a distant vertical drop beyond the roofline. Faint violet-blue dusk light glints in rooftop puddles; a cool wind moves the tracksuit fabric. The camera remains locked off and unhurried. No sports car, no brutalist tower, no other people, and no other vehicles appear."
+      }
+    ]
+  },
+  "calls": [
+    {
+      "usage": {
+        "promptTokens": 1493,
+        "completionTokens": 621,
+        "reasoningTokens": 0
+      },
+      "latencyMs": 7026,
+      "attempts": 1,
+      "costUsd": 0.010438,
+      "request": {
+        "model": "gpt-5.6-terra",
+        "reasoning_effort": "none",
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are the Storyboarder on a film crew that turns licensed NFT\nartwork into short generated video. Your job is not to describe a pretty picture — it is a\nprecise technical blocking specification for one beat, the kind a cinematographer leaves for\na director, exact enough that a video-render pipeline can follow it without guessing.\n\nMiniMax-H3 expects a structured script, not a paragraph. Emit three fields:\n\n1. integrated_multimodal_description — the visuals, action, camera and diegetic sound,\n   along a timeline. Open with visual style and composition (\"Live-action, cinematic, a\n   medium-wide shot frames...\"). A single shot needs no timestamp; if you genuinely need a\n   second shot, mark it \"[Shot 2] At 00:03.500, the camera cuts to...\".\n2. overall_soundscape — ambient, physical and non-verbal sound. One to four sentences.\n3. non_diegetic_music — score the characters cannot hear. One to three sentences, or \"N/A\".\n\nCamera moves are written as natural English actions, never as bracketed labels. The formula\nis motion + amplitude + speed: \"the camera pushes in with small amplitude at slow speed\".\nAvailable motions: Zoom In/Out, Push In/Out, Pan Left/Right, Truck Left/Right, Tilt Up/Down,\nPedestal Up/Down, Arc Shot, Tracking Shot, Static Shot, Shake Slightly/Strongly, POV, Roll.\n\nEach text field can run to 7000 characters. Length is not a virtue in itself, but this model\nis directed, not hinted at — be specific and complete rather than terse.\n\nRules:\n1. Never place a subject in subjectsInFrame that this beat's own text doesn't put there. If a\n   cast member has a reference available (listed below) but this beat's action doesn't\n   involve them, they go in subjectsExcluded — even though they're referenced elsewhere in\n   the film. An early, unearned reveal is a real error, not a safe default.\n2. cameraMovement is natural English (motion + amplitude + speed), drawn from H3's own\n   vocabulary above — never a bracketed label, never invented terminology H3 doesn't use.\n3. When given the previous beat's own blocking JSON, compare explicitly: report every subject\n   whose screenPosition or depth changed, and say plainly whether this beat's own text\n   justifies that change. An unexplained flip in position is a mistake to report, not\n   something to silently accept or paper over.\n4. containmentNotes says whatever a renderer needs to get physically right — who is inside\n   what, who is holding what, any constraint this beat implies. A person in a vehicle is\n   inside it, not visible through the windshield from an impossible angle.\n5. visualPrompt is a plain-English rendering of everything above, precise enough that an\n   image model could work from it directly later — but you are not drawing anything yourself.\n6. Every \"subject\" field everywhere in the schema is the bare tag and nothing else — exactly\n   \"<Subject 1>\", never \"<Subject 1> — the ape\" or any other appended description. Downstream\n   code matches these by exact tag; anything extra breaks that match silently.\n\nReturn the blocking spec by calling the tool. Write no prose outside it."
+          },
+          {
+            "role": "user",
+            "content": "World: A deserted city at dusk, wet streets, a single enormous concrete tower dominating the skyline.\nStaging: <Subject 1> is the driver of <Subject 2> and is inside it whenever it appears. <Subject 3> is a building and never moves.\nGuard: Every character has ordinary skin and is a living figure, not a mannequin and not a chrome statue.\nFilm's overall camera direction: Unhurried, mostly locked off, one move per beat at most.\nContinuity: A single cut to black divides the film; everything either side of it is continuous.\n\nCast with references available (referencePlan order):\n<Subject 1> — A Bored Ape character wearing a neon yellow tracksuit, red heart-shaped sunglasses, yellow hat, and white sneakers. (neon yellow tracksuit, red heart-shaped sunglasses, yellow hat)\n<Subject 2> — a white rounded-silhouette sports car with four round LED headlamps (four circular LED headlamps, shield-shaped badge on hood, black rectangular front bumper with large air intakes)\n<Subject 3> — a massive brutalist concrete tower with stepped balconies and recessed windows (rough weathered concrete surface, vertical staining on the upper block, small rectangular windows)\n\nThis beat: <Subject 1> sits inside <Subject 2> in the driver's seat, the car parked at the foot of <Subject 3>.\n\nThis is the first beat — continuityCheck should be { consistent: true, changes: [] }.\n\nWrite the blocking spec."
+          }
+        ],
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "emit_blocking",
+              "description": "Return the blocking spec.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "framing": {
+                    "type": "string",
+                    "enum": [
+                      "ECU",
+                      "CU",
+                      "MCU",
+                      "MS",
+                      "MWS",
+                      "WS",
+                      "EWS"
+                    ],
+                    "description": "Shot size."
+                  },
+                  "cameraAngle": {
+                    "type": "string",
+                    "enum": [
+                      "low",
+                      "eye-level",
+                      "high",
+                      "dutch",
+                      "overhead"
+                    ]
+                  },
+                  "cameraMovement": {
+                    "type": "string",
+                    "description": "Natural English, drawn from H3's own vocabulary (motion + amplitude + speed) — never a bracketed label."
+                  },
+                  "subjectsInFrame": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "subject": {
+                          "type": "string",
+                          "description": "Exactly the tag, nothing appended — e.g. \"<Subject 1>\", never \"<Subject 1> — description\"."
+                        },
+                        "screenPosition": {
+                          "type": "string",
+                          "enum": [
+                            "far-left",
+                            "left",
+                            "center-left",
+                            "center",
+                            "center-right",
+                            "right",
+                            "far-right"
+                          ]
+                        },
+                        "depth": {
+                          "type": "string",
+                          "enum": [
+                            "foreground",
+                            "midground",
+                            "background"
+                          ]
+                        },
+                        "action": {
+                          "type": "string",
+                          "description": "What this subject is doing right now, in this frame."
+                        }
+                      },
+                      "required": [
+                        "subject",
+                        "screenPosition",
+                        "depth",
+                        "action"
+                      ]
+                    }
+                  },
+                  "subjectsExcluded": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Subjects with a reference available who must NOT appear in this frame — bare tags only, e.g. \"<Subject 4>\"."
+                  },
+                  "screenDirection": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "subject": {
+                          "type": "string",
+                          "description": "Exactly the tag, e.g. \"<Subject 1>\" — nothing appended."
+                        },
+                        "movement": {
+                          "type": "string",
+                          "enum": [
+                            "left-to-right",
+                            "right-to-left",
+                            "toward-camera",
+                            "away-from-camera",
+                            "static"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "subject",
+                        "movement"
+                      ]
+                    }
+                  },
+                  "continuityCheck": {
+                    "type": "object",
+                    "properties": {
+                      "consistent": {
+                        "type": "boolean"
+                      },
+                      "changes": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "subject": {
+                              "type": "string",
+                              "description": "Exactly the tag, e.g. \"<Subject 1>\" — nothing appended."
+                            },
+                            "from": {
+                              "type": "string"
+                            },
+                            "to": {
+                              "type": "string"
+                            },
+                            "justifiedByBeatText": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "subject",
+                            "from",
+                            "to",
+                            "justifiedByBeatText"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "consistent",
+                      "changes"
+                    ],
+                    "description": "Empty changes array and consistent:true when there is no previous beat, or nothing moved."
+                  },
+                  "containmentNotes": {
+                    "type": "string"
+                  },
+                  "visualPrompt": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "framing",
+                  "cameraAngle",
+                  "cameraMovement",
+                  "subjectsInFrame",
+                  "subjectsExcluded",
+                  "screenDirection",
+                  "continuityCheck",
+                  "containmentNotes",
+                  "visualPrompt"
+                ]
+              }
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "function",
+          "function": {
+            "name": "emit_blocking"
+          }
+        },
+        "temperature": 0.3,
+        "max_completion_tokens": 1500
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 2086,
+        "completionTokens": 807,
+        "reasoningTokens": 0
+      },
+      "latencyMs": 8204,
+      "attempts": 1,
+      "costUsd": 0.013856,
+      "request": {
+        "model": "gpt-5.6-terra",
+        "reasoning_effort": "none",
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are the Storyboarder on a film crew that turns licensed NFT\nartwork into short generated video. Your job is not to describe a pretty picture — it is a\nprecise technical blocking specification for one beat, the kind a cinematographer leaves for\na director, exact enough that a video-render pipeline can follow it without guessing.\n\nMiniMax-H3 expects a structured script, not a paragraph. Emit three fields:\n\n1. integrated_multimodal_description — the visuals, action, camera and diegetic sound,\n   along a timeline. Open with visual style and composition (\"Live-action, cinematic, a\n   medium-wide shot frames...\"). A single shot needs no timestamp; if you genuinely need a\n   second shot, mark it \"[Shot 2] At 00:03.500, the camera cuts to...\".\n2. overall_soundscape — ambient, physical and non-verbal sound. One to four sentences.\n3. non_diegetic_music — score the characters cannot hear. One to three sentences, or \"N/A\".\n\nCamera moves are written as natural English actions, never as bracketed labels. The formula\nis motion + amplitude + speed: \"the camera pushes in with small amplitude at slow speed\".\nAvailable motions: Zoom In/Out, Push In/Out, Pan Left/Right, Truck Left/Right, Tilt Up/Down,\nPedestal Up/Down, Arc Shot, Tracking Shot, Static Shot, Shake Slightly/Strongly, POV, Roll.\n\nEach text field can run to 7000 characters. Length is not a virtue in itself, but this model\nis directed, not hinted at — be specific and complete rather than terse.\n\nRules:\n1. Never place a subject in subjectsInFrame that this beat's own text doesn't put there. If a\n   cast member has a reference available (listed below) but this beat's action doesn't\n   involve them, they go in subjectsExcluded — even though they're referenced elsewhere in\n   the film. An early, unearned reveal is a real error, not a safe default.\n2. cameraMovement is natural English (motion + amplitude + speed), drawn from H3's own\n   vocabulary above — never a bracketed label, never invented terminology H3 doesn't use.\n3. When given the previous beat's own blocking JSON, compare explicitly: report every subject\n   whose screenPosition or depth changed, and say plainly whether this beat's own text\n   justifies that change. An unexplained flip in position is a mistake to report, not\n   something to silently accept or paper over.\n4. containmentNotes says whatever a renderer needs to get physically right — who is inside\n   what, who is holding what, any constraint this beat implies. A person in a vehicle is\n   inside it, not visible through the windshield from an impossible angle.\n5. visualPrompt is a plain-English rendering of everything above, precise enough that an\n   image model could work from it directly later — but you are not drawing anything yourself.\n6. Every \"subject\" field everywhere in the schema is the bare tag and nothing else — exactly\n   \"<Subject 1>\", never \"<Subject 1> — the ape\" or any other appended description. Downstream\n   code matches these by exact tag; anything extra breaks that match silently.\n\nReturn the blocking spec by calling the tool. Write no prose outside it."
+          },
+          {
+            "role": "user",
+            "content": "World: A deserted city at dusk, wet streets, a single enormous concrete tower dominating the skyline.\nStaging: <Subject 1> is the driver of <Subject 2> and is inside it whenever it appears. <Subject 3> is a building and never moves.\nGuard: Every character has ordinary skin and is a living figure, not a mannequin and not a chrome statue.\nFilm's overall camera direction: Unhurried, mostly locked off, one move per beat at most.\nContinuity: A single cut to black divides the film; everything either side of it is continuous.\n\nCast with references available (referencePlan order):\n<Subject 1> — A Bored Ape character wearing a neon yellow tracksuit, red heart-shaped sunglasses, yellow hat, and white sneakers. (neon yellow tracksuit, red heart-shaped sunglasses, yellow hat)\n<Subject 2> — a white rounded-silhouette sports car with four round LED headlamps (four circular LED headlamps, shield-shaped badge on hood, black rectangular front bumper with large air intakes)\n<Subject 3> — a massive brutalist concrete tower with stepped balconies and recessed windows (rough weathered concrete surface, vertical staining on the upper block, small rectangular windows)\n\nThis beat: <Subject 2> pulls away from <Subject 3> and drives off down the empty street.\n\nThe previous beat's own blocking JSON, for your continuityCheck comparison:\n{\"framing\":\"MWS\",\"cameraAngle\":\"eye-level\",\"cameraMovement\":\"Static Shot with no amplitude at slow speed.\",\"subjectsInFrame\":[{\"subject\":\"<Subject 2>\",\"screenPosition\":\"center\",\"depth\":\"foreground\",\"action\":\"Parked on the rain-slick street at the tower's base, its white rounded body facing three-quarters toward camera; all four circular LED headlamps glow softly and reflect in the wet pavement.\"},{\"subject\":\"<Subject 1>\",\"screenPosition\":\"center\",\"depth\":\"foreground\",\"action\":\"Sits alive and still in the driver's seat inside the parked car, visible through the driver-side window in a neon yellow tracksuit, yellow hat, and red heart-shaped sunglasses; hands rest near the steering wheel with a bored, waiting posture.\"},{\"subject\":\"<Subject 3>\",\"screenPosition\":\"center\",\"depth\":\"background\",\"action\":\"Rises immovably behind the car, its enormous weathered brutalist concrete mass, stepped balconies, recessed small rectangular windows, and vertical upper-block staining dominating the dusk skyline.\"}],\"subjectsExcluded\":[],\"screenDirection\":[{\"subject\":\"<Subject 1>\",\"movement\":\"static\"},{\"subject\":\"<Subject 2>\",\"movement\":\"static\"},{\"subject\":\"<Subject 3>\",\"movement\":\"static\"}],\"continuityCheck\":{\"consistent\":true,\"changes\":[]},\"containmentNotes\":\"<Subject 1> is physically inside <Subject 2>, seated in its driver's seat behind the steering wheel; show the figure only through the side glass/open side-window view, never standing outside or appearing through an impossible windshield angle. <Subject 2> is parked at street level directly at the foot of <Subject 3>. <Subject 3> is a fixed building and does not move. Keep <Subject 1> an ordinary-skinned living figure, not a mannequin, statue, or chrome object.\",\"visualPrompt\":\"Live-action, cinematic, a medium-wide eye-level shot frames a deserted city street at dusk after rain. A white rounded-silhouette sports car is parked centered in the foreground at the foot of a single enormous brutalist concrete tower. The car is seen three-quarters from the driver-side/front, with four circular LED headlamps, a shield-shaped hood badge, and a black rectangular front bumper with large air intakes; its softly glowing lamps shimmer in puddles on the wet asphalt. Inside the driver’s seat, visible naturally through the driver-side window, <Subject 1> is a living ordinary-skinned Bored Ape character in a neon yellow tracksuit, yellow hat, red heart-shaped sunglasses, and white sneakers, sitting bored and motionless with hands near the steering wheel. Behind the car, <Subject 3> dominates the entire skyline: massive rough weathered concrete, stepped balconies, recessed small rectangular windows, and vertical staining on its upper block. The empty street, damp pavement, muted blue-violet dusk, and sparse reflected city light emphasize isolation. The camera remains locked off.\"}\n\nWrite the blocking spec."
+          }
+        ],
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "emit_blocking",
+              "description": "Return the blocking spec.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "framing": {
+                    "type": "string",
+                    "enum": [
+                      "ECU",
+                      "CU",
+                      "MCU",
+                      "MS",
+                      "MWS",
+                      "WS",
+                      "EWS"
+                    ],
+                    "description": "Shot size."
+                  },
+                  "cameraAngle": {
+                    "type": "string",
+                    "enum": [
+                      "low",
+                      "eye-level",
+                      "high",
+                      "dutch",
+                      "overhead"
+                    ]
+                  },
+                  "cameraMovement": {
+                    "type": "string",
+                    "description": "Natural English, drawn from H3's own vocabulary (motion + amplitude + speed) — never a bracketed label."
+                  },
+                  "subjectsInFrame": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "subject": {
+                          "type": "string",
+                          "description": "Exactly the tag, nothing appended — e.g. \"<Subject 1>\", never \"<Subject 1> — description\"."
+                        },
+                        "screenPosition": {
+                          "type": "string",
+                          "enum": [
+                            "far-left",
+                            "left",
+                            "center-left",
+                            "center",
+                            "center-right",
+                            "right",
+                            "far-right"
+                          ]
+                        },
+                        "depth": {
+                          "type": "string",
+                          "enum": [
+                            "foreground",
+                            "midground",
+                            "background"
+                          ]
+                        },
+                        "action": {
+                          "type": "string",
+                          "description": "What this subject is doing right now, in this frame."
+                        }
+                      },
+                      "required": [
+                        "subject",
+                        "screenPosition",
+                        "depth",
+                        "action"
+                      ]
+                    }
+                  },
+                  "subjectsExcluded": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Subjects with a reference available who must NOT appear in this frame — bare tags only, e.g. \"<Subject 4>\"."
+                  },
+                  "screenDirection": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "subject": {
+                          "type": "string",
+                          "description": "Exactly the tag, e.g. \"<Subject 1>\" — nothing appended."
+                        },
+                        "movement": {
+                          "type": "string",
+                          "enum": [
+                            "left-to-right",
+                            "right-to-left",
+                            "toward-camera",
+                            "away-from-camera",
+                            "static"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "subject",
+                        "movement"
+                      ]
+                    }
+                  },
+                  "continuityCheck": {
+                    "type": "object",
+                    "properties": {
+                      "consistent": {
+                        "type": "boolean"
+                      },
+                      "changes": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "subject": {
+                              "type": "string",
+                              "description": "Exactly the tag, e.g. \"<Subject 1>\" — nothing appended."
+                            },
+                            "from": {
+                              "type": "string"
+                            },
+                            "to": {
+                              "type": "string"
+                            },
+                            "justifiedByBeatText": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "subject",
+                            "from",
+                            "to",
+                            "justifiedByBeatText"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "consistent",
+                      "changes"
+                    ],
+                    "description": "Empty changes array and consistent:true when there is no previous beat, or nothing moved."
+                  },
+                  "containmentNotes": {
+                    "type": "string"
+                  },
+                  "visualPrompt": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "framing",
+                  "cameraAngle",
+                  "cameraMovement",
+                  "subjectsInFrame",
+                  "subjectsExcluded",
+                  "screenDirection",
+                  "continuityCheck",
+                  "containmentNotes",
+                  "visualPrompt"
+                ]
+              }
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "function",
+          "function": {
+            "name": "emit_blocking"
+          }
+        },
+        "temperature": 0.3,
+        "max_completion_tokens": 1500
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 1483,
+        "completionTokens": 378,
+        "reasoningTokens": 0
+      },
+      "latencyMs": 4557,
+      "attempts": 1,
+      "costUsd": 0.007502,
+      "request": {
+        "model": "gpt-5.6-terra",
+        "reasoning_effort": "none",
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are the Storyboarder on a film crew that turns licensed NFT\nartwork into short generated video. Your job is not to describe a pretty picture — it is a\nprecise technical blocking specification for one beat, the kind a cinematographer leaves for\na director, exact enough that a video-render pipeline can follow it without guessing.\n\nMiniMax-H3 expects a structured script, not a paragraph. Emit three fields:\n\n1. integrated_multimodal_description — the visuals, action, camera and diegetic sound,\n   along a timeline. Open with visual style and composition (\"Live-action, cinematic, a\n   medium-wide shot frames...\"). A single shot needs no timestamp; if you genuinely need a\n   second shot, mark it \"[Shot 2] At 00:03.500, the camera cuts to...\".\n2. overall_soundscape — ambient, physical and non-verbal sound. One to four sentences.\n3. non_diegetic_music — score the characters cannot hear. One to three sentences, or \"N/A\".\n\nCamera moves are written as natural English actions, never as bracketed labels. The formula\nis motion + amplitude + speed: \"the camera pushes in with small amplitude at slow speed\".\nAvailable motions: Zoom In/Out, Push In/Out, Pan Left/Right, Truck Left/Right, Tilt Up/Down,\nPedestal Up/Down, Arc Shot, Tracking Shot, Static Shot, Shake Slightly/Strongly, POV, Roll.\n\nEach text field can run to 7000 characters. Length is not a virtue in itself, but this model\nis directed, not hinted at — be specific and complete rather than terse.\n\nRules:\n1. Never place a subject in subjectsInFrame that this beat's own text doesn't put there. If a\n   cast member has a reference available (listed below) but this beat's action doesn't\n   involve them, they go in subjectsExcluded — even though they're referenced elsewhere in\n   the film. An early, unearned reveal is a real error, not a safe default.\n2. cameraMovement is natural English (motion + amplitude + speed), drawn from H3's own\n   vocabulary above — never a bracketed label, never invented terminology H3 doesn't use.\n3. When given the previous beat's own blocking JSON, compare explicitly: report every subject\n   whose screenPosition or depth changed, and say plainly whether this beat's own text\n   justifies that change. An unexplained flip in position is a mistake to report, not\n   something to silently accept or paper over.\n4. containmentNotes says whatever a renderer needs to get physically right — who is inside\n   what, who is holding what, any constraint this beat implies. A person in a vehicle is\n   inside it, not visible through the windshield from an impossible angle.\n5. visualPrompt is a plain-English rendering of everything above, precise enough that an\n   image model could work from it directly later — but you are not drawing anything yourself.\n6. Every \"subject\" field everywhere in the schema is the bare tag and nothing else — exactly\n   \"<Subject 1>\", never \"<Subject 1> — the ape\" or any other appended description. Downstream\n   code matches these by exact tag; anything extra breaks that match silently.\n\nReturn the blocking spec by calling the tool. Write no prose outside it."
+          },
+          {
+            "role": "user",
+            "content": "World: A deserted city at dusk, wet streets, a single enormous concrete tower dominating the skyline.\nStaging: <Subject 1> is the driver of <Subject 2> and is inside it whenever it appears. <Subject 3> is a building and never moves.\nGuard: Every character has ordinary skin and is a living figure, not a mannequin and not a chrome statue.\nFilm's overall camera direction: Unhurried, mostly locked off, one move per beat at most.\nContinuity: A single cut to black divides the film; everything either side of it is continuous.\n\nCast with references available (referencePlan order):\n<Subject 1> — A Bored Ape character wearing a neon yellow tracksuit, red heart-shaped sunglasses, yellow hat, and white sneakers. (neon yellow tracksuit, red heart-shaped sunglasses, yellow hat)\n<Subject 2> — a white rounded-silhouette sports car with four round LED headlamps (four circular LED headlamps, shield-shaped badge on hood, black rectangular front bumper with large air intakes)\n<Subject 3> — a massive brutalist concrete tower with stepped balconies and recessed windows (rough weathered concrete surface, vertical staining on the upper block, small rectangular windows)\n\nThis beat: <Subject 1> stands alone on an empty rooftop high above the city, no car anywhere.\n\nThis is the first beat — continuityCheck should be { consistent: true, changes: [] }.\n\nWrite the blocking spec."
+          }
+        ],
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "emit_blocking",
+              "description": "Return the blocking spec.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "framing": {
+                    "type": "string",
+                    "enum": [
+                      "ECU",
+                      "CU",
+                      "MCU",
+                      "MS",
+                      "MWS",
+                      "WS",
+                      "EWS"
+                    ],
+                    "description": "Shot size."
+                  },
+                  "cameraAngle": {
+                    "type": "string",
+                    "enum": [
+                      "low",
+                      "eye-level",
+                      "high",
+                      "dutch",
+                      "overhead"
+                    ]
+                  },
+                  "cameraMovement": {
+                    "type": "string",
+                    "description": "Natural English, drawn from H3's own vocabulary (motion + amplitude + speed) — never a bracketed label."
+                  },
+                  "subjectsInFrame": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "subject": {
+                          "type": "string",
+                          "description": "Exactly the tag, nothing appended — e.g. \"<Subject 1>\", never \"<Subject 1> — description\"."
+                        },
+                        "screenPosition": {
+                          "type": "string",
+                          "enum": [
+                            "far-left",
+                            "left",
+                            "center-left",
+                            "center",
+                            "center-right",
+                            "right",
+                            "far-right"
+                          ]
+                        },
+                        "depth": {
+                          "type": "string",
+                          "enum": [
+                            "foreground",
+                            "midground",
+                            "background"
+                          ]
+                        },
+                        "action": {
+                          "type": "string",
+                          "description": "What this subject is doing right now, in this frame."
+                        }
+                      },
+                      "required": [
+                        "subject",
+                        "screenPosition",
+                        "depth",
+                        "action"
+                      ]
+                    }
+                  },
+                  "subjectsExcluded": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Subjects with a reference available who must NOT appear in this frame — bare tags only, e.g. \"<Subject 4>\"."
+                  },
+                  "screenDirection": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "subject": {
+                          "type": "string",
+                          "description": "Exactly the tag, e.g. \"<Subject 1>\" — nothing appended."
+                        },
+                        "movement": {
+                          "type": "string",
+                          "enum": [
+                            "left-to-right",
+                            "right-to-left",
+                            "toward-camera",
+                            "away-from-camera",
+                            "static"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "subject",
+                        "movement"
+                      ]
+                    }
+                  },
+                  "continuityCheck": {
+                    "type": "object",
+                    "properties": {
+                      "consistent": {
+                        "type": "boolean"
+                      },
+                      "changes": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "subject": {
+                              "type": "string",
+                              "description": "Exactly the tag, e.g. \"<Subject 1>\" — nothing appended."
+                            },
+                            "from": {
+                              "type": "string"
+                            },
+                            "to": {
+                              "type": "string"
+                            },
+                            "justifiedByBeatText": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "subject",
+                            "from",
+                            "to",
+                            "justifiedByBeatText"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "consistent",
+                      "changes"
+                    ],
+                    "description": "Empty changes array and consistent:true when there is no previous beat, or nothing moved."
+                  },
+                  "containmentNotes": {
+                    "type": "string"
+                  },
+                  "visualPrompt": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "framing",
+                  "cameraAngle",
+                  "cameraMovement",
+                  "subjectsInFrame",
+                  "subjectsExcluded",
+                  "screenDirection",
+                  "continuityCheck",
+                  "containmentNotes",
+                  "visualPrompt"
+                ]
+              }
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "function",
+          "function": {
+            "name": "emit_blocking"
+          }
+        },
+        "temperature": 0.3,
+        "max_completion_tokens": 1500
+      }
+    },
+    {
+      "usage": {
+        "promptTokens": 1843,
+        "completionTokens": 507,
+        "reasoningTokens": 0
+      },
+      "latencyMs": 5618,
+      "attempts": 1,
+      "costUsd": 0.00977,
+      "request": {
+        "model": "gpt-5.6-terra",
+        "reasoning_effort": "none",
+        "messages": [
+          {
+            "role": "system",
+            "content": "You are the Storyboarder on a film crew that turns licensed NFT\nartwork into short generated video. Your job is not to describe a pretty picture — it is a\nprecise technical blocking specification for one beat, the kind a cinematographer leaves for\na director, exact enough that a video-render pipeline can follow it without guessing.\n\nMiniMax-H3 expects a structured script, not a paragraph. Emit three fields:\n\n1. integrated_multimodal_description — the visuals, action, camera and diegetic sound,\n   along a timeline. Open with visual style and composition (\"Live-action, cinematic, a\n   medium-wide shot frames...\"). A single shot needs no timestamp; if you genuinely need a\n   second shot, mark it \"[Shot 2] At 00:03.500, the camera cuts to...\".\n2. overall_soundscape — ambient, physical and non-verbal sound. One to four sentences.\n3. non_diegetic_music — score the characters cannot hear. One to three sentences, or \"N/A\".\n\nCamera moves are written as natural English actions, never as bracketed labels. The formula\nis motion + amplitude + speed: \"the camera pushes in with small amplitude at slow speed\".\nAvailable motions: Zoom In/Out, Push In/Out, Pan Left/Right, Truck Left/Right, Tilt Up/Down,\nPedestal Up/Down, Arc Shot, Tracking Shot, Static Shot, Shake Slightly/Strongly, POV, Roll.\n\nEach text field can run to 7000 characters. Length is not a virtue in itself, but this model\nis directed, not hinted at — be specific and complete rather than terse.\n\nRules:\n1. Never place a subject in subjectsInFrame that this beat's own text doesn't put there. If a\n   cast member has a reference available (listed below) but this beat's action doesn't\n   involve them, they go in subjectsExcluded — even though they're referenced elsewhere in\n   the film. An early, unearned reveal is a real error, not a safe default.\n2. cameraMovement is natural English (motion + amplitude + speed), drawn from H3's own\n   vocabulary above — never a bracketed label, never invented terminology H3 doesn't use.\n3. When given the previous beat's own blocking JSON, compare explicitly: report every subject\n   whose screenPosition or depth changed, and say plainly whether this beat's own text\n   justifies that change. An unexplained flip in position is a mistake to report, not\n   something to silently accept or paper over.\n4. containmentNotes says whatever a renderer needs to get physically right — who is inside\n   what, who is holding what, any constraint this beat implies. A person in a vehicle is\n   inside it, not visible through the windshield from an impossible angle.\n5. visualPrompt is a plain-English rendering of everything above, precise enough that an\n   image model could work from it directly later — but you are not drawing anything yourself.\n6. Every \"subject\" field everywhere in the schema is the bare tag and nothing else — exactly\n   \"<Subject 1>\", never \"<Subject 1> — the ape\" or any other appended description. Downstream\n   code matches these by exact tag; anything extra breaks that match silently.\n\nReturn the blocking spec by calling the tool. Write no prose outside it."
+          },
+          {
+            "role": "user",
+            "content": "World: A deserted city at dusk, wet streets, a single enormous concrete tower dominating the skyline.\nStaging: <Subject 1> is the driver of <Subject 2> and is inside it whenever it appears. <Subject 3> is a building and never moves.\nGuard: Every character has ordinary skin and is a living figure, not a mannequin and not a chrome statue.\nFilm's overall camera direction: Unhurried, mostly locked off, one move per beat at most.\nContinuity: A single cut to black divides the film; everything either side of it is continuous.\n\nCast with references available (referencePlan order):\n<Subject 1> — A Bored Ape character wearing a neon yellow tracksuit, red heart-shaped sunglasses, yellow hat, and white sneakers. (neon yellow tracksuit, red heart-shaped sunglasses, yellow hat)\n<Subject 2> — a white rounded-silhouette sports car with four round LED headlamps (four circular LED headlamps, shield-shaped badge on hood, black rectangular front bumper with large air intakes)\n<Subject 3> — a massive brutalist concrete tower with stepped balconies and recessed windows (rough weathered concrete surface, vertical staining on the upper block, small rectangular windows)\n\nThis beat: <Subject 1> walks to the edge of the roof and looks down at the street far below.\n\nThe previous beat's own blocking JSON, for your continuityCheck comparison:\n{\"framing\":\"MWS\",\"cameraAngle\":\"eye-level\",\"cameraMovement\":\"Static Shot with no amplitude at slow speed.\",\"subjectsInFrame\":[{\"subject\":\"<Subject 1>\",\"screenPosition\":\"center\",\"depth\":\"midground\",\"action\":\"Stands alone near the open center of a wet rooftop, facing the distant deserted city skyline; the neon yellow tracksuit, yellow hat, red heart-shaped sunglasses, and white sneakers are visible. The living figure remains still, with a subtle natural shift of weight in the dusk wind.\"}],\"subjectsExcluded\":[\"<Subject 2>\",\"<Subject 3>\"],\"screenDirection\":[{\"subject\":\"<Subject 1>\",\"movement\":\"static\"}],\"continuityCheck\":{\"consistent\":true,\"changes\":[]},\"containmentNotes\":\"<Subject 1> is standing on the exposed rooftop surface, fully outside any vehicle or structure interior. <Subject 2> does not appear anywhere in frame or on the rooftop. <Subject 3> does not appear in frame. Keep the rooftop empty apart from <Subject 1>; no other people, vehicles, or figures are present.\",\"visualPrompt\":\"Live-action, cinematic, a medium-wide eye-level shot frames <Subject 1> alone on an empty wet rooftop at dusk, high above a deserted city. The living Bored Ape character wears a neon yellow tracksuit, yellow hat, red heart-shaped sunglasses, and white sneakers, standing centered in the midground and facing the distant skyline. Rain-darkened concrete reflects faint violet-blue dusk light and scattered city glow; low wind stirs the tracksuit fabric. The skyline is broad and empty, with no car and no massive tower visible in this composition. The camera remains locked off, emphasizing isolation, wet rooftop texture, and the enormous height above silent streets.\"}\n\nWrite the blocking spec."
+          }
+        ],
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "emit_blocking",
+              "description": "Return the blocking spec.",
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "framing": {
+                    "type": "string",
+                    "enum": [
+                      "ECU",
+                      "CU",
+                      "MCU",
+                      "MS",
+                      "MWS",
+                      "WS",
+                      "EWS"
+                    ],
+                    "description": "Shot size."
+                  },
+                  "cameraAngle": {
+                    "type": "string",
+                    "enum": [
+                      "low",
+                      "eye-level",
+                      "high",
+                      "dutch",
+                      "overhead"
+                    ]
+                  },
+                  "cameraMovement": {
+                    "type": "string",
+                    "description": "Natural English, drawn from H3's own vocabulary (motion + amplitude + speed) — never a bracketed label."
+                  },
+                  "subjectsInFrame": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "subject": {
+                          "type": "string",
+                          "description": "Exactly the tag, nothing appended — e.g. \"<Subject 1>\", never \"<Subject 1> — description\"."
+                        },
+                        "screenPosition": {
+                          "type": "string",
+                          "enum": [
+                            "far-left",
+                            "left",
+                            "center-left",
+                            "center",
+                            "center-right",
+                            "right",
+                            "far-right"
+                          ]
+                        },
+                        "depth": {
+                          "type": "string",
+                          "enum": [
+                            "foreground",
+                            "midground",
+                            "background"
+                          ]
+                        },
+                        "action": {
+                          "type": "string",
+                          "description": "What this subject is doing right now, in this frame."
+                        }
+                      },
+                      "required": [
+                        "subject",
+                        "screenPosition",
+                        "depth",
+                        "action"
+                      ]
+                    }
+                  },
+                  "subjectsExcluded": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Subjects with a reference available who must NOT appear in this frame — bare tags only, e.g. \"<Subject 4>\"."
+                  },
+                  "screenDirection": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "subject": {
+                          "type": "string",
+                          "description": "Exactly the tag, e.g. \"<Subject 1>\" — nothing appended."
+                        },
+                        "movement": {
+                          "type": "string",
+                          "enum": [
+                            "left-to-right",
+                            "right-to-left",
+                            "toward-camera",
+                            "away-from-camera",
+                            "static"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "subject",
+                        "movement"
+                      ]
+                    }
+                  },
+                  "continuityCheck": {
+                    "type": "object",
+                    "properties": {
+                      "consistent": {
+                        "type": "boolean"
+                      },
+                      "changes": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "subject": {
+                              "type": "string",
+                              "description": "Exactly the tag, e.g. \"<Subject 1>\" — nothing appended."
+                            },
+                            "from": {
+                              "type": "string"
+                            },
+                            "to": {
+                              "type": "string"
+                            },
+                            "justifiedByBeatText": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "subject",
+                            "from",
+                            "to",
+                            "justifiedByBeatText"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "consistent",
+                      "changes"
+                    ],
+                    "description": "Empty changes array and consistent:true when there is no previous beat, or nothing moved."
+                  },
+                  "containmentNotes": {
+                    "type": "string"
+                  },
+                  "visualPrompt": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "framing",
+                  "cameraAngle",
+                  "cameraMovement",
+                  "subjectsInFrame",
+                  "subjectsExcluded",
+                  "screenDirection",
+                  "continuityCheck",
+                  "containmentNotes",
+                  "visualPrompt"
+                ]
+              }
+            }
+          }
+        ],
+        "tool_choice": {
+          "type": "function",
+          "function": {
+            "name": "emit_blocking"
+          }
+        },
+        "temperature": 0.3,
+        "max_completion_tokens": 1500
+      }
+    }
+  ],
+  "costUsd": 0.041566
+}

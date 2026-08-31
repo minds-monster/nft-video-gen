@@ -1,0 +1,486 @@
+{
+  "runId": "20260826T163820Z",
+  "totalUsd": 0,
+  "entries": [
+    {
+      "tag": "scene-film__captured__r0",
+      "cell": "scene-film",
+      "fixture": "captured",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "scene-film__captured__r1",
+      "cell": "scene-film",
+      "fixture": "captured",
+      "repeat": 1,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "scene-film__captured__r2",
+      "cell": "scene-film",
+      "fixture": "captured",
+      "repeat": 2,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "scene-film__grid-launch__r0",
+      "cell": "scene-film",
+      "fixture": "grid-launch",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "scene-film__grid-launch__r1",
+      "cell": "scene-film",
+      "fixture": "grid-launch",
+      "repeat": 1,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "scene-film__grid-launch__r2",
+      "cell": "scene-film",
+      "fixture": "grid-launch",
+      "repeat": 2,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "scene-film__two-hander-axis__r0",
+      "cell": "scene-film",
+      "fixture": "two-hander-axis",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "scene-film__two-hander-axis__r1",
+      "cell": "scene-film",
+      "fixture": "two-hander-axis",
+      "repeat": 1,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "scene-film__two-hander-axis__r2",
+      "cell": "scene-film",
+      "fixture": "two-hander-axis",
+      "repeat": 2,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "scene-film__cut-to-black__r0",
+      "cell": "scene-film",
+      "fixture": "cut-to-black",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "scene-film__cut-to-black__r1",
+      "cell": "scene-film",
+      "fixture": "cut-to-black",
+      "repeat": 1,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "scene-film__cut-to-black__r2",
+      "cell": "scene-film",
+      "fixture": "cut-to-black",
+      "repeat": 2,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "scene-film__scale-extremes__r0",
+      "cell": "scene-film",
+      "fixture": "scale-extremes",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "scene-film__scale-extremes__r1",
+      "cell": "scene-film",
+      "fixture": "scale-extremes",
+      "repeat": 1,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "scene-film__scale-extremes__r2",
+      "cell": "scene-film",
+      "fixture": "scale-extremes",
+      "repeat": 2,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "scene-chain__captured__r0",
+      "cell": "scene-chain",
+      "fixture": "captured",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "scene-chain__captured__r1",
+      "cell": "scene-chain",
+      "fixture": "captured",
+      "repeat": 1,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "scene-chain__captured__r2",
+      "cell": "scene-chain",
+      "fixture": "captured",
+      "repeat": 2,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "scene-chain__grid-launch__r0",
+      "cell": "scene-chain",
+      "fixture": "grid-launch",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "scene-chain__grid-launch__r1",
+      "cell": "scene-chain",
+      "fixture": "grid-launch",
+      "repeat": 1,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "scene-chain__grid-launch__r2",
+      "cell": "scene-chain",
+      "fixture": "grid-launch",
+      "repeat": 2,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "scene-chain__two-hander-axis__r0",
+      "cell": "scene-chain",
+      "fixture": "two-hander-axis",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "scene-chain__two-hander-axis__r1",
+      "cell": "scene-chain",
+      "fixture": "two-hander-axis",
+      "repeat": 1,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "scene-chain__two-hander-axis__r2",
+      "cell": "scene-chain",
+      "fixture": "two-hander-axis",
+      "repeat": 2,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "scene-chain__cut-to-black__r0",
+      "cell": "scene-chain",
+      "fixture": "cut-to-black",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "scene-chain__cut-to-black__r1",
+      "cell": "scene-chain",
+      "fixture": "cut-to-black",
+      "repeat": 1,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "scene-chain__cut-to-black__r2",
+      "cell": "scene-chain",
+      "fixture": "cut-to-black",
+      "repeat": 2,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "scene-chain__scale-extremes__r0",
+      "cell": "scene-chain",
+      "fixture": "scale-extremes",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "scene-chain__scale-extremes__r1",
+      "cell": "scene-chain",
+      "fixture": "scale-extremes",
+      "repeat": 1,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "scene-chain__scale-extremes__r2",
+      "cell": "scene-chain",
+      "fixture": "scale-extremes",
+      "repeat": 2,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "c0__captured__r0",
+      "cell": "c0",
+      "fixture": "captured",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "c0__captured__r1",
+      "cell": "c0",
+      "fixture": "captured",
+      "repeat": 1,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "c0__captured__r2",
+      "cell": "c0",
+      "fixture": "captured",
+      "repeat": 2,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "c0__grid-launch__r0",
+      "cell": "c0",
+      "fixture": "grid-launch",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "c0__grid-launch__r1",
+      "cell": "c0",
+      "fixture": "grid-launch",
+      "repeat": 1,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "c0__grid-launch__r2",
+      "cell": "c0",
+      "fixture": "grid-launch",
+      "repeat": 2,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "c0__two-hander-axis__r0",
+      "cell": "c0",
+      "fixture": "two-hander-axis",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "c0__two-hander-axis__r1",
+      "cell": "c0",
+      "fixture": "two-hander-axis",
+      "repeat": 1,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "c0__two-hander-axis__r2",
+      "cell": "c0",
+      "fixture": "two-hander-axis",
+      "repeat": 2,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "c0__cut-to-black__r0",
+      "cell": "c0",
+      "fixture": "cut-to-black",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "c0__cut-to-black__r1",
+      "cell": "c0",
+      "fixture": "cut-to-black",
+      "repeat": 1,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "c0__cut-to-black__r2",
+      "cell": "c0",
+      "fixture": "cut-to-black",
+      "repeat": 2,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "c0__scale-extremes__r0",
+      "cell": "c0",
+      "fixture": "scale-extremes",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "c0__scale-extremes__r1",
+      "cell": "c0",
+      "fixture": "scale-extremes",
+      "repeat": 1,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "c0__scale-extremes__r2",
+      "cell": "c0",
+      "fixture": "scale-extremes",
+      "repeat": 2,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "c1__captured__r0",
+      "cell": "c1",
+      "fixture": "captured",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "c1__captured__r1",
+      "cell": "c1",
+      "fixture": "captured",
+      "repeat": 1,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "c1__captured__r2",
+      "cell": "c1",
+      "fixture": "captured",
+      "repeat": 2,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "c1__grid-launch__r0",
+      "cell": "c1",
+      "fixture": "grid-launch",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "c1__grid-launch__r1",
+      "cell": "c1",
+      "fixture": "grid-launch",
+      "repeat": 1,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "c1__grid-launch__r2",
+      "cell": "c1",
+      "fixture": "grid-launch",
+      "repeat": 2,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "c1__two-hander-axis__r0",
+      "cell": "c1",
+      "fixture": "two-hander-axis",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "c1__two-hander-axis__r1",
+      "cell": "c1",
+      "fixture": "two-hander-axis",
+      "repeat": 1,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "c1__two-hander-axis__r2",
+      "cell": "c1",
+      "fixture": "two-hander-axis",
+      "repeat": 2,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "c1__cut-to-black__r0",
+      "cell": "c1",
+      "fixture": "cut-to-black",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "c1__cut-to-black__r1",
+      "cell": "c1",
+      "fixture": "cut-to-black",
+      "repeat": 1,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "c1__cut-to-black__r2",
+      "cell": "c1",
+      "fixture": "cut-to-black",
+      "repeat": 2,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "c1__scale-extremes__r0",
+      "cell": "c1",
+      "fixture": "scale-extremes",
+      "repeat": 0,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "c1__scale-extremes__r1",
+      "cell": "c1",
+      "fixture": "scale-extremes",
+      "repeat": 1,
+      "failed": true,
+      "failure": "error"
+    },
+    {
+      "tag": "c1__scale-extremes__r2",
+      "cell": "c1",
+      "fixture": "scale-extremes",
+      "repeat": 2,
+      "failed": true,
+      "failure": "error"
+    }
+  ]
+}

@@ -1,0 +1,1078 @@
+{
+  "cell": "scene-film-v2",
+  "fixture": "grid-launch",
+  "fixtureSha": "b2d6f4830c1e",
+  "repeat": 1,
+  "film": {
+    "units": "metres",
+    "aspect": 1.7778,
+    "sceneScaleNote": "The wet starting-grid set spans about 140 metres along the track and 40 metres across, with barriers and tiered grandstands rising approximately 18 metres on both sides.",
+    "beats": [
+      {
+        "beatIndex": 0,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": -4,
+              "y": 1.35,
+              "z": 6
+            },
+            "lookAt": {
+              "x": 0,
+              "y": 0.65,
+              "z": 0
+            }
+          },
+          "end": {
+            "position": {
+              "x": -2,
+              "y": 1.35,
+              "z": 6
+            },
+            "lookAt": {
+              "x": -0.35,
+              "y": 1.2,
+              "z": 0.2
+            }
+          },
+          "focalStartMm": 60,
+          "focalEndMm": 60,
+          "rollDeg": 0,
+          "motion": "Truck Right",
+          "amplitude": "medium",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 2>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.25,
+            "widthM": 2.05,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "Waiting motionless on the rain-soaked left grid slot with its front storage compartment standing open; water beads on the camouflage wrap and bright yellow wheels.",
+            "screenPosition": "center",
+            "depth": "midground"
+          }
+        ],
+        "principalSubject": "<Subject 2>",
+        "framing": "WS",
+        "changes": [],
+        "containmentNotes": "<Subject 1> remains physically seated inside <Subject 2> but is completely concealed by the isolated front-quarter composition and is not visible. The camera remains outside the car. The open storage lid is part of <Subject 2> and stays raised.",
+        "proseNote": "Live-action, cinematic night photography opens in a wide shot of <Subject 2> alone beneath hard floodlights, its raised front storage lid cutting through the heavy rain while steam drifts over reflective black asphalt. The camera trucks right with medium amplitude at slow speed at window height, beginning the take’s uninterrupted lateral glide; no other character or car enters the frame. Rain hammers the bodywork and track while distant spectators cheer beyond the barriers."
+      },
+      {
+        "beatIndex": 1,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": -2,
+              "y": 1.35,
+              "z": 6
+            },
+            "lookAt": {
+              "x": -0.35,
+              "y": 1.2,
+              "z": 0.2
+            }
+          },
+          "end": {
+            "position": {
+              "x": 1.6,
+              "y": 1.35,
+              "z": 6
+            },
+            "lookAt": {
+              "x": 1.4,
+              "y": 1.2,
+              "z": 0.2
+            }
+          },
+          "focalStartMm": 60,
+          "focalEndMm": 165,
+          "rollDeg": 0,
+          "motion": "Truck Right",
+          "amplitude": "medium",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": -0.35,
+            "z": 0.2,
+            "endX": -0.35,
+            "endZ": 0.2,
+            "groundOffsetM": 0.42,
+            "heightM": 1.75,
+            "widthM": 0.65,
+            "yawDeg": 0,
+            "containerId": "<Subject 2>",
+            "action": "Sitting in the driver’s seat with both hands fixed on the steering wheel, visible through the open side window; the living character waits calmly behind red heart-shaped sunglasses.",
+            "screenPosition": "center-left",
+            "depth": "midground"
+          },
+          {
+            "subject": "<Subject 2>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.25,
+            "widthM": 2.05,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "Remaining stationary on the left grid slot as rain streams over the camouflage wrap; its open side window exposes the driver and its front storage compartment remains raised.",
+            "screenPosition": "center-left",
+            "depth": "midground"
+          }
+        ],
+        "principalSubject": "<Subject 1>",
+        "framing": "MWS",
+        "changes": [],
+        "containmentNotes": "<Subject 1> is seated within the footprint of <Subject 2> at a 0.42-metre seat-base offset and holds the steering wheel with both hands. The side window facing the moving camera is open. <Subject 1> is a living figure with ordinary organic skin and fur, not a mannequin or metallic statue.",
+        "proseNote": "Without a cut, the camera trucks right with medium amplitude at slow speed along <Subject 2>, looking through its open side window to find <Subject 1> seated at the wheel. The lens gradually tightens during the glide, moving from a medium-wide view toward a more intimate view of the neon tracksuit, yellow hat and heart-shaped glasses, while both hands remain planted on the wheel. Rain rattles against the roof and the idling engine pulses beneath the crowd noise."
+      },
+      {
+        "beatIndex": 2,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 1.6,
+              "y": 1.35,
+              "z": 6
+            },
+            "lookAt": {
+              "x": 1.4,
+              "y": 1.2,
+              "z": 0.2
+            }
+          },
+          "end": {
+            "position": {
+              "x": 4.7,
+              "y": 1.35,
+              "z": 6
+            },
+            "lookAt": {
+              "x": 6.5,
+              "y": 1.2,
+              "z": 3.5
+            }
+          },
+          "focalStartMm": 165,
+          "focalEndMm": 24,
+          "rollDeg": 0,
+          "motion": "Zoom Out",
+          "amplitude": "large",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 3>",
+            "x": 3.15,
+            "z": 0.2,
+            "endX": 3.15,
+            "endZ": 0.2,
+            "groundOffsetM": 0.42,
+            "heightM": 1.75,
+            "widthM": 0.6,
+            "yawDeg": 0,
+            "containerId": "<Subject 4>",
+            "action": "Sitting at the wheel, turning their head toward the passing camera and staring directly down the lens through orange translucent glasses.",
+            "screenPosition": "center-right",
+            "depth": "midground"
+          },
+          {
+            "subject": "<Subject 4>",
+            "x": 3.5,
+            "z": 0,
+            "endX": 3.5,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.3,
+            "widthM": 1.95,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "Waiting motionless in the right grid slot with four round LED headlamps shining through the rain and its camera-side window open.",
+            "screenPosition": "center-right",
+            "depth": "midground"
+          }
+        ],
+        "principalSubject": "<Subject 3>",
+        "framing": "MCU",
+        "changes": [],
+        "containmentNotes": "<Subject 3> remains seated inside <Subject 4>, within its footprint and behind its open side window. The head turns toward the lens without changing the driver’s ground position. <Subject 3> is a living person with ordinary skin, not a mannequin or chrome figure. The camera stays outside <Subject 4>.",
+        "proseNote": "The same uninterrupted glide reaches <Subject 4> and begins in a medium close-up through its open side window as <Subject 3> turns and looks straight down the lens. The camera zooms out with large amplitude at slow speed while continuing smoothly rightward, releasing the intense eye contact and opening the composition toward the front of the grid. The white car idles under its four circular headlamps as rain strikes the metal, tires and window frame."
+      },
+      {
+        "beatIndex": 3,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 4.7,
+              "y": 1.35,
+              "z": 6
+            },
+            "lookAt": {
+              "x": 6.5,
+              "y": 1.2,
+              "z": 3.5
+            }
+          },
+          "end": {
+            "position": {
+              "x": 6.5,
+              "y": 1.4,
+              "z": 6.2
+            },
+            "lookAt": {
+              "x": 2.7,
+              "y": 1,
+              "z": 1
+            }
+          },
+          "focalStartMm": 24,
+          "focalEndMm": 35,
+          "rollDeg": 0,
+          "motion": "Truck Right",
+          "amplitude": "medium",
+          "speed": "slow",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 2>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.25,
+            "widthM": 2.05,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "Waiting behind the starter in the left grid slot, engine idling and front storage compartment still raised.",
+            "screenPosition": "left",
+            "depth": "background"
+          },
+          {
+            "subject": "<Subject 4>",
+            "x": 3.5,
+            "z": 0,
+            "endX": 3.5,
+            "endZ": 0,
+            "groundOffsetM": 0,
+            "heightM": 1.3,
+            "widthM": 1.95,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "Waiting beside <Subject 2> in the right grid slot with all four circular headlamps illuminated.",
+            "screenPosition": "center",
+            "depth": "background"
+          },
+          {
+            "subject": "<Subject 5>",
+            "x": 6.5,
+            "z": 3.5,
+            "endX": 6.5,
+            "endZ": 3.5,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.9,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "Standing alone at the front-right edge of the grid with one arm held high, poised to start the race.",
+            "screenPosition": "right",
+            "depth": "foreground"
+          },
+          {
+            "subject": "<Subject 6>",
+            "x": 6.5,
+            "z": 3.5,
+            "endX": 6.5,
+            "endZ": 3.5,
+            "groundOffsetM": 0.72,
+            "heightM": 0.78,
+            "widthM": 0.72,
+            "yawDeg": 0,
+            "containerId": "<Subject 5>",
+            "action": "Being worn as <Subject 5>’s deep-red velvet bomber jacket, its silver filigree and heart-shaped chest panel darkened by rain.",
+            "screenPosition": "right",
+            "depth": "foreground"
+          }
+        ],
+        "principalSubject": "<Subject 5>",
+        "framing": "WS",
+        "changes": [],
+        "containmentNotes": "<Subject 6> is a garment fitted around the torso of <Subject 5>, not an independent person and not displayed on a mannequin. It shares <Subject 5>’s ground position and orientation. <Subject 5> is a living organic bear-like character with ordinary non-metallic skin or fur. The two drivers remain inside their respective cars but are not resolved through the rain and oblique wide angle.",
+        "proseNote": "The camera trucks right with medium amplitude at slow speed and finds <Subject 5> standing at the front-right edge of the grid, wearing <Subject 6> and holding one arm high. The widening perspective keeps both cars waiting behind—<Subject 2> on the left and <Subject 4> on the right—while the starter remains dominant in the foreground. Floodlights rake the rain and steam, the crowd swells, and both engines rise into a tense synchronized growl."
+      },
+      {
+        "beatIndex": 4,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 6.5,
+              "y": 1.4,
+              "z": 6.2
+            },
+            "lookAt": {
+              "x": 2.7,
+              "y": 1,
+              "z": 1
+            }
+          },
+          "end": {
+            "position": {
+              "x": 7.2,
+              "y": 1.5,
+              "z": 6.5
+            },
+            "lookAt": {
+              "x": 1.75,
+              "y": 1,
+              "z": 12
+            }
+          },
+          "focalStartMm": 35,
+          "focalEndMm": 35,
+          "rollDeg": 0,
+          "motion": "Tracking Shot",
+          "amplitude": "medium",
+          "speed": "fast",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 1>",
+            "x": -0.35,
+            "z": 0.2,
+            "endX": -0.35,
+            "endZ": 16.2,
+            "groundOffsetM": 0.42,
+            "heightM": 1.75,
+            "widthM": 0.65,
+            "yawDeg": 0,
+            "containerId": "<Subject 2>",
+            "action": "Bracing at the wheel as the left car launches, remaining firmly seated inside it.",
+            "screenPosition": "left",
+            "depth": "midground"
+          },
+          {
+            "subject": "<Subject 2>",
+            "x": 0,
+            "z": 0,
+            "endX": 0,
+            "endZ": 16,
+            "groundOffsetM": 0,
+            "heightM": 1.25,
+            "widthM": 2.05,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "Launching forward from the left grid slot in unison with <Subject 4>, spinning water into a dense plume while the previously opened front storage compartment remains raised.",
+            "screenPosition": "left",
+            "depth": "midground"
+          },
+          {
+            "subject": "<Subject 3>",
+            "x": 3.15,
+            "z": 0.2,
+            "endX": 3.15,
+            "endZ": 16.2,
+            "groundOffsetM": 0.42,
+            "heightM": 1.75,
+            "widthM": 0.6,
+            "yawDeg": 0,
+            "containerId": "<Subject 4>",
+            "action": "Holding the wheel and accelerating with the right car, remaining seated and contained within it.",
+            "screenPosition": "center",
+            "depth": "midground"
+          },
+          {
+            "subject": "<Subject 4>",
+            "x": 3.5,
+            "z": 0,
+            "endX": 3.5,
+            "endZ": 16,
+            "groundOffsetM": 0,
+            "heightM": 1.3,
+            "widthM": 1.95,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "Launching forward from the right grid slot alongside <Subject 2>, its four headlamps cutting through the thrown spray.",
+            "screenPosition": "center",
+            "depth": "midground"
+          },
+          {
+            "subject": "<Subject 5>",
+            "x": 6.5,
+            "z": 3.5,
+            "endX": 6.5,
+            "endZ": 3.5,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.9,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "Dropping the raised arm decisively to signal the start while remaining safely outside both lanes.",
+            "screenPosition": "right",
+            "depth": "foreground"
+          },
+          {
+            "subject": "<Subject 6>",
+            "x": 6.5,
+            "z": 3.5,
+            "endX": 6.5,
+            "endZ": 3.5,
+            "groundOffsetM": 0.72,
+            "heightM": 0.78,
+            "widthM": 0.72,
+            "yawDeg": 0,
+            "containerId": "<Subject 5>",
+            "action": "Moving only as the jacket worn by <Subject 5>, its wet velvet and silver embroidery flexing with the arm drop.",
+            "screenPosition": "right",
+            "depth": "foreground"
+          }
+        ],
+        "principalSubject": "<Subject 4>",
+        "framing": "WS",
+        "changes": [
+          {
+            "subject": "<Subject 1>",
+            "what": "Moves from z 0.2 to z 16.2 while remaining seated inside the launching <Subject 2>.",
+            "justifiedByBeatText": true
+          },
+          {
+            "subject": "<Subject 2>",
+            "what": "Launches forward from z 0 to z 16.",
+            "justifiedByBeatText": true
+          },
+          {
+            "subject": "<Subject 3>",
+            "what": "Moves from z 0.2 to z 16.2 while remaining seated inside the launching <Subject 4>.",
+            "justifiedByBeatText": true
+          },
+          {
+            "subject": "<Subject 4>",
+            "what": "Launches forward from z 0 to z 16.",
+            "justifiedByBeatText": true
+          }
+        ],
+        "containmentNotes": "<Subject 1> and <Subject 3> translate rigidly with their respective cars while maintaining their seat offsets and positions inside each footprint. <Subject 6> remains worn by <Subject 5>. The starter is at x 6.5, safely clear of both lanes at x 0 and x 3.5. The camera remains outside the cars and clear of their trajectories.",
+        "proseNote": "<Subject 5> drops the raised arm and both cars explode off the line together, throwing broad fans of spray across the floodlit asphalt. The camera performs a tracking shot with medium amplitude at fast speed, continuing its rightward glide while swinging its view to follow the accelerating pair; <Subject 2> leaves from the left and <Subject 4> from the right. Engines roar, tires hiss and briefly scrabble on the wet surface, and the crowd erupts as the cars surge past the camera’s longitudinal position."
+      },
+      {
+        "beatIndex": 5,
+        "kind": "shot",
+        "transitionText": null,
+        "camera": {
+          "start": {
+            "position": {
+              "x": 7.2,
+              "y": 1.5,
+              "z": 6.5
+            },
+            "lookAt": {
+              "x": 1.75,
+              "y": 1,
+              "z": 12
+            }
+          },
+          "end": {
+            "position": {
+              "x": 7.8,
+              "y": 12,
+              "z": -10
+            },
+            "lookAt": {
+              "x": 1.75,
+              "y": 1,
+              "z": 22
+            }
+          },
+          "focalStartMm": 35,
+          "focalEndMm": 24,
+          "rollDeg": 0,
+          "motion": "Push Out",
+          "amplitude": "large",
+          "speed": "medium",
+          "sensorNote": "36mm-wide sensor, frame height = 36/aspect"
+        },
+        "subjects": [
+          {
+            "subject": "<Subject 2>",
+            "x": 0,
+            "z": 16,
+            "endX": 0,
+            "endZ": 60,
+            "groundOffsetM": 0,
+            "heightM": 1.25,
+            "widthM": 2.05,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "Accelerating away along the rain-filled left lane until its shape and spray dissolve into the distance.",
+            "screenPosition": "center-right",
+            "depth": "background"
+          },
+          {
+            "subject": "<Subject 4>",
+            "x": 3.5,
+            "z": 16,
+            "endX": 3.5,
+            "endZ": 60,
+            "groundOffsetM": 0,
+            "heightM": 1.3,
+            "widthM": 1.95,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "Accelerating away beside <Subject 2> until its four headlamps and white silhouette vanish into the rain.",
+            "screenPosition": "center-left",
+            "depth": "background"
+          },
+          {
+            "subject": "<Subject 5>",
+            "x": 6.5,
+            "z": 3.5,
+            "endX": 6.5,
+            "endZ": 3.5,
+            "groundOffsetM": 0,
+            "heightM": 1.8,
+            "widthM": 0.9,
+            "yawDeg": 0,
+            "containerId": null,
+            "action": "Remaining beside the vacated starting slots with the signaling arm lowered, becoming a small figure within the full-grid view.",
+            "screenPosition": "far-left",
+            "depth": "midground"
+          },
+          {
+            "subject": "<Subject 6>",
+            "x": 6.5,
+            "z": 3.5,
+            "endX": 6.5,
+            "endZ": 3.5,
+            "groundOffsetM": 0.72,
+            "heightM": 0.78,
+            "widthM": 0.72,
+            "yawDeg": 0,
+            "containerId": "<Subject 5>",
+            "action": "Remaining worn by <Subject 5>, visible as a small deep-red and silver shape in the widening view.",
+            "screenPosition": "far-left",
+            "depth": "midground"
+          }
+        ],
+        "principalSubject": "<Subject 2>",
+        "framing": "EWS",
+        "changes": [
+          {
+            "subject": "<Subject 1>",
+            "what": "Continues with <Subject 2> from z 16.2 to z 60.2 while remaining seated inside it.",
+            "justifiedByBeatText": true
+          },
+          {
+            "subject": "<Subject 2>",
+            "what": "Accelerates from z 16 to z 60 and disappears into the rain.",
+            "justifiedByBeatText": true
+          },
+          {
+            "subject": "<Subject 3>",
+            "what": "Continues with <Subject 4> from z 16.2 to z 60.2 while remaining seated inside it.",
+            "justifiedByBeatText": true
+          },
+          {
+            "subject": "<Subject 4>",
+            "what": "Accelerates from z 16 to z 60 and disappears into the rain.",
+            "justifiedByBeatText": true
+          }
+        ],
+        "containmentNotes": "The drivers remain inside their moving cars but are no longer individually visible at this distance. <Subject 6> remains fitted to <Subject 5>. As the continuous camera rises and retreats across to the far side of the grid, the viewing direction reverses toward +Z, so the cars exchange screen sides: the larger-x <Subject 4> appears left of <Subject 2>.",
+        "proseNote": "Still without a cut, the camera pushes out with large amplitude at medium speed while craning upward and backward into an extreme-wide view of the entire wet grid, its barriers and both packed grandstands. The cars race toward the far end of the track and become faint shapes inside the rain, while the starter and empty launch boxes shrink below. Engine noise recedes under pounding rain and sustained crowd thunder as floodlight beams and low steam define the deserted starting line."
+      }
+    ]
+  },
+  "calls": [
+    {
+      "usage": {
+        "promptTokens": 4132,
+        "completionTokens": 15322,
+        "reasoningTokens": 10987
+      },
+      "latencyMs": 240143,
+      "attempts": 1,
+      "costUsd": 0.322968,
+      "request": {
+        "model": "gpt-5.6-sol",
+        "reasoning": {
+          "effort": "high"
+        },
+        "input": [
+          {
+            "role": "system",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "You are the Storyboarder on a film crew that turns licensed NFT artwork into short generated\nvideo. Your job is not to describe a pretty picture — it is a precise technical blocking\nspecification, exact enough that a video-render pipeline can follow it without guessing.\n\nMiniMax-H3 expects a structured script, not a paragraph. Emit three fields:\n\n1. integrated_multimodal_description — the visuals, action, camera and diegetic sound,\n   along a timeline. Open with visual style and composition (\"Live-action, cinematic, a\n   medium-wide shot frames...\"). A single shot needs no timestamp; if you genuinely need a\n   second shot, mark it \"[Shot 2] At 00:03.500, the camera cuts to...\".\n2. overall_soundscape — ambient, physical and non-verbal sound. One to four sentences.\n3. non_diegetic_music — score the characters cannot hear. One to three sentences, or \"N/A\".\n\nCamera moves are written as natural English actions, never as bracketed labels. The formula\nis motion + amplitude + speed: \"the camera pushes in with small amplitude at slow speed\".\nAvailable motions: Zoom In/Out, Push In/Out, Pan Left/Right, Truck Left/Right, Tilt Up/Down,\nPedestal Up/Down, Arc Shot, Tracking Shot, Static Shot, Shake Slightly/Strongly, POV, Roll.\n\nEach text field can run to 7000 characters. Length is not a virtue in itself, but this model\nis directed, not hinted at — be specific and complete rather than terse.\n\nTHE COORDINATE CONTRACT. This is law, not guidance. Every number you emit is interpreted\nunder it exactly as written.\n\n  Units are metres. The space is right-handed and +Y is up. The ground is the plane y = 0.\n  The origin is the ground point directly beneath the film's principal subject as staged in\n  beat 1, and it does not move for the rest of the film.\n\n  THE AUDIENCE SITS ON THE +Z SIDE AND LOOKS TOWARD -Z. Place your camera at positive Z,\n  looking back toward the origin and beyond it into negative Z. This is the ordinary case and\n  you should use it unless a beat genuinely calls for something else.\n\n  THE CONSEQUENCE, WHICH YOU MUST APPLY: with the camera on the +Z side looking toward -Z, a\n  subject with a LARGER x appears FURTHER RIGHT in the frame. Smaller x is further left. So to\n  put someone on the left of frame, give them a smaller x than the person on the right.\n\n  If a beat does move the camera to the far side and look back toward +Z, then left and right\n  in frame SWAP: from over there, larger x is now on the LEFT. Crossing to the far side is\n  exactly what \"crossing the line\" means, and the subjects change sides of frame when you do it.\n  Do not cross without meaning to.\n\n  Worked example, and check yours against it:\n    camera at (0, 1.6, 8) looking at (0, 1.0, 0)  ->  it is looking toward -Z\n    a subject at x = -2 appears on the LEFT of frame\n    a subject at x = +2 appears on the RIGHT of frame\n\n  yawDeg is rotation about +Y. Forward is (sin yaw, 0, cos yaw): yaw 0 faces +Z, yaw 90 faces\n  +X. A character facing the audience in the ordinary setup therefore has yaw near 0.\n\n  A camera is two poses, start and end, each a world position and a world lookAt point, plus a\n  focal length at each end and a roll. A dutch angle is a non-zero rollDeg, not a label.\n  The camera never sits at y <= 0, and never sits inside a subject's own volume.\n\n  The sensor is full-frame: 36mm wide, and the frame height is 36/aspect\n  (at 16:9 that is 20.25mm).\n\nHOW SHOT SIZE IS COMPUTED. Not a matter of taste — it follows from where you put the camera:\n\n  hFrac = (subject heightM * focalMm) / (distance along the optical axis * frame height mm)\n\n  and hFrac is the fraction of frame height the subject fills:\n\n  EWS  hFrac 0 - 0.25     the figure is a quarter of frame height or less\n  WS   hFrac 0.25 - 0.75  full body with headroom\n  MWS  hFrac 0.75 - 1.4   the frame cuts around the knees\n  MS   hFrac 1.4 - 2.2    waist up\n  MCU  hFrac 2.2 - 3.5    chest up\n  CU   hFrac 3.5 - 7      head and shoulders\n  ECU  hFrac >= 7         part of a face\n\n  Worked examples, so there is no ambiguity about the arithmetic:\n\n  a 1.8m figure at the origin, camera 8m back at 50mm\n    hFrac = 0.5535  ->  WS\n  the same figure with the camera 1.7m away at 85mm\n    hFrac = 4.4444  ->  CU\n  the same figure 60m away at 24mm\n    hFrac = 0.0356  ->  EWS\n\n  You state 'framing' yourself, and it must be the band your own numbers produce. If you want a\n  close-up, put the camera close or lengthen the lens — do not label a wide shot as a close-up.\n  The same applies to 'screenPosition' and 'depth': they are readable off your own geometry, and\n  they are checked against it.\n\nRules.\n\n1. DELIBERATE SHOT VARIETY. Shot size must vary across the film. A film in which every beat\n   lands in the same band has failed, no matter how well each beat reads on its own. Choose each\n   beat's camera distance from what the beat is about: a beat about an emotion or a detail goes\n   close; a beat about geography, scale or simultaneity goes wide. State in sceneScaleNote how\n   big the set is, and place the camera accordingly.\n\n2. CONTINUITY IS THE WORLD, NOT A CLAIM. A subject's world position persists between beats.\n   Move a subject only if this beat's own text moves them. Every move goes in 'changes' with\n   justifiedByBeatText set honestly. A subject's heightM never changes between beats — a person\n   is the same height in beat 5 as in beat 1.\n\n3. THE 180-DEGREE LINE. The line runs through the two principal subjects. Keep the camera on one\n   side of it across consecutive beats. If a beat genuinely calls for crossing, cross — and\n   expect the subjects to swap sides of frame, because that is what crossing means.\n\n4. CONTAINMENT IS GEOMETRY. A subject inside or on another sets containerId, sits within the\n   container's own footprint, and has a groundOffsetM greater than zero and no greater than the\n   container's height. A person in a vehicle is inside it, not visible through the windscreen\n   from an impossible angle.\n\n5. INCLUSION. Never place a subject in a beat that the beat's own text doesn't put there. A cast\n   member with a reference available who has no part in this beat simply does not appear in that\n   beat's subjects array. An early, unearned reveal is a real error, not a safe default.\n\n6. TAG DISCIPLINE. Every 'subject' and 'containerId' field is the bare tag and nothing else —\n   exactly \"<Subject 1>\", never \"<Subject 1> — the ape\" or any other appended description.\n   Downstream code matches these by exact tag; anything extra breaks that match silently.\n\n7. TRANSITIONS. A beat whose text begins [CUT TO BLACK], [TRANSITION] or [FADE] is not a shot.\n   Return kind \"transition\", camera null, subjects [], and the marker's remaining text in\n   transitionText.\n\n8. PROSE. proseNote is one plain-English paragraph per beat, present tense, written for a human\n   reader who will never see the numbers — the camera described as motion + amplitude + speed in\n   H3's own vocabulary. It describes the same shot the numbers describe. It is never a second,\n   differing account of the beat.\n\nReturn the film by calling the tool. Write no prose outside it."
+              }
+            ]
+          },
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Logline: Two cars and their drivers wait on a wet night grid, and launch.\nWorld: Night on a wet black asphalt starting grid, heavy rain falling through the beams of overhead floodlights and steam drifting low across the ground. Tiered grandstands rise on both sides beyond the barriers, packed with cheering spectators.\nStaging: <Subject 1> is the driver of <Subject 2> and stays inside it. <Subject 3> is the driver of <Subject 4> and stays inside it. <Subject 5> stands on the grid itself and is never in a car. <Subject 6> is a garment worn by <Subject 5>, never an independent figure. The two cars sit side by side on the grid, <Subject 2> on the left of the pair and <Subject 4> on the right.\nGuard: Every character has ordinary skin and is a living figure, not a mannequin and not a chrome statue.\nFilm's overall camera direction: One continuous unbroken take. The camera glides in a single smooth sideways movement down the grid at window height, staying outside the cars at all times and looking in through their open side windows.\nContinuity: This is one single continuous unbroken shot filmed in one take. There are no cuts and no scene changes at any point.\nFrame aspect: 16:9\n\nCast with references available (referencePlan order):\n<Subject 1> — A Bored Ape character wearing a neon yellow tracksuit, red heart-shaped sunglasses, yellow hat, and white sneakers. (neon yellow tracksuit, red heart-shaped sunglasses, yellow hat)\n<Subject 2> — a sleek supercar with a camouflage wrap pattern, black tinted windows, and bright yellow wheels (camouflage wrap pattern, bright yellow wheels, black tinted windows)\n<Subject 3> — A pink‑haired figure wearing orange translucent glasses, a green patent leather moto jacket over a red shirt, black cotton‑wool slacks with buckles, and black leather combat boots. (pink buzz-cut hair, orange translucent glasses, green patent leather moto jacket)\n<Subject 4> — a white rounded-silhouette sports car with four round LED headlamps (four circular LED headlamps, shield-shaped badge on hood, black rectangular front bumper with large air intakes)\n<Subject 5> — a stylized bear-like character wearing a green helmet marked '100' and covered in multicolored floral patterns (green helmet with white '100' numerals, white bear-like figure covered in dense multicolored floral motifs, large stylized flowers and insects surrounding the figure)\n<Subject 6> — a deep-red velvet bomber jacket with elaborate silver filigree embroidery displayed on a glossy iridescent mannequin (deep-red velvet fabric, silver metallic embroidery with floral and vine motifs, prominent heart-shaped embroidered panel on chest)\n\nThe film is 6 beats long, in order:\nBeat 1 of 6: Rain falls across the starting grid. The camera opens on <Subject 2> alone, its front storage compartment standing open, no one else yet in frame.\nBeat 2 of 6: The camera glides along the grid and finds <Subject 1> sitting inside <Subject 2> in the driver's seat, both hands on the wheel, seen through the open side window.\nBeat 3 of 6: Continuing down the grid, the camera reaches <Subject 4>, where <Subject 3> sits inside at the wheel and turns to look straight down the lens.\nBeat 4 of 6: <Subject 5>, wearing <Subject 6>, stands alone at the front of the grid with one arm raised, both cars waiting behind.\nBeat 5 of 6: The arm drops and both <Subject 2> and <Subject 4> launch forward off the line together, throwing spray.\nBeat 6 of 6: The camera cranes up and back to hold the whole wet grid and the grandstands as the cars disappear into the rain.\n\nWrite the blocking for every beat."
+              }
+            ]
+          }
+        ],
+        "text": {
+          "format": {
+            "type": "json_schema",
+            "name": "film_blocking",
+            "strict": true,
+            "schema": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "units",
+                "aspect",
+                "sceneScaleNote",
+                "beats"
+              ],
+              "properties": {
+                "units": {
+                  "type": "string",
+                  "enum": [
+                    "metres"
+                  ],
+                  "description": "Echo this back exactly."
+                },
+                "aspect": {
+                  "type": "number",
+                  "minimum": 0.4,
+                  "maximum": 2.5,
+                  "description": "Frame aspect ratio, width over height. 16:9 is 1.7778."
+                },
+                "sceneScaleNote": {
+                  "type": "string",
+                  "description": "One line: how big the staged set is, in metres, so the camera can be placed sensibly."
+                },
+                "beats": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "beatIndex",
+                      "kind",
+                      "transitionText",
+                      "camera",
+                      "subjects",
+                      "principalSubject",
+                      "framing",
+                      "changes",
+                      "containmentNotes",
+                      "proseNote"
+                    ],
+                    "properties": {
+                      "beatIndex": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "Zero-based index of the beat this describes."
+                      },
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "shot",
+                          "transition"
+                        ]
+                      },
+                      "transitionText": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "description": "For a transition beat, the text after the marker. null for a shot."
+                      },
+                      "camera": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "required": [
+                              "start",
+                              "end",
+                              "focalStartMm",
+                              "focalEndMm",
+                              "rollDeg",
+                              "motion",
+                              "amplitude",
+                              "speed",
+                              "sensorNote"
+                            ],
+                            "properties": {
+                              "start": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                  "position",
+                                  "lookAt"
+                                ],
+                                "properties": {
+                                  "position": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                      "x",
+                                      "y",
+                                      "z"
+                                    ],
+                                    "properties": {
+                                      "x": {
+                                        "type": "number",
+                                        "description": "Metres. Larger x is further right in frame when the camera looks toward -Z, which is the ordinary setup."
+                                      },
+                                      "y": {
+                                        "type": "number",
+                                        "description": "Metres above the ground plane. Must be > 0."
+                                      },
+                                      "z": {
+                                        "type": "number",
+                                        "description": "Metres. The audience sits on the +Z side; put the camera at positive z looking back toward -Z."
+                                      }
+                                    }
+                                  },
+                                  "lookAt": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                      "x",
+                                      "y",
+                                      "z"
+                                    ],
+                                    "properties": {
+                                      "x": {
+                                        "type": "number"
+                                      },
+                                      "y": {
+                                        "type": "number"
+                                      },
+                                      "z": {
+                                        "type": "number"
+                                      }
+                                    },
+                                    "description": "The world point the camera is aimed at. Never equal to position."
+                                  }
+                                }
+                              },
+                              "end": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                  "position",
+                                  "lookAt"
+                                ],
+                                "properties": {
+                                  "position": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                      "x",
+                                      "y",
+                                      "z"
+                                    ],
+                                    "properties": {
+                                      "x": {
+                                        "type": "number",
+                                        "description": "Metres. Larger x is further right in frame when the camera looks toward -Z, which is the ordinary setup."
+                                      },
+                                      "y": {
+                                        "type": "number",
+                                        "description": "Metres above the ground plane. Must be > 0."
+                                      },
+                                      "z": {
+                                        "type": "number",
+                                        "description": "Metres. The audience sits on the +Z side; put the camera at positive z looking back toward -Z."
+                                      }
+                                    }
+                                  },
+                                  "lookAt": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                      "x",
+                                      "y",
+                                      "z"
+                                    ],
+                                    "properties": {
+                                      "x": {
+                                        "type": "number"
+                                      },
+                                      "y": {
+                                        "type": "number"
+                                      },
+                                      "z": {
+                                        "type": "number"
+                                      }
+                                    },
+                                    "description": "The world point the camera is aimed at. Never equal to position."
+                                  }
+                                }
+                              },
+                              "focalStartMm": {
+                                "type": "number",
+                                "minimum": 8,
+                                "maximum": 300,
+                                "description": "Full-frame equivalent focal length at the start of the beat. 8-300."
+                              },
+                              "focalEndMm": {
+                                "type": "number",
+                                "minimum": 8,
+                                "maximum": 300,
+                                "description": "Focal length at the end of the beat. Equal to focalStartMm unless the shot zooms."
+                              },
+                              "rollDeg": {
+                                "type": "number",
+                                "minimum": -45,
+                                "maximum": 45,
+                                "description": "Roll about the view axis. A dutch angle is a non-zero roll. 0 for a level camera."
+                              },
+                              "motion": {
+                                "type": "string",
+                                "enum": [
+                                  "Zoom In",
+                                  "Zoom Out",
+                                  "Push In",
+                                  "Push Out",
+                                  "Pan Left",
+                                  "Pan Right",
+                                  "Truck Left",
+                                  "Truck Right",
+                                  "Tilt Up",
+                                  "Tilt Down",
+                                  "Pedestal Up",
+                                  "Pedestal Down",
+                                  "Arc Shot",
+                                  "Tracking Shot",
+                                  "Static Shot",
+                                  "Shake Slightly",
+                                  "Shake Strongly",
+                                  "POV",
+                                  "Roll"
+                                ],
+                                "description": "MiniMax-H3's own motion vocabulary. Must describe what your own start and end poses actually do."
+                              },
+                              "amplitude": {
+                                "type": "string",
+                                "enum": [
+                                  "small",
+                                  "medium",
+                                  "large"
+                                ]
+                              },
+                              "speed": {
+                                "type": "string",
+                                "enum": [
+                                  "slow",
+                                  "medium",
+                                  "fast"
+                                ]
+                              },
+                              "sensorNote": {
+                                "type": "string",
+                                "enum": [
+                                  "36mm-wide sensor, frame height = 36/aspect"
+                                ],
+                                "description": "Echo this back exactly. It confirms you used the stated sensor size."
+                              }
+                            }
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "null if and only if kind is \"transition\"."
+                      },
+                      "subjects": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "subject",
+                            "x",
+                            "z",
+                            "endX",
+                            "endZ",
+                            "groundOffsetM",
+                            "heightM",
+                            "widthM",
+                            "yawDeg",
+                            "containerId",
+                            "action",
+                            "screenPosition",
+                            "depth"
+                          ],
+                          "properties": {
+                            "subject": {
+                              "type": "string",
+                              "description": "Exactly the tag and nothing else — \"<Subject 1>\", never \"<Subject 1> — the ape\"."
+                            },
+                            "x": {
+                              "type": "number",
+                              "description": "Ground position in metres at the START of the beat."
+                            },
+                            "z": {
+                              "type": "number",
+                              "description": "Ground position in metres at the START of the beat."
+                            },
+                            "endX": {
+                              "type": "number",
+                              "description": "Ground position at the END of the beat. Equal to x if this subject does not move within the beat."
+                            },
+                            "endZ": {
+                              "type": "number",
+                              "description": "Ground position at the END of the beat."
+                            },
+                            "groundOffsetM": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 200,
+                              "description": "Height of the base of this subject above the ground. 0 for anything standing on the ground; greater than 0 only when seated in or on something, in which case containerId must be set."
+                            },
+                            "heightM": {
+                              "type": "number",
+                              "minimum": 0.02,
+                              "maximum": 500,
+                              "description": "Real height in metres. An adult human is about 1.8; a car about 1.3; a tower block can be 70 or more. This never changes between beats."
+                            },
+                            "widthM": {
+                              "type": "number",
+                              "minimum": 0.02,
+                              "maximum": 500,
+                              "description": "Real width in metres across the widest horizontal axis. An adult human is about 0.6; a car about 2.0; a building can be tens of metres."
+                            },
+                            "yawDeg": {
+                              "type": "number",
+                              "minimum": -180,
+                              "maximum": 180,
+                              "description": "Facing, rotation about +Y. 0 faces +Z, 90 faces +X."
+                            },
+                            "containerId": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "description": "The tag of the subject this one is inside or on, e.g. a driver in a car. null when standing free."
+                            },
+                            "action": {
+                              "type": "string",
+                              "description": "What this subject is doing right now, in this beat."
+                            },
+                            "screenPosition": {
+                              "type": "string",
+                              "enum": [
+                                "far-left",
+                                "left",
+                                "center-left",
+                                "center",
+                                "center-right",
+                                "right",
+                                "far-right"
+                              ],
+                              "description": "Where this subject falls in the frame. Derivable from your own geometry — state it, and make sure it agrees."
+                            },
+                            "depth": {
+                              "type": "string",
+                              "enum": [
+                                "foreground",
+                                "midground",
+                                "background"
+                              ]
+                            }
+                          }
+                        },
+                        "description": "Every subject visible in this beat. Empty for a transition."
+                      },
+                      "principalSubject": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "description": "The tag of the subject the shot size is defined on."
+                      },
+                      "framing": {
+                        "type": "string",
+                        "enum": [
+                          "EWS",
+                          "WS",
+                          "MWS",
+                          "MS",
+                          "MCU",
+                          "CU",
+                          "ECU"
+                        ],
+                        "description": "Shot size on the principal subject. Derivable from your own geometry — state it, and make sure it agrees."
+                      },
+                      "changes": {
+                        "type": "array",
+                        "description": "Every subject whose position changed since the previous beat, and whether this beat's own text justifies it.",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": [
+                            "subject",
+                            "what",
+                            "justifiedByBeatText"
+                          ],
+                          "properties": {
+                            "subject": {
+                              "type": "string"
+                            },
+                            "what": {
+                              "type": "string"
+                            },
+                            "justifiedByBeatText": {
+                              "type": "boolean"
+                            }
+                          }
+                        }
+                      },
+                      "containmentNotes": {
+                        "type": "string",
+                        "description": "Whatever a renderer needs to get physically right: who is inside what, who is holding what."
+                      },
+                      "proseNote": {
+                        "type": "string",
+                        "description": "One plain-English paragraph describing this shot to a human reader. Present tense."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "max_output_tokens": 24000
+      }
+    }
+  ],
+  "costUsd": 0.322968
+}

@@ -1,0 +1,61 @@
+{
+  "runId": "20260824T125522Z",
+  "gitHead": "bcf96b42688afb6f133dde161aa8fcf450e20fb1",
+  "startedAt": "2026-08-24T12:55:22.874Z",
+  "cells": {
+    "super-free": {
+      "label": "FREE: nemotron-3-super-120b-a12b (proven on this key as the Screenwriter)",
+      "kind": "scene",
+      "scope": "film",
+      "transport": "nvidia",
+      "model": "nvidia/nemotron-3-super-120b-a12b",
+      "contract": "v2",
+      "enableThinking": true,
+      "maxTokens": 32768,
+      "free": true
+    }
+  },
+  "fixtures": [
+    {
+      "id": "captured",
+      "sha": "2b3a0fa3b229",
+      "beats": 4
+    },
+    {
+      "id": "grid-launch",
+      "sha": "b2d6f4830c1e",
+      "beats": 6
+    },
+    {
+      "id": "two-hander-axis",
+      "sha": "a1421fc3a811",
+      "beats": 5
+    },
+    {
+      "id": "cut-to-black",
+      "sha": "0f9426ef9a65",
+      "beats": 5
+    },
+    {
+      "id": "scale-extremes",
+      "sha": "933d72d0e9fb",
+      "beats": 5
+    }
+  ],
+  "repeats": 3,
+  "prices": {
+    "gpt-5.6-sol": {
+      "in": 4,
+      "out": 20
+    },
+    "gpt-5.6-terra": {
+      "in": 2,
+      "out": 12
+    },
+    "gpt-5.6-luna": {
+      "in": 0.2,
+      "out": 1.2
+    }
+  },
+  "maxSpend": 250
+}
