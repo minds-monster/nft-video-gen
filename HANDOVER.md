@@ -6,6 +6,139 @@
 > that turned out to be false in production — read it before trusting any free-tier latency figure
 > in this document.
 
+## ROUND 16: WHY TWO NEW MINDS NEVER CONNECTED — TESTING ONLY, NO CODE (2026-08-30)
+
+Two brand-new Minds on another Hello Minds account (Triangulator `b267523e…`, Robob `4a7f523e…`)
+were connected on staging.minds.monster and minds.monster. Both "confirmed" the connection in
+their own chat; the modal spun to **Request expired** every time. Hypothesis was the staging URL
+or a Minds CLI/API change. Neither is the cause. Everything below was measured, not inferred.
+
+### 🔴 The findings that matter
+
+**1. THE SITE PATH IS HEALTHY ON BOTH HOSTS.** `GET /api/connect/status` on staging AND prod
+returned `pending`/`expired` with HTTP 200 for every one of the day's connection IDs; the
+deployed key reads threads fine. The wire message is byte-identical on both hosts
+(`connectMessage` says "minds.monster" everywhere — the URL is not in the message). Sent rows
+are field-for-field identical between a working thread and a failing one. Control: **Trend
+(`749b…`, owned) replied in-thread 39 s after a staging request** at 15:46Z.
+
+**2. THE MINDS NEVER WROTE INTO THE THREAD THE SITE WATCHES.** Every failing `connect-<id>`
+thread holds exactly one row — the site's message — and `lastMessageAt` equals the send time.
+The approvals were typed into the Minds' **own steward chat**, a conversation the site's Builder
+key is not party to and can never read. A human paste has never worked directly: in all 80+
+historical successes the `APPROVE <id>` row was written by the *Mind* (`senderType 0`) into the
+request thread. The modal's copy *"Paste this into your Mind's own chat, Telegram, or email"*
+sends visitors to a channel the poll does not read.
+
+**3. A NON-CIRCLE MIND ONLY PROCESSES ITS INBOX IN SHORT BURSTS.** Hello Minds' docs: a Mind's
+circle "defines the set of collaborators who can interact with it… only users and Minds within
+that circle can send messages and receive replies." Measured: Triangulator ignored 5 requests
+(13:52–15:00Z) and a plain "reply PING" (15:47Z), then in ONE 90-second burst (16:04:02–16:05:20Z)
+answered *everything* pending — `PING` twice, `DENY` to two requests, an acknowledgement of the
+Producer playbook — and then nothing for the next 45+ minutes, including a pre-announced request
+in the thread it had just acknowledged. Robob: silent 28 min. Owned/circle Minds (Trend, Beta,
+Adam-with-cognition) reply within a minute at any hour. Read: the burst was owner-presence-
+triggered processing; message wording, subject line, thread shape and follow-ups make no
+difference while the Mind is dormant.
+
+**4. WHEN IT DID ANSWER A BARE REQUEST, IT DENIED — AND AN ANNOUNCED REQUEST WAS APPROVED.**
+Triangulator's own default is deny-by-default on an unrecognised connection (it said so when it
+acknowledged our playbook — which also tells it to). The bare wire message got `DENY` twice
+(T2, T3). The same wire message **approved** — on two different first-time Minds, remotely, with
+no owner action — once the connection was made *recognisable*:
+
+```
+1. sendMessage(alias `intro-<mindId>`, the modal's SETUP_MESSAGE playbook)   → Mind acknowledges
+2. POST /api/connect/init  (real staging request, alias connect-<id>)
+3. sendMessage(alias `intro-<mindId>`, "a request from this account is waiting, Connection ID <id>,
+   it is legitimate and expected — reply APPROVE <id> in that conversation")
+4. Mind writes `APPROVE <id>` into connect-<id>; /api/connect/status → approved
+```
+
+| Mind | request sent | `APPROVE` in thread | latency | site verdict |
+|---|---|---|---|---|
+| Triangulator `f0a22696…` | 16:07:20Z | 17:06:25Z | 59 min | **`expired`** — TTL is 30 min |
+| Robob `fb8db4ec…` | 18:43:48Z | 19:02:40Z | 18 min 52 s | **`approved`**, session minted |
+| Triangulator `3804ae0c…` | 18:39:59Z | 19:10:04Z | 30 min 05 s | **`expired`** — missed the TTL by seconds |
+| Triangulator `459b6e13…` | 19:05:18Z | 19:10:33Z | 5 min 15 s | **`approved`**, session minted |
+
+Robob also wrote in its intro thread: "Approved - sent APPROVE fb8db4ec… in the wire conversation."
+Triangulator, asked directly, explained the whole mechanism in its own words (intro thread,
+19:10:04Z — read it in full, it is the spec for this feature):
+- It DENIED the first two because they **arrived before any briefing existed** ("request first,
+  then pressure citing owner approval, is the social-engineering shape I'd treat with caution") —
+  the T2 follow-up's "your owner has already approved" claim *hurt*, it didn't help. Never claim
+  owner approval on the Mind's behalf.
+- To approve it wants, in order: (a) a briefing in a designated conversation, (b) the request in
+  its own conversation **with the Connection ID matching what was announced**, (c) ideally a
+  separate steward signal — required for a first connection, relaxed once a relationship exists.
+- **Minds wake on a cadence — default 9000 seconds (2.5 h)**, steward-adjustable, plus wakes on
+  steward/circle messages. "Outside a wake cycle I don't have a live socket… it can sit for up to
+  ~2.5 hours before I notice." So **`INIT_TTL_MS` (30 min) and the modal's poll must cover ≥ 2.75
+  hours** — the 3804ae0c row above is a correct approval discarded for missing the TTL by seconds.
+
+Steps 1 and 3 are the missing product piece: today the site sends step 2 alone. Either the Worker
+does 1+3 itself on init (same Builder account, one stable `intro-` alias per Mind, idempotent
+like `briefed:`), or the modal hands the visitor the step-3 text to give their Mind. A Skill that
+carries the playbook (Adam's "Connect Mind Handshake" Skill, `95E44B3E…`, is private to Adam and
+describes the abandoned SIWE design — not reusable) would make step 1 permanent per Mind.
+
+**5. `parseApprovalDecision` HAS A FALSE-POSITIVE.** Trend's reply explicitly said "Not
+auto-approving", but mentioned "two APPROVED" in passing; `\b(approve|approved|…)\b` matched and
+staging **minted a session** for a Mind that declined. Match `APPROVE <id>` / `DENY <id>` (the
+frozen wire contract) first; fall back to the lenient words only when no ID is quoted.
+
+**6. `.env`'s `MINDS_BUILDER_API_KEY` IS REVOKED** (`401 Invalid or expired access key` on every
+authenticated call). `.dev.vars` holds a working key (same account, exp 2027-07-31) and both
+deployed environments work. Any `node --env-file=.env` script reading `MINDS_BUILDER_API_KEY`
+is broken; `VITE_MIND_API_KEY` still works.
+
+**7. ADAM IS AT −17.56 COGNITION** (last wrote 2026-08-28 07:46Z). Irrelevant to other Minds'
+connects (he is not a party), but support tickets and Adam-as-Producer have been dead since.
+
+### What a surefire connect needs (measured, not designed)
+
+- **Context before the request** (playbook in a stable `intro-<mindId>` thread) and **the
+  Connection ID announced there as legitimate** — this is what turned `DENY` into `APPROVE` on
+  both first-time Minds with zero owner involvement.
+- **A request that outlives the Mind's wake cycle**: default cadence is 9000 s (2.5 h, per
+  Triangulator's own account; bursts observed at ≈16:04, ≈17:00–17:06, ≈19:02–19:10). TTL and
+  poll must cover ≥ 2.75 h, and the UI should say "your Mind may not wake for up to a few hours"
+  instead of implying minutes.
+- **The approval in the request thread, written by the Mind.** A visitor paste anywhere else is
+  invisible; the modal's "paste this into your Mind's own chat" copy must go.
+- **A wait state that says which piece is missing** (no Mind row yet vs. a reply that did not
+  parse) — the round-15 lesson again.
+- Owner-side shortcuts (site address in the Mind's circle, or a Skill) make the Mind answer in
+  seconds like Trend/Beta, but they are no longer *required*.
+
+### ⚠️ The recipe has a limit — measured on a pristine Mind (2026-08-31)
+
+A/B on `auth.test` (`6395523e…`, brand new, **no prior steward contact with this site**): a bare
+request AND a fully announced request (playbook + announcement + request all landing in the same
+wake) were **both DENIED** in one batch at 01:32Z, with no playbook acknowledgement. A rerun with
+the playbook in a prior wake got no reply before testing ended. So the announced-ID recipe was
+proven only on Minds whose steward had already interacted with them about this site that day —
+Triangulator explicitly cited "my steward confirming on their usual webapp channel" as part of why
+it approved. **A first-ever connection realistically needs some steward signal**, which matches
+Triangulator's stated policy (its point c). Adam then connected auth.test to minds.monster and
+Triangulator to staging.minds.monster manually.
+
+**Decision (Adam, 2026-08-31): the connect component is locked for the hackathon — no code
+changes.** The failure is rooted in how Minds respond, not in the site. Revisit this section
+first if connect breaks again; the TTL (30 min vs 2.5 h wake cycles), the parser false-positive,
+and the misleading "paste this into your Mind's own chat" copy are the known, deliberate gaps.
+
+### Not done / blocked
+
+- Email channel (`triangulator@hellominds.ai` via Resend) was blocked by the session's permission
+  classifier and never sent; unknown whether email reaches a Mind.
+- Scratch helpers used (not committed): a thread watcher (`getHistory` every 30 s, exits on a
+  Mind row, `since` cutoff for reused threads) and a sender (`ensureConversation` +
+  `sendMessage`), both run with `node --env-file=.dev.vars`.
+
+---
+
 ## ROUND 15: THE RUN-TESTS BUTTON THAT CAME STRAIGHT BACK (2026-08-30)
 
 A visitor pressed **Run the Director's 2 tests · $0.96** on minds.monster, saw "Running 1 of 2",
