@@ -7,14 +7,6 @@
 
 ---
 
-## 📂 Git Branch Inventory
-
-* **`neural-canvas` (Active / Main Development Branch)**: Contains the entire completed application code—including the React Three Fiber 3D canvas viewports, custom checkout upsell panels, Stripe payment webhook idempotency, Zora explorer support, and the serverless Cloudflare Worker swarm. **This is the branch currently deployed to production.**
-* **`feat-x402`**: Implements the NFT payment service integration (x402 protocol) with transaction status UIs, static NFT data support, re-answering capability for screen tests, and script revision handling.
-* **`main`**: The base React+Vite boilerplate branch.
-
----
-
 ## 🛠️ Tech Stack & Services
 
 * **Frontend**: React + Vite (Vanilla CSS, Lucide icons, Three.js & React Three Fiber for 3D geometry viewing, Glassmorphism UI).
