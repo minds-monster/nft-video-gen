@@ -148,6 +148,7 @@ export const useScreenwriter = () => {
             [owner]: {
               phase: data.phase,
               message: data.message,
+              txHashes: data.phase === 'paid' ? data.message : slot?.txHashes,
               // Keep the reasoning the user has already watched; only clear it when the
               // piece actually settles. Otherwise the formalising/watching phases look empty
               // and the live card appears to obfuscate what just happened.
@@ -162,7 +163,7 @@ export const useScreenwriter = () => {
       // show the same reasoning twice. See the retry loop in src/services/swarm.js.
       if (type === 'restart') {
         setStreams((current) =>
-          current[owner] ? { ...current, [owner]: { phase: current[owner].phase, reasoning: '', content: '' } } : current,
+          current[owner] ? { ...current, [owner]: { phase: current[owner].phase, txHashes: current[owner].txHashes, reasoning: '', content: '' } } : current,
         );
         return;
       }
@@ -197,6 +198,7 @@ export const useScreenwriter = () => {
           owner,
           phase: snapshot.phase,
           message: snapshot.message,
+          txHashes: snapshot.txHashes,
           reasoning: snapshot.reasoning,
           content: snapshot.content,
           finishedAt: Date.now(),
