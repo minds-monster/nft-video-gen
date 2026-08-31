@@ -2,7 +2,7 @@
 
 **minds.MONSTER** is a decentralized cinematic video generation platform designed for creators, brand IP activation, and automated creative pipelines. It allows anyone to turn real-world brand assets (NFT artwork, 3D meshes) into fully-realized cinematic films using an orchestrating swarm of specialized AI agents.
 
-* **Live Site:** [https://minds.monster](https://minds.monster)
+* **Live Site:** [minds.monster](https://minds.monster)
 * **Status:** Hackathon Submission Completed & Live in Production
 
 ---
