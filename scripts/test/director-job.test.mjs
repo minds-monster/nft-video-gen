@@ -289,3 +289,15 @@ test('a job that has vanished is acked, not looped on forever', async () => {
   assert.equal(acked.length, 1);
   assert.equal(retried.length, 0);
 });
+
+test('the Director queue is recognised by prefix, so the staging queue reaches the Director', async () => {
+  // 2026-08-31: `batch.queue === 'director-jobs'` sent every `director-jobs-staging` message to
+  // the storyboard handler, which acked it. The first read on staging sat at `queued` for good.
+  const { isDirectorQueue } = await import('../../worker/director-job.js');
+  assert.equal(isDirectorQueue('director-jobs'), true);
+  assert.equal(isDirectorQueue('director-jobs-staging'), true);
+  assert.equal(isDirectorQueue('storyboard-jobs'), false);
+  assert.equal(isDirectorQueue('storyboard-jobs-staging'), false);
+  assert.equal(isDirectorQueue('director-jobsx'), false);
+  assert.equal(isDirectorQueue(undefined), false);
+});

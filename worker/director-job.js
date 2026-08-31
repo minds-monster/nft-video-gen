@@ -922,6 +922,15 @@ export async function rememberTake(
  * second retry can never fire. That inconsistency is left alone there rather than changed blind,
  * and deliberately not reproduced here.
  */
+/**
+ * Is this batch ours? BY PREFIX, NOT EQUALITY. The staging environment names its queue
+ * `director-jobs-staging` (wrangler.jsonc `env.staging`), and an exact match on `director-jobs`
+ * sent every staging Director message to the storyboard handler, which acked it as a job it
+ * could not find. Found 2026-08-31: the first "Have the Director read it" on staging sat at
+ * `queued` with zero events until the panel's deadline ran out.
+ */
+export const isDirectorQueue = (name) => /^director-jobs(-|$)/.test(name ?? '');
+
 export async function handleDirectorQueue(batch, env) {
   for (const message of batch.messages) {
     const { mindId, jobId, step } = message.body ?? {};

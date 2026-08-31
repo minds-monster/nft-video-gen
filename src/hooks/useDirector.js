@@ -45,6 +45,7 @@ export const PHASE_LABEL = {
   mirroring: 'Bringing the film back',
   unsettled: 'MiniMax has not answered yet',
   reconnecting: 'Reconnecting — the render is still running',
+  stalled: 'Gave up waiting — the job is still queued on the server. Nothing more is charged; reload to check again',
 };
 
 /**
@@ -258,6 +259,13 @@ export function useDirector() {
         const status = await getDirectorJobStatus(token, jobId).catch(() => null);
         if (status) setJob((current) => mergeJob(current, status));
         if (status?.status === 'complete' || status?.status === 'failed') setPhase(null);
+        // The clock ran out and the record never settled. Say so, rather than leaving
+        // "reconnecting" and a frozen timer on screen indefinitely — which is what a visitor
+        // saw on 2026-08-31 when staging's queue was not consuming Director jobs at all.
+        else if (Date.now() - startedAt >= deadlineMs) {
+          console.error('[director] job did not settle within the deadline', { jobId, status: status?.status, step: status?.step });
+          setPhase('stalled');
+        }
         const { filmId } = contextRef.current;
         if (filmId) await loadProduction({ token, filmId });
       }
@@ -574,7 +582,9 @@ export function useDirector() {
     [],
   );
 
-  const running = job?.status === 'queued' || job?.status === 'running';
+  // A stalled job is not "running" as far as the buttons are concerned: the visitor may read
+  // or shoot again, and the server's own idempotency guards a job that later wakes up.
+  const running = (job?.status === 'queued' || job?.status === 'running') && phase !== 'stalled';
 
   return {
     plan,

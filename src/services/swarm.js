@@ -299,18 +299,41 @@ export const forCastingWire = ({ key, nft }) => {
   };
 };
 
+// Where the Casting Director lives. Same-origin by default — this repo's Worker at
+// POST /api/casting — so the bundle routes itself by hostname like every other /api/*
+// call (staging → staging Worker, prod → prod Worker; HANDOVER Round 14 §4).
+//
+// VITE_PROD_SERVER, when set AT BUILD TIME, swaps in the external assets server the
+// feat-x402 work targets (GET /casting-director/:chain/:address/:tokenId). It is a Vite
+// var, so it is baked into dist/ by whoever runs `vite build` — which is how prod ended
+// up on the external server while a local `npm run deploy:staging` shipped the literal
+// string "undefined" and every piece died with "Failed to construct 'URL'" (2026-08-31).
+// A value without a scheme is treated as unset rather than allowed to throw.
+const CASTING_SERVER = (() => {
+  const raw = (import.meta.env?.VITE_PROD_SERVER ?? '').trim().replace(/\/+$/, '');
+  if (!raw) return '';
+  if (/^https?:\/\//.test(raw)) return raw;
+  console.warn(`VITE_PROD_SERVER "${raw}" is not an absolute URL; casting same-origin.`);
+  return '';
+})();
+
 /**
  * `refresh` skips the dossier cache; `previsNote` is an external complaint from the Previs
  * Supervisor's dossier review (see previsDossierReview below) — both optional, both empty by
  * default so the plain re-cast path this always was is unaffected.
+ *
+ * `nft` may be raw Alchemy or already wire-shaped — forCastingWire is idempotent, and the
+ * Previs retry in useScreenwriter passes the raw object.
  */
-export const castPiece = async ({ key, nft, refresh, previsNote }, options) => {
+export const castPiece = ({ key, nft, refresh, previsNote }, options) => {
+  if (!CASTING_SERVER) {
+    return stream('/api/casting', { ...forCastingWire({ key, nft }), refresh, previsNote }, options);
+  }
   const [chain, address, tokenId] = key.split(':');
-  const url = new URL(`${import.meta.env.VITE_PROD_SERVER}/casting-director/${chain}/${address}/${tokenId}`);
+  const url = new URL(`${CASTING_SERVER}/casting-director/${chain}/${address}/${tokenId}`);
   if (refresh) url.searchParams.set('refresh', 'true');
   if (previsNote) url.searchParams.set('previsNote', previsNote);
-  
-  return await stream(url.toString(), null, { ...options, method: 'GET' });
+  return stream(url.toString(), null, { ...options, method: 'GET' });
 };
 
 /**

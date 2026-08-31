@@ -197,6 +197,20 @@ against a ceiling nobody set. Now a mode without an allowance has none.
 - Tests: `director-budget.test.mjs` (refusal arithmetic, ask-mode allowance) and
   `director-start.test.mjs` (the 402 body from the test route, the bounce itself). 388 pass.
 
+### Addendum (2026-08-31): the Director had never run on staging at all
+
+The first "Have the Director read it" on staging sat at "Reconnecting — the render is still
+running · 9m 47s" — the panel's whole deadline (`LATENCY(768P, 4s).max + 180s = 587s`) — with the
+job record at `queued`, `step: assess`, **zero events**. `wrangler queues info` showed
+`director-jobs-staging` with its consumer attached. The cause was one line:
+`worker/index.js` dispatched with `batch.queue === 'director-jobs'`, so every message on
+`director-jobs-staging` went to the **storyboard** handler, which could not find a storyboard job
+and acked it — the exact failure the comment beside that line warned about. Round 14 renamed the
+queue and nothing matched the rename. Now `isDirectorQueue()` (prefix match, tested). The panel
+also stops pretending after its deadline: phase `stalled`, buttons re-enabled, console error.
+
+🔑 A binding that is renamed per environment must never be matched by its literal name.
+
 **Deployed to staging.minds.monster, not production** — round 14's environment exists for
 exactly this. Reproduce there with a fresh Mind and a sandbox Stripe top-up before promoting.
 
@@ -218,6 +232,11 @@ We have introduced a fully isolated **Staging Environment** (`staging.minds.mons
 **3. WEBHOOK AND CONNECTIONS BYPASS.** The staging environment has `STRIPE_ACCOUNT_ID` removed from its secrets. The `stripe.js` client logic only uses `Stripe-Context` if `STRIPE_ACCOUNT_ID` is present. Deleting this environment secret allows checkout sessions to run directly on the main Stripe account in test mode. This completely bypasses the need for mock Connect platform onboarding in test mode, allowing the webhook destination to use the standard "Your account" scope.
 
 **4. AUTOMATIC ROUTING VIA VITE.** The Vite bundle uses relative paths (`/api/*`), meaning it automatically routes all payment actions and agent API calls to the staging Worker when loaded on `staging.minds.monster`, and to the production Worker when loaded on `minds.monster`. No frontend environment variables or client rebuilds are needed.
+
+  **⚠️ Caveat (2026-08-31).** This invariant was broken by `72e8031` (feat-x402, merged 2026-08-29), which rewrote `castPiece` in `src/services/swarm.js` to `new URL(\`${import.meta.env.VITE_PROD_SERVER}/casting-director/…\`)`. `VITE_PROD_SERVER` is a **build-time** Vite var that lives only in the builder's `.env`: prod was deployed from a machine that had it (`https://nft-assets-server.still-snowflake-5e6a.workers.dev`, an external worker), while the first `npm run deploy:staging` from Adam's machine baked the literal string `undefined` — Chrome threw `Failed to construct 'URL': Invalid URL` for every piece and the Writers' Room reported "None of the selected pieces could be read". Fixed by making `castPiece` default to same-origin `POST /api/casting` (this repo's Worker, the staging `DOSSIERS` KV) and only use the external `GET /casting-director/…` route when `VITE_PROD_SERVER` is set and absolute. Consequences to keep in mind:
+  * `VITE_PROD_SERVER` is now the ONE client var that changes routing. It is documented in `.env.example` and deliberately absent from `.env`.
+  * Prod's LIVE bundle still points at the external server. The next `npm run deploy` from a machine without the var moves prod casting back to the in-repo Worker. Decide which is wanted before deploying prod, and ask Logesh what the external server adds on top of `/api/casting`.
+  * `src/services/wallet.js` (same commit) also reads `VITE_PROD_SERVER` for `/fund`, but nothing imports it yet — dead code, left alone.
 
 ### How to use Staging (For future coding agents)
 

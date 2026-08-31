@@ -37,7 +37,7 @@ import {
   handleDirectorBrief,
   handleDirectorAssess,
 } from './director.js';
-import { handleDirectorQueue } from './director-job.js';
+import { handleDirectorQueue, isDirectorQueue } from './director-job.js';
 import {
   handleStoryboard,
   handleStoryboardSketch,
@@ -156,8 +156,9 @@ export default {
   async queue(batch, env, ctx) {
     // One Worker, two queues. `batch.queue` is the only thing that says which, and getting it
     // wrong would hand a director message to the storyboarder's handler, which would not find a
-    // storyboard job and would ack it — losing a paid render silently.
-    if (batch.queue === 'director-jobs') return handleDirectorQueue(batch, env, ctx);
+    // storyboard job and would ack it — losing a paid render silently. Matched by prefix: the
+    // staging queue is `director-jobs-staging`, and an exact match did precisely that there.
+    if (isDirectorQueue(batch.queue)) return handleDirectorQueue(batch, env, ctx);
     return handleStoryboardQueue(batch, env, ctx);
   },
 
