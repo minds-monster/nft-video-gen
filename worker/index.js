@@ -100,6 +100,11 @@ const ROUTES = {
   'POST /api/producer/claim-guest-budget': handleClaimGuestBudget,
   'POST /api/checkout': handleStripeCheckout,
   'POST /api/webhook/stripe': handleStripeWebhook,
+  // The same handler under the path HANDOVER round 14 documented for the staging destination.
+  // A destination created from that doc got a 404 on every event, so a sandbox top-up was
+  // paid and never credited (2026-08-31). Stripe retries a non-2xx for days, so registering
+  // the path also lets the missed events land.
+  'POST /api/stripe-webhook': handleStripeWebhook,
   // POST rather than GET despite changing nothing: the whole spec and cast travel in the body,
   // exactly as /api/storyboard/sketch does. Spends nothing and never queues a task — it reports
   // what WOULD be sent, what it would cost, and what is already known to be wrong with it.
@@ -214,6 +219,13 @@ export default {
         // The Director's queue. Without it every Screen Test and take throws at `send` — a 500
         // that presents exactly like the missing key above: "the button does nothing".
         hasDirectorQueue: Boolean(env.DIRECTOR_JOBS),
+        // The money in. No key = no checkout; no webhook secret = every payment is taken and
+        // never credited, which is the worse of the two because it looks like the Director's
+        // fault. `stripeConnectContext` says whether checkouts run on a connected account
+        // (production) or directly on the key's own account (staging, sandbox).
+        hasStripeKey: Boolean(env.STRIPE_SECRET_KEY),
+        hasStripeWebhookSecret: Boolean(env.STRIPE_WEBHOOK_SECRET),
+        stripeConnectContext: Boolean(env.STRIPE_ACCOUNT_ID),
         // The pinning key. Missing it means finished takes still reach the Mind's filmography, but
         // with a 7-day link and no permanent ipfs:// address — degraded, not dead.
         hasPinataKey: Boolean(env.PINATA_JWT),

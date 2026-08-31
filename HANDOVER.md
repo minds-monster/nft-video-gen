@@ -242,7 +242,7 @@ We have introduced a fully isolated **Staging Environment** (`staging.minds.mons
 
 * **To deploy to Staging:** Run `npm run deploy:staging`. This builds the frontend into `dist/` and deploys the bundle and Worker assets under the Cloudflare `staging` environment.
 * **To set Staging Secrets:** Run `npx wrangler secret put <SECRET_NAME> --env staging` (e.g. `STRIPE_WEBHOOK_SECRET`). Staging secrets are completely isolated from production.
-* **Stripe Webhook Endpoint:** Staging payments confirm via the webhook endpoint `https://staging.minds.monster/api/stripe-webhook` (using Test Mode).
+* **Stripe Webhook Endpoint:** Staging payments confirm via `POST https://staging.minds.monster/api/webhook/stripe` (Test Mode / sandbox). ⚠️ An earlier version of this line said `/api/stripe-webhook`, which was **not a route** — a destination created from it 404'd on every event and a sandbox top-up on 2026-08-31 was paid and never credited (no `budget:` or `stripe_processed:` row ever appeared in staging KV). Both paths now reach the handler; check the destination's URL and its recent deliveries in the sandbox dashboard if a top-up does not land, and `/api/health` reports `hasStripeKey` / `hasStripeWebhookSecret` / `stripeConnectContext`.
 
 ### 🔴 Connect Handshake Diagnostics & Gotchas (Crucial for Staging)
 
