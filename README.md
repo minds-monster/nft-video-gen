@@ -2,7 +2,7 @@
 
 **minds.MONSTER** is a decentralized cinematic video generation platform designed for creators, brand IP activation, and automated creative pipelines. It allows anyone to turn real-world brand assets (NFT artwork, 3D meshes) into fully-realized cinematic films using an orchestrating swarm of specialized AI agents.
 
-* **Live Site:** [https://minds.monster](https://minds.monster)
+* **Live Site:** [minds.monster](https://minds.monster)
 * **Status:** Hackathon Submission Completed & Live in Production
 
 ---
@@ -32,7 +32,7 @@
 
 ## 🤖 Swarm Agent Architecture & x402 Protocol
 
-The swarm operates with a central coordinator (the Producer) driving specialized microservice agents. The system is designed to integrate the **x402 Licensing Protocol**, which automatically handles split micro-payments in `$TEST402` tokens when agents invoke registered brand assets.
+The swarm operates with a central coordinator (the Producer) driving specialized microservice agents. The system is designed to integrate the **x402 Attribution Protocol**, which automatically handles split micro-payments in `$TEST402` tokens when agents invoke registered brand assets.
 
 ```mermaid
 graph TB
@@ -85,7 +85,7 @@ graph TB
         Director
     end
 
-    subgraph licensing_layer ["Licensing Layer (x402)"]
+    subgraph attribution_layer ["Attribution Layer (x402)"]
         AssetRegistry
         X402
     end
