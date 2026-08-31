@@ -33,8 +33,8 @@ export const PHASE_LABEL = {
   formalising: 'writing it up',
   drafting: 'thinking the film through',
   reviewing: 'checking the cast against the prompt',
-  paying: 'paying asset creator',
-  paid: 'paid asset creator',
+  paying: 'paying asset beneficiaries',
+  paid: 'paid asset beneficiaries',
   payfailed: 'payment failed',
   // Client statuses (src/hooks/useScreenwriter.js), seen only when nothing streamed.
   casting: 'reading the artwork',
@@ -58,7 +58,7 @@ const StatusDot = ({ status }) => (
   </span>
 );
 
-const Header = ({ status, phaseName, label, isLive, isCompiling, phase, message }) => (
+const Header = ({ status, phaseName, label, isLive, isCompiling, phase, message, txHashes }) => (
   <>
     <div className="flex items-center gap-2 min-w-0">
       <ChevronRight
@@ -75,17 +75,43 @@ const Header = ({ status, phaseName, label, isLive, isCompiling, phase, message 
       {phaseName && (
         <span className="hidden shrink-0 font-normal text-slate-500 @sm:inline">· {phaseName}</span>
       )}
-      {phase === 'paid' && message && (
-        <a
-          href={message}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hidden shrink-0 text-xs text-blue-400 hover:text-blue-300 hover:underline @sm:inline"
-          onClick={(e) => e.stopPropagation()}
-        >
-          · Tx: {message.split('/').pop().slice(0, 6)}...{message.split('/').pop().slice(-4)}
-        </a>
-      )}
+      {txHashes && (() => {
+        const hashes = txHashes.split(',');
+        return (
+          <div className="hidden shrink-0 @sm:flex items-center group relative">
+            <span className="text-xs text-slate-500 mr-2">·</span>
+            <div className="flex items-center gap-1 text-xs text-blue-400 cursor-pointer">
+              <Activity className="h-3 w-3" />
+              <span>Tx</span>
+            </div>
+            {/* The wrapper has pt-2 instead of mt-2 to create an invisible hover bridge to the popup */}
+            <div className="absolute top-full left-0 pt-1.5 hidden group-hover:block z-50">
+              <div className="flex flex-col gap-1.5 rounded-md border border-slate-700 bg-slate-800 p-2 shadow-xl min-w-max">
+                {hashes.map((hash, i) => {
+                  const url = hash.startsWith('http') ? hash : `https://basescan.org/tx/${hash}`;
+                  const displayHash = hash.split('/').pop();
+                  const shortHash = `${displayHash.slice(0, 6)}...${displayHash.slice(-4)}`;
+                  const label = hashes.length > 1 ? (i === 0 ? 'Creator' : 'Owner') : 'Tx';
+                  return (
+                    <div key={hash} className="flex items-center gap-3 justify-between">
+                      <span className="text-xs text-slate-400">{label}:</span>
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-400 hover:text-blue-300 hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {shortHash}
+                      </a>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
       {phase === 'payfailed' && message && (
         <span className="hidden shrink-0 text-xs text-red-400 @sm:inline">· {message}</span>
       )}
@@ -111,6 +137,7 @@ const AgentThought = ({
   label,
   phase,
   message,
+  txHashes,
   status = 'live',
   reasoning,
   content,
@@ -152,6 +179,7 @@ const AgentThought = ({
       isCompiling={isCompiling}
       phase={phase}
       message={message}
+      txHashes={txHashes}
     />
   );
 

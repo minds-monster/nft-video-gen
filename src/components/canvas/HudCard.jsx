@@ -42,7 +42,7 @@ const HudCard = ({
       defaultOpen={defaultOpen}
       onToggle={onToggle}
     >
-      <summary className="relative z-10 flex cursor-pointer list-none items-center justify-between p-4 text-[10px] uppercase tracking-widest">
+      <summary className="relative z-20 flex cursor-pointer list-none items-center justify-between p-4 text-[10px] uppercase tracking-widest">
         {summary}
       </summary>
       <div className="relative z-10 border-t border-white/5 p-4">{children}</div>
@@ -54,7 +54,7 @@ const HudCard = ({
   return (
     <div
       className={cn(
-        'relative overflow-hidden rounded-xl border border-purple-500/20 bg-black/40 text-left shadow-[0_0_20px_rgba(168,85,247,0.05)] backdrop-blur-md',
+        'relative rounded-xl border border-purple-500/20 bg-black/40 text-left shadow-[0_0_20px_rgba(168,85,247,0.05)] backdrop-blur-md',
         className,
       )}
     >
