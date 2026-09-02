@@ -2,7 +2,6 @@ import { motion } from 'framer-motion';
 import { ArrowDown } from 'lucide-react';
 import HeroBackdrop from './HeroBackdrop';
 import { COLLAPSED_HEIGHT } from './canvas/PromptCanvas';
-import PromptSuggestions from './canvas/panels/PromptSuggestions';
 import { BRANDS, LIVE_BRANDS } from '../data/brands';
 import { PAYMENT } from '../config/payment';
 
@@ -77,19 +76,7 @@ const HeroSection = ({ setAnchor, backdropPaused = false, onPromptSelect }) => (
           style={{ height: COLLAPSED_HEIGHT }}
         />
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.25 }}
-          className="mt-4"
-        >
-          <PromptSuggestions
-            onSelect={onPromptSelect}
-            count={4}
-            className="justify-center"
-            label="Try"
-          />
-        </motion.div>
+
       </div>
     </div>
 

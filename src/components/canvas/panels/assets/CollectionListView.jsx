@@ -17,11 +17,11 @@ const CollectionRow = ({ collection, candidate, onBrowseCollection }) => {
     <button
       type="button"
       onClick={() => onBrowseCollection?.(collection)}
-      className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-white/5"
+      className="flex w-full items-center gap-2 md:gap-2.5 rounded-lg p-1.5 md:p-2 text-left transition-colors hover:bg-white/5"
     >
       <div
-        className="shrink-0 overflow-hidden rounded-md border border-white/10 bg-slate-900"
-        style={{ width: 48, aspectRatio: ratio }}
+        className="shrink-0 overflow-hidden rounded-md border border-white/10 bg-slate-900 w-10 md:w-14 lg:w-16 xl:w-20"
+        style={{ aspectRatio: ratio }}
       >
         {thumb ? (
           <img
@@ -37,8 +37,8 @@ const CollectionRow = ({ collection, candidate, onBrowseCollection }) => {
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-xs font-medium text-slate-200">{collection.name}</p>
-        <p className="truncate text-[10px] text-slate-500">{collection.brand?.name}</p>
+        <p className="truncate text-[11px] md:text-xs lg:text-sm font-medium text-slate-200">{collection.name}</p>
+        <p className="truncate text-[9px] md:text-[10px] lg:text-xs text-slate-500">{collection.brand?.name}</p>
       </div>
     </button>
   );

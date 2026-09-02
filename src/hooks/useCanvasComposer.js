@@ -110,11 +110,9 @@ export const useCanvasComposer = () => {
 
   const castKeys = useMemo(() => new Set(cast.map((item) => item.key)), [cast]);
 
-  // Deriving the primary rather than storing it means a stale `primaryKey` (its card was
-  // removed) can't produce an empty selection — it falls back to the centre of the arc,
-  // which is where the eye already is.
-  const primary =
-    cast.find((item) => item.key === primaryKey) ?? cast[Math.floor(cast.length / 2)] ?? null;
+  // Deriving the primary rather than storing it allows a stale `primaryKey` (its card was
+  // removed) or a deliberately cleared selection to produce an empty state, hiding the viewer.
+  const primary = cast.find((item) => item.key === primaryKey) ?? null;
 
   const seedCast = useCallback(
     (candidates) => {

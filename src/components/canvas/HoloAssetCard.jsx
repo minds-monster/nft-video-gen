@@ -49,6 +49,7 @@ const HoloAssetCard = ({
   analysis,
   readOnly = false,
   compact = false,
+  className,
 }) => {
   const [imageFailed, setImageFailed] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
@@ -84,6 +85,7 @@ const HoloAssetCard = ({
         'group relative overflow-hidden border bg-slate-900/60 transition-colors',
         compact ? 'rounded-lg' : 'rounded-xl',
         isPrimary ? 'border-white/25' : 'border-white/10 hover:border-white/20',
+        className,
       )}
       style={{ width, height }}
     >

@@ -122,11 +122,39 @@ const HoloArc = ({
   }
 
   if (flat) {
+    if (compact) {
+      return (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(90px,1fr))] gap-3 py-2 w-full">
+          {cast.map((entry) => (
+            <div key={entry.key} className="w-full">
+              <HoloAssetCard
+                entry={entry}
+                isPrimary={entry.key === primaryKey}
+                onPromote={onPromote}
+                onRemove={onRemove}
+                onSwap={onSwap}
+                width="100%"
+                height="auto"
+                className="aspect-[4/5]"
+                analysis={analysis?.[entry.key]}
+                readOnly={readOnly}
+                compact={compact}
+              />
+            </div>
+          ))}
+          {!readOnly && (
+            <div className="w-full aspect-[4/5]">
+              <AddNode onClick={() => onAdd?.()} disabled={full} width="100%" height="100%" />
+            </div>
+          )}
+        </div>
+      );
+    }
+
     return (
       <div
         className={cn(
-          'no-scrollbar overscroll-contain-y -mx-4 flex snap-x overflow-x-auto px-4',
-          compact ? 'justify-center gap-2 py-2' : 'snap-mandatory gap-3 py-4',
+          'no-scrollbar overscroll-contain-y -mx-4 flex snap-x overflow-x-auto px-4 snap-mandatory gap-3 py-4',
         )}
       >
         {cast.map((entry) => (
