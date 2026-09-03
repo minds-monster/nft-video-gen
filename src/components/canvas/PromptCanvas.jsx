@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { Loader2, Search, Send, Sparkles, X } from 'lucide-react';
+import { Loader2, Search, Send, Sparkles, X, Menu } from 'lucide-react';
 import HudFrame from './HudFrame';
 import ContractDock from './ContractDock';
 import AssetPicker from './AssetPicker';
@@ -8,6 +8,7 @@ import AssetsPanel from './panels/AssetsPanel';
 import CastPanel from './panels/CastPanel';
 import MovieRenderPanel from './panels/MovieRenderPanel';
 import PromptSuggestions from './panels/PromptSuggestions';
+import OverviewPanel from './panels/OverviewPanel';
 import { filmIdFor } from '../../../worker/film-id.js';
 import CrewStrip from './CrewStrip';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
@@ -154,6 +155,7 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder, director
   const [rightWidth, setRightWidth] = useState(25);
   const [isDragging, setIsDragging] = useState(false);
   const dragTarget = useRef(null);
+  const [viewMode, setViewMode] = useState('overview');
 
   const handleMouseDownLeft = useCallback((e) => {
     e.preventDefault();
@@ -371,48 +373,48 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder, director
           <div
             className="relative flex flex-col h-full w-full"
           >
-            {/* 1. Top step indicator */}
-            <div className="shrink-0 flex items-center gap-6 px-4 md:px-6 py-4 border-b border-white/10">
-              <div className="flex items-center gap-2">
-                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-purple-600 text-white text-xs font-bold">1</span>
-                <span className="text-white font-medium">Cast</span>
-              </div>
-              <div className="h-[1px] w-8 bg-white/20" />
-              <div className="flex items-center gap-2 opacity-50">
-                <span className="flex items-center justify-center w-6 h-6 rounded-full border border-white/30 text-white text-xs font-bold">2</span>
-                <span className="text-white font-medium">Prompt</span>
-              </div>
-              <div className="h-[1px] w-8 bg-white/20" />
-              <div className="flex items-center gap-2 opacity-50">
-                <span className="flex items-center justify-center w-6 h-6 rounded-full border border-white/30 text-white text-xs font-bold">3</span>
-                <span className="text-white font-medium">Direct</span>
-              </div>
+            {/* 1. Top Header */}
+            <div className="shrink-0 flex items-center px-4 md:px-6 py-4 border-b border-white/10">
+              {viewMode !== 'overview' && (
+                <button 
+                  onClick={() => setViewMode('overview')} 
+                  className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+                >
+                  <Menu className="h-5 w-5" />
+                </button>
+              )}
             </div>
 
             {/* 2. Three-column main area */}
             <div className="flex flex-col md:hidden flex-1 min-h-0">
-              {/* Mobile Column 1: Asset catalog */}
+              {/* Mobile Column 1: Asset catalog or Overview */}
               <div className="w-full shrink-0 border-b border-white/10 flex flex-col relative bg-black/20 max-h-[40vh]">
-                <div className="flex-1 flex flex-col min-h-0 p-4">
-                  <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4 shrink-0">Your collections</h3>
-                  <AssetsPanel
-                    id="canvas-panel-assets"
-                    pool={pool}
-                    castKeys={castKeys}
-                    isMock={isMock}
-                    onAdd={addAsset}
-                    onPreview={setPreviewCandidate}
-                    onBrowseCollection={browseCollection}
-                  />
-                </div>
-                <div className="shrink-0 border-t border-white/10 p-3 bg-black/40">
-                  <ContractDock
-                    onResolve={resolveContract}
-                    resolving={resolving}
-                    error={resolveError}
-                    onReshuffle={reshuffle}
-                  />
-                </div>
+                {viewMode === 'overview' ? (
+                  <OverviewPanel id="canvas-panel-overview-mobile" onNewTask={() => setViewMode('assets')} />
+                ) : (
+                  <>
+                    <div className="flex-1 flex flex-col min-h-0 p-4">
+                      <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4 shrink-0">Your collections</h3>
+                      <AssetsPanel
+                        id="canvas-panel-assets-mobile"
+                        pool={pool}
+                        castKeys={castKeys}
+                        isMock={isMock}
+                        onAdd={addAsset}
+                        onPreview={setPreviewCandidate}
+                        onBrowseCollection={browseCollection}
+                      />
+                    </div>
+                    <div className="shrink-0 border-t border-white/10 p-3 bg-black/40">
+                      <ContractDock
+                        onResolve={resolveContract}
+                        resolving={resolving}
+                        error={resolveError}
+                        onReshuffle={reshuffle}
+                      />
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Mobile Column 2: Viewer */}
@@ -489,7 +491,7 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder, director
               </div>
 
               {/* Mobile Column 3: Cast slots */}
-              <div className={cn("flex-1 flex flex-col bg-black/40 p-4 overflow-y-auto", hasShot && "hidden")}>
+              <div className={cn("flex-1 flex flex-col bg-black/40 p-4 overflow-y-auto", (hasShot || viewMode === 'overview') && "hidden")}>
                 <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4 shrink-0">Your cast</h3>
                 <CastPanel
                   id="canvas-panel-cast"
@@ -523,31 +525,37 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder, director
             </div>
 
             <div className="hidden md:flex flex-row flex-1 min-h-0 w-full">
-              {/* Column 1: Asset catalog */}
+              {/* Column 1: Asset catalog or Overview */}
               <div 
                 className="shrink-0 border-r border-white/10 flex flex-col relative bg-black/20"
                 style={{ width: `${leftWidth}%` }}
               >
-                <div className="flex-1 flex flex-col min-h-0 p-4">
-                  <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4 shrink-0">Your collections</h3>
-                  <AssetsPanel
-                    id="canvas-panel-assets"
-                    pool={pool}
-                    castKeys={castKeys}
-                    isMock={isMock}
-                    onAdd={addAsset}
-                    onPreview={setPreviewCandidate}
-                    onBrowseCollection={browseCollection}
-                  />
-                </div>
-                <div className="shrink-0 border-t border-white/10 p-3 bg-black/40">
-                  <ContractDock
-                    onResolve={resolveContract}
-                    resolving={resolving}
-                    error={resolveError}
-                    onReshuffle={reshuffle}
-                  />
-                </div>
+                {viewMode === 'overview' ? (
+                  <OverviewPanel id="canvas-panel-overview" onNewTask={() => setViewMode('assets')} />
+                ) : (
+                  <>
+                    <div className="flex-1 flex flex-col min-h-0 p-4">
+                      <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4 shrink-0">Your collections</h3>
+                      <AssetsPanel
+                        id="canvas-panel-assets"
+                        pool={pool}
+                        castKeys={castKeys}
+                        isMock={isMock}
+                        onAdd={addAsset}
+                        onPreview={setPreviewCandidate}
+                        onBrowseCollection={browseCollection}
+                      />
+                    </div>
+                    <div className="shrink-0 border-t border-white/10 p-3 bg-black/40">
+                      <ContractDock
+                        onResolve={resolveContract}
+                        resolving={resolving}
+                        error={resolveError}
+                        onReshuffle={reshuffle}
+                      />
+                    </div>
+                  </>
+                )}
               </div>
               
               {/* Resizer 1 */}
@@ -561,7 +569,7 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder, director
               {/* Column 2: Chatbot style viewer */}
               <div 
                 className="shrink-0 border-r border-white/10 flex flex-col transition-all duration-500 ease-in-out min-w-0 p-4"
-                style={{ width: `${middleWidth}%` }}
+                style={{ width: viewMode === 'overview' ? `${100 - leftWidth}%` : `${middleWidth}%` }}
               >
                 <div className="flex-1 min-h-0 flex flex-col justify-center">
                   <AnimatePresence mode="popLayout">
@@ -645,48 +653,52 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder, director
               </div>
 
               {/* Resizer 2 */}
-              <div
-                className="w-2 -ml-1 -mr-1 z-10 cursor-col-resize flex items-center justify-center hover:bg-purple-500/50 active:bg-purple-500 group"
-                onMouseDown={handleMouseDownRight}
-              >
-                <div className="w-0.5 h-8 bg-white/20 rounded-full group-hover:bg-white" />
-              </div>
+              {viewMode !== 'overview' && (
+                <div
+                  className="w-2 -ml-1 -mr-1 z-10 cursor-col-resize flex items-center justify-center hover:bg-purple-500/50 active:bg-purple-500 group"
+                  onMouseDown={handleMouseDownRight}
+                >
+                  <div className="w-0.5 h-8 bg-white/20 rounded-full group-hover:bg-white" />
+                </div>
+              )}
 
               {/* Column 3: Cast slots */}
-              <div 
-                className="shrink-0 flex flex-col bg-black/40 p-4 overflow-y-auto min-w-0"
-                style={{ width: `${rightWidth}%` }}
-              >
-                <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4 shrink-0">Your cast</h3>
-                <CastPanel
-                  id="canvas-panel-cast"
-                  cast={cast}
-                  primaryKey={primaryKey}
-                  setPrimary={setPrimary}
-                  removeAsset={removeAsset}
-                  openPicker={openPicker}
-                  loading={poolLoading && cast.length === 0}
-                  full={cast.length >= 7}
-                  analysis={screenwriter?.analysis}
-                  readOnly={!composing}
-                  status={status.cast}
-                />
+              {viewMode !== 'overview' && (
+                <div 
+                  className="shrink-0 flex flex-col bg-black/40 p-4 overflow-y-auto min-w-0"
+                  style={{ width: `${rightWidth}%` }}
+                >
+                  <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4 shrink-0">Your cast</h3>
+                  <CastPanel
+                    id="canvas-panel-cast"
+                    cast={cast}
+                    primaryKey={primaryKey}
+                    setPrimary={setPrimary}
+                    removeAsset={removeAsset}
+                    openPicker={openPicker}
+                    loading={poolLoading && cast.length === 0}
+                    full={cast.length >= 7}
+                    analysis={screenwriter?.analysis}
+                    readOnly={!composing}
+                    status={status.cast}
+                  />
 
-                <CrewStrip
-                  steps={pipeline.steps}
-                  status={status}
-                  cast={cast}
-                  screenwriter={screenwriter}
-                  storyboarder={storyboarder}
-                  director={director}
-                  token={token}
-                  budget={budget}
-                  pipeline={pipeline}
-                  onAcceptBrief={onAcceptBrief}
-                  onPreviewTake={onPreviewTake}
-                  preview={preview}
-                />
-              </div>
+                  <CrewStrip
+                    steps={pipeline.steps}
+                    status={status}
+                    cast={cast}
+                    screenwriter={screenwriter}
+                    storyboarder={storyboarder}
+                    director={director}
+                    token={token}
+                    budget={budget}
+                    pipeline={pipeline}
+                    onAcceptBrief={onAcceptBrief}
+                    onPreviewTake={onPreviewTake}
+                    preview={preview}
+                  />
+                </div>
+              )}
             </div>
 
 
