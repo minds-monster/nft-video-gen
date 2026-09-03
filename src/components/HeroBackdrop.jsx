@@ -226,20 +226,20 @@ const HeroBackdrop = ({ className, paused = false }) => {
           grade it at encode time in scripts/encode-hero.sh (a colorbalance shadow lift on
           a v4 render, poster re-rendered from the same chain) — zero runtime cost and no
           blend-mode risk at all. */}
-      <div
+      {/* <div
         className="absolute inset-0"
         style={{
           background:
             'linear-gradient(to bottom, rgb(var(--ground-rgb) / 0.42) 0%, rgb(var(--ground-rgb) / 0.38) 45%, rgb(var(--ground-rgb) / 0.74) 78%, rgb(var(--ground-rgb) / 1) 100%)',
         }}
-      />
-      <div
+      /> */}
+      {/* <div
         className="absolute inset-0"
         style={{
           background:
             'radial-gradient(60% 55% at 50% 42%, rgb(var(--ground-rgb) / 0.45) 0%, rgb(var(--ground-rgb) / 0.18) 60%, transparent 100%)',
         }}
-      />
+      /> */}
 
       {/* WCAG 2.2.2 (Pause, Stop, Hide): motion that runs longer than five seconds needs a
           control available to everyone, not only to visitors who set the OS reduce-motion

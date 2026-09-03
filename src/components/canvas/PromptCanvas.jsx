@@ -9,6 +9,7 @@ import CastPanel from './panels/CastPanel';
 import MovieRenderPanel from './panels/MovieRenderPanel';
 import PromptSuggestions from './panels/PromptSuggestions';
 import OverviewPanel from './panels/OverviewPanel';
+import LoginPanel from './panels/LoginPanel';
 import { filmIdFor } from '../../../worker/film-id.js';
 import CrewStrip from './CrewStrip';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
@@ -20,6 +21,9 @@ import { useProductionPipeline } from '../../hooks/useProductionPipeline';
 import { checkHealth } from '../../services/swarm';
 import { STAGE } from '../../hooks/useScreenwriter';
 import { cn } from '../../lib/cn';
+import { useTasks } from '../../hooks/useSupabaseData';
+import { useAuth } from '../../context/AuthContext';
+import { resolveNftName } from '../../lib/nftMedia';
 
 const EXPANDED_INSET = 24;
 const COLLAPSED_RADIUS = 10;
@@ -98,6 +102,72 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder, director
     if (!token || !spec?.beats?.length) return;
     loadDirectorProduction?.({ token, filmId: filmIdFor(spec) });
   }, [token, spec, loadDirectorProduction]);
+
+  const { user } = useAuth();
+  const { createTask, updateTask } = useTasks();
+  const [activeTaskId, setActiveTaskId] = useState(null);
+
+  const handleNewTask = useCallback(() => {
+    onStartFresh?.();
+    setActiveTaskId(null);
+    setViewMode('assets');
+  }, [onStartFresh]);
+
+  const handleTaskSelect = useCallback((task) => {
+    setActiveTaskId(task.id);
+    composer.restore({
+      prompt: task.prompt,
+      cast: task.cast_data,
+      primaryKey: task.primary_cast_key
+    });
+    if (task.spec && screenwriter?.restore) {
+      screenwriter.restore({
+        stage: STAGE.COMPOSE,
+        spec: task.spec,
+        writtenCast: [],
+        caps: {}
+      });
+    }
+    if (task.preview_take_id) {
+      previewTake(task.preview_take_id);
+    } else {
+      clearPreview();
+    }
+    setViewMode('assets');
+  }, [composer, screenwriter, previewTake, clearPreview]);
+  
+  // Sync state to task
+  useEffect(() => {
+    if (!user) return;
+    
+    const syncToTask = async () => {
+      let savePrompt = prompt;
+      if (!savePrompt && cast.length > 0) {
+        savePrompt = resolveNftName(cast[0].nft);
+      }
+
+      const taskData = {
+        prompt: savePrompt,
+        cast_data: cast,
+        primary_cast_key: primaryKey,
+        spec,
+        preview_take_id: preview?.takeId
+      };
+      
+      if (activeTaskId) {
+        await updateTask(activeTaskId, taskData);
+      } else if (prompt || cast.length > 0) {
+        const newTask = await createTask(taskData);
+        if (newTask) {
+          setActiveTaskId(newTask.id);
+        }
+      }
+    };
+    
+    // Debounce the sync
+    const timeoutId = setTimeout(syncToTask, 1500);
+    return () => clearTimeout(timeoutId);
+  }, [user, prompt, cast, primaryKey, spec, preview?.takeId, activeTaskId, createTask, updateTask]);
 
   const acceptBrief = director?.acceptBrief;
   const onAcceptBrief = useCallback(
@@ -390,7 +460,7 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder, director
               {/* Mobile Column 1: Asset catalog or Overview */}
               <div className="w-full shrink-0 border-b border-white/10 flex flex-col relative bg-black/20 max-h-[40vh]">
                 {viewMode === 'overview' ? (
-                  <OverviewPanel id="canvas-panel-overview-mobile" onNewTask={() => setViewMode('assets')} />
+                  <OverviewPanel id="canvas-panel-overview-mobile" onNewTask={handleNewTask} onTaskSelect={handleTaskSelect} />
                 ) : (
                   <>
                     <div className="flex-1 flex flex-col min-h-0 p-4">
@@ -420,7 +490,43 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder, director
               {/* Mobile Column 2: Viewer */}
               <div className="flex flex-col transition-all duration-500 ease-in-out p-4 flex-1 min-h-0 justify-center">
                 <AnimatePresence mode="popLayout">
-                  {(preview || primary || viewedTake) && (
+                  {!user && viewMode === 'overview' && (
+                    <motion.div
+                      key="login-mobile"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.3 }}
+                      layout
+                      className="flex-1 min-h-0 flex flex-col relative mb-4"
+                    >
+                      <LoginPanel id="canvas-panel-login-mobile" />
+                    </motion.div>
+                  )}
+                  {user && viewMode === 'overview' && (
+                    <motion.div
+                      key="create-project-mobile"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.3 }}
+                      layout
+                      className="flex-1 flex flex-col items-center justify-center gap-4 text-center h-full mb-4"
+                    >
+                      <div className="w-16 h-16 bg-purple-600/20 text-purple-400 rounded-2xl flex items-center justify-center mb-2">
+                        <Plus className="h-8 w-8" />
+                      </div>
+                      <h2 className="text-xl font-semibold text-white">Start a new project</h2>
+                      <button 
+                        onClick={handleNewTask}
+                        className="mt-2 flex items-center gap-2 px-6 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-medium transition-all shadow-lg hover:shadow-purple-500/25"
+                      >
+                        <Plus className="h-5 w-5" />
+                        Create New Project
+                      </button>
+                    </motion.div>
+                  )}
+                  {viewMode !== 'overview' && (preview || primary || viewedTake) && (
                     <motion.div
                       key="viewer"
                       initial={{ opacity: 0, scale: 0.95 }}
@@ -454,40 +560,42 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder, director
                   )}
                 </AnimatePresence>
                 
-                <motion.div layout className="mt-4 flex flex-col gap-3 shrink-0 w-full max-w-3xl mx-auto">
-                  <div className="flex items-center gap-3 bg-black/40 rounded-xl border border-white/10 px-4 py-2 shadow-sm">
-                    <Sparkles className="h-5 w-5 text-purple-400" />
-                    <textarea
-                      rows={1}
-                      value={prompt}
-                      onChange={(event) => setPrompt(event.target.value)}
-                      readOnly={!composing}
-                      placeholder="Describe your film..."
-                      className="flex-1 resize-none bg-transparent text-slate-300 outline-none placeholder:text-slate-600 py-2"
+                {viewMode !== 'overview' && (
+                  <motion.div layout className="mt-4 flex flex-col gap-3 shrink-0 w-full max-w-3xl mx-auto">
+                    <div className="flex items-center gap-3 bg-black/40 rounded-xl border border-white/10 px-4 py-2 shadow-sm">
+                      <Sparkles className="h-5 w-5 text-purple-400" />
+                      <textarea
+                        rows={1}
+                        value={prompt}
+                        onChange={(event) => setPrompt(event.target.value)}
+                        readOnly={!composing}
+                        placeholder="Describe your film..."
+                        className="flex-1 resize-none bg-transparent text-slate-300 outline-none placeholder:text-slate-600 py-2"
+                      />
+                      <button
+                        type="button"
+                        onClick={launch}
+                        disabled={!ready}
+                        className={cn(
+                          'flex shrink-0 items-center justify-center rounded-xl p-2.5 text-white transition-colors',
+                          'bg-purple-600 hover:bg-purple-500',
+                          'disabled:bg-purple-600/40 disabled:text-white/50',
+                        )}
+                      >
+                        {resolving ? (
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                        ) : (
+                          <Send className="h-5 w-5" />
+                        )}
+                      </button>
+                    </div>
+                    <PromptSuggestions
+                      onSelect={setPrompt}
+                      count={3}
+                      className="justify-center"
                     />
-                    <button
-                      type="button"
-                      onClick={launch}
-                      disabled={!ready}
-                      className={cn(
-                        'flex shrink-0 items-center justify-center rounded-xl p-2.5 text-white transition-colors',
-                        'bg-purple-600 hover:bg-purple-500',
-                        'disabled:bg-purple-600/40 disabled:text-white/50',
-                      )}
-                    >
-                      {resolving ? (
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                      ) : (
-                        <Send className="h-5 w-5" />
-                      )}
-                    </button>
-                  </div>
-                  <PromptSuggestions
-                    onSelect={setPrompt}
-                    count={3}
-                    className="justify-center"
-                  />
-                </motion.div>
+                  </motion.div>
+                )}
               </div>
 
               {/* Mobile Column 3: Cast slots */}
@@ -531,7 +639,7 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder, director
                 style={{ width: `${leftWidth}%` }}
               >
                 {viewMode === 'overview' ? (
-                  <OverviewPanel id="canvas-panel-overview" onNewTask={() => setViewMode('assets')} />
+                  <OverviewPanel id="canvas-panel-overview" onNewTask={handleNewTask} onTaskSelect={handleTaskSelect} />
                 ) : (
                   <>
                     <div className="flex-1 flex flex-col min-h-0 p-4">
@@ -573,7 +681,46 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder, director
               >
                 <div className="flex-1 min-h-0 flex flex-col justify-center">
                   <AnimatePresence mode="popLayout">
-                    {(preview || primary || viewedTake) && (
+                    {!user && viewMode === 'overview' && (
+                      <motion.div
+                        key="login-mid"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.3 }}
+                        layout
+                        className="flex-1 min-h-0 flex flex-col mb-4"
+                      >
+                        <LoginPanel id="canvas-panel-login-mid" />
+                      </motion.div>
+                    )}
+                    {user && viewMode === 'overview' && (
+                      <motion.div
+                        key="create-project"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.3 }}
+                        layout
+                        className="flex-1 flex flex-col items-center justify-center gap-4 text-center h-full"
+                      >
+                        <div className="w-16 h-16 bg-purple-600/20 text-purple-400 rounded-2xl flex items-center justify-center mb-2 shadow-[0_0_30px_-5px_rgba(147,51,234,0.3)]">
+                          <Plus className="h-8 w-8" />
+                        </div>
+                        <h2 className="text-3xl font-semibold text-white tracking-tight">Start a new project</h2>
+                        <p className="text-slate-400 max-w-md text-base leading-relaxed">
+                          Create a new film, or select an existing project from the sidebar to continue working.
+                        </p>
+                        <button 
+                          onClick={handleNewTask}
+                          className="mt-6 flex items-center gap-2 px-8 py-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-medium transition-all shadow-[0_0_40px_-10px_rgba(147,51,234,0.5)] hover:shadow-[0_0_60px_-15px_rgba(147,51,234,0.7)] hover:scale-105 active:scale-95"
+                        >
+                          <Plus className="h-5 w-5" />
+                          Create New Project
+                        </button>
+                      </motion.div>
+                    )}
+                    {viewMode !== 'overview' && (preview || primary || viewedTake) && (
                       <motion.div
                         key="viewer"
                         initial={{ opacity: 0, scale: 0.95 }}
@@ -615,40 +762,42 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder, director
                     )}
                   </AnimatePresence>
 
-                  <motion.div layout className="flex flex-col gap-3 shrink-0 w-full max-w-3xl mx-auto">
-                    <div className="flex items-center gap-3 bg-black/40 rounded-xl border border-white/10 px-4 py-2 shadow-lg">
-                      <Sparkles className="h-5 w-5 text-purple-400" />
-                      <textarea
-                        rows={1}
-                        value={prompt}
-                        onChange={(event) => setPrompt(event.target.value)}
-                        readOnly={!composing}
-                        placeholder="Describe your film..."
-                        className="flex-1 resize-none bg-transparent text-slate-300 outline-none placeholder:text-slate-600 py-2"
+                  {viewMode !== 'overview' && (
+                    <motion.div layout className="flex flex-col gap-3 shrink-0 w-full max-w-3xl mx-auto">
+                      <div className="flex items-center gap-3 bg-black/40 rounded-xl border border-white/10 px-4 py-2 shadow-lg">
+                        <Sparkles className="h-5 w-5 text-purple-400" />
+                        <textarea
+                          rows={1}
+                          value={prompt}
+                          onChange={(event) => setPrompt(event.target.value)}
+                          readOnly={!composing}
+                          placeholder="Describe your film..."
+                          className="flex-1 resize-none bg-transparent text-slate-300 outline-none placeholder:text-slate-600 py-2"
+                        />
+                        <button
+                          type="button"
+                          onClick={launch}
+                          disabled={!ready}
+                          className={cn(
+                            'flex shrink-0 items-center justify-center rounded-xl p-2.5 text-white transition-colors',
+                            'bg-purple-600 hover:bg-purple-500',
+                            'disabled:bg-purple-600/40 disabled:text-white/50',
+                          )}
+                        >
+                          {resolving ? (
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                          ) : (
+                            <Send className="h-5 w-5" />
+                          )}
+                        </button>
+                      </div>
+                      <PromptSuggestions
+                        onSelect={setPrompt}
+                        count={3}
+                        className="justify-center"
                       />
-                      <button
-                        type="button"
-                        onClick={launch}
-                        disabled={!ready}
-                        className={cn(
-                          'flex shrink-0 items-center justify-center rounded-xl p-2.5 text-white transition-colors',
-                          'bg-purple-600 hover:bg-purple-500',
-                          'disabled:bg-purple-600/40 disabled:text-white/50',
-                        )}
-                      >
-                        {resolving ? (
-                          <Loader2 className="h-5 w-5 animate-spin" />
-                        ) : (
-                          <Send className="h-5 w-5" />
-                        )}
-                      </button>
-                    </div>
-                    <PromptSuggestions
-                      onSelect={setPrompt}
-                      count={3}
-                      className="justify-center"
-                    />
-                  </motion.div>
+                    </motion.div>
+                  )}
                 </div>
               </div>
 

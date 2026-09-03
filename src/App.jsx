@@ -26,7 +26,6 @@ import { useCanvasComposer } from './hooks/useCanvasComposer';
 import { useScreenwriter } from './hooks/useScreenwriter';
 import { useStoryboarder } from './hooks/useStoryboarder';
 import { useDirector } from './hooks/useDirector';
-import { useDraftPersistence } from './hooks/useDraftPersistence';
 import { consumeCheckoutReturn } from './lib/checkoutReturn';
 import { assetKey } from './lib/assetKey';
 import { BRANDS, LIVE_COLLECTIONS } from './data/brands';
@@ -97,12 +96,6 @@ const AppShell = () => {
   // useStoryboarder would have meant one hook with two budgets and two failure models.
   const director = useDirector();
 
-  // The draft — prompt, cast, screenplay — written to localStorage and, for a connected Mind, to
-  // the Worker, and put back on load. This is what makes the Stripe round-trip survivable; see
-  // src/lib/draftStore.js for why it exists and src/hooks/useDraftPersistence.js for the order
-  // it restores things in.
-  const draft = useDraftPersistence({ composer, screenwriter, session });
-
   // Restore THIS film's storyboard once there is both a session to fetch it with and a spec
   // saying which film we are looking at.
   //
@@ -131,11 +124,10 @@ const AppShell = () => {
   //
   // Only when the tab has no spec of its own. The storyboard note above is the reason: pulling
   // the Mind's LAST film into a tab that is mid-way through a different one is the exact
-  // leak this app already refused once. `draft.pending` is the same guard one step earlier: a
-  // tab whose own draft is still being read back does not yet know whether it has a spec.
+  // leak this app already refused once.
   const { loadFilms: loadProductions, openProduction } = director;
   useEffect(() => {
-    if (!session?.token || screenwriter.spec || draft.pending) return;
+    if (!session?.token || screenwriter.spec) return;
     let cancelled = false;
     loadProductions(session.token).then((films) => {
       if (cancelled) return;
@@ -145,7 +137,7 @@ const AppShell = () => {
     return () => {
       cancelled = true;
     };
-  }, [session?.token, screenwriter.spec, draft.pending, loadProductions, openProduction]);
+  }, [session?.token, screenwriter.spec, loadProductions, openProduction]);
 
   // Publish how far this visitor has actually got, for the Producer briefing.
   //
@@ -349,8 +341,8 @@ const AppShell = () => {
         >
           <span className="flex-1 leading-relaxed">
             {checkoutOutcome === 'success'
-              ? `Payment received — your budget is being credited.${draft.restored ? ' Your draft has been restored.' : ''}`
-              : `Checkout cancelled.${draft.restored ? ' Your draft is still here.' : ''}`}
+              ? `Payment received — your budget is being credited.`
+              : `Checkout cancelled.`}
           </span>
           <button
             type="button"
@@ -371,7 +363,10 @@ const AppShell = () => {
         storyboarder={storyboarder}
         director={director}
         onLaunch={screenwriter.launch}
-        onStartFresh={draft.startFresh}
+        onStartFresh={() => {
+          screenwriter.reset();
+          composer.clearComposition();
+        }}
         budgetBoostUntil={budgetBoostUntil}
       />
 
@@ -392,11 +387,14 @@ const AppShell = () => {
    two marquees and the hud keyframes but NOT framer-motion, which animates inline styles
    from JS. Only four components called useReducedMotion() individually, leaving ~30
    motion elements ignoring the OS flag. This covers all of them in one place. */
+import { AuthProvider } from './context/AuthContext';
 const App = () => (
   <MotionConfig reducedMotion="user">
-    <MindChatProvider>
-      <AppShell />
-    </MindChatProvider>
+    <AuthProvider>
+      <MindChatProvider>
+        <AppShell />
+      </MindChatProvider>
+    </AuthProvider>
   </MotionConfig>
 );
 
