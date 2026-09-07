@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { ArrowDownAZ, ArrowUpAZ } from 'lucide-react';
 import { resolveNftThumb } from '../../../../services/alchemy';
 import { artRatio } from '../../../../data/brands';
+import { candidateKey } from '../../../../lib/assetKey';
 import { cn } from '../../../../lib/cn';
 
 const SORT = {
@@ -9,7 +10,7 @@ const SORT = {
   ZA: 'za',
 };
 
-const CollectionRow = ({ collection, candidate, onBrowseCollection }) => {
+const CollectionRow = ({ collection, candidate, hasSelected, onBrowseCollection }) => {
   const thumb = resolveNftThumb(candidate.nft);
   const ratio = artRatio(collection);
 
@@ -17,7 +18,10 @@ const CollectionRow = ({ collection, candidate, onBrowseCollection }) => {
     <button
       type="button"
       onClick={() => onBrowseCollection?.(collection)}
-      className="flex w-full items-center gap-2 md:gap-2.5 rounded-lg p-1.5 md:p-2 text-left transition-colors hover:bg-white/5"
+      className={cn(
+        "flex w-full items-center gap-2 md:gap-2.5 rounded-lg p-1.5 md:p-2 text-left transition-colors hover:bg-white/5",
+        hasSelected && "ring-1 ring-purple-500/50 bg-purple-500/10"
+      )}
     >
       <div
         className="shrink-0 overflow-hidden rounded-md border border-white/10 bg-slate-900 w-10 md:w-14 lg:w-16 xl:w-20"
@@ -47,15 +51,18 @@ const CollectionRow = ({ collection, candidate, onBrowseCollection }) => {
 /**
  * All collections as a small-icon scrollable list. Clicking a collection browses it.
  */
-const CollectionListView = ({ pool, onBrowseCollection }) => {
+const CollectionListView = ({ pool, castKeys, onBrowseCollection }) => {
   const [sort, setSort] = useState(SORT.AZ);
 
   const collections = useMemo(() => {
     const byKey = new Map();
     for (const candidate of pool) {
       const key = `${candidate.collection.chain}:${candidate.collection.address}`.toLowerCase();
+      const assetKey = candidateKey(candidate);
       if (!byKey.has(key)) {
-        byKey.set(key, { collection: candidate.collection, candidate });
+        byKey.set(key, { collection: candidate.collection, candidate, hasSelected: castKeys?.has(assetKey) });
+      } else if (castKeys?.has(assetKey)) {
+        byKey.get(key).hasSelected = true;
       }
     }
     return [...byKey.values()].sort((a, b) => {
@@ -63,7 +70,7 @@ const CollectionListView = ({ pool, onBrowseCollection }) => {
       const nameB = b.collection.name.toLowerCase();
       return sort === SORT.AZ ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
     });
-  }, [pool, sort]);
+  }, [pool, sort, castKeys]);
 
   return (
     <div className="flex h-full flex-col">
@@ -97,11 +104,12 @@ const CollectionListView = ({ pool, onBrowseCollection }) => {
           <p className="py-6 text-center text-xs text-slate-500">No collections available.</p>
         ) : (
           <div className="flex flex-col gap-1">
-            {collections.map(({ collection, candidate }) => (
+            {collections.map(({ collection, candidate, hasSelected }) => (
               <CollectionRow
                 key={`${collection.chain}:${collection.address}`}
                 collection={collection}
                 candidate={candidate}
+                hasSelected={hasSelected}
                 onBrowseCollection={onBrowseCollection}
               />
             ))}

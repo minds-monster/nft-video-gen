@@ -1,35 +1,38 @@
 import { useMemo, useState } from 'react';
 import { ChevronRight, Folder, FolderOpen, Image } from 'lucide-react';
 import { resolveNftName } from '../../../../services/alchemy';
+import { candidateKey } from '../../../../lib/assetKey';
 import { cn } from '../../../../lib/cn';
 
 const ROW = 'flex w-full items-center gap-1.5 md:gap-2 rounded-lg px-1.5 md:px-2 py-1 md:py-1.5 text-left transition-colors hover:bg-white/5';
 const LABEL = 'truncate text-[11px] md:text-xs text-slate-300';
 
-const AssetRow = ({ candidate, onPreview }) => (
-  <button type="button" onClick={() => onPreview?.(candidate)} className={cn(ROW, 'pl-6 md:pl-7')}>
-    <Image className="h-3 w-3 md:h-3.5 md:w-3.5 shrink-0 text-slate-500" />
-    <span className={LABEL}>{resolveNftName(candidate.nft)}</span>
+const AssetRow = ({ candidate, onPreview, selected }) => (
+  <button type="button" onClick={() => onPreview?.(candidate)} className={cn(ROW, 'pl-6 md:pl-7', selected && 'bg-white/10 ring-1 ring-purple-400/50')}>
+    <Image className={cn("h-3 w-3 md:h-3.5 md:w-3.5 shrink-0", selected ? "text-purple-400" : "text-slate-500")} />
+    <span className={cn(LABEL, selected && "text-purple-300 font-medium")}>{resolveNftName(candidate.nft)}</span>
   </button>
 );
 
-const CollectionRow = ({ collection, assets, onPreview, onBrowseCollection }) => {
+const CollectionRow = ({ collection, assets, onPreview, onBrowseCollection, castKeys }) => {
   const [open, setOpen] = useState(false);
+  const hasSelected = useMemo(() => assets.some(a => castKeys?.has(candidateKey(a))), [assets, castKeys]);
+  
   return (
     <div>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className={cn(ROW, 'pl-3 md:pl-4')}
+        className={cn(ROW, 'pl-3 md:pl-4', hasSelected && 'bg-purple-500/10 ring-1 ring-purple-500/50')}
       >
         <ChevronRight className={cn('h-3 w-3 md:h-3.5 md:w-3.5 shrink-0 text-slate-500 transition-transform', open && 'rotate-90')} />
-        <span className={cn(LABEL, 'font-medium text-slate-200')}>{collection.name}</span>
+        <span className={cn(LABEL, 'font-medium', hasSelected ? 'text-purple-200' : 'text-slate-200')}>{collection.name}</span>
         <span className="ml-auto shrink-0 font-mono text-[9px] md:text-[10px] text-slate-600">{assets.length}</span>
       </button>
       {open && (
         <div className="mt-0.5 flex flex-col">
           {assets.map((candidate, index) => (
-            <AssetRow key={index} candidate={candidate} onPreview={onPreview} />
+            <AssetRow key={index} candidate={candidate} onPreview={onPreview} selected={castKeys?.has(candidateKey(candidate))} />
           ))}
           <button
             type="button"
@@ -40,22 +43,24 @@ const CollectionRow = ({ collection, assets, onPreview, onBrowseCollection }) =>
           </button>
         </div>
       )}
-    </div>
+      </div>
   );
 };
 
-const BrandRow = ({ brand, collections, onPreview, onBrowseCollection }) => {
+const BrandRow = ({ brand, collections, onPreview, onBrowseCollection, castKeys }) => {
   const [open, setOpen] = useState(false);
   const Icon = open ? FolderOpen : Folder;
+  const hasSelected = useMemo(() => collections.some(({ assets }) => assets.some(a => castKeys?.has(candidateKey(a)))), [collections, castKeys]);
+
   return (
     <div className="border-b border-white/5 last:border-b-0">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className={ROW}
+        className={cn(ROW, hasSelected && 'bg-purple-500/10 ring-1 ring-purple-500/50')}
       >
-        <Icon className="h-3.5 w-3.5 md:h-4 md:w-4 shrink-0 text-purple-400" />
-        <span className={cn(LABEL, 'font-semibold text-slate-200')}>{brand?.name ?? 'Unknown brand'}</span>
+        <Icon className={cn("h-3.5 w-3.5 md:h-4 md:w-4 shrink-0", hasSelected ? "text-purple-300" : "text-purple-400")} />
+        <span className={cn(LABEL, 'font-semibold', hasSelected ? 'text-purple-200' : 'text-slate-200')}>{brand?.name ?? 'Unknown brand'}</span>
         <span className="ml-auto shrink-0 font-mono text-[9px] md:text-[10px] text-slate-600">{collections.length}</span>
       </button>
       {open && (
@@ -67,6 +72,7 @@ const BrandRow = ({ brand, collections, onPreview, onBrowseCollection }) => {
               assets={assets}
               onPreview={onPreview}
               onBrowseCollection={onBrowseCollection}
+              castKeys={castKeys}
             />
           ))}
         </div>
@@ -78,7 +84,7 @@ const BrandRow = ({ brand, collections, onPreview, onBrowseCollection }) => {
 /**
  * Hierarchical directory: brand → collection → asset.
  */
-const DirectoryView = ({ pool, onPreview, onBrowseCollection }) => {
+const DirectoryView = ({ pool, castKeys, onPreview, onBrowseCollection }) => {
   const tree = useMemo(() => {
     const byBrand = new Map();
     for (const candidate of pool) {
@@ -110,6 +116,7 @@ const DirectoryView = ({ pool, onPreview, onBrowseCollection }) => {
           collections={[...collections.values()].sort((a, b) => a.collection.name.localeCompare(b.collection.name))}
           onPreview={onPreview}
           onBrowseCollection={onBrowseCollection}
+          castKeys={castKeys}
         />
       ))}
     </div>

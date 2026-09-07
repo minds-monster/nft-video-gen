@@ -44,10 +44,6 @@ export const loadCollection = (chain, address, limit = 24) => {
 export const getCachedCollection = (chain, address, limit = 24) =>
   cache.get(keyOf(chain, address, limit)) ?? null;
 
-/**
- * Load one collection's NFTs. `enabled: false` defers the fetch, which lets the
- * brand wall load collections lazily as sections come into view.
- */
 export const useCollectionNfts = ({ chain, address, limit = 24, enabled = true } = {}) => {
   const cached = address && enabled ? getCachedCollection(chain, address, limit) : null;
   // `status` separates "haven't asked yet" from "asked and got nothing". Without it,
@@ -55,8 +51,8 @@ export const useCollectionNfts = ({ chain, address, limit = 24, enabled = true }
   // to an empty result, and the UI flashes an error at anyone who scrolls fast.
   const [state, setState] = useState(() =>
     cached
-      ? { nfts: cached.nfts, isMock: cached.isMock, status: 'done', error: null }
-      : { nfts: [], isMock: false, status: 'idle', error: null },
+      ? { nfts: cached.nfts, isMock: cached.isMock, status: 'done', error: null, reqAddress: address }
+      : { nfts: [], isMock: false, status: 'idle', error: null, reqAddress: address },
   );
 
   useEffect(() => {
@@ -64,12 +60,12 @@ export const useCollectionNfts = ({ chain, address, limit = 24, enabled = true }
 
     const hit = getCachedCollection(chain, address, limit);
     if (hit) {
-      setState({ nfts: hit.nfts, isMock: hit.isMock, status: 'done', error: null });
+      setState({ nfts: hit.nfts, isMock: hit.isMock, status: 'done', error: null, reqAddress: address });
       return;
     }
 
     let active = true;
-    setState({ nfts: [], isMock: false, status: 'loading', error: null });
+    setState({ nfts: [], isMock: false, status: 'loading', error: null, reqAddress: address });
 
     loadCollection(chain, address, limit).then((result) => {
       if (!active) return;
@@ -78,6 +74,7 @@ export const useCollectionNfts = ({ chain, address, limit = 24, enabled = true }
         isMock: result.isMock,
         status: 'done',
         error: result.error ?? null,
+        reqAddress: address,
       });
     });
 
@@ -86,10 +83,14 @@ export const useCollectionNfts = ({ chain, address, limit = 24, enabled = true }
     };
   }, [chain, address, limit, enabled]);
 
+  const isStale = state.reqAddress !== address;
+
   return {
-    ...state,
+    nfts: isStale ? (cached ? cached.nfts : []) : state.nfts,
+    isMock: isStale ? (cached ? cached.isMock : false) : state.isMock,
+    error: isStale ? null : state.error,
     // `loading` stays true while idle so callers render a skeleton, never an error.
-    loading: state.status !== 'done',
-    settled: state.status === 'done',
+    loading: isStale ? !cached : state.status !== 'done',
+    settled: isStale ? !!cached : state.status === 'done',
   };
 };

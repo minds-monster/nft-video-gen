@@ -57,10 +57,10 @@ const AssetsPanel = ({ id, pool, castKeys, isMock, onPreview, onBrowseCollection
           />
         )}
         {view === VIEWS.DIRECTORY && (
-          <DirectoryView pool={pool} onPreview={onPreview} onBrowseCollection={onBrowseCollection} />
+          <DirectoryView pool={pool} castKeys={castKeys} onPreview={onPreview} onBrowseCollection={onBrowseCollection} />
         )}
         {view === VIEWS.COLLECTIONS && (
-          <CollectionListView pool={pool} onBrowseCollection={onBrowseCollection} />
+          <CollectionListView pool={pool} castKeys={castKeys} onBrowseCollection={onBrowseCollection} />
         )}
       </div>
     </CanvasPanel>

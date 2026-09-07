@@ -123,11 +123,8 @@ const MovieRenderPanel = ({
         <PreviewEmpty />
       ) : (
         <>
-          <div className="relative mx-auto flex min-h-0 w-full max-w-full flex-1 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-black/40">
-            <div
-              className="relative max-h-full max-w-full"
-              style={{ aspectRatio: ratio }}
-            >
+          <div className="relative mx-auto flex w-full items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-black/40 aspect-square md:aspect-video">
+            <div className="relative h-full w-full p-2 md:p-4">
               {previewLoading && !candidate.nft ? (
                 <div className="flex h-full w-full items-center justify-center text-sm text-slate-500">
                   Loading…
