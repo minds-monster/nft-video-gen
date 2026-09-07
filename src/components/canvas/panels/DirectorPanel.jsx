@@ -537,6 +537,7 @@ const DirectorPanel = ({
       title="Director"
       icon={Clapperboard}
       bodyClassName="flex flex-col gap-2"
+      className="rounded-xl border border-purple-500/40 shadow-[0_0_30px_-5px_rgba(168,85,247,0.2)]"
       collapsed={collapsed}
       onToggle={onToggle}
       status={status}
@@ -704,7 +705,12 @@ const DirectorPanel = ({
                 type="button"
                 onClick={() => director.assess({ spec, cast, token })}
                 disabled={!token || running || planning || batching}
-                className="w-full rounded-xl border border-white/10 bg-black/40 px-2 py-1.5 text-[11px] text-slate-300 transition-colors hover:border-purple-500/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                className={cn(
+                  'w-full rounded-xl px-2 py-1.5 text-[11px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40',
+                  !director.shootingPlan
+                    ? 'bg-purple-600 text-white hover:bg-purple-500'
+                    : 'border border-white/10 bg-black/40 text-slate-300 hover:border-purple-500/40 hover:text-white'
+                )}
               >
                 {director.shootingPlan ? 'Read it again' : 'Have the Director read it'}
               </button>
@@ -716,10 +722,10 @@ const DirectorPanel = ({
               onClick={() => onShoot?.({ spec, cast, token })}
               disabled={!ready || running || planning || batching}
               className={cn(
-                'w-full rounded-xl px-2 py-2 text-[11px] font-semibold transition-colors disabled:cursor-not-allowed disabled:bg-white/5 disabled:text-slate-600',
+                'w-full rounded-xl font-semibold transition-colors disabled:cursor-not-allowed disabled:bg-white/5 disabled:text-slate-600',
                 cleared
-                  ? 'bg-purple-600 text-white hover:bg-purple-500'
-                  : 'border border-white/10 bg-black/40 text-slate-400 hover:text-white',
+                  ? 'bg-purple-600 px-2 py-2.5 text-xs text-white hover:bg-purple-500'
+                  : 'border border-white/10 bg-black/40 px-2 py-2 text-[11px] text-slate-400 hover:text-white',
               )}
             >
               {cta}

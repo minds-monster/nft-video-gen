@@ -116,7 +116,7 @@ const StoryboarderPanel = ({
             onClick={send}
             disabled={capped}
             title={capped ? 'This scene is too long for the current tier' : undefined}
-            className="sticker sticker-hover w-full rounded-xl bg-purple-600 px-4 py-2 text-xs font-semibold text-white hover:bg-purple-500 disabled:cursor-not-allowed disabled:bg-purple-600/40"
+            className="sticker sticker-hover w-full rounded-xl border border-purple-500/30 bg-purple-500/10 px-4 py-2 text-xs font-semibold text-purple-300 hover:border-purple-500/60 hover:bg-purple-500/20 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {capped ? 'Scene exceeds Zero Budget limits' : 'Try the Storyboarder (Beta)'}
           </button>

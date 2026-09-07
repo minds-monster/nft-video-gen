@@ -79,7 +79,7 @@ const FlowColumn = ({
   return (
     <div className={cn("flex-1 min-h-0 flex flex-col items-center w-full h-full pb-20", isCentered ? "justify-center" : "justify-start")}>
       <AnimatePresence mode="popLayout">
-          <motion.div layout key="flow-content" className="w-full flex flex-col items-center pt-4">
+          <motion.div layout key="flow-content" className="w-full flex flex-col items-center pt-4 pb-[10%]">
             {/* 1. The Prompt */}
             {!composing && prompt ? (
               <motion.div layout className="w-full max-w-3xl shrink-0 p-5 rounded-2xl bg-black/40 border border-white/10 shadow-lg z-10">
@@ -172,7 +172,7 @@ const FlowColumn = ({
                   />
                 )}
                 
-                {(status?.storyboarder || status?.storyboard) && (
+                {/* {(status?.storyboarder || status?.storyboard) && (
                   <StoryboarderPanel
                     spec={screenwriter?.spec}
                     cast={screenwriter?.writtenCast}
@@ -183,7 +183,7 @@ const FlowColumn = ({
                     status={status?.storyboarder || status?.storyboard}
                     collapsed={false}
                   />
-                )}
+                )} */}
                 
                 {status?.screenplay && director && (
                   <DirectorPanel
@@ -196,7 +196,7 @@ const FlowColumn = ({
                   />
                 )}
 
-                {status?.director && (
+                {status?.director && (director?.takes?.length > 0 || storyboarder?.frames?.length > 0) && (
                   <TimelinePanel
                     storyboarder={storyboarder}
                     director={director}
