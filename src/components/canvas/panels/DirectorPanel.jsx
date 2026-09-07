@@ -699,6 +699,11 @@ const DirectorPanel = ({
             <ApproveRow label={cta} onDecide={director.decide} />
           ) : (
             <div className="space-y-1.5">
+              {!token && (
+                <p className="text-center text-[10px] text-slate-400">
+                  Connect your Mind to shoot this film
+                </p>
+              )}
               {/* Free, so it is never behind the money gate — and offered before Shoot because
                   reading the film first is the whole method this Director is executing. */}
               <button

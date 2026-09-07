@@ -109,7 +109,7 @@ const ProducerSurface = ({
             onClick={() => setTab(key)}
             className={cn(
               'flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-semibold transition-colors',
-              tab === key ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-slate-200',
+              tab === key ? 'border border-purple-600 text-purple-300' : 'border border-transparent text-slate-400 hover:text-slate-200',
             )}
           >
             <Icon className="h-3.5 w-3.5" /> {label}

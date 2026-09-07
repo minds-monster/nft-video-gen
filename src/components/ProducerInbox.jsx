@@ -385,7 +385,7 @@ const ProducerInbox = ({ session, pending, messages, isInitializing, error, send
           <button
             type="button"
             onClick={() => setOpen({ view: 'compose', replyTo: null })}
-            className="sticker sticker-hover flex items-center gap-1.5 rounded-xl bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-purple-500"
+            className="sticker sticker-hover flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-purple-500"
           >
             <PenSquare className="h-3.5 w-3.5" /> New message
           </button>
