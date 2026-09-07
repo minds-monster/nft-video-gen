@@ -45,6 +45,7 @@ const StoryboarderPanel = ({
   const { frames, phase, running, error, spend, stageLabel, elapsedSeconds, events } = storyboarder ?? {};
   const { plan, capped, capViolations } = pipeline ?? {};
   const [showEvents, setShowEvents] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const nudgeFrame = (frames ?? []).find((f) => f.regenCount === 3);
 
   const send = () => {
@@ -60,8 +61,8 @@ const StoryboarderPanel = ({
       // would otherwise lose its label.
       title="Storyboarder (Beta)"
       icon={Clapperboard}
-      collapsed={collapsed}
-      onToggle={onToggle}
+      collapsed={isCollapsed}
+      onToggle={() => setIsCollapsed(!isCollapsed)}
       status={status}
     >
       {children}
@@ -105,12 +106,36 @@ const StoryboarderPanel = ({
               Deliberately not a pitch. The gains are real (better shot variety, framing that
               matches the geometry) but a visitor who wanted those went looking for this panel;
               a visitor who did not is owed the reason to walk away, up front. */}
-          <p className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-[11px] leading-relaxed text-amber-200/90">
-            <span className="font-semibold">Beta.</span> Blocks every shot in 3D, and takes
-            several minutes longer than shooting straight from the screenplay. The Director does
-            not demand it — this is an advanced, experimental feature for blocking the scene before
-            you spend on it.
-          </p>
+          <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-[11px] leading-relaxed text-amber-200/90">
+            <p>
+              <span className="font-semibold">Beta.</span> Blocks every shot in 3D, and takes
+              several minutes longer than shooting straight from the screenplay. The Director does
+              not demand it — this is an advanced, experimental feature for blocking the scene before
+              you spend on it.
+            </p>
+            {capped && (
+              <p className="mt-3 pt-3 border-t border-amber-500/20 text-amber-200">
+                {(capViolations ?? []).map((v) => v.detail).join(' ')}{' '}
+                {onOpenProducer ? (
+                  <button
+                    type="button"
+                    onClick={onOpenProducer}
+                    className="underline underline-offset-2 transition-colors hover:text-white"
+                  >
+                    Set a budget in the Producer
+                  </button>
+                ) : (
+                  'Set a budget in the Producer'
+                )}{' '}
+                to unlock the full scene, or shorten the prompt.
+              </p>
+            )}
+            {!capped && plan?.overCapCopy && (
+              <p className="mt-3 pt-3 border-t border-amber-500/20 text-amber-200">
+                {plan.overCapCopy}
+              </p>
+            )}
+          </div>
           <button
             type="button"
             onClick={send}
@@ -120,23 +145,6 @@ const StoryboarderPanel = ({
           >
             {capped ? 'Scene exceeds Zero Budget limits' : 'Try the Storyboarder (Beta)'}
           </button>
-          {capped && (
-            <p className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-[11px] leading-relaxed text-amber-200">
-              {(capViolations ?? []).map((v) => v.detail).join(' ')}{' '}
-              {onOpenProducer ? (
-                <button
-                  type="button"
-                  onClick={onOpenProducer}
-                  className="underline underline-offset-2 transition-colors hover:text-white"
-                >
-                  Set a budget in the Producer
-                </button>
-              ) : (
-                'Set a budget in the Producer'
-              )}{' '}
-              to unlock the full scene, or shorten the prompt.
-            </p>
-          )}
           {plan && (
             <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[10px] uppercase tracking-wider text-slate-500">
               <span className={plan.tier === 'paid' ? 'text-amber-300' : 'text-emerald-300'}>{plan.label}</span>
@@ -146,11 +154,6 @@ const StoryboarderPanel = ({
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />~{Math.round(plan.estimateSeconds / 60)}–{Math.round(plan.estimateSeconds / 60) + 2} min
               </span>
-            </p>
-          )}
-          {!capped && plan?.overCapCopy && (
-            <p className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-[11px] leading-relaxed text-amber-200">
-              {plan.overCapCopy}
             </p>
           )}
           {plan?.downgraded && (

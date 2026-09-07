@@ -172,7 +172,7 @@ const FlowColumn = ({
                   />
                 )}
                 
-                {/* {(status?.storyboarder || status?.storyboard) && (
+                {(status?.storyboarder || status?.storyboard) && (
                   <StoryboarderPanel
                     spec={screenwriter?.spec}
                     cast={screenwriter?.writtenCast}
@@ -183,7 +183,7 @@ const FlowColumn = ({
                     status={status?.storyboarder || status?.storyboard}
                     collapsed={false}
                   />
-                )} */}
+                )}
                 
                 {status?.screenplay && director && (
                   <DirectorPanel
