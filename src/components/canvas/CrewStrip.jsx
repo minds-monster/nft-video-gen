@@ -1,14 +1,8 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Clock, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import { STATE } from '../../hooks/useProductionPipeline';
 import { cn } from '../../lib/cn';
-import CastingDirectorPanel from './panels/CastingDirectorPanel';
-import ScreenwriterPanel from './panels/ScreenwriterPanel';
-import ScreenplayPanel from './panels/ScreenplayPanel';
-import StoryboarderPanel from './panels/StoryboarderPanel';
-import ProducerPanel from './panels/ProducerPanel';
-import TimelinePanel from './panels/TimelinePanel';
 
 const CrewStrip = ({
   steps,
@@ -24,8 +18,7 @@ const CrewStrip = ({
   onPreviewTake,
   preview,
 }) => {
-  const [expanded, setExpanded] = useState(true);
-  const [activePanel, setActivePanel] = useState('producer');
+  const [expanded, setExpanded] = useState(false);
 
   const busy = steps.some((step) => step.state === STATE.RUNNING);
   const activeStep = steps.find((step) => step.state === STATE.RUNNING) || steps.find((step) => step.state === STATE.FAILED) || steps[steps.length - 1];
@@ -60,7 +53,7 @@ const CrewStrip = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="font-medium text-white">Crew at work</span>
-            <span className="text-slate-500 text-sm">— ~4m 20s typical wait</span>
+            {/* <span className="text-slate-500 text-sm">— ~4m 20s typical wait</span> */}
           </div>
           <button className="text-slate-400 hover:text-white">
             {expanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
@@ -113,98 +106,18 @@ const CrewStrip = ({
             exit={{ height: 0, opacity: 0 }}
             className="border-t border-white/10"
           >
-            <div className="flex flex-col bg-black/60 relative">
+            <div className="flex flex-col bg-black/60 relative p-4 gap-3">
               {[
-                { id: 'castingDirector', label: 'Casting Director' },
-                { id: 'writersRoom', label: 'Screenwriter' },
-                { id: 'screenplay', label: 'Screenplay' },
-                { id: 'storyboarder', label: 'Storyboarder' },
-                { id: 'director', label: 'Timeline' },
-                { id: 'producer', label: 'Producer' }
-              ].map(tab => (
-                <div key={tab.id} className="flex flex-col border-b border-white/10 last:border-b-0">
-                  <button
-                    onClick={() => setActivePanel(activePanel === tab.id ? null : tab.id)}
-                    className="flex items-center justify-between px-4 py-3 text-sm font-medium hover:bg-white/5 transition-colors text-slate-300 hover:text-white"
-                  >
-                    <span>{tab.label}</span>
-                    {activePanel === tab.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                  </button>
-                  <AnimatePresence>
-                    {activePanel === tab.id && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="max-h-[400px] overflow-y-auto bg-black/40 relative">
-                          {tab.id === 'castingDirector' && (
-                            <CastingDirectorPanel
-                              cast={cast}
-                              analysis={screenwriter?.analysis}
-                              streams={screenwriter?.streams}
-                              thoughts={screenwriter?.thoughts}
-                              status={status?.castingDirector}
-                              collapsed={false}
-                            />
-                          )}
-                          {tab.id === 'writersRoom' && (
-                            <ScreenwriterPanel
-                              live={screenwriter?.live ?? []}
-                              thoughts={screenwriter?.thoughts ?? {}}
-                              error={screenwriter?.error ?? null}
-                              status={status?.writersRoom}
-                              collapsed={false}
-                            />
-                          )}
-                          {tab.id === 'screenplay' && (
-                            <ScreenplayPanel
-                              spec={screenwriter?.spec}
-                              cast={cast}
-                              analysis={screenwriter?.analysis}
-                              rewriting={screenwriter?.rewriting}
-                              live={screenwriter?.live ?? []}
-                              trimBeat={screenwriter?.trimBeat}
-                              requestTrim={screenwriter?.requestTrim}
-                              status={status?.screenplay}
-                              collapsed={false}
-                            />
-                          )}
-                          {tab.id === 'storyboarder' && (
-                            <StoryboarderPanel
-                              spec={screenwriter?.spec}
-                              cast={screenwriter?.writtenCast}
-                              storyboarder={storyboarder}
-                              pipeline={pipeline}
-                              token={token}
-                              budget={budget}
-                              status={status?.storyboarder}
-                              collapsed={false}
-                            />
-                          )}
-                          {tab.id === 'producer' && (
-                            <ProducerPanel
-                              onAcceptBrief={onAcceptBrief}
-                              acceptedBriefAt={director?.brief?.acceptedAt ?? 0}
-                              collapsed={false}
-                            />
-                          )}
-                          {tab.id === 'director' && (
-                            <TimelinePanel
-                              storyboarder={storyboarder}
-                              director={director}
-                              token={token}
-                              budget={budget}
-                              status={status?.storyboard}
-                              activeTakeId={preview?.takeId ?? null}
-                              onPreviewTake={onPreviewTake}
-                            />
-                          )}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                { id: 'castingDirector', label: 'Casting Director', desc: 'Selects the ideal AI actors and voice profiles for the script.' },
+                { id: 'writersRoom', label: 'Screenwriter', desc: 'Develops the core narrative and dialogue for the video.' },
+                { id: 'screenplay', label: 'Screenplay', desc: 'Formats the narrative into a structured, shot-by-shot script.' },
+                { id: 'storyboarder', label: 'Storyboarder', desc: 'Generates visual representations for each scene.' },
+                { id: 'director', label: 'Timeline', desc: 'Sequences shots, audio, and transitions into a coherent flow.' },
+                { id: 'producer', label: 'Producer', desc: 'Oversees the final assembly and rendering of the video.' }
+              ].map(role => (
+                <div key={role.id} className="flex items-center gap-3 border-b border-white/10 pb-3 last:border-b-0 last:pb-0">
+                  <span className="text-[11px] font-medium text-slate-200 bg-white/10 px-2 py-1 rounded shrink-0">{role.label}</span>
+                  <span className="text-[11px] text-slate-400 truncate">{role.desc}</span>
                 </div>
               ))}
             </div>

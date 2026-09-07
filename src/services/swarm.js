@@ -52,6 +52,11 @@ export const stream = async (path, body, { signal, onEvent, headers, retries = 0
       throw error;
     }
 
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      return await response.json();
+    }
+
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';

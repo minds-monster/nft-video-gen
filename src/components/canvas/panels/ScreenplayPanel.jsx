@@ -125,23 +125,7 @@ const ScreenplayPanel = ({
   return (
     <CanvasPanel id={id} title="Screenplay" icon={PenLine} collapsed={collapsed} onToggle={onToggle} status={status}>
       <div className={cn('space-y-4', rewriting && 'opacity-60')}>
-        {/* User intent */}
-        <HudCard
-          summary={
-            <>
-              <span className="text-purple-300/80">You asked for</span>
-            </>
-          }
-        >
-          <p className="text-sm italic leading-relaxed text-slate-200">
-            &ldquo;{spec.intent}&rdquo;
-          </p>
-          {spec.note && (
-            <p className="mt-2 border-t border-white/10 pt-2 text-xs leading-relaxed text-purple-200/70">
-              then directed: &ldquo;{spec.note}&rdquo;
-            </p>
-          )}
-        </HudCard>
+
 
         {/* Headline */}
         <HudCard>

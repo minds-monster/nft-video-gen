@@ -30,7 +30,7 @@ const ScreenwriterPanel = ({ id, live, thoughts, error, collapsed, onToggle, sta
     >
       <div className="space-y-3">
         {/* Ahead of the Screenwriter's own card, because it runs before it. */}
-        {(previsStream || previsThought) && (
+        {previsStream && (
           <div className="space-y-1.5">
             <p className="flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.25em] text-slate-600">
               <ClipboardCheck className="h-3 w-3 shrink-0 text-purple-400" />
@@ -38,21 +38,17 @@ const ScreenwriterPanel = ({ id, live, thoughts, error, collapsed, onToggle, sta
             </p>
             <AgentThought
               label="Previs Supervisor"
-              phase={previsStream?.phase ?? previsThought?.phase}
-              status={previsStream ? 'live' : 'done'}
-              reasoning={previsStream?.reasoning ?? previsThought?.reasoning}
-              content={previsStream?.content ?? previsThought?.content}
-              compiling={Boolean(previsStream) && !previsStream.reasoning?.trim() && !previsStream.content?.trim()}
+              phase={previsStream.phase}
+              status="live"
+              reasoning={previsStream.reasoning}
+              content={previsStream.content}
+              compiling={!previsStream.reasoning?.trim() && !previsStream.content?.trim()}
             />
           </div>
         )}
 
         {(writerStream || writerThought) && (
           <div className="space-y-1.5">
-            <p className="flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.25em] text-slate-600">
-              <PenLine className="h-3 w-3 shrink-0 text-purple-400" />
-              Screenwriter
-            </p>
             {writerStream ? (
               <AgentThought
                 label="Screenwriter"

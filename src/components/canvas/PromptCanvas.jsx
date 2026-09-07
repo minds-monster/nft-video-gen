@@ -9,6 +9,7 @@ import CastPanel from './panels/CastPanel';
 import { filmIdFor } from '../../../worker/film-id.js';
 import CrewStrip from './CrewStrip';
 import FlowColumn from './FlowColumn';
+import ProducerPanel from './panels/ProducerPanel';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
@@ -510,6 +511,14 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder, director
                   onPreviewTake={onPreviewTake}
                   preview={preview}
                 />
+                
+                <div className="mt-auto pt-4 shrink-0">
+                  <ProducerPanel
+                    onAcceptBrief={onAcceptBrief}
+                    acceptedBriefAt={director?.brief?.acceptedAt ?? 0}
+                    collapsed={false}
+                  />
+                </div>
               </div>
             </div>
 
@@ -629,6 +638,14 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder, director
                   onPreviewTake={onPreviewTake}
                   preview={preview}
                 />
+
+                <div className="mt-auto pt-4 shrink-0">
+                  <ProducerPanel
+                    onAcceptBrief={onAcceptBrief}
+                    acceptedBriefAt={director?.brief?.acceptedAt ?? 0}
+                    collapsed={false}
+                  />
+                </div>
               </div>
             </div>
 

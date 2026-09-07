@@ -189,7 +189,7 @@ export const useProductionPipeline = ({ composer, screenwriter, storyboarder, di
     let writeState = STATE.IDLE;
     if (writerStream || rewriting) writeState = STATE.RUNNING;
     else if (spec) writeState = STATE.DONE;
-    else if (writerError && tally.done > 0) writeState = STATE.FAILED;
+    else if (writerError) writeState = STATE.FAILED;
     else if (stage === STAGE.WRITING && previsThought) writeState = STATE.RUNNING;
 
     const writeStep = {

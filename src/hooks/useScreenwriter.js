@@ -169,14 +169,13 @@ export const useScreenwriter = () => {
       }
       if (type !== 'delta') return;
       setStreams((current) => {
-        const slot = current[owner];
-        if (!slot) return current;
+        const slot = current[owner] || { phase: 'drafting', reasoning: '', content: '' };
         return {
           ...current,
           [owner]: {
             ...slot,
-            reasoning: slot.reasoning + (data.reasoning ?? ''),
-            content: slot.content + (data.content ?? ''),
+            reasoning: (slot.reasoning || '') + (data.reasoning ?? ''),
+            content: (slot.content || '') + (data.content ?? ''),
           },
         };
       });

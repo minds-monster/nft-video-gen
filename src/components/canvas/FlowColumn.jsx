@@ -7,7 +7,7 @@ import PromptSuggestions from './panels/PromptSuggestions';
 import ScreenwriterPanel from './panels/ScreenwriterPanel';
 import ScreenplayPanel from './panels/ScreenplayPanel';
 import StoryboarderPanel from './panels/StoryboarderPanel';
-import ProducerPanel from './panels/ProducerPanel';
+import DirectorPanel from './panels/DirectorPanel';
 import TimelinePanel from './panels/TimelinePanel';
 import { useEffect, useRef } from 'react';
 
@@ -91,6 +91,9 @@ const FlowColumn = ({
               </motion.div>
             ) : composing && (
               <motion.div layout className="flex flex-col gap-3 shrink-0 w-full max-w-3xl z-10">
+                <motion.div layout className="mb-2 text-center">
+                  <h2 className="text-2xl font-medium text-slate-200 tracking-wide">Where will your story begin?</h2>
+                </motion.div>
                 <div className="flex items-center gap-3 bg-black/40 rounded-xl border border-white/10 px-4 py-2 shadow-lg">
                   <Sparkles className="h-5 w-5 text-purple-400" />
                   <textarea
@@ -99,7 +102,7 @@ const FlowColumn = ({
                     value={prompt}
                     onChange={(event) => setPrompt(event.target.value)}
                     readOnly={!composing}
-                    placeholder="Describe your film..."
+                    placeholder="Describe your film"
                     className="flex-1 resize-none bg-transparent text-slate-300 outline-none placeholder:text-slate-600 py-2"
                   />
                   <button
@@ -144,7 +147,7 @@ const FlowColumn = ({
 
             {/* The rest of the pipeline panels in the second column */}
             {!composing && cast.length > 0 && (
-              <motion.div layout className="w-full max-w-3xl shrink-0 z-10 flex flex-col gap-4 mt-4">
+              <motion.div layout className="w-full max-w-3xl shrink-0 z-10 grid gap-4 mt-4">
                 {status?.writersRoom && (
                   <ScreenwriterPanel
                     live={screenwriter?.live ?? []}
@@ -182,14 +185,17 @@ const FlowColumn = ({
                   />
                 )}
                 
-                {status?.director && (
-                  <ProducerPanel
-                    onAcceptBrief={onAcceptBrief}
-                    acceptedBriefAt={director?.brief?.acceptedAt ?? 0}
+                {status?.screenplay && director && (
+                  <DirectorPanel
+                    director={director}
+                    spec={screenwriter?.spec}
+                    cast={cast}
+                    token={token}
+                    status={status?.director}
                     collapsed={false}
                   />
                 )}
-                
+
                 {status?.director && (
                   <TimelinePanel
                     storyboarder={storyboarder}
