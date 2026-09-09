@@ -21,8 +21,10 @@ import { handleBudgetSet } from './budget.js';
 import { handleProducerState } from './producer-state.js';
 import { handleDraftGet, handleDraftPut, handleDraftDelete } from './draft.js';
 import { handleStripeCheckout, handleStripeWebhook, handleClaimGuestBudget } from './stripe.js';
+import { handleDossiersList } from './dossiers.js';
 import {
   handleDirectorPlan,
+
   handleDirectorStart,
   handleDirectorApprove,
   handleDirectorJobStatus,
@@ -136,6 +138,7 @@ const ROUTES = {
   // A mesh, or an honest account of why this piece does not get one — see worker/mesh.js.
   'GET /api/cast/mesh': handleCastMesh,
   'POST /api/cast/mesh': handleCastMeshGenerate,
+  'GET /api/dossiers': handleDossiersList,
   'POST /api/subscribe': handleSubscribe,
   // Support — public intake and the visitor's own signed view of one ticket. See worker/support.js.
   'POST /api/support': handleSupportSubmit,

@@ -69,12 +69,36 @@ const FlowColumn = ({
   const isCentered = !hasContentBelow;
 
   const textareaRef = useRef(null);
+  const bottomRef = useRef(null);
 
   useEffect(() => {
     if (textareaRef.current && isCentered) {
       textareaRef.current.focus();
     }
   }, [isCentered]);
+
+  const scrollTrigger = [
+    composing,
+    cast.length,
+    status?.writersRoom,
+    status?.screenplay,
+    status?.storyboarder,
+    status?.storyboard,
+    status?.director,
+    director?.takes?.length,
+    storyboarder?.frames?.length,
+    Boolean(preview),
+    Boolean(viewedTake)
+  ].join(',');
+
+  useEffect(() => {
+    if (bottomRef.current) {
+      const timer = setTimeout(() => {
+        bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [scrollTrigger]);
 
   return (
     <div className={cn("flex-1 min-h-0 flex flex-col items-center w-full h-full pb-20", isCentered ? "justify-center" : "justify-start")}>
@@ -147,7 +171,8 @@ const FlowColumn = ({
 
             {/* The rest of the pipeline panels in the second column */}
             {!composing && cast.length > 0 && (
-              <motion.div layout className="w-full max-w-3xl shrink-0 z-10 grid gap-4 mt-4">
+              <motion.div layout className="w-full max-w-3xl shrink-0 z-10 flex flex-col items-center mt-4">
+                {status?.writersRoom && <Connector />}
                 {status?.writersRoom && (
                   <ScreenwriterPanel
                     live={screenwriter?.live ?? []}
@@ -158,6 +183,7 @@ const FlowColumn = ({
                   />
                 )}
                 
+                {status?.screenplay && <Connector />}
                 {status?.screenplay && (
                   <ScreenplayPanel
                     spec={screenwriter?.spec}
@@ -172,6 +198,7 @@ const FlowColumn = ({
                   />
                 )}
                 
+                {(status?.storyboarder || status?.storyboard) && <Connector />}
                 {(status?.storyboarder || status?.storyboard) && (
                   <StoryboarderPanel
                     spec={screenwriter?.spec}
@@ -185,6 +212,7 @@ const FlowColumn = ({
                   />
                 )}
                 
+                {status?.screenplay && director && <Connector />}
                 {status?.screenplay && director && (
                   <DirectorPanel
                     director={director}
@@ -196,6 +224,7 @@ const FlowColumn = ({
                   />
                 )}
 
+                {status?.director && (director?.takes?.length > 0 || storyboarder?.frames?.length > 0) && <Connector />}
                 {status?.director && (director?.takes?.length > 0 || storyboarder?.frames?.length > 0) && (
                   <TimelinePanel
                     storyboarder={storyboarder}
@@ -249,6 +278,8 @@ const FlowColumn = ({
                 />
               </motion.div>
             )}
+            
+            <div ref={bottomRef} className="h-px w-full shrink-0" />
           </motion.div>
       </AnimatePresence>
     </div>
@@ -256,3 +287,4 @@ const FlowColumn = ({
 };
 
 export default FlowColumn;
+

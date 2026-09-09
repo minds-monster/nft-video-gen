@@ -15,6 +15,7 @@
     "verify:brands": "node --env-file-if-exists=.env scripts/verify-brands.mjs",
     "prep:refs": "node --env-file-if-exists=.env scripts/prep-refs.mjs",
     "gen:video": "node --env-file-if-exists=.env scripts/gen-video.mjs",
+    "fetch:videos": "node --env-file-if-exists=.dev.vars scripts/fetch-ipfs-videos.mjs",
     "encode:hero": "bash scripts/encode-hero.sh",
     "assemble:hero": "bash scripts/assemble-hero.sh",
     "verify:hero": "node scripts/verify-hero.mjs"

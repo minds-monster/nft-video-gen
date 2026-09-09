@@ -10,8 +10,10 @@ import { SupportModal } from './components/SupportForm';
 // from the link in a support email).
 const OwnerArea = lazy(() => import('./owner/OwnerArea.jsx'));
 const SupportTicketPage = lazy(() => import('./components/SupportTicketPage.jsx'));
+const ThreeDPage = lazy(() => import('./components/ThreeDPage.jsx'));
 import HeroSection from './components/HeroSection';
 import FeaturedMarquee from './components/FeaturedMarquee';
+import ExamplesSection from './components/ExamplesSection';
 import PromptCanvas from './components/canvas/PromptCanvas';
 import ConnectMindModal from './components/ConnectMindModal';
 import PricingSection from './components/PricingSection';
@@ -188,6 +190,13 @@ const AppShell = () => {
       </Suspense>
     );
   }
+  if (route.segments[0] === '3d') {
+    return (
+      <Suspense fallback={<div className="min-h-screen bg-slate-950" />}>
+        <ThreeDPage />
+      </Suspense>
+    );
+  }
   if (route.segments[0] === 'support' && route.segments[1] && route.segments[2]) {
     return (
       <Suspense fallback={<div className="min-h-screen bg-slate-950" />}>
@@ -269,6 +278,8 @@ const AppShell = () => {
           onToggle={handleToggleAsset}
           selectedKeys={composer.castKeys}
         />
+
+        <ExamplesSection />
 
 
         {/* The one purple tear on the page. It sits at the seam where the browsing wall
