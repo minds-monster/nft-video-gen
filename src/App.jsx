@@ -219,17 +219,6 @@ const AppShell = () => {
       {/* `inert` on the three content regions while the canvas is up: no tab stops, no
           pointer events, and the whole subtree hidden from screen readers, in one
           attribute. The overlays are siblings, so they stay reachable. */}
-      <div className="self-center mt-3 mb-1 bg-purple-600 px-5 py-2 text-center text-sm font-medium text-white shadow-lg flex items-center justify-center gap-4 rounded-full w-fit relative z-[100]">
-        <span>✨ <strong>Minds.MONSTER v2 is now live!</strong> Experience faster generations and new AI models.</span>
-        <a
-          href="https://v2.minds.monster"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="rounded-full bg-white px-4 py-1.5 text-xs font-bold text-purple-600 transition-colors hover:bg-slate-100 shadow-sm whitespace-nowrap"
-        >
-          Checkout Latest
-        </a>
-      </div>
       <header
         inert={canvasOpen}
         className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/70 backdrop-blur-md"
@@ -247,7 +236,18 @@ const AppShell = () => {
             />
           </a>
 
-          <nav className="hidden gap-8 text-sm font-medium text-slate-400 md:flex">
+          <nav className="hidden items-center gap-8 text-sm font-medium text-slate-400 md:flex">
+            {/* The one nav item that leaves the site: a filled purple pill, so it reads as
+                a destination rather than a section anchor. */}
+            <a
+              href="https://v2.minds.monster"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Try the new Minds.MONSTER v2 experience"
+              className="rounded-full bg-purple-600 px-4 py-1.5 font-semibold text-white shadow-[0_0_18px_rgb(147_51_234/0.35)] transition-colors hover:bg-purple-500 hover:text-white"
+            >
+              ✨V2 UX
+            </a>
             <a href="#how-it-works" className="transition-colors hover:text-white">
               How it works
             </a>
