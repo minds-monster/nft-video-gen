@@ -339,6 +339,81 @@
 				"SITE_ORIGIN": "https://staging.minds.monster",
 				"ANALYTICS_DATASET": "minds_monster_events_staging"
 			}
+		},
+		"preview": {
+			"name": "nft-video-gen-preview",
+			"routes": [
+				{
+					"pattern": "v2.minds.monster",
+					"custom_domain": true
+				}
+			],
+			"assets": {
+				"directory": "./dist",
+				"not_found_handling": "single-page-application",
+				"run_worker_first": [
+					"/api/*",
+					"/__scheduled",
+					"/cdn-cgi/*"
+				]
+			},
+			"analytics_engine_datasets": [
+				{
+					"binding": "ANALYTICS",
+					"dataset": "minds_monster_events"
+				}
+			],
+			"kv_namespaces": [
+				{
+					"binding": "DOSSIERS",
+					"id": "4e83431bb02e42e4858edb61243e7653"
+				},
+				{
+					"binding": "MIND_CONNECTIONS",
+					"id": "943f6aa409e047df8b8ba31a1d5580db"
+				}
+			],
+			"r2_buckets": [
+				{
+					"binding": "STORYBOARD_IMAGES",
+					"bucket_name": "nft-video-gen-storyboards"
+				},
+				{
+					"binding": "RENDERS",
+					"bucket_name": "nft-video-gen-renders"
+				}
+			],
+			"queues": {
+				"producers": [
+					{
+						"queue": "storyboard-jobs",
+						"binding": "STORYBOARD_JOBS"
+					},
+					{
+						"queue": "director-jobs",
+						"binding": "DIRECTOR_JOBS"
+					}
+				],
+				"consumers": []
+			},
+			"vars": {
+				"NVIDIA_BASE_URL": "https://integrate.api.nvidia.com/v1",
+				"CASTING_MODEL": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+				"SCREENWRITER_MODEL": "nvidia/nemotron-3-super-120b-a12b",
+				"ASSISTANT_MODEL": "minimaxai/minimax-m3",
+				"STORYBOARDER_MODEL": "gpt-5.6-sol",
+				"STORYBOARDER_EFFORT": "high",
+				"OPENROUTER_BASE_URL": "https://openrouter.ai/api/v1",
+				"FREE_STORYBOARD_MODEL": "nvidia/nemotron-3-ultra-550b-a55b:free",
+				"FREE_STORYBOARD_REASONING": "",
+				"FREE_STORYBOARD_SPLIT": "1",
+				"FREE_STORYBOARD_BEAT_CONCURRENCY": "1",
+				"SUPPORT_MIND_ID": "240b453e-f36b-1410-8466-00039ce7df11",
+				"SUPPORT_FROM": "minds.monster Support <support@minds.monster>",
+				"OWNER_NOTIFY_EMAIL": "adam@munerate.com",
+				"SITE_ORIGIN": "https://v2.minds.monster",
+				"ANALYTICS_DATASET": "minds_monster_events"
+			}
 		}
 	}
 }
