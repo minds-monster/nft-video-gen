@@ -22,6 +22,8 @@
 //   node --env-file=.env scripts/gen-audio.mjs <render.mp4> --score b
 //   node --env-file=.env scripts/gen-audio.mjs <render.mp4> --launch 10.8
 //   node --env-file=.env scripts/gen-audio.mjs <render.mp4> --reuse   # remix, no API calls
+//   node --env-file=.env scripts/gen-audio.mjs assets/renders/oneshot-2.mp4 \
+//     --score assets/audio/dead-ramen.m4a --bare --offset 0.5 --score-gain 0.18 --fade-out 13,14.75 --master-gain 2.5   # hero v4
 
 import { mkdir, writeFile, readFile, access } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
@@ -317,7 +319,9 @@ console.log(
 // from there. The stem still steps down again at the green light, so the payoff is music too.
 const STEM_PRE = 0.46;   // ambience, not the lead — see the note below
 const STEM_POST = 0.36;  // after: further back still, the score carries the payoff
-const SCORE_CEIL = 0.86; // the ramp's top, reached at the launch beat
+// --score-gain overrides it. A supplied track is already mastered hot (Dead Ramen sits at a flat
+// -12 dB RMS from its first bar), so at 0.86 it buried the stem and needed pulling back.
+const SCORE_CEIL = Number(arg('--score-gain', 0.86)); // the ramp's top, reached at the launch beat
 const CALL_GAIN = 0.9;
 const BOOM_GAIN = 0.58;
 
@@ -335,10 +339,17 @@ const scoreVolume = suppliedTrack
   ? `volume=${SCORE_CEIL}`
   : `volume='min(${SCORE_CEIL}, ${(SCORE_CEIL * 0.68).toFixed(3)} + ${(SCORE_CEIL * 0.32).toFixed(3)}*t/${launchAt})':eval=frame`;
 
+// --fade-out <start>,<end> replaces the default 0.7s tail fade with a long one that is silent by
+// <end>. oneshot-2 wants 13,14.75: the launch roar has died away by 13s, and the lightning that
+// blows the frame to white cracks at 14.75s — the ending belongs to the thunder, not the music.
+const [fadeStart, fadeEnd] = (arg('--fade-out', null) ?? `${videoSeconds - 0.7},${videoSeconds}`)
+  .split(',')
+  .map(Number);
+
 const scoreChain =
   `[1:a]atrim=start=${picked.offset.toFixed(3)}:duration=${videoSeconds.toFixed(3)},asetpts=N/SR/TB,` +
   `${scoreVolume},` +
-  `afade=t=in:st=0:d=0.6,afade=t=out:st=${(videoSeconds - 0.7).toFixed(3)}:d=0.7[score]`;
+  `afade=t=in:st=0:d=0.6,afade=t=out:st=${fadeStart.toFixed(3)}:d=${(fadeEnd - fadeStart).toFixed(3)}[score]`;
 
 // Call: delayed onto the green light, and used as the sidechain key so the score dips for it.
 const callChain = `[2:a]adelay=${ms}|${ms},volume=${CALL_GAIN}[call]`;
@@ -360,7 +371,11 @@ const stemVolume =
 // AAC and Opus reconstruct INTER-sample peaks slightly higher, and a mix measuring -0.7 dBFS
 // came back out of the AAC encoder at 0.0 — i.e. clipping in the file that actually ships. So
 // leave real headroom for the codec rather than mastering to the ceiling.
-const LIMIT = 'alimiter=limit=0.80:level=false,volume=-2.0dB';
+//
+// --master-gain <dB> lifts the whole mix, and goes BEFORE the limiter so that safety net and the
+// codec headroom still apply however far it is pushed.
+const MASTER_DB = Number(arg('--master-gain', 0));
+const LIMIT = `volume=${MASTER_DB}dB,alimiter=limit=0.80:level=false,volume=-2.0dB`;
 if (bare) {
   // Two layers, nothing to duck against.
   if (stem) {

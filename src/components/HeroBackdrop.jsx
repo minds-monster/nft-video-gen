@@ -7,7 +7,10 @@ import { cn } from '../lib/cn';
 // when scripts/encode-hero.sh writes a new render, so the immutable cache is bypassed.
 // v2 = the race launch, first version with an audio track. v3 = the corrected launch:
 // three distinct cars each with their own driver, a Mocaverse crowd, and a stronger score.
-const VERSION = 'v3';
+// v4 = the same picture as v3 with the score swapped for the deadmau5 track from Hypervision
+// "Dead Ramen #55/67" (0xa20f75be9427995e596788c29a10c7d734671251 #5600010055), mixed --bare
+// over the H3 stem from 0.5s in to skip the track's silent lead-in.
+const VERSION = 'v4';
 const BASE = `/hero/hero.${VERSION}`;
 
 // Ordered by preference — the browser picks the first type it can decode. AV1 is smallest
