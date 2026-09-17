@@ -39,7 +39,7 @@
 	"triggers": {
 		"crons": [
 			"*/5 * * * *",
-			"0 3 * * *"
+			"*/5 * * * *"
 		]
 	},
 	// Site analytics. Analytics Engine rather than KV counters, because a KV counter under
@@ -109,7 +109,8 @@
 		}
 	],
 	"observability": {
-		"enabled": true
+		"enabled": true,
+		"redact_query_string": false
 	},
 	// Pin the local dev port so Vite's /api proxy has a stable target. 8787 is Wrangler's
 	// default and is often still held by a stale workerd from a previous session; picking an
@@ -249,7 +250,10 @@
 		"SUPPORT_FROM": "minds.monster Support <support@minds.monster>",
 		"OWNER_NOTIFY_EMAIL": "adam@munerate.com",
 		"SITE_ORIGIN": "https://minds.monster",
-		"ANALYTICS_DATASET": "minds_monster_events"
+		"ANALYTICS_DATASET": "minds_monster_events",
+		"VITE_ALCHEMY_NETWORK": "eth-mainnet",
+		"VITE_MIND_ID": "240b453e-f36b-1410-8466-00039ce7df11",
+		"VITE_PROD_SERVER": "https://nft-assets-server.still-snowflake-5e6a.workers.dev"
 	},
 	"env": {
 		"staging": {
