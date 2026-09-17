@@ -51,7 +51,8 @@ const fetchResized = async (url, maxBytes) => {
  * Unmeasurable formats (HEIC) pass, as the preflight intends: "measured and legal" and "could not
  * be measured" are different states, and refusing the second would block a legal reference.
  */
-export async function fetchLegalReference(urls, { key, dossierFraming = null, maxBytes = REFERENCE_PROXY_BYTES } = {}) {
+export async function fetchLegalReference(urls, options = {}) {
+  const { key, dossierFraming = null, maxBytes = REFERENCE_PROXY_BYTES } = options;
   const tried = [];
   for (const url of urls ?? []) {
     let artwork;
