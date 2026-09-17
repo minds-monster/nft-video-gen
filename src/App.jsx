@@ -332,10 +332,6 @@ const AppShell = () => {
           </p>
           <p>
             Powered by <span className="text-purple-400"><a href="https://www.munerate.com">Munerate</a></span>
-            {' · '}
-            <a href="#support" className="text-slate-400 transition-colors hover:text-white">
-              Support
-            </a>
           </p>
         </div>
       </footer>

@@ -12,6 +12,7 @@
     "preview": "vite preview",
     "deploy": "vite build && wrangler deploy",
     "deploy:staging": "vite build && wrangler deploy --env staging",
+    "deploy:preview": "vite build && wrangler deploy --env preview",
     "verify:brands": "node --env-file-if-exists=.env scripts/verify-brands.mjs",
     "prep:refs": "node --env-file-if-exists=.env scripts/prep-refs.mjs",
     "gen:video": "node --env-file-if-exists=.env scripts/gen-video.mjs",
