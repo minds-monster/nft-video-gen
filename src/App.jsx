@@ -246,7 +246,7 @@ const AppShell = () => {
             {/* The one nav item that leaves the site: a glass chip rather than a bare
                 anchor, so it reads as a destination without competing with the purple
                 Connect Mind CTA on the other side of the bar. */}
-            <a
+            {/* <a
               href="https://v2.minds.monster"
               target="_blank"
               rel="noopener noreferrer"
@@ -254,7 +254,7 @@ const AppShell = () => {
               className="chip px-4 py-1.5 font-semibold text-slate-200 hover:text-white"
             >
               ✨V2 UX
-            </a>
+            </a> */}
             <a href="#pricing" className="transition-colors hover:text-white">
               Pricing
             </a>
