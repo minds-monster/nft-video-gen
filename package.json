@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "dev:worker": "wrangler dev",
-    "build": "vite build",
+    "build": "if [ \"$CF_PAGES\" = \"1\" ]; then npm install @rolldown/binding-wasm32-wasi @rolldown/binding-linux-x64-gnu @esbuild/linux-x64 --no-save --force; fi && vite build",
     "lint": "oxlint",
     "test:scene": "node --test \"scripts/test/*.test.mjs\"",
     "preview": "vite preview",
