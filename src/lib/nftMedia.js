@@ -11,6 +11,23 @@ export const IPFS_GATEWAY = 'https://ipfs.io/ipfs/';
 export const toHttp = (url) =>
   url?.startsWith('ipfs://') ? IPFS_GATEWAY + url.slice('ipfs://'.length) : url;
 
+export const getAllImageCandidates = (nft) => [
+  nft?.image?.cachedUrl,
+  nft?.image?.pngUrl,
+  nft?.image?.originalUrl,
+  nft?.image?.thumbnailUrl,
+  nft?.media?.[0]?.gateway,
+  nft?.raw?.metadata?.image,
+  nft?.rawMetadata?.image,
+  nft?.raw?.metadata?.image_url,
+  nft?.rawMetadata?.image_url,
+  nft?.raw?.metadata?.display_image_url,
+  nft?.rawMetadata?.display_image_url,
+  nft?.raw?.metadata?.original_image_url,
+  nft?.rawMetadata?.original_image_url,
+  nft?.contract?.openSeaMetadata?.imageUrl,
+];
+
 // alchemy-sdk v3 moved image fields from `media[]`/`rawMetadata` to a structured
 // `image` object. We read v3 first and keep the v2 keys as a fallback so older
 // cached responses (and the mocks in alchemy.js) still render.
@@ -19,21 +36,18 @@ export const toHttp = (url) =>
 // real image is visibly soft — a crop used to hide that. resolveNftThumb below now serves the
 // case that actually wants a small file.
 export const resolveNftImage = (nft) =>
-  toHttp(
-    nft?.image?.cachedUrl ||
-      nft?.image?.pngUrl ||
-      nft?.image?.originalUrl ||
-      nft?.image?.thumbnailUrl ||
-      nft?.media?.[0]?.gateway ||
-      nft?.raw?.metadata?.image ||
-      nft?.rawMetadata?.image,
-  );
+  toHttp(getAllImageCandidates(nft).find((value) => typeof value === 'string' && value.trim()));
 
 // The blurred bed painted behind `object-contain` artwork, so a piece that doesn't match its
 // card's shape sits on a soft enlargement of itself instead of on dead bars. Thumbnail first:
 // this gets blurred beyond recognition, so bytes matter and sharpness does not.
 export const resolveNftThumb = (nft) =>
-  toHttp(nft?.image?.thumbnailUrl || nft?.image?.cachedUrl || nft?.image?.pngUrl) ?? null;
+  toHttp(
+    [
+      nft?.image?.thumbnailUrl,
+      ...getAllImageCandidates(nft),
+    ].find((value) => typeof value === 'string' && value.trim())
+  ) ?? null;
 
 // Things an animation_url can point at that a <video> can't play. We deny-list rather
 // than allow-list extensions because the video URLs frequently have none at all.
@@ -107,9 +121,7 @@ export const stillCandidates = (nft) =>
   [
     nft?.image?.originalUrl,
     nft?.image?.pngUrl,
-    nft?.image?.cachedUrl,
-    nft?.raw?.metadata?.image,
-    nft?.rawMetadata?.image,
+    ...getAllImageCandidates(nft),
   ]
     .filter((value) => typeof value === 'string' && value.trim())
     .map((value) => toHttp(value.trim()))
