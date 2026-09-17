@@ -171,7 +171,7 @@ const FlowColumn = ({
 
             {/* The rest of the pipeline panels in the second column */}
             {!composing && cast.length > 0 && (
-              <motion.div layout className="w-full max-w-3xl shrink-0 z-10 flex flex-col items-center mt-4">
+              <motion.div layout className="w-full max-w-3xl shrink-0 z-10 flex flex-col items-stretch mt-4">
                 {status?.writersRoom && <Connector />}
                 {status?.writersRoom && (
                   <ScreenwriterPanel
