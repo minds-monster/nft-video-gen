@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Frame probe</title>
+<!--
+  A DEV TOOL, and deliberately not part of the app — same arrangement as cast-inspector.html: it
+  lives at the project root, so Vite serves it in development and the production build never
+  includes it.
+
+    npm run dev   →   http://localhost:5173/probe-frames.html
+
+  THE QUESTION. scripts/probe-frames.mjs established that 30 of 56 NFT films sit behind a
+  Cloudflare bot challenge on ipfs.io that no server passes — not ours, and not NVIDIA's (`--watch`,
+  2026-09-18). A browser passes such challenges by design. So: can a browser not only PLAY one of
+  these films, but READ ITS PIXELS? Only the second is sampling.
+
+  THE CATCH-22 THIS IS BUILT TO EXPOSE. Reading pixels off a cross-origin <video> needs
+  crossorigin="anonymous" and an Access-Control-Allow-Origin header on the response — otherwise the
+  canvas is tainted and toBlob throws. But "anonymous" also STRIPS COOKIES, so a browser that has
+  passed ipfs.io's challenge cannot present its clearance cookie. Hence two modes per film:
+
+    anonymous   the only mode that can yield readable pixels. This is the one that matters.
+    none        no CORS request; cookies may be sent. Pixels can NEVER be read in this mode — it
+                is here as a diagnostic, to tell "blocked at the network" from "blocked by CORS".
+
+  Reading them together:
+    none loads,  anonymous loads + reads   → browser sampling WORKS for this film
+    none loads,  anonymous fails           → playable but unreadable: CORS, or a cookie-bound
+                                             challenge. Playing on hover ≠ sampleable.
+    both fail                              → blocked at the network. The browser gets no further
+                                             than the server did.
+
+  (use-credentials is deliberately absent: it requires the server to echo our exact origin with
+  Access-Control-Allow-Credentials, which a public gateway sending `*` will never do — it would
+  fail for the controls too and teach nothing.)
+
+  CONTROLS. Three reachable hosts, each verified by curl on 2026-09-18 to send
+  `access-control-allow-origin: *`. If a control fails in anonymous mode the page itself is broken,
+  and nothing it says about ipfs.io should be believed.
+
+  THE ANSWER IS BROWSER-SPECIFIC. Cloudflare's bot scoring reads the TLS fingerprint, so Chrome,
+  Safari and Firefox may each get a different answer, and the result records the user agent. Run it
+  in the browser a visitor would actually use.
+-->
+<style>
+  :root {
+    --bg: #f7f7f5; --panel: #ffffff; --ink: #1b1b1a; --muted: #6b6b66; --line: #e3e3de;
+    --ok: #1d7f45; --bad: #b3261e; --warn: #9a6700; --accent: #2f5bd3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #121211; --panel: #1b1b1a; --ink: #ecece8; --muted: #9a9a93; --line: #2d2d2a;
+      --ok: #4cc27a; --bad: #ff7a70; --warn: #e0b341; --accent: #86a6ff;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121211; --panel: #1b1b1a; --ink: #ecece8; --muted: #9a9a93; --line: #2d2d2a;
+    --ok: #4cc27a; --bad: #ff7a70; --warn: #e0b341; --accent: #86a6ff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 system-ui, -apple-system, sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  p.lede { color: var(--muted); margin: 0 0 20px; max-width: 70ch; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; align-items: center; }
+  button { font: inherit; padding: 7px 14px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button:disabled { opacity: 0.5; cursor: default; }
+  input[type="url"] { font: inherit; flex: 1 1 280px; min-width: 0; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+  .ua { color: var(--muted); font-size: 12px; margin-bottom: 16px; word-break: break-all; }
+  .film { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
+  .film header { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; margin-bottom: 8px; }
+  .film header strong { font-size: 15px; }
+  .tag { font-size: 11px; padding: 1px 7px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); }
+  .tag.challenged { color: var(--warn); border-color: var(--warn); }
+  .tag.control { color: var(--ok); border-color: var(--ok); }
+  .url { color: var(--muted); font-size: 12px; word-break: break-all; }
+  .modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; }
+  .mode { border-top: 1px solid var(--line); padding-top: 8px; }
+  .mode h3 { font-size: 12px; margin: 0 0 6px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+  .steps { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+  .step { font-size: 12px; padding: 2px 8px; border-radius: 4px; background: var(--bg); color: var(--muted); }
+  .step.ok { color: var(--ok); } .step.bad { color: var(--bad); }
+  .detail { font-size: 12px; color: var(--muted); word-break: break-word; }
+  .detail.bad { color: var(--bad); }
+  .frame { display: flex; gap: 10px; align-items: flex-start; margin-top: 6px; }
+  .frame img { width: 120px; height: auto; border-radius: 4px; border: 1px solid var(--line); background: var(--bg); }
+  .verdict { font-weight: 600; margin-top: 8px; }
+  .verdict.ok { color: var(--ok); } .verdict.bad { color: var(--bad); } .verdict.warn { color: var(--warn); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Frame probe</h1>
+  <p class="lede">
+    Can a browser read the pixels of an NFT film that no server can fetch? Each film is loaded in two
+    CORS modes, seeked, drawn to a canvas, read back, and checked against H3's reference floors.
+    Controls must pass in <em>anonymous</em> mode, or this page is broken.
+  </p>
+
+  <div class="bar">
+    <button class="primary" id="run">Run all</button>
+    <button id="copy" disabled>Copy results as JSON</button>
+    <input type="url" id="custom" placeholder="Add a film URL…">
+    <button id="add">Add</button>
+  </div>
+  <div class="ua" id="ua"></div>
+  <div id="films"></div>
+</main>
+
+<script type="module">
+  // The same floors production preflights against, imported rather than restated, so this page
+  // cannot drift from what H3 will actually accept.
+  import { checkReference } from '/worker/reference-preflight.js';
+
+  const STEP_TIMEOUT_MS = 20_000;
+  const SEEK_TO = 1;
+
+  // From scripts/probe-frames.mjs's sweep and `--watch`, 2026-09-18.
+  const FILMS = [
+    { label: 'Gucci #10', cls: 'challenged', url: 'https://ipfs.io/ipfs/QmX2DVFgnPZdiM6jGUrFChh64aBWkMdPT1UoJguLHNehF6/10.mp4' },
+    { label: 'Rimowa #2', cls: 'challenged', url: 'https://ipfs.io/ipfs/QmQ7yQMd2iWt1fELfchdGvs9az1oYNPutbyrTLtQ62joU2/blue.mp4' },
+    { label: 'Nike #2', cls: 'challenged', url: 'https://ipfs.io/ipfs/QmUFuKaQLyhGAiugMy81ggqc28Wpn3yrDmyWtRso8t7j1H/base.mp4' },
+    // The same CID through the second gateway. On the server both were challenged; a browser may
+    // be scored differently by each.
+    { label: 'Gucci #10 via dweb.link', cls: 'challenged', url: 'https://dweb.link/ipfs/QmX2DVFgnPZdiM6jGUrFChh64aBWkMdPT1UoJguLHNehF6/10.mp4' },
+    { label: 'Mercedes #1', cls: 'control', url: 'https://gateway.arweave.net/xfG4fMY-z9ky0-RyawRlA-M35N5TiX3QH36xk5cYde0' },
+    { label: 'D&G #3', cls: 'control', url: 'https://res.cloudinary.com/dvz8qqgob/video/upload/v1632172659/UNXD/nft_gallery/bza8ypjqrafo8ji8btdr.mp4' },
+    { label: 'adidas #0', cls: 'control', url: 'https://raw2.seadn.io/ethereum/0x28472a58a490c5e09a238847f66a68a47cc76f0f/65db33a856b19f48396062e59e6d62/3565db33a856b19f48396062e59e6d62.mp4' },
+  ];
+
+  const MODES = ['anonymous', 'none'];
+  const STEPS = ['load', 'seek', 'draw', 'read', 'legal'];
+
+  const results = [];
+  const $ = (selector) => document.querySelector(selector);
+  document.getElementById('ua').textContent = `User agent: ${navigator.userAgent}`;
+
+  const withTimeout = (promise, label) =>
+    Promise.race([
+      promise,
+      new Promise((_, reject) => setTimeout(() => reject(new Error(`${label}: no answer in ${STEP_TIMEOUT_MS / 1000}s`)), STEP_TIMEOUT_MS)),
+    ]);
+
+  const once = (element, event) =>
+    new Promise((resolve, reject) => {
+      element.addEventListener(event, resolve, { once: true });
+      // A media error carries no HTTP status — browsers hide it on purpose. That is exactly why
+      // the two modes exist: the pair says what one failure cannot.
+      element.addEventListener('error', () => {
+        const code = element.error?.code;
+        const names = { 1: 'ABORTED', 2: 'NETWORK', 3: 'DECODE', 4: 'SRC_NOT_SUPPORTED' };
+        reject(new Error(`media error ${code ?? '?'} ${names[code] ?? ''}${element.error?.message ? ` — ${element.error.message}` : ''}`.trim()));
+      }, { once: true });
+    });
+
+  /** One film in one mode, step by step, stopping at the first failure and naming it. */
+  async function sample(film, mode) {
+    const row = { label: film.label, cls: film.cls, url: film.url, mode, steps: {}, error: null };
+    const video = document.createElement('video');
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = 'auto';
+    if (mode !== 'none') video.crossOrigin = mode;
+
+    let step = 'load';
+    try {
+      const loaded = once(video, 'loadeddata');
+      video.src = film.url;
+      await withTimeout(loaded, 'load');
+      row.steps.load = true;
+      row.duration = Number.isFinite(video.duration) ? Math.round(video.duration * 10) / 10 : null;
+
+      step = 'seek';
+      const seeked = once(video, 'seeked');
+      video.currentTime = Math.min(SEEK_TO, (video.duration || 2) / 2);
+      await withTimeout(seeked, 'seek');
+      row.steps.seek = true;
+      row.atSeconds = Math.round(video.currentTime * 100) / 100;
+
+      step = 'draw';
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0);
+      row.steps.draw = true;
+      row.width = canvas.width;
+      row.height = canvas.height;
+
+      // THE STEP THAT MATTERS. drawImage succeeds on a tainted canvas; reading it back is where a
+      // cross-origin frame without CORS throws a SecurityError. Everything before this is playing.
+      step = 'read';
+      const blob = await withTimeout(
+        new Promise((resolve, reject) => {
+          try {
+            canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob returned null'))), 'image/png');
+          } catch (error) {
+            reject(error);
+          }
+        }),
+        'read',
+      );
+      row.steps.read = true;
+      row.bytes = blob.size;
+      row.preview = URL.createObjectURL(blob);
+
+      step = 'legal';
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+      const check = checkReference({ key: `${film.label}@${row.atSeconds}s`, mime: 'image/png', bytes });
+      const floor = check.violations.filter((v) => v.severity === 'floor');
+      row.legal = floor.length === 0;
+      row.violations = floor.map((v) => v.detail);
+      row.steps.legal = row.legal;
+    } catch (error) {
+      row.steps[step] = false;
+      row.error = `${error.name && error.name !== 'Error' ? `${error.name}: ` : ''}${error.message}`;
+    } finally {
+      video.removeAttribute('src');
+      video.load();
+    }
+    return row;
+  }
+
+  function verdictFor(film) {
+    const anon = results.find((r) => r.url === film.url && r.mode === 'anonymous');
+    const none = results.find((r) => r.url === film.url && r.mode === 'none');
+    if (!anon || !none) return null;
+    if (anon.steps.read) {
+      return anon.legal
+        ? { cls: 'ok', text: 'Browser sampling WORKS, and the frame is a legal H3 reference.' }
+        : { cls: 'warn', text: 'Browser sampling works, but the frame fails H3\'s floors as-is — it would need a crop.' };
+    }
+    if (none.steps.load) {
+      return film.cls === 'control'
+        ? { cls: 'bad', text: 'CONTROL FAILED in anonymous mode — the page or this browser is at fault. Distrust every row.' }
+        : { cls: 'bad', text: 'Plays, but pixels are unreadable — CORS or a cookie-bound challenge. Playing ≠ sampleable.' };
+    }
+    return film.cls === 'control'
+      ? { cls: 'bad', text: 'CONTROL FAILED to load at all — check the network before reading anything else.' }
+      : { cls: 'bad', text: 'Blocked at the network in both modes. The browser gets no further than the server did.' };
+  }
+
+  function render() {
+    const root = document.getElementById('films');
+    root.innerHTML = '';
+    for (const film of FILMS) {
+      const section = document.createElement('section');
+      section.className = 'film';
+      const header = document.createElement('header');
+      header.innerHTML = `<strong></strong><span class="tag ${film.cls}">${film.cls}</span>`;
+      header.querySelector('strong').textContent = film.label;
+      const url = document.createElement('div');
+      url.className = 'url';
+      url.textContent = film.url;
+      section.append(header, url);
+
+      const modes = document.createElement('div');
+      modes.className = 'modes';
+      for (const mode of MODES) {
+        const row = results.find((r) => r.url === film.url && r.mode === mode);
+        const cell = document.createElement('div');
+        cell.className = 'mode';
+        cell.innerHTML = `<h3>crossorigin = ${mode}</h3>`;
+        const steps = document.createElement('div');
+        steps.className = 'steps';
+        for (const step of STEPS) {
+          const state = row?.steps?.[step];
+          const chip = document.createElement('span');
+          chip.className = `step ${state === true ? 'ok' : state === false ? 'bad' : ''}`;
+          chip.textContent = `${state === true ? '✓' : state === false ? '✗' : '·'} ${step}`;
+          steps.append(chip);
+        }
+        cell.append(steps);
+        if (row?.error) {
+          const detail = document.createElement('div');
+          detail.className = 'detail bad';
+          detail.textContent = row.error;
+          cell.append(detail);
+        }
+        if (row?.preview) {
+          const frame = document.createElement('div');
+          frame.className = 'frame';
+          const img = document.createElement('img');
+          img.src = row.preview;
+          img.alt = `${film.label} at ${row.atSeconds}s`;
+          const info = document.createElement('div');
+          info.className = 'detail';
+          info.textContent = `${row.width}×${row.height} at ${row.atSeconds}s · ${(row.bytes / 1e6).toFixed(2)}MB PNG` +
+            (row.legal ? ' · legal H3 reference' : ` · ${row.violations.join('; ')}`);
+          frame.append(img, info);
+          cell.append(frame);
+        }
+        modes.append(cell);
+      }
+      section.append(modes);
+
+      const verdict = verdictFor(film);
+      if (verdict) {
+        const line = document.createElement('div');
+        line.className = `verdict ${verdict.cls}`;
+        line.textContent = verdict.text;
+        section.append(line);
+      }
+      root.append(section);
+    }
+  }
+
+  async function runAll() {
+    $('#run').disabled = true;
+    $('#copy').disabled = true;
+    results.length = 0;
+    render();
+    // Serial on purpose: parallel loads against one gateway measure its rate limiter, which is
+    // precisely what refused NVIDIA (HTTP 429), not whether this browser can read a frame.
+    for (const film of FILMS) {
+      for (const mode of MODES) {
+        results.push(await sample(film, mode));
+        render();
+      }
+    }
+    $('#run').disabled = false;
+    $('#copy').disabled = false;
+  }
+
+  $('#run').addEventListener('click', runAll);
+  $('#add').addEventListener('click', () => {
+    const url = $('#custom').value.trim();
+    if (!url) return;
+    FILMS.push({ label: new URL(url).host, cls: 'custom', url });
+    $('#custom').value = '';
+    render();
+  });
+  $('#copy').addEventListener('click', async () => {
+    const payload = {
+      ranAt: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+      origin: location.origin,
+      results: results.map(({ preview, ...rest }) => ({ ...rest, verdict: verdictFor(FILMS.find((f) => f.url === rest.url))?.text ?? null })),
+    };
+    await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+    $('#copy').textContent = 'Copied';
+    setTimeout(() => { $('#copy').textContent = 'Copy results as JSON'; }, 1500);
+  });
+
+  render();
+</script>
+</body>
+</html>

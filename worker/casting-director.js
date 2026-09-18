@@ -440,7 +440,10 @@ const MOTION_SCHEMA = {
   required: ['motionNotes'],
 };
 
-const motionRequest = (env, film) => ({
+// Exported for scripts/probe-frames.mjs `--watch`, which has to send the EXACT production request:
+// a hand-copied one that drifted (say, without enable_thinking: false) would fail for its own
+// reasons and be read as a finding about the film.
+export const motionRequest = (env, film) => ({
   model: env.CASTING_MODEL,
   messages: [
     {

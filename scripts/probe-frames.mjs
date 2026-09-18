@@ -40,6 +40,9 @@
 //   node --env-file-if-exists=.env scripts/probe-frames.mjs --origin https://v2.minds.monster
 //   node --env-file-if-exists=.env scripts/probe-frames.mjs --json > /tmp/frames.json
 //
+//   # SPENDS NVIDIA CREDIT — the production motion pass against named tokens, control included:
+//   node --env-file-if-exists=.env scripts/probe-frames.mjs --watch chain:address:id,chain:address:id
+//
 // ── RESULTS — 2026-09-18, 129 tokens across 23 collections, --limit 6 ───────────────────────
 //
 // COVERAGE. 56 of 129 tokens carry a film or an animated still. Not a niche case: 43% of the
@@ -114,10 +117,30 @@
 //   (b) The dossiers PREDATE the challenge. Dossiers are written without a TTL, so a record from
 //       before ipfs.io turned this on would survive unchanged and look like present-day success.
 //
-// A dossier carries no timestamp, so the record cannot settle this. The test that can: re-run the
-// motion pass against Gucci #10's ipfs.io URL today and see whether NVIDIA still returns notes.
-// UNTIL THAT RUNS, NOTHING HERE LICENCES CHOOSING AN ARCHITECTURE — (a) and (b) point at
-// different systems, and the cheap call that separates them has not been made.
+// A dossier carries no timestamp, so the record cannot settle this. `--watch` can, and did:
+//
+// ── SETTLED: (a) IS FALSE — `--watch`, 2026-09-18 03:19 and 03:20 UTC ────────────────────────
+//
+//   Gucci #10    ipfs.io      us: 403 challenge   NVIDIA: ❌ ×2  "HTTP 429 for https://ipfs.io/…"
+//   Rimowa #2    ipfs.io      us: 403 challenge   NVIDIA: ❌ ×2  "HTTP 429 for https://ipfs.io/…"
+//   Mercedes #1  arweave      us: 200             NVIDIA: ✅     control
+//   D&G #3       cloudinary   us: 206             NVIDIA: ✅     control (a first attempt got an
+//                                                                NVIDIA-side 503 "ResourceExhausted
+//                                                                16/16" — their capacity, not the film)
+//
+// Both controls watched, so the key, the model and the request are sound; the failures are about
+// the films. NVIDIA does NOT get through — ipfs.io answers its fetcher with a 429 rather than the
+// 403 challenge it gives us, which is a different refusal to a different client and the same
+// outcome. The two dossiers therefore PREDATE the blocking: they were written while ipfs.io still
+// served these files, and a TTL-less store kept the evidence of a world that no longer exists.
+//
+// One honest qualification: a 429 is a rate limit, and rate limits vary by moment and by client
+// load, so "NVIDIA can never reach ipfs.io" is stronger than four failures prove. What they do
+// prove is the thing that matters — a server-side fetch of these films is not a DEPENDABLE path,
+// and a feature cannot be built on a gateway that works when it is not busy.
+//
+// And a lesson for anything that reads dossiers as evidence of the present: `watchedFilm: true`
+// means the film was reachable ON THE DAY IT WAS CAST, not today. A dossier is a historical record.
 //
 // WHAT IS STILL UNMEASURED: stage 3 has never run, because stage 1 has never passed. Whether an
 // extracted frame is a LEGAL H3 reference — aspect 0.4-2.5, short side >=256px — is therefore
@@ -126,7 +149,8 @@
 
 import { resolveNftVideo, toHttp } from '../src/lib/nftMedia.js';
 import { withIpfsFallback } from '../worker/artwork.js';
-import { castingStills } from '../worker/casting-director.js';
+import { castingStills, motionRequest } from '../worker/casting-director.js';
+import { chat, jsonFrom } from '../worker/nvidia.js';
 import { checkReference, measureImage } from '../worker/reference-preflight.js';
 import { sampleTimes } from '../worker/frames.js';
 import { BRANDS } from '../src/data/brands.js';
@@ -413,9 +437,82 @@ const explicitToken = async (spec) => {
   return [{ nft: await response.json(), brand: 'explicit', chain, address }];
 };
 
+// ─────────────────────────────────────────── --watch: can NVIDIA reach what we cannot?
+
+/**
+ * The production motion pass, run today, against named tokens.
+ *
+ * Exists to settle one anomaly (see RESULTS): dossiers that record a watched film whose URL now
+ * 403s to us. Either NVIDIA's fetcher passes the challenge, or those dossiers predate it. The
+ * request is worker/casting-director.js's own `motionRequest`, imported rather than copied.
+ *
+ * ⚠️ PASS A CONTROL. Include at least one token whose film is known to be reachable. If the
+ * control fails too, NVIDIA or the key is down and the run says nothing about the challenge —
+ * which is otherwise indistinguishable from "NVIDIA was blocked".
+ *
+ * Spends NVIDIA credit (one call per token), which is why it is opt-in and never part of a sweep.
+ */
+const runWatch = async (specs) => {
+  const env = {
+    NVIDIA_API_KEY: process.env.NVIDIA_API_KEY,
+    // Defaults are wrangler.jsonc's production vars; override from the environment to test another.
+    NVIDIA_BASE_URL: process.env.NVIDIA_BASE_URL ?? 'https://integrate.api.nvidia.com/v1',
+    CASTING_MODEL: process.env.CASTING_MODEL ?? 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning',
+  };
+  if (!env.NVIDIA_API_KEY) throw new Error('NVIDIA_API_KEY is not set (it lives in .env)');
+
+  say('');
+  say(`━━ WATCH: the production motion pass, run ${new Date().toISOString()} ━━━━━━━━━━━━━━━━━━━━━`);
+  say(`  model ${env.CASTING_MODEL}`);
+  say('');
+
+  const results = [];
+  for (const spec of specs) {
+    // eslint-disable-next-line no-await-in-loop -- one paid call at a time, and readable output.
+    const [{ nft }] = await explicitToken(spec);
+    const film = resolveNftVideo(nft);
+    if (!film) {
+      say(`  ${spec}\n    no film — nothing to watch`);
+      results.push({ spec, film: null });
+      continue;
+    }
+
+    // eslint-disable-next-line no-await-in-loop
+    const ours = await probeOne(film);
+    const started = Date.now();
+    let outcome;
+    try {
+      // retries: 1 — a transport retry is fine, but five of them against a film NVIDIA cannot
+      // fetch just buys the same refusal five times.
+      // eslint-disable-next-line no-await-in-loop
+      const motion = jsonFrom(await chat(env, { ...motionRequest(env, film), retries: 1 }));
+      outcome = { watched: Boolean(motion?.motionNotes), notes: motion?.motionNotes ?? null };
+    } catch (error) {
+      outcome = { watched: false, error: error.message.slice(0, 300) };
+    }
+    const seconds = ((Date.now() - started) / 1000).toFixed(1);
+
+    say(`  ${spec}`);
+    say(`    film     ${film.slice(0, 90)}`);
+    say(`    us       ${ours.status}${ours.challenge ? '  (Cloudflare challenge)' : ''}`);
+    say(`    NVIDIA   ${outcome.watched ? '✅ watched' : '❌ could not watch'}  (${seconds}s)`);
+    if (outcome.notes) say(`    notes    ${outcome.notes}`);
+    if (outcome.error) say(`    error    ${outcome.error}`);
+    say('');
+    results.push({ spec, film, ours: { status: ours.status, challenge: Boolean(ours.challenge) }, ...outcome, seconds });
+  }
+
+  if (AS_JSON) process.stdout.write(`${JSON.stringify({ watchedAt: new Date().toISOString(), results }, null, 2)}\n`);
+};
+
 // ─────────────────────────────────────────────────────────────────────────────────── run
 
 const main = async () => {
+  if (flag('watch')) {
+    await runWatch(flag('watch').split(',').map((spec) => spec.trim()));
+    return;
+  }
+
   const token = flag('token');
 
   say('');
