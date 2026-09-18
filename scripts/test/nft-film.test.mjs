@@ -11,6 +11,7 @@ import assert from 'node:assert/strict';
 
 import { resolveNftMedia, resolveNftVideo, resolveNftVideoCandidates } from '../../src/lib/nftMedia.js';
 import { findFilm } from '../../worker/artwork.js';
+import { forCastingWire } from '../../src/services/swarm.js';
 
 const nft = ({ animation, animationUrl, image } = {}) => ({
   image: image ?? { contentType: 'image/png', cachedUrl: 'https://cdn/still.png' },
@@ -97,4 +98,15 @@ test('a challenged ipfs.io URL walks the gateways, and null means none of them s
   assert.equal(await findFilm(['https://ipfs.io/ipfs/Qm/x.mp4']), null);
   serve({ 'https://dweb.link/ipfs/Qm/x.mp4': { status: 200, bytes: mp4() } });
   assert.equal(await findFilm(['https://ipfs.io/ipfs/Qm/x.mp4']), 'https://dweb.link/ipfs/Qm/x.mp4');
+});
+
+test("the casting wire carries Alchemy's film mirror to the Worker", () => {
+  // Found on 2026-09-18: the browser trimmed `animation` off every NFT it sent to be cast, so
+  // the Worker's resolveNftVideoCandidates never saw the mirror and fell back to a dead ipfs.io URL.
+  const wired = forCastingWire({
+    key: 'k',
+    nft: nft({ animation: { cachedUrl: 'https://mirror/w', contentType: 'video/mp4', originalUrl: 'https://p/w.mp4', size: 9 }, animationUrl: 'ipfs://Qm/w.mp4' }),
+  });
+  assert.equal(wired.nft.animation.cachedUrl, 'https://mirror/w');
+  assert.equal(resolveNftVideoCandidates(wired.nft)[0], 'https://mirror/w');
 });

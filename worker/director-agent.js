@@ -23,6 +23,7 @@
 // costs nothing per token. The Director's expensive resource is FOOTAGE, not tokens, and adding a
 // paid reasoning tier here would be spending money to decide how to spend money.
 
+import { subjectSlots } from './rulebook.js';
 import { chat, jsonFrom } from './nvidia.js';
 import { priceUsd } from './minimax.js';
 import { MOTION_TEST } from './director-risks.js';
@@ -77,7 +78,8 @@ const slugOf = (demand) =>
  */
 const demandsOf = (data, spec, risks) => {
   const beatCount = spec?.beats?.length ?? 0;
-  const referencePlan = spec?.referencePlan ?? [];
+  // Subjects, not slots — a piece with film-frame slots is one subject (rulebook.js subjectSlots).
+  const referencePlan = subjectSlots(spec?.referencePlan);
   const rehearsedByRegister = new Set(
     risks.flatMap((risk) => (risk.test?.focus === 'rehearsal' ? risk.test.beats ?? [] : [])),
   );

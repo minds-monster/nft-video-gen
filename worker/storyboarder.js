@@ -51,11 +51,11 @@ import {
   toStrictSchema,
   validateScene,
 } from './scene.js';
-import { castingStills, fetchImageAsDataUri } from './casting-director.js';
+import { fetchImageAsDataUri, resolveCastingStills } from './casting-director.js';
 import { serveSignedMedia, signedMediaUrl } from './signed-media.js';
 import { streamJobEvents } from './job-events.js';
 import { createJobLogger as makeJobLogger } from './job-log.js';
-import { H3_FORMAT } from './rulebook.js';
+import { H3_FORMAT, subjectSlots } from './rulebook.js';
 import {
   FILM_PLAN_SCHEMA,
   buildPlanBrief,
@@ -712,14 +712,14 @@ const floorViolations = (scene, profiles = null) =>
  */
 const profilesFrom = (spec, castByKey) =>
   Object.fromEntries(
-    (spec.referencePlan ?? [])
+    subjectSlots(spec.referencePlan)
       .map((slot, i) => [`<Subject ${i + 1}>`, castByKey.get(slot.key)?.dossier?.physicalProfile])
       .filter(([, profile]) => profile),
   );
 
 const subjectNamesFrom = (spec, castByKey) =>
   Object.fromEntries(
-    (spec.referencePlan ?? []).map((slot, i) => {
+    subjectSlots(spec.referencePlan).map((slot, i) => {
       const entry = castByKey.get(slot.key);
       return [`<Subject ${i + 1}>`, entry?.dossier?.subject ?? entry?.name ?? `<Subject ${i + 1}>`];
     }),
@@ -1479,7 +1479,7 @@ export const frameSubjectsInFrame = (frame) =>
 // a preference.
 
 async function resolveReferenceImage(castEntry) {
-  const stills = castingStills(castEntry?.nft);
+  const stills = await resolveCastingStills(castEntry?.nft);
   if (!stills.length) throw new Error(`No usable image for cast member ${castEntry?.key ?? '(unknown)'}`);
   return fetchImageAsDataUri(stills);
 }
@@ -1507,7 +1507,7 @@ async function resolveInFrameReferences(spec, castByKey, blocking) {
       .map((s) => [Number(s.subject?.match(/\d+/)?.[0]), s])
       .filter(([num]) => Number.isFinite(num)),
   );
-  const inFrameSlots = (spec.referencePlan ?? [])
+  const inFrameSlots = subjectSlots(spec.referencePlan)
     .map((slot, i) => ({ key: slot.key, subjectNumber: i + 1 }))
     .filter(({ subjectNumber }) => inFrameByNumber.has(subjectNumber));
 

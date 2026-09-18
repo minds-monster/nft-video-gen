@@ -26,8 +26,14 @@
  * which made the "fallback" a guaranteed second failure — a dead CID cost two round trips and
  * produced no alternative. These three are independent operators, so a CID unpinned at one has a
  * real chance at another.
+ *
+ * Pinata leads because on 2026-09-18 it was the ONLY one serving anything: ipfs.io, dweb.link,
+ * w3s.link and nftstorage.link all answered a Worker-style fetch with a 403 HTML page, for both
+ * the metadata JSON and the PNG of an unrevealed Robinhood-chain token. Pinata took 7-9s but
+ * returned both. The others stay as fallbacks — they fail in about a second, so they cost little.
  */
 const IPFS_GATEWAYS = [
+  'https://gateway.pinata.cloud/ipfs/',
   'https://ipfs.io/ipfs/',
   'https://dweb.link/ipfs/',
   'https://w3s.link/ipfs/',
@@ -97,6 +103,46 @@ export const fetchArtwork = async (urls, { maxBytes = 0 } = {}) => {
     }
   }
   throw new Error(errors.join(' | ') || 'no candidate URLs');
+};
+
+/**
+ * A token's own metadata JSON, read from its tokenURI.
+ *
+ * For the tokens Alchemy has not indexed media for: every image field comes back null (an
+ * unrevealed Robinhood-chain piece, 2026-09-18), yet the NFT object still carries `tokenUri`,
+ * and the JSON behind it names the image. Accepts ipfs://, http(s):// and data: URIs, since
+ * fully on-chain collections put the JSON straight into the URI. Throws with every attempt's
+ * reason, like fetchArtwork.
+ */
+export const fetchTokenMetadata = async (tokenUri) => {
+  const uri = tokenUri?.trim();
+  if (!uri) throw new Error('no tokenURI');
+
+  const inline = /^data:application\/json(;[^,]*)?,(.*)$/s.exec(uri);
+  if (inline) {
+    const body = inline[1]?.includes('base64') ? atob(inline[2]) : decodeURIComponent(inline[2]);
+    return JSON.parse(body);
+  }
+
+  const http = uri.startsWith('ipfs://') ? IPFS_PREFIX + uri.slice('ipfs://'.length).replace(/^ipfs\//, '') : uri;
+  const errors = [];
+  for (const url of withIpfsFallback(http)) {
+    try {
+      // eslint-disable-next-line no-await-in-loop -- one gateway at a time, as fetchArtwork does.
+      const response = await fetch(url, {
+        headers: { 'User-Agent': BROWSER_UA, Accept: 'application/json' },
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      // Not trusting content-type: plenty of IPFS JSON is served as text/plain or octet-stream.
+      // A gateway's HTML error page fails the parse, which is the check that matters.
+      // eslint-disable-next-line no-await-in-loop
+      return JSON.parse(await response.text());
+    } catch (error) {
+      errors.push(`${url.slice(0, 60)}: ${error.message}`);
+    }
+  }
+  throw new Error(errors.join(' | '));
 };
 
 /** A film by its opening bytes: an ISO-BMFF `ftyp` box (mp4, mov) or an EBML header (webm). */

@@ -130,6 +130,10 @@
 			{
 				"queue": "director-jobs",
 				"binding": "DIRECTOR_JOBS"
+			},
+			{
+				"queue": "film-frames-jobs",
+				"binding": "FILM_FRAMES_JOBS"
 			}
 		],
 		"consumers": [
@@ -154,6 +158,16 @@
 			// deliberately not copied here.
 			{
 				"queue": "director-jobs",
+				"max_batch_size": 1,
+				"max_batch_timeout": 1,
+				"max_retries": 3
+			},
+			// Film frames (worker/film-frames.js): one piece per message, because one pick is 1½-5
+			// minutes of reasoning. Three attempts, matched to handleFilmFramesQueue's own
+			// `attempts < 3` — NVIDIA capacity 503s and a prose-instead-of-tool-call reply both pass
+			// on a second try.
+			{
+				"queue": "film-frames-jobs",
 				"max_batch_size": 1,
 				"max_batch_timeout": 1,
 				"max_retries": 3
@@ -308,6 +322,10 @@
 					{
 						"queue": "director-jobs-staging",
 						"binding": "DIRECTOR_JOBS"
+					},
+					{
+						"queue": "film-frames-jobs-staging",
+						"binding": "FILM_FRAMES_JOBS"
 					}
 				],
 				"consumers": [
@@ -319,6 +337,12 @@
 					},
 					{
 						"queue": "director-jobs-staging",
+						"max_batch_size": 1,
+						"max_batch_timeout": 1,
+						"max_retries": 3
+					},
+					{
+						"queue": "film-frames-jobs-staging",
 						"max_batch_size": 1,
 						"max_batch_timeout": 1,
 						"max_retries": 3
@@ -396,6 +420,10 @@
 					{
 						"queue": "director-jobs",
 						"binding": "DIRECTOR_JOBS"
+					},
+					{
+						"queue": "film-frames-jobs",
+						"binding": "FILM_FRAMES_JOBS"
 					}
 				],
 				"consumers": []

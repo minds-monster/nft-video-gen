@@ -285,10 +285,27 @@ export const forCastingWire = ({ key, nft }) => {
           }
         : undefined,
       animationUrl: nft?.animationUrl,
+      // Alchemy's copy of the film — for 26 of 61 films in the registry the ONLY working source,
+      // their own animation_url being a challenged ipfs.io link (scripts/probe-frames.mjs). Left
+      // off this wire, the Casting Director's motion pass and its frame choice never saw it.
+      animation: nft?.animation
+        ? {
+            cachedUrl: nft.animation.cachedUrl,
+            originalUrl: nft.animation.originalUrl,
+            contentType: nft.animation.contentType,
+            size: nft.animation.size,
+          }
+        : undefined,
+      // The Worker's last resort when Alchemy indexed no media: it reads the image out of the
+      // token's own metadata (resolveCastingStills in worker/casting-director.js).
+      tokenUri: typeof nft?.tokenUri === 'string' ? nft.tokenUri : nft?.tokenUri?.raw,
       media: nft?.media?.[0] ? [{ gateway: nft.media[0].gateway }] : undefined,
       raw: {
         metadata: {
           image: rawMetadata.image,
+          image_url: rawMetadata.image_url,
+          original_image_url: rawMetadata.original_image_url,
+          display_image_url: rawMetadata.display_image_url,
           animation_url: rawMetadata.animation_url,
           video_url: rawMetadata.video_url,
           description: rawMetadata.description,

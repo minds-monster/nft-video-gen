@@ -22,6 +22,7 @@
 // does not belong here; it belongs in the Director's own reasoning, where it will be labelled as
 // judgement rather than fact.
 
+import { subjectSlots } from './rulebook.js';
 import { priceUsd } from './minimax.js';
 import { FACE_AT_RISK_FRAMING } from './reference-preflight.js';
 
@@ -282,7 +283,10 @@ const elevatedBy = (risk, mustHold = []) => {
 export const assessRisks = ({ spec, cast = [], preflight = null, mustHold = [], prompt = null, intent = null } = {}) => {
   const risks = [];
   const prose = proseOf(spec);
-  const referencePlan = spec?.referencePlan ?? [];
+  const allSlots = spec?.referencePlan ?? [];
+  // Subjects, not slots: a piece with film-frame slots is one subject (rulebook.js subjectSlots).
+  // Only the nine-slot ceiling below counts every slot — that is the one limit slots are.
+  const referencePlan = subjectSlots(allSlots);
   const beats = spec?.beats ?? [];
   const byKey = new Map(cast.map((entry) => [entry?.key, entry]));
 
@@ -361,13 +365,13 @@ export const assessRisks = ({ spec, cast = [], preflight = null, mustHold = [], 
   }
 
   // ── Rule 4. NINE SLOTS, AND NOTHING MAY FALL BACK TO PROSE. ────────────────────────────────
-  if (referencePlan.length > 9) {
+  if (allSlots.length > 9) {
     add({
       id: 'over-nine-slots',
       rule: 4,
       severity: 'floor',
-      what: `${referencePlan.length} pieces for 9 reference slots.`,
-      evidence: referencePlan.slice(9).map((slot) => slot.key),
+      what: `${allSlots.length} reference slots for 9.`,
+      evidence: allSlots.slice(9).map((slot) => slot.key),
       measured:
         'Measured on the hero: 12 assets into 9 slots left the tiara, the Blossom and the entire ' +
         'crowd on prose alone. All three failed — the Blossom rendered hatless and the crowd was ' +

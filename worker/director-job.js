@@ -26,8 +26,9 @@
 // we have lost is money spent on something nobody can ever collect.
 
 import { createJobLogger } from './job-log.js';
-import { castingStills } from './casting-director.js';
+import { castingStills, resolveCastingStills } from './casting-director.js';
 import { fetchLegalReference } from './reference-legal.js';
+import { parseRefKey, readFrameDataUri } from './film-frames.js';
 import { recordSpend } from './budget.js';
 import { authoriseSpend, getEnvelope } from './render-budget.js';
 import { LATENCY_SECONDS, MinimaxError, createH3Task, h3Content, pollVideo, priceUsd } from './minimax.js';
@@ -293,21 +294,35 @@ export async function recordVerdict(env, mindId, filmId, { takeId, answer, note,
  * "a dropped asset is the single most common cause of a wrong render". Quietly shooting without
  * one would spend the visitor's money on a film missing a character they cast.
  */
-async function resolveReferences(cast, refKeys) {
+async function resolveReferences(env, cast, refKeys, logger = null) {
   const byKey = new Map((cast ?? []).map((entry) => [entry?.key, entry]));
   const images = [];
-  for (const key of refKeys ?? []) {
+  for (const ref of refKeys ?? []) {
+    // A film-frame slot (`key@<seconds>s`, worker/film-frames.js) is a stored image, already
+    // measured legal when it was chosen. If it has gone, the piece's still takes the slot: the
+    // prompt's <Picture N> then shows the piece from its still rather than that moment, which is
+    // a smaller loss than the piece missing from the film.
+    const { key, atSeconds } = parseRefKey(ref);
+    if (atSeconds !== null) {
+      // eslint-disable-next-line no-await-in-loop
+      const frame = await readFrameDataUri(env, key, atSeconds).catch(() => null);
+      if (frame) {
+        images.push(frame);
+        continue;
+      }
+      logger?.log('reference-fallback', { key, atSeconds, reason: 'stored film frame missing; using the still' });
+    }
     const entry = byKey.get(key);
     try {
       // The first still H3 will ACCEPT, not the first that loads — measured here, before the
       // task is created, because H3 measures it after the task is billed (worker/reference-legal.js).
       // eslint-disable-next-line no-await-in-loop -- sequential against third-party media hosts.
-      const legal = await fetchLegalReference(castingStills(entry?.nft), { key, dossierFraming: entry?.dossier?.framing ?? null });
+      const legal = await fetchLegalReference(await resolveCastingStills(entry?.nft), { key, dossierFraming: entry?.dossier?.framing ?? null });
       images.push(legal.dataUri);
     } catch (error) {
       throw Object.assign(
         new Error(
-          error.code === 'reference_illegal'
+          error.code === 'reference_illegal' || error.code === 'reference_no_image'
             ? `${error.message}. Shooting without it would render a film missing a piece you cast.`
             : `Could not fetch the artwork for "${key}", and shooting without it would render a film ` +
               `missing a piece you cast: ${error.message}`,
@@ -514,7 +529,7 @@ async function review(env, record, logger) {
 async function submit(env, record, logger, cast) {
   logger.log('phase', { phase: 'submitting', detail: 'Sending the shot to MiniMax.' });
 
-  const images = await resolveReferences(cast, record.refKeys);
+  const images = await resolveReferences(env, cast, record.refKeys, logger);
   const content = await h3Content({ text: record.script.text, referenceImages: images });
 
   let taskId;

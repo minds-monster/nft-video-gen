@@ -38,6 +38,7 @@ import {
   handleDirectorAssess,
 } from './director.js';
 import { handleDirectorQueue, isDirectorQueue } from './director-job.js';
+import { handleFilmFramesQueue, isFilmFramesQueue } from './film-frames.js';
 import {
   handleStoryboard,
   handleStoryboardSketch,
@@ -159,11 +160,14 @@ const CRON_NIGHTLY = '0 3 * * *';
 
 export default {
   async queue(batch, env, ctx) {
-    // One Worker, two queues. `batch.queue` is the only thing that says which, and getting it
+    // One Worker, three queues. `batch.queue` is the only thing that says which, and getting it
     // wrong would hand a director message to the storyboarder's handler, which would not find a
     // storyboard job and would ack it — losing a paid render silently. Matched by prefix: the
     // staging queue is `director-jobs-staging`, and an exact match did precisely that there.
     if (isDirectorQueue(batch.queue)) return handleDirectorQueue(batch, env, ctx);
+    // Checked before the storyboard fallthrough for the same reason: an unrecognised queue lands
+    // in handleStoryboardQueue, which acks what it cannot find — a frame job would vanish.
+    if (isFilmFramesQueue(batch.queue)) return handleFilmFramesQueue(batch, env, ctx);
     return handleStoryboardQueue(batch, env, ctx);
   },
 

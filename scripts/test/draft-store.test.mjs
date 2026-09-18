@@ -42,7 +42,7 @@ test('buildDraft keeps the wire subset of an NFT and the slim collection, nothin
   assert.equal(draft.v, DRAFT_VERSION);
   assert.equal(draft.filmId.length, 8);
   const [entry] = draft.cast;
-  assert.equal(entry.nft.tokenUri, undefined);
+  assert.equal(entry.nft.tokenUri, 'https://somewhere/huge', 'kept: the Worker reads the art from it when Alchemy has none');
   assert.equal(entry.nft.contract.deployer, undefined);
   assert.equal(entry.nft.raw.metadata.extra, undefined);
   assert.equal(entry.nft.image.cachedUrl, 'https://cdn/ape.png');

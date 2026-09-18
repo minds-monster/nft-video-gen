@@ -73,3 +73,20 @@ test('an unmeasurable format passes — "could not be measured" is not "illegal"
   const legal = await fetchLegalReference(['https://a/photo.heic'], { key: 'piece' });
   assert.equal(legal.measured, null);
 });
+
+test('no candidates at all is its own failure, not an illegal still', async () => {
+  await assert.rejects(fetchLegalReference([], { key: 'piece' }), (error) => {
+    assert.equal(error.code, 'reference_no_image');
+    assert.equal(error.fatal, true);
+    return true;
+  });
+});
+
+test('a refusal records which candidates were actually measured', async () => {
+  serve({ 'https://a/thumb.png': { w: 140, h: 250 } });
+  await assert.rejects(fetchLegalReference(['https://a/thumb.png', 'https://a/gone.png'], { key: 'piece' }), (error) => {
+    assert.equal(error.tried[0].measured, true);
+    assert.equal(error.tried[1].measured, undefined, 'a 404 was never measured');
+    return true;
+  });
+});

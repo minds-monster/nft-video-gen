@@ -8,7 +8,8 @@
 
 import { chat, jsonFrom, streamChat } from './nvidia.js';
 import { sseResponse } from './sse.js';
-import { SCREENWRITER_BRIEF, SHOT_SPEC_SCHEMA } from './rulebook.js';
+import { SCREENWRITER_BRIEF, SHOT_SPEC_SCHEMA, subjectSlots } from './rulebook.js';
+import { readFilmFrames } from './film-frames.js';
 import {
   FREE_MAX_BEATS,
   FREE_MAX_REFERENCES,
@@ -25,6 +26,33 @@ import {
 const DEFAULT_MAX_BEATS = FREE_MAX_BEATS;
 const DEFAULT_MAX_REFERENCES = FREE_MAX_REFERENCES;
 
+/**
+ * A cast member's chosen film frames, as the Screenwriter sees them — only when there are some.
+ * The kind and the binding wording come from worker/film-frames.js, because "angles" and
+ * "moments in order" are different instructions and each was measured with its own wording.
+ */
+export const filmFramesLine = (record) => {
+  if (record?.status !== 'ready' || !record.frames?.length) return null;
+  const listed = record.frames.map((frame) => `  frame ${frame.n} (${frame.atSeconds}s): ${frame.shows}`).join('\n');
+  return `Film frames — its film is a ${record.filmKind}; several of these in one subject's slots are ${record.binding}:\n${listed}`;
+};
+
+/**
+ * Attach each cast member's film frames, read HERE rather than trusted from the request body.
+ *
+ * The browser's copy of a dossier is the one it was handed at cast time, before the frames —
+ * chosen on a queue, minutes later — existed. And the frame list decides which stored images
+ * a paid render is sent, so it comes from the server's record, never from the client.
+ */
+const attachFilmFrames = async (env, cast) => {
+  await Promise.all(
+    cast.map(async (entry) => {
+      const record = await readFilmFrames(env, entry.key).catch(() => null);
+      entry.filmFrames = record?.status === 'ready' ? record : null;
+    }),
+  );
+};
+
 /** What the model is told about one cast member. Dossier first — it is the real material. */
 const castBlock = (entry) => {
   const { key, dossier, name, collectionName } = entry;
@@ -40,6 +68,7 @@ const castBlock = (entry) => {
     dossier.isMannequin ? 'Presented on a mannequin — the guard line is mandatory.' : null,
     dossier.motionNotes ? `In its own film: ${dossier.motionNotes}` : null,
     dossier.hazards?.length ? `Hazards: ${dossier.hazards.join('; ')}` : null,
+    filmFramesLine(entry.filmFrames),
   ]
     .filter(Boolean)
     .join('\n');
@@ -100,7 +129,7 @@ const userMessage = ({ prompt, cast, primaryKey, note, maxBeats, maxReferences }
  * expensive failure and the least visible one: the spec reads perfectly well, and the loss
  * only surfaces as an asset missing from a render minutes and dollars later.
  */
-const validate = (spec, cast, { maxBeats, maxReferences }) => {
+export const validate = (spec, cast, { maxBeats, maxReferences }) => {
   const missing = SHOT_SPEC_SCHEMA.required.filter((field) => spec?.[field] === undefined);
   if (missing.length) throw new Error(`Shot spec missing fields: ${missing.join(', ')}`);
   if (!Array.isArray(spec.beats) || !spec.beats.length) throw new Error('Shot spec has no beats');
@@ -114,6 +143,31 @@ const validate = (spec, cast, { maxBeats, maxReferences }) => {
   }
   if (spec.referencePlan.length > maxReferences) {
     throw new Error(`Shot spec plans ${spec.referencePlan.length} reference slots; tier allows ${maxReferences}.`);
+  }
+
+  // Every piece's first slot before any repeated one — the rule that keeps <Subject N> equal to
+  // slot N for every consumer downstream (rulebook.js subjectSlots).
+  // Equivalent, and checkable in one line: the first K slots — K being the number of distinct
+  // pieces — are all different pieces.
+  const subjectCount = subjectSlots(spec.referencePlan).length;
+  const head = spec.referencePlan.slice(0, subjectCount).map((slot) => slot.key);
+  if (new Set(head).size !== subjectCount) {
+    throw new Error(
+      'referencePlan puts a cast member\'s first slot after a repeated (film-frame) slot. List every ' +
+        'cast member once, in <Subject> order, then the film-frame slots — <Subject N> must be slot N.',
+    );
+  }
+
+  // A frame slot must name a frame that exists — it decides which stored image a render is sent.
+  for (const slot of spec.referencePlan) {
+    if (slot.frame === undefined || slot.frame === null) continue;
+    const frames = cast.find((entry) => entry.key === slot.key)?.filmFrames?.frames ?? [];
+    if (!frames.some((frame) => frame.n === slot.frame)) {
+      throw new Error(
+        `A referencePlan slot names film frame ${slot.frame}, which is not in that cast member's Film frames list` +
+          (frames.length ? ` (frames 1-${frames.length}).` : ' — it has none. Omit "frame" to use the artwork itself.'),
+      );
+    }
   }
 
   // Cast keys are database identifiers — chain, contract, token id. They are useful for
@@ -230,6 +284,8 @@ export const screenwrite = async (httpRequest, env) => {
     1,
     PAID_MAX_REFERENCES,
   );
+
+  await attachFilmFrames(env, cast);
 
   return sseResponse(async (emit) => {
     // ---- 1. the draft, streamed ----------------------------------------------------

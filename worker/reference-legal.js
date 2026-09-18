@@ -52,6 +52,15 @@ const fetchResized = async (url, maxBytes) => {
  * be measured" are different states, and refusing the second would block a legal reference.
  */
 export async function fetchLegalReference(urls, { key, dossierFraming = null, maxBytes = REFERENCE_PROXY_BYTES } = {}) {
+  // Nothing to measure is a different failure from everything measured and refused, and the
+  // visitor is told different things: "add an image" versus "this image is too small".
+  if (!urls?.length) {
+    throw Object.assign(
+      new Error(`No image found for "${key}" — neither Alchemy nor the token's own metadata names one.`),
+      { code: 'reference_no_image', key, tried: [], fatal: true },
+    );
+  }
+
   const tried = [];
   for (const url of urls ?? []) {
     let artwork;
@@ -79,12 +88,10 @@ export async function fetchLegalReference(urls, { key, dossierFraming = null, ma
     if (!floor.length) {
       return { dataUri: toDataUri(artwork), url: artwork.url ?? url, measured: check.measured, check, tried };
     }
-    tried.push({ url, reason: floor.map((violation) => violation.detail).join('; ') });
+    tried.push({ url, reason: floor.map((violation) => violation.detail).join('; '), measured: true });
   }
 
-  const summary = tried.length
-    ? tried.map((entry) => entry.reason).join(' | ')
-    : 'no candidate URLs';
+  const summary = tried.map((entry) => entry.reason).join(' | ');
   throw Object.assign(
     new Error(`No usable still for "${key}" — every candidate was refused before spending: ${summary}`),
     { code: 'reference_illegal', key, tried, fatal: true },

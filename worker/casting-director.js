@@ -13,7 +13,8 @@
 
 import { chat, jsonFrom, streamChat } from './nvidia.js';
 import { sseResponse } from './sse.js';
-import { fetchArtwork, findFilm, toDataUri } from './artwork.js';
+import { fetchArtwork, fetchTokenMetadata, findFilm, toDataUri } from './artwork.js';
+import { requestFilmFrames } from './film-frames.js';
 import {
   toHttp,
   resolveNftVideoCandidates,
@@ -299,10 +300,55 @@ export const castingStills = (nft) => {
     nft?.image?.thumbnailUrl,
     nft?.media?.[0]?.gateway,
     rawMetadata.image,
+    // Some chains' raw metadata is OpenSea-shaped rather than the token's own JSON.
+    rawMetadata.image_url,
+    rawMetadata.original_image_url,
+    rawMetadata.display_image_url,
   ]
     .filter((value) => typeof value === 'string' && value.trim())
     .map((value) => toHttp(value.trim()))
     .filter((value, index, all) => all.indexOf(value) === index);
+};
+
+/** Alchemy v3 carries `tokenUri` as a string; v2 carried `{ raw, gateway }`. */
+const tokenUriOf = (nft) =>
+  typeof nft?.tokenUri === 'string' ? nft.tokenUri : nft?.tokenUri?.raw ?? nft?.tokenUri?.gateway ?? null;
+
+/** Per isolate: a piece is resolved by the plan, the job and the storyboarder in quick succession. */
+const tokenStills = new Map();
+
+/**
+ * castingStills, falling back to the token's own metadata when Alchemy indexed no media.
+ *
+ * THE CASE: an unrevealed Robinhood-chain token (2026-09-18) came back from Alchemy with every
+ * image field null, so the Director refused it as having "no still MiniMax will accept" — when
+ * its tokenURI pointed at a perfectly legal 1254x1254 PNG. Only the discovery was missing, never
+ * the image. Resolving costs a metadata fetch, so it runs only when the cheap list is empty, and
+ * never throws: an empty list still means "no image", and callers already say so.
+ */
+export const resolveCastingStills = async (nft) => {
+  const known = castingStills(nft);
+  const tokenUri = tokenUriOf(nft);
+  if (known.length || !tokenUri) return known;
+
+  if (!tokenStills.has(tokenUri)) {
+    tokenStills.set(
+      tokenUri,
+      fetchTokenMetadata(tokenUri)
+        .then((metadata) =>
+          [metadata?.image, metadata?.image_url]
+            .filter((value) => typeof value === 'string' && value.trim() && !value.startsWith('data:'))
+            .map((value) => toHttp(value.trim())),
+        )
+        .catch((error) => {
+          console.warn(`Could not read tokenURI ${tokenUri.slice(0, 80)}: ${error.message}`);
+          // A failure is not cached: the gateway may be back on the next request.
+          tokenStills.delete(tokenUri);
+          return [];
+        }),
+    );
+  }
+  return tokenStills.get(tokenUri);
 };
 
 const traitLines = (nft) => {
@@ -347,10 +393,9 @@ export const fetchImageAsDataUri = async (urls) => {
  * retrieve a URL we cannot), but the reason has to survive as something more than a log line, or
  * an unfetchable piece surfaces as the model complaining about artwork it never received.
  */
-const buildContent = async (nft) => {
+const buildContent = async (nft, stills) => {
   const parts = [];
   let imageError = null;
-  const stills = castingStills(nft);
   if (stills.length) {
     let imageUrl = stills[0];
     try {
@@ -617,6 +662,20 @@ const validate = (dossier) => {
   return dossier;
 };
 
+/**
+ * Queue the choice of this piece's film frames (worker/film-frames.js), once.
+ *
+ * On a queue, not here: the pick is one to five minutes of reasoning over eleven images, far past
+ * anything a visitor should watch a cast for, and past what a Worker may do after its response.
+ * Asked on EVERY cast, cached ones included, so the pieces already in the library pick up frames
+ * the next time they are used — requestFilmFrames returns at once when a record exists. Never
+ * allowed to fail a cast: frames are an upgrade to the still, not a condition of it.
+ */
+const askForFilmFrames = (env, key, nft, stills) =>
+  requestFilmFrames(env, { key, stills, films: resolveNftVideoCandidates(nft) }).catch((error) =>
+    console.warn(`Could not queue film frames for ${key}:`, error.message),
+  );
+
 export const castPiece = async (httpRequest, env, ctx) => {
   const { key, nft, refresh = false, previsNote } = await httpRequest.json();
   if (!key || !nft) {
@@ -631,13 +690,6 @@ export const castPiece = async (httpRequest, env, ctx) => {
   // write that would have made it permanent. See worker/sse.js's header: the guarantee was
   // written for exactly this handler and this handler was the one opting out of it.
   return sseResponse(async (emit) => {
-    if (!castingStills(nft).length) {
-      throw new Error(
-        'No usable image URL found for this piece. The token may be video-only, or Alchemy ' +
-          'may not have returned any media for it.',
-      );
-    }
-
     // A warm dossier skips every model call, so there is nothing to stream and nothing to
     // wait for — it resolves in one round trip. Saying so is what makes the cache legible
     // rather than making a known piece look skipped.
@@ -645,12 +697,22 @@ export const castPiece = async (httpRequest, env, ctx) => {
       const hit = await env.DOSSIERS.get(cacheKey, 'json');
       if (hit) {
         await emit('result', { ...hit, cached: true });
+        await askForFilmFrames(env, key, nft, hit.sourceImageUrls ?? castingStills(nft));
         return;
       }
     }
 
+    // After the cache, because resolving may read the token's metadata off a slow IPFS gateway.
+    const stills = await resolveCastingStills(nft);
+    if (!stills.length) {
+      throw new Error(
+        'No usable image URL found for this piece. The token may be video-only, or neither ' +
+          'Alchemy nor its tokenURI metadata names an image for it.',
+      );
+    }
+
     // The artwork, resolved once and shown to every pass below.
-    const { parts, imageError } = await buildContent(nft);
+    const { parts, imageError } = await buildContent(nft, stills);
 
     // ---- 1. the looking pass, streamed --------------------------------------------
     await emit('phase', { phase: 'looking' });
@@ -751,7 +813,7 @@ export const castPiece = async (httpRequest, env, ctx) => {
       // Two things need it. Provenance — a derivative is only traceable to its source if the
       // source is named — and any later pass that has to look at the same pixels again without
       // re-resolving the token from scratch.
-      sourceImageUrls: castingStills(nft),
+      sourceImageUrls: stills,
       // The film the motion notes were written from, when there was one — the same provenance
       // the stills get. Null means no candidate served a film, not that the token has none.
       sourceFilmUrl: film,
@@ -769,5 +831,6 @@ export const castPiece = async (httpRequest, env, ctx) => {
     if (env.DOSSIERS) await env.DOSSIERS.put(cacheKey, JSON.stringify(record));
 
     await emit('result', { ...record, cached: false });
+    await askForFilmFrames(env, key, nft, record.sourceImageUrls ?? castingStills(nft));
   }, ctx);
 };

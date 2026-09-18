@@ -23,7 +23,7 @@
 // can; a visitor who wants to shoot the screenplay as written can too.
 
 import { requireSession } from './mind-chat.js';
-import { castingStills } from './casting-director.js';
+import { resolveCastingStills } from './casting-director.js';
 import { fetchLegalReference } from './reference-legal.js';
 import { compileSceneToH3 } from './scene.js';
 import { filmIdFor } from './film-id.js';
@@ -43,6 +43,7 @@ import { relayScreenTestDigest } from './filmography.js';
 import { testGate } from './director-gate.js';
 import { parseBrief } from '../src/lib/directorBrief.js';
 import { recordVerdict } from './director-job.js';
+import { parseRefKey, refKeysForPlan } from './film-frames.js';
 import { h3Params, h3ScriptFrom, h3Script } from '../src/lib/h3Script.js';
 import { record as trackEvent } from './analytics.js';
 
@@ -149,14 +150,19 @@ const gatherReferences = async (spec, cast) => {
       // The first LEGAL still, measured (worker/reference-legal.js); a piece with no legal still
       // is reported by reason rather than silently passed on to fail after billing.
       // eslint-disable-next-line no-await-in-loop -- sequential against third-party media hosts.
-      const legal = await fetchLegalReference(castingStills(entry?.nft), { key: slot.key, dossierFraming: entry?.dossier?.framing ?? null });
+      const legal = await fetchLegalReference(await resolveCastingStills(entry?.nft), { key: slot.key, dossierFraming: entry?.dossier?.framing ?? null });
       references.push({
         key: slot.key,
         dataUri: legal.dataUri,
         dossierFraming: entry?.dossier?.framing ?? null,
       });
     } catch (error) {
-      unreachable.push({ key: slot.key, reason: error.message, code: error.code ?? 'reference_unreachable' });
+      unreachable.push({
+        key: slot.key,
+        reason: error.message,
+        code: error.code ?? 'reference_unreachable',
+        measured: Boolean(error.tried?.some((attempt) => attempt.measured)),
+      });
     }
   }
   return { references, unreachable };
@@ -170,19 +176,43 @@ const gatherReferences = async (spec, cast) => {
  * thumbnail that this would have refused for free, by name, with the reason.
  */
 const refuseIllegalReferences = async (spec, cast, refKeys) => {
-  const wanted = new Set(refKeys ?? []);
-  const scoped = { ...spec, referencePlan: (spec?.referencePlan ?? []).filter((slot) => wanted.has(slot.key)) };
+  // Per PIECE, not per slot: a film-frame slot (`key@<seconds>s`) was measured legal when it was
+  // chosen, and a piece with several slots needs its still checked once — it is the fallback
+  // every one of its frame slots drops back to.
+  const wanted = new Set((refKeys ?? []).map((ref) => parseRefKey(ref).key));
+  const seen = new Set();
+  const scoped = {
+    ...spec,
+    referencePlan: (spec?.referencePlan ?? []).filter((slot) => wanted.has(slot.key) && !seen.has(slot.key) && seen.add(slot.key)),
+  };
   const { unreachable } = await gatherReferences(scoped, cast);
   if (!unreachable.length) return null;
   const named = new Map(cast.map((entry) => [entry?.key, entry?.name ?? entry?.key]));
+  const list = (pieces) => pieces.map((piece) => `"${named.get(piece.key) ?? piece.key}"`).join(', ');
+  const verb = (pieces, one, many) => (pieces.length === 1 ? one : many);
+
+  // Said by cause, because the fixes differ. The H3 floor used to be quoted for every refusal,
+  // which sent a visitor hunting for a bigger image of a piece whose art had simply never been
+  // found (an unrevealed Robinhood-chain token, 2026-09-18).
+  const missing = unreachable.filter((piece) => piece.code === 'reference_no_image');
+  const refused = unreachable.filter((piece) => piece.code !== 'reference_no_image' && piece.measured);
+  const unfetched = unreachable.filter((piece) => piece.code !== 'reference_no_image' && !piece.measured);
+  const reasons = [
+    missing.length &&
+      `No image could be found for ${list(missing)} — neither Alchemy nor the token's own metadata names one. ` +
+        `Recast ${verb(missing, 'it', 'them')}, or cast a different piece.`,
+    refused.length &&
+      `${list(refused)} ${verb(refused, 'has', 'have')} no still MiniMax will accept: H3 needs a short side of ` +
+        'at least 256px, an aspect between 0.4 and 2.5, and a JPEG, PNG or WebP. Add a larger image of the piece, or recast it.',
+    unfetched.length &&
+      `The artwork for ${list(unfetched)} could not be downloaded from any of its hosts. ` +
+        'That is often temporary — try again in a few minutes.',
+  ].filter(Boolean);
+
   return json(
     {
       error: 'reference_illegal',
-      detail:
-        `${unreachable.map((piece) => `"${named.get(piece.key) ?? piece.key}"`).join(', ')} ` +
-        `${unreachable.length === 1 ? 'has' : 'have'} no still MiniMax will accept, so nothing was sent and nothing was charged. ` +
-        'H3 needs a short side of at least 256px, an aspect between 0.4 and 2.5, and a JPEG, PNG or WebP. ' +
-        'Add a larger image of the piece to the cast, or recast it.',
+      detail: `${reasons.join(' ')} So nothing was sent and nothing was charged.`,
       pieces: unreachable,
     },
     400,
@@ -451,8 +481,11 @@ export async function handleDirectorStart(request, env) {
   const finalUsd = priceUsd(params) ?? 0;
   const castRefs = castRefsFrom(cast);
 
+  // A frame slot becomes `key@<seconds>s` here, from the stored record (worker/film-frames.js).
+  const refKeys = await refKeysForPlan(env, spec.referencePlan);
+
   // Measured before the envelope opens and before a task is created (see handleDirectorTest).
-  const refused = await refuseIllegalReferences(spec, cast, (spec.referencePlan ?? []).map((slot) => slot.key));
+  const refused = await refuseIllegalReferences(spec, cast, refKeys);
   if (refused) return refused;
 
   const overrideRecord =
@@ -466,7 +499,7 @@ export async function handleDirectorStart(request, env) {
       filmId,
       script: { source: script.source, text: script.text },
       params,
-      refKeys: (spec.referencePlan ?? []).map((slot) => slot.key),
+      refKeys,
       cast,
       origin: new URL(request.url).origin,
       // Carried for the filmography digest, which names the film by its logline. The screen-test

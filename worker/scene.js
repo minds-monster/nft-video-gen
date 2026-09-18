@@ -1,4 +1,4 @@
-import { H3_MOTIONS } from './rulebook.js';
+import { H3_MOTIONS, subjectSlots } from './rulebook.js';
 
 // Re-exported so every consumer reads the vocabulary from one place, whichever module it
 // happens to import.
@@ -1256,7 +1256,8 @@ export const castLine = (index, entry) => {
  */
 export const subjectAssetsFrom = (spec, castByKey) =>
   Object.fromEntries(
-    (spec.referencePlan ?? [])
+    // Subjects, not slots: a piece with film-frame slots is still one subject (rulebook.js).
+    subjectSlots(spec.referencePlan)
       .map((slot, i) => {
         const entry = castByKey.get(slot.key);
         if (!entry) return null;
@@ -1282,7 +1283,7 @@ export const subjectAssetsFrom = (spec, castByKey) =>
  * shapes from the same header, and a second copy of this join is a second place for the
  * tag-to-cast mapping to drift. */
 export const specHeader = (spec, cast) => {
-  const referenceLines = (spec.referencePlan ?? []).map((slot, i) => {
+  const referenceLines = subjectSlots(spec.referencePlan).map((slot, i) => {
     const entry = cast.find((c) => c.key === slot.key);
     return castLine(i, entry ?? { key: slot.key });
   });

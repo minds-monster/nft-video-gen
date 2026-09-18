@@ -144,6 +144,22 @@ is "768P" or "2K". Ratio is one of 21:9, 16:9, 4:3, 1:1, 3:4, 9:16. Reference im
 capped at 9, must have an aspect ratio between 0.4 and 2.5, and a short side of at least
 256px. Default to 768P and 6 seconds unless the brief clearly wants the full 15.`;
 
+/**
+ * Each cast member's FIRST reference slot, in order — the slots that define <Subject N>.
+ *
+ * A piece can take several slots now (film frames, worker/film-frames.js), and every consumer that
+ * numbered subjects by slot position — the Storyboarder, the scene header, the Director's plan —
+ * would then have called the second and third pictures of one hand <Subject 2> and <Subject 3>:
+ * three subjects where the film has one, which is the failure frames were chosen to avoid. The
+ * rule that keeps them right is enforced by the Screenwriter's validator: every piece's first
+ * slot comes before any repeated slot. So <Subject N> is still slot N for every subject, and this
+ * is the list to number subjects from. <Picture N> still counts every slot.
+ */
+export const subjectSlots = (referencePlan) => {
+  const seen = new Set();
+  return (referencePlan ?? []).filter((slot) => !seen.has(slot?.key) && seen.add(slot?.key));
+};
+
 export const SHOT_SPEC_SCHEMA = {
   type: 'object',
   properties: {
@@ -171,14 +187,18 @@ export const SHOT_SPEC_SCHEMA = {
       type: 'string',
       description:
         'Define each subject and bind it to its reference, using the H3 convention: ' +
-        '"<Subject 1> is the stylised ape character in <Picture 1>, with ...". N is the ' +
-        '1-based position in referencePlan. Then say how many of each exist and where each ' +
+        '"<Subject 1> is the stylised ape character in <Picture 1>, with ...". <Picture N> is ' +
+        'the Nth slot in referencePlan. <Subject N> is the Nth cast member\'s FIRST slot — ' +
+        'every cast member\'s first slot comes before any film-frame slot, so the two numbers ' +
+        'agree for each subject\'s first picture. Then say how many of each exist and where each ' +
         'one stays — including, for every subject with more than one other subject moving ' +
         'near it, which SIDE it starts on (left/right). A worn or held reference (role ' +
         '"garment" or "prop" in referencePlan) is NEVER an independent figure with its own ' +
         'position — introduce it in the same sentence as the character wearing or holding ' +
         'it: "<Subject 1> ... wearing <Subject 2>, the deep-red velvet jacket, from ' +
-        '<Picture 2>" — never "<Subject 2> stands beside <Subject 1>". NEVER write a cast ' +
+        '<Picture 2>" — never "<Subject 2> stands beside <Subject 1>". A subject given ' +
+        'several slots (film frames) is bound to all of them in one sentence, in the words ' +
+        'its Film frames line gives — see FILM FRAMES. NEVER write a cast ' +
         'key, contract address or chain name — those are internal identifiers, and this ' +
         'text is sent to a model that renders text it is shown. Empty string only when ' +
         'there is a single subject.',
@@ -228,6 +248,14 @@ export const SHOT_SPEC_SCHEMA = {
           },
           role: { type: 'string', description: 'What it contributes: character, garment, prop, vehicle, crowd.' },
           crop: { type: 'string', description: 'Crop instruction from the dossier, or empty.' },
+          frame: {
+            type: 'integer',
+            minimum: 1,
+            description:
+              'Optional. A frame number from this cast member\'s "Film frames" list, to use a ' +
+              'real frame of its film in this slot. Omit it for the artwork itself. Each slot — ' +
+              'frame or not — is its own <Picture N>.',
+          },
         },
         required: ['key', 'role', 'crop'],
       },
@@ -305,6 +333,26 @@ them into the prose so the model has them in words as well as in pixels. Respect
 flat-2d-vector piece has to be described as a physical object or it renders as a sticker.
 Honour hazards and burnedInText: if artwork carries lettering, keep it out of the composition
 or crop past it. If isMannequin is true anywhere, the guard line is mandatory.
+
+FILM FRAMES. Some cast members list frames from their own film — real frames of the artwork,
+chosen by the Casting Director as the same subject, fully in view. A frame can fill a
+reference slot: give that slot "frame": N. Every slot is its own <Picture N>, so a subject
+with several slots is bound to several pictures, in the words its Film frames line gives:
+
+- "moments ... in order" (a transformation or a performance): "<Subject 1> is the sculpted
+  hand shown in <Picture 1> through <Picture 4>. These are moments from ONE continuous
+  performance, in order, not different subjects." Put the slots in the order they happen,
+  and write beats that pass through those states. Measured: from its still alone, a
+  transforming piece rendered a generic stand-in for its middle and the wrong ending; with
+  its own frames bound this way, it performed its actual states, in order.
+- "views ... from different angles" (a turntable): only the angles a beat needs — the back,
+  when the subject turns away. From a front view alone the model guesses the rest.
+
+Frames spend slots, and they go LAST. Every cast member gets its first slot, in <Subject>
+order, before any frame slot appears — so <Subject N> is still the Nth slot, and frame slots
+only add pictures (<Picture 5>, <Picture 6>) to subjects already defined. Never drop a piece to
+fit a frame. A frame's framing carries into the render: a close-up frame
+makes that moment a close-up.
 
 STAGING SUBJECTS, NOT JUST NAMING THEM. Two failures, both measured against a real storyboard
 render, both worth naming so you don't repeat them:

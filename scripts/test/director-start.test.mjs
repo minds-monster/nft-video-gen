@@ -334,6 +334,41 @@ test('a piece whose only still is too small is refused before anything is charge
   assert.deepEqual(env.DIRECTOR_JOBS.sent, [], 'no job, no envelope, no spend');
 });
 
+test('a piece Alchemy has no media for is shot from its tokenURI — the Robinhood unrevealed case', async () => {
+  // 2026-09-18: every Alchemy image field null, so the Director refused a piece whose tokenURI
+  // named a legal 1254x1254 PNG. The image was never the problem; finding it was.
+  const env = await makeEnv();
+  await readWithDemand(env);
+  const [first, ...rest] = CAST;
+  const bare = { ...first, nft: { tokenId: '1247', tokenUri: 'ipfs://bafkmeta' } };
+  globalThis.fetch = async (url) =>
+    String(url).endsWith('/ipfs/bafkmeta')
+      ? new Response(JSON.stringify({ name: 'Unrevealed', image: 'ipfs://bafkart' }), { status: 200 })
+      : new Response(png(1254, 1254), { status: 200, headers: { 'content-type': 'image/png' } });
+  const response = await handleDirectorTest(
+    await post(env, '/api/director/test', { spec: fixture.spec, cast: [bare, ...rest], riskId: 'demand:letters-become-brain', mode: 'ask' }),
+    env,
+  );
+  const body = await response.json();
+  assert.notEqual(body.error, 'reference_illegal', JSON.stringify(body));
+});
+
+test('a piece with no image anywhere is refused as missing, not as too small', async () => {
+  const env = await makeEnv();
+  await readWithDemand(env);
+  const [first, ...rest] = CAST;
+  const response = await handleDirectorTest(
+    await post(env, '/api/director/test', { spec: fixture.spec, cast: [{ ...first, nft: { tokenId: '1' } }, ...rest], riskId: 'demand:letters-become-brain', mode: 'ask' }),
+    env,
+  );
+  const body = await response.json();
+  assert.equal(response.status, 400);
+  assert.equal(body.pieces[0].code, 'reference_no_image');
+  assert.match(body.detail, /No image could be found/);
+  assert.doesNotMatch(body.detail, /256px/, 'the size floor is not the reason, so it is not quoted');
+  assert.match(body.detail, /nothing was sent and nothing was charged/);
+});
+
 test('the same refusal guards the final take', async () => {
   const env = await makeEnv();
   await readWithDemand(env);
