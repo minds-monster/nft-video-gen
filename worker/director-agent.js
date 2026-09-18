@@ -23,6 +23,7 @@
 // costs nothing per token. The Director's expensive resource is FOOTAGE, not tokens, and adding a
 // paid reasoning tier here would be spending money to decide how to spend money.
 
+import { answersFit } from './screen-test.js';
 import { subjectSlots } from './rulebook.js';
 import { chat, jsonFrom } from './nvidia.js';
 import { priceUsd } from './minimax.js';
@@ -123,10 +124,11 @@ const demandsOf = (data, spec, risks) => {
       direction,
       onHeld: String(raw?.onHeld ?? '').trim() || null,
       onFailed: String(raw?.onFailed ?? '').trim() || null,
-      // The buttons, in the film's words. Missing or malformed falls back to the generic
-      // "It held / It did not" rather than dropping a demand over its labels.
+      // The buttons, in the film's words. Missing, malformed, or about a different film — the
+      // model has copied the schema's example verbatim (worker/screen-test.js answersFit) — falls
+      // back to the generic "It held / It did not" rather than dropping a demand over its labels.
       answers:
-        raw?.answers?.held && raw?.answers?.failed
+        answersFit(raw?.answers, question, direction)
           ? {
               held: String(raw.answers.held).trim().slice(0, 60),
               failed: String(raw.answers.failed).trim().slice(0, 60),

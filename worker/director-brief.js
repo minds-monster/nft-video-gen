@@ -148,8 +148,10 @@ export const SHOOTING_PLAN_SCHEMA = {
               'The two buttons the visitor presses after watching, in the film\'s own words, six ' +
               'words or fewer each: what they click if it worked, and what they click if it did not.',
             properties: {
-              held: { type: 'string', description: 'e.g. "The letters became the brain"' },
-              failed: { type: 'string', description: 'e.g. "A brain faded in over them"' },
+              // The example is framed as ANOTHER film's on purpose: given it bare, the model
+              // copied it verbatim onto a test about roaring creatures (staging, 2026-09-18).
+              held: { type: 'string', description: 'What they click if it worked, in THIS film\'s words. For comparison only, a different film about letters swelling into a brain used "The letters became the brain" — never reuse those words.' },
+              failed: { type: 'string', description: 'What they click if it did not, in THIS film\'s words. That other film used "A brain faded in over them" — never reuse those words.' },
             },
           },
           why: { type: 'string', description: 'One sentence: what in their prompt makes you doubt the model will do this.' },

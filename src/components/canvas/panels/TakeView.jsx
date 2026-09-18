@@ -167,7 +167,7 @@ const TakeView = ({ take, index, onJudge, onRemember, onClear }) => {
               onChange={(event) => setNote(event.target.value)}
               rows={2}
               maxLength={600}
-              placeholder='In your own words — e.g. "the letters inflated properly but the brain faded in over them at the end". Optional; the Director reads this before changing the script.'
+              placeholder="In your own words: what you saw, and where it went wrong if it did. Optional; the Director reads this before changing the script."
               className="scrollbar-subtle mb-1 w-full resize-none rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-[11px] leading-snug text-white placeholder:text-slate-600 focus:border-purple-500/40 focus:outline-none"
             />
             <div className="flex gap-1">

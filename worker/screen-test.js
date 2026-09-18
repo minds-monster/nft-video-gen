@@ -228,6 +228,44 @@ export const VERDICTS = [
   { id: 'unclear', label: 'Cannot tell', tone: 'neutral' },
 ];
 
-/** The label for one verdict on one take: the test's own words when it has them, else the generic. */
-export const verdictLabel = (take, answer) =>
-  take?.answers?.[answer] ?? VERDICTS.find((entry) => entry.id === answer)?.label ?? answer;
+// Words too common to show that a label is about this film rather than another one.
+const LABEL_STOPWORDS = new Set([
+  'that', 'this', 'with', 'from', 'they', 'them', 'their', 'there', 'have', 'does', 'each', 'into',
+  'over', 'then', 'than', 'what', 'when', 'were', 'will', 'your', 'just', 'some', 'more', 'very',
+  'also', 'been', 'being', 'only', 'still', 'shot', 'take', 'film',
+]);
+const stemsOf = (text) =>
+  new Set(
+    (String(text ?? '').toLowerCase().match(/[a-z]{4,}/g) ?? [])
+      .filter((word) => !LABEL_STOPWORDS.has(word))
+      .map((word) => word.slice(0, 4)),
+  );
+
+/**
+ * Whether a test's own answer buttons are about THIS test.
+ *
+ * The Director's model writes them "in the film's own words" from a schema whose example is
+ * another film's — and on staging (2026-09-18) it copied the example verbatim: a test asking
+ * whether thousands of creatures roar in sync offered "The letters became the brain" and "A brain
+ * faded in over them". So at least one label must share a word (by its first four letters, so
+ * "roared" meets "roar") with the question or direction; otherwise the generic buttons are used,
+ * which are always right for a yes/no question.
+ */
+export const answersFit = (answers, ...context) => {
+  if (!answers?.held || !answers?.failed) return false;
+  const known = stemsOf(context.join(' '));
+  const shares = (label) => [...stemsOf(label)].some((stem) => known.has(stem));
+  return shares(answers.held) || shares(answers.failed);
+};
+
+/**
+ * The label for one verdict on one take: the test's own words when they fit its question, else the
+ * generic. Checked here as well as where tests are written, so a take stored before the check —
+ * the staging Godzilla test above — shows the right buttons too.
+ */
+export const verdictLabel = (take, answer) => {
+  // Only overruled when there is a question to judge them against; without one they are trusted.
+  const fitting = !take?.question || answersFit(take?.answers, take.question);
+  const own = fitting ? take?.answers?.[answer] : null;
+  return own ?? VERDICTS.find((entry) => entry.id === answer)?.label ?? answer;
+};

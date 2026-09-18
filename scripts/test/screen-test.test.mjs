@@ -293,3 +293,29 @@ test('a demand with no id or question is not a risk', () => {
   assert.equal(demandAsRisk({ id: 'x' }), null);
   assert.equal(demandAsRisk(null), null);
 });
+
+// ── Answer buttons that belong to another film ────────────────────────────────────────────────
+//
+// Staging, 2026-09-18: the Director's model copied its schema's example verbatim, and a test
+// asking whether thousands of creatures roar in sync offered "The letters became the brain".
+
+import { answersFit as fits, verdictLabel as label } from '../../worker/screen-test.js';
+
+const ROAR = 'Do thousands of identical creatures appear, each performing the same turn-and-roar in sync as the camera pulls back?';
+
+test("answer buttons copied from another film's example fall back to the generic ones", () => {
+  const take = { question: ROAR, answers: { held: 'The letters became the brain', failed: 'A brain faded in over them', unclear: 'Cannot tell' } };
+  assert.equal(fits(take.answers, take.question), false);
+  assert.deepEqual(['held', 'failed', 'unclear'].map((a) => label(take, a)), ['It held', 'It did not', 'Cannot tell']);
+});
+
+test("buttons in the film's own words are kept, matching a word by its stem ('roared' meets 'roar')", () => {
+  const take = { question: ROAR, answers: { held: 'They all roared in sync', failed: 'They fell out of step', unclear: 'Cannot tell' } };
+  assert.equal(fits(take.answers, take.question), true);
+  assert.equal(label(take, 'held'), 'They all roared in sync');
+});
+
+test('the letters-and-brain film keeps its own buttons', () => {
+  const take = { question: 'Do the letters physically become the brain?', answers: { held: 'The letters became the brain', failed: 'A brain faded in over them' } };
+  assert.equal(label(take, 'held'), 'The letters became the brain');
+});
