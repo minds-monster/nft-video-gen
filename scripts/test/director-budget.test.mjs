@@ -17,7 +17,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { recordSpend, setBudget } from '../../worker/budget.js';
+import { getSpend, markSpendFailed, recordSpend, setBudget } from '../../worker/budget.js';
 import {
   BUDGET_REFUSALS,
   DEFAULT_MODE,
@@ -328,4 +328,29 @@ test('reservedElsewhere counts only OPEN escrows, and never the film asking', as
 test('spentOnFilm ignores events belonging to no film', async () => {
   const spend = { events: [{ filmId: null, amountUsd: 5 }, { filmId: 'f1', amountUsd: 0.32 }] };
   assert.equal(spentOnFilm(spend, 'f1'), 0.32);
+});
+
+// ── A render charged at submission, then failed at MiniMax ────────────────────────────────────
+//
+// Staging, 2026-09-18: two screen tests MiniMax accepted and then failed stayed in the ledger as
+// `failed: false`. The money was spent, so the amount stays; only what the entry says changes.
+
+test('a failed render keeps its cost but is marked failed, with the reason', async () => {
+  const env = makeEnv();
+  await recordSpend(env, MIND, { kind: 'video', amountUsd: 0.48, filmId: 'f1', testId: 'test-edfa3802' });
+  const before = (await getSpend(env, MIND)).totalSpent;
+  assert.equal(await markSpendFailed(env, MIND, { testId: 'test-edfa3802', reason: 'input text sensitive' }), true);
+  const after = await getSpend(env, MIND);
+  assert.equal(after.totalSpent, before, 'the money was spent — the total does not move');
+  assert.equal(after.events[0].failed, true);
+  assert.equal(after.events[0].failedReason, 'input text sensitive');
+});
+
+test('marking is idempotent, and a take not in the ledger is left alone rather than invented', async () => {
+  const env = makeEnv();
+  await recordSpend(env, MIND, { kind: 'video', amountUsd: 0.64, filmId: 'f1', testId: 'take-1' });
+  assert.equal(await markSpendFailed(env, MIND, { testId: 'take-1' }), true);
+  assert.equal(await markSpendFailed(env, MIND, { testId: 'take-1' }), false);
+  assert.equal(await markSpendFailed(env, MIND, { testId: 'never-shot' }), false);
+  assert.equal((await getSpend(env, MIND)).events.length, 1);
 });

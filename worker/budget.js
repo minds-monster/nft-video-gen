@@ -133,6 +133,29 @@ export async function recordSpend(
 }
 
 /**
+ * A render that was charged at submission and then FAILED at MiniMax, flagged as such.
+ *
+ * A take's spend is recorded when it is submitted, because that is when MiniMax bills — and
+ * nothing ever came back to it. Measured on staging (2026-09-18): two screen tests that MiniMax
+ * accepted and then failed ("input text sensitive") sat in the ledger as `failed: false`, so
+ * "why did my budget run out faster than the films I can see?" had no answer in it.
+ *
+ * The amount is KEPT — the money was spent. Only the flag and the reason change. Matched by
+ * `testId` (the take id every video event carries); a take that is not in the ledger is left
+ * alone rather than invented. Returns whether an event was marked.
+ */
+export async function markSpendFailed(env, mindId, { testId, reason = null }) {
+  if (!testId) return false;
+  const stored = (await env.MIND_CONNECTIONS.get(spendKey(mindId), 'json')) ?? null;
+  const events = stored?.events ?? [];
+  const index = events.findLastIndex((event) => event.testId === testId && event.kind === 'video');
+  if (index < 0 || events[index].failed) return false;
+  events[index] = { ...events[index], failed: true, failedReason: reason, failedAt: Date.now() };
+  await env.MIND_CONNECTIONS.put(spendKey(mindId), JSON.stringify({ ...stored, events }));
+  return true;
+}
+
+/**
  * Marks a 50%/80%-of-cap threshold as already relayed to the connected Mind, so a digest
  * fires once per threshold per Mind rather than on every generation past it. Adam's own
  * cadence ask: threshold crossings, not a running ping.

@@ -7,6 +7,7 @@ import {
   screenwrite,
 } from '../services/swarm';
 import { resolveNftName } from '../lib/nftMedia';
+import { takePrecast } from '../lib/precast';
 import { useMindChatContext } from '../context/mindChat';
 
 // Where the canvas is in the pipeline. Kept as one value rather than a set of booleans so
@@ -311,10 +312,16 @@ export const useScreenwriter = () => {
             // src/services/swarm.js). A cut stream normally means the Worker finished and
             // persisted the dossier anyway, so the second attempt is a cache hit rather than a
             // second cold cast — which is why one is enough and two would be waste.
-            const dossier = await castPiece(
-              forCastingWire({ key: entry.key, nft: entry.nft }),
-              { signal, onEvent: feed(entry.key), retries: 1 },
-            );
+            // A pre-cast started when the piece was added (src/lib/precast.js) is awaited rather
+            // than duplicated; if it failed, the piece is cast here as it always was.
+            const early = takePrecast(entry.key);
+            const dossier =
+              (early ? await early.catch(() => null) : null) ??
+              (await castPiece(
+                forCastingWire({ key: entry.key, nft: entry.nft }),
+                { signal, onEvent: feed(entry.key), retries: 1 },
+              ));
+            if (signal.aborted) return;
             dossiers.set(entry.key, dossier);
             patch(entry.key, { status: 'done', dossier, cached: dossier.cached });
             settle(entry.key);

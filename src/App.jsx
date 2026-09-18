@@ -24,6 +24,7 @@ import { setProductionState } from './lib/productionState';
 import { resolveNftName } from './lib/nftMedia';
 import { useCanvasComposer } from './hooks/useCanvasComposer';
 import { useScreenwriter } from './hooks/useScreenwriter';
+import { usePrecast } from './hooks/usePrecast';
 import { useStoryboarder } from './hooks/useStoryboarder';
 import { useDirector } from './hooks/useDirector';
 import { useDraftPersistence } from './hooks/useDraftPersistence';
@@ -84,6 +85,9 @@ const AppShell = () => {
   }, [route.path]);
 
   const composer = useCanvasComposer();
+  // Cast pieces as they settle on the canvas, so a moving piece's film frames are chosen before
+  // the screenplay is written rather than after it (src/lib/precast.js).
+  usePrecast(composer.cast);
   // The other half of the canvas. useCanvasComposer owns the prompt and the cast and says
   // outright that it owns no submit behaviour; this is what that seam was left for.
   const screenwriter = useScreenwriter();

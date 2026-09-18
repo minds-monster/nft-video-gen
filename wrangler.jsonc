@@ -39,7 +39,11 @@
 	"triggers": {
 		"crons": [
 			"*/5 * * * *",
-			"*/5 * * * *"
+			// Restored 2026-09-18. db0edd2 replaced this with a second "*/5 * * * *", which
+			// Cloudflare rejects as a duplicate ("duplicate cron found", code 10100) — and which
+			// worker/index.js would never have run as the nightly job anyway, since it matches
+			// CRON_NIGHTLY by this exact string.
+			"0 3 * * *"
 		]
 	},
 	// Site analytics. Analytics Engine rather than KV counters, because a KV counter under

@@ -642,6 +642,30 @@ export const refKeysForPlan = async (env, referencePlan) => {
   return refs;
 };
 
+/**
+ * The references a screen test sends: the images the TAKE would send, so a rehearsal tests what
+ * will actually be shot.
+ *
+ * Measured on staging (2026-09-18): the Godzilla screenplay planned its one slot as a film frame,
+ * the take sent that frame — and the screen test before it sent the still, because tests were
+ * given one still per piece. A test that rehearses different pictures from the take is answering
+ * a question about a different film.
+ *
+ * Two shapes, because the two kinds of test bind pictures differently:
+ *   · rehearsal / continuity reuse the screenplay's own staging text, which numbers <Picture N> by
+ *     the plan's slots — so they get EVERY slot, in order, exactly as the take does (a subset had
+ *     already misnumbered any film with more than three pieces);
+ *   · identity / dimensionality write their own "<Subject 1> … in <Picture 1>" — so they get that
+ *     piece's FIRST slot as the take sends it, still or frame.
+ * H3 prices by duration and resolution, never by reference count, so the full set costs nothing more.
+ */
+export const screenTestRefKeys = async (env, spec, { focus, refKeys }) => {
+  const plan = spec?.referencePlan ?? [];
+  if ((focus === 'rehearsal' || focus === 'continuity') && plan.length) return refKeysForPlan(env, plan);
+  const first = (refKeys ?? []).slice(0, 1).map((key) => plan.find((slot) => slot.key === key) ?? { key });
+  return first.length ? refKeysForPlan(env, first) : refKeys ?? [];
+};
+
 /** A stored frame as the data URI H3 takes, or null when it is not there. */
 export const readFrameDataUri = async (env, key, atSeconds) => {
   const object = await env.STORYBOARD_IMAGES?.get(frameR2Key(key, atSeconds));

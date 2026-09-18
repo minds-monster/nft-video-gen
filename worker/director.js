@@ -43,7 +43,7 @@ import { relayScreenTestDigest } from './filmography.js';
 import { testGate } from './director-gate.js';
 import { parseBrief } from '../src/lib/directorBrief.js';
 import { recordVerdict } from './director-job.js';
-import { parseRefKey, refKeysForPlan } from './film-frames.js';
+import { parseRefKey, refKeysForPlan, screenTestRefKeys } from './film-frames.js';
 import { h3Params, h3ScriptFrom, h3Script } from '../src/lib/h3Script.js';
 import { record as trackEvent } from './analytics.js';
 
@@ -823,9 +823,12 @@ export async function handleDirectorTest(request, env) {
     );
   }
 
+  // The take's own references, film frames included (worker/film-frames.js screenTestRefKeys).
+  const refKeys = await screenTestRefKeys(env, revised, { focus: risk.test?.focus, refKeys: test.refKeys });
+
   // Measured before the envelope opens and before a task is created. A reference H3 refuses is
   // refused HERE, for free, by name.
-  const refused = await refuseIllegalReferences(spec, cast, test.refKeys);
+  const refused = await refuseIllegalReferences(spec, cast, refKeys);
   if (refused) return refused;
 
   const castRefs = castRefsFrom(cast);
@@ -835,7 +838,7 @@ export async function handleDirectorTest(request, env) {
       filmId,
       script: { source: 'screen-test', text: test.script },
       params: test.params,
-      refKeys: test.refKeys,
+      refKeys,
       cast,
       kind: 'screen-test',
       question: test.question,

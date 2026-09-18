@@ -29,7 +29,7 @@ import { createJobLogger } from './job-log.js';
 import { castingStills, resolveCastingStills } from './casting-director.js';
 import { fetchLegalReference } from './reference-legal.js';
 import { parseRefKey, readFrameDataUri } from './film-frames.js';
-import { recordSpend } from './budget.js';
+import { markSpendFailed, recordSpend } from './budget.js';
 import { authoriseSpend, getEnvelope } from './render-budget.js';
 import { LATENCY_SECONDS, MinimaxError, createH3Task, h3Content, pollVideo, priceUsd } from './minimax.js';
 import { extractFrames } from './frames.js';
@@ -601,6 +601,10 @@ async function poll(env, record, logger) {
     // on `failed` is the reason: "why did my budget run out faster than the beats I can see?"
     // On the production too, so the failure outlives the job log and the panel can show it.
     await recordFailedTake(env, record, result.reason);
+    // The ledger entry written at submission said this render produced something. It did not.
+    await markSpendFailed(env, record.mindId, { testId: record.take.takeId, reason: result.reason }).catch((error) =>
+      console.warn(`Could not mark spend failed for ${record.take.takeId}:`, error.message),
+    );
     logger.log('take', { takeId: record.take.takeId, status: 'failed', reason: result.reason });
     await logger.setStatus('failed', { take: record.take, error: `The render failed: ${result.reason}` });
     return;

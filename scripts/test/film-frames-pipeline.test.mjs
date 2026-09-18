@@ -20,6 +20,7 @@ import {
   readFrameDataUri,
   refKeysForPlan,
   requestFilmFrames,
+  screenTestRefKeys,
   webmDuration,
 } from '../../worker/film-frames.js';
 
@@ -286,4 +287,22 @@ test('a kept frame that fails H3\'s floors is skipped, not stored', async () => 
   assert.equal(record.frames.length, 0);
   assert.ok(record.skipped.every((line) => /200|256|aspect/.test(line)));
   assert.equal(env.STORYBOARD_IMAGES.objects.size, 0);
+});
+
+// ─────────────────────────────────────────────────────────────────────────── screen tests
+
+test('a rehearsal sends the take\'s own references — every slot, frames included, in order', async () => {
+  const env = envWith();
+  await env.DOSSIERS.put(filmFramesKey(KEY), JSON.stringify({ status: 'ready', frames: [{ n: 1, atSeconds: 4.82 }, { n: 2, atSeconds: 22.88 }] }));
+  const spec = { referencePlan: [{ key: KEY, frame: 1 }, { key: 'ape:0x1:1' }, { key: KEY, frame: 2 }] };
+  const refs = await screenTestRefKeys(env, spec, { focus: 'rehearsal', refKeys: [KEY, 'ape:0x1:1'] });
+  assert.deepEqual(refs, [`${KEY}@4.82s`, 'ape:0x1:1', `${KEY}@22.88s`]);
+});
+
+test('an identity test sends the piece\'s FIRST slot as the take sends it — here, a frame', async () => {
+  const env = envWith();
+  await env.DOSSIERS.put(filmFramesKey(KEY), JSON.stringify({ status: 'ready', frames: [{ n: 1, atSeconds: 4.82 }] }));
+  const spec = { referencePlan: [{ key: KEY, frame: 1 }, { key: KEY }] };
+  assert.deepEqual(await screenTestRefKeys(env, spec, { focus: 'identity', refKeys: [KEY] }), [`${KEY}@4.82s`]);
+  assert.deepEqual(await screenTestRefKeys(env, { referencePlan: [{ key: KEY }] }, { focus: 'identity', refKeys: [KEY] }), [KEY]);
 });
