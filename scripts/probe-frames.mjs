@@ -89,6 +89,36 @@
 // it. Exactly the class of failure worker/artwork.js's content-type check exists for, on a path
 // that did not have one.
 //
+// ── A PREDICTION THAT WAS WRONG, AND THE ANOMALY IT TURNED UP — production KV, 2026-09-18 ───
+//
+// The obvious inference from the challenge finding was that the Casting Director's motion pass
+// (worker/casting-director.js step 3) must already be failing silently on every challenged film,
+// leaving `watchedFilm: false`. Checked against the production DOSSIERS namespace
+// (5c402c9b702f475aa88b09d99f2a07b6, --remote), 24 v5 dossiers over challenged and reachable
+// collections. IT IS FALSE, and the check that falsified it is the one worth keeping:
+//
+//   watchedFilm: false   15 dossiers
+//   of those, how many actually HAVE a film that resolveNftVideo finds?   ZERO.
+//
+// Every single one is a genuinely filmless token. `watchedFilm: false` means "no film" far more
+// often than "the watch failed", and reading it as a failure rate would have manufactured a
+// production bug that does not exist. The motion pass is not quietly broken.
+//
+// 🔑 THE ANOMALY IS THE REAL FINDING. Two dossiers — Gucci #10 and Rimowa #2 — record
+// `watchedFilm: true` with specific, plainly genuine motion notes ("The suitcase rotates
+// continuously on a circular platform"), and their films are on ipfs.io and return 403 to us NOW.
+// Something watched those films. Two explanations, with opposite consequences:
+//
+//   (a) NVIDIA's fetcher PASSES the challenge where ours does not — different IP reputation. Then
+//       a server-side path to the challenged 30 exists today and the browser is not required.
+//   (b) The dossiers PREDATE the challenge. Dossiers are written without a TTL, so a record from
+//       before ipfs.io turned this on would survive unchanged and look like present-day success.
+//
+// A dossier carries no timestamp, so the record cannot settle this. The test that can: re-run the
+// motion pass against Gucci #10's ipfs.io URL today and see whether NVIDIA still returns notes.
+// UNTIL THAT RUNS, NOTHING HERE LICENCES CHOOSING AN ARCHITECTURE — (a) and (b) point at
+// different systems, and the cheap call that separates them has not been made.
+//
 // WHAT IS STILL UNMEASURED: stage 3 has never run, because stage 1 has never passed. Whether an
 // extracted frame is a LEGAL H3 reference — aspect 0.4-2.5, short side >=256px — is therefore
 // still an open question on real footage, and it is the one that decides whether sampled frames
