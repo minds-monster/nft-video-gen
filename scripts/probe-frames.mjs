@@ -289,6 +289,8 @@ const probeOne = async (url) => {
     // 206 means the range was honoured. A 200 means the host ignored it and is sending the whole
     // file — survivable for us, fatal for a transform that has to seek into a large object.
     record.ranges = response.status === 206 ? '206' : `ignored (${response.status})`;
+    // Whether a BROWSER could read this frame too (probe-frames.html's anonymous mode needs it).
+    record.cors = response.headers.get('access-control-allow-origin');
     // ONLY FOR A SUCCESSFUL RESPONSE. A 403 from an IPFS gateway still has a body, a
     // content-length and a recognisable signature — all belonging to an HTML error page. Reporting
     // those in the size and container columns is the exact confusion worker/artwork.js's header was
@@ -321,22 +323,35 @@ const probeOne = async (url) => {
 };
 
 /**
- * The film, across every gateway that might serve it.
+ * Every URL a token's film might be served from, best first.
  *
- * ⚠️ THIS WALK IS THE WHOLE COVERAGE NUMBER, and leaving it out made the first run of this probe
- * wrong in a way worth recording. Without it, 30 of 56 films came back 403 — and every single one
- * of those was ipfs.io, which worker/artwork.js's header already documents as answering a blocked
- * CID with a 403 HTML page, and which `withIpfsFallback` already routes around for IMAGES. The
- * films never got that treatment because src/lib/nftMedia.js `resolveNftVideo` returns one
- * ipfs.io URL and nothing on the video path has ever walked it.
+ * ⚠️ THE CANDIDATE LIST IS THE WHOLE COVERAGE NUMBER, and this probe got it wrong twice.
  *
- * So a "33 unreachable films" verdict would have been an artefact of the probe reproducing a gap
- * in the product rather than a fact about the library — and it would have argued for the wrong
- * architecture. Whichever gateway wins is recorded, because which one is alive changes by the day.
+ * First it probed only what src/lib/nftMedia.js `resolveNftVideo` returns — the metadata's own
+ * animation_url, which for 30 films is a bare ipfs.io URL behind a bot challenge. Walking the
+ * IPFS_GATEWAYS fallback rescued none of them. That looked like "30 films are unreachable".
+ *
+ * They are not. Alchemy's v3 response carries an `animation` object —
+ * `{ cachedUrl, contentType, size, originalUrl }` — exactly parallel to `image`, and NOTHING in
+ * this codebase reads it: resolveNftVideo looks at raw metadata and a v2-era `animationUrl`.
+ * Checked on Gucci #10 and Nike #2, both challenged on ipfs.io:
+ *
+ *   animation.cachedUrl    nft2-cdn.alchemy.com/…_animation   206, real video bytes, seekable
+ *   animation.originalUrl  gateway.pinata.cloud/ipfs/…         206, real video bytes, CORS *
+ *
+ * So "Alchemy mirrors stills and not films" was wrong. It mirrors films too; we never asked.
  */
-const probeFilm = async (url) => {
+const filmCandidates = (nft, fallback) =>
+  [nft?.animation?.cachedUrl, nft?.animation?.originalUrl, fallback]
+    .filter((value) => typeof value === 'string' && value.trim())
+    .map((value) => toHttp(value.trim()))
+    .flatMap(withIpfsFallback)
+    .filter((value, index, all) => all.indexOf(value) === index);
+
+/** The first candidate that answers with a film. Records every attempt, and which one won. */
+const probeFilm = async (candidates) => {
   const attempts = [];
-  for (const candidate of withIpfsFallback(url)) {
+  for (const candidate of candidates) {
     // eslint-disable-next-line no-await-in-loop -- one gateway at a time, as worker/artwork.js does.
     const record = await probeOne(candidate);
     attempts.push(record);
@@ -531,7 +546,8 @@ const main = async () => {
   const moving = [];
   const stills = [];
   for (const entry of entries) {
-    const film = resolveNftVideo(entry.nft);
+    // A film Alchemy knows about counts even where resolveNftVideo finds nothing.
+    const film = resolveNftVideo(entry.nft) ?? entry.nft?.animation?.cachedUrl ?? null;
     // An "image" that is really an mp4 counts as moving too — adidas Phase 1 does exactly this,
     // and resolveNftVideo already folds that case in (src/lib/nftMedia.js).
     const animatedStill = castingStills(entry.nft).find((url) => /\.gif(\?|#|$)/i.test(url));
@@ -549,7 +565,7 @@ const main = async () => {
   for (const entry of moving) {
     // eslint-disable-next-line no-await-in-loop -- sequential against third-party media hosts,
     // matching worker/reference-legal.js's candidate walk.
-    const measured = await probeFilm(entry.film);
+    const measured = await probeFilm(filmCandidates(entry.nft, entry.film));
     films.push({ ...measured, brand: entry.brand, tokenId: entry.nft?.tokenId });
     say(
       `  ${pad(entry.brand, 14)}${pad(`#${entry.nft?.tokenId}`, 10)}${pad(measured.status, 10)}` +
