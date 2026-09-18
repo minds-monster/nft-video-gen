@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "dev:worker": "wrangler dev",
-    "build": "if [ \"$CF_PAGES\" = \"1\" ]; then npm install @rolldown/binding-wasm32-wasi @rolldown/binding-linux-x64-gnu @esbuild/linux-x64 --no-save --force; fi && vite build",
+    "build": "vite build",
     "lint": "oxlint",
     "test:scene": "node --test \"scripts/test/*.test.mjs\"",
     "preview": "vite preview",
@@ -50,11 +50,5 @@
     "tailwindcss": "^4.3.3",
     "vite": "^8.2.0",
     "wrangler": "^4.123.0"
-  },
-  "optionalDependencies": {
-    "@rolldown/binding-linux-arm64-gnu": "^1.2.9",
-    "@rolldown/binding-linux-arm64-musl": "^1.2.9",
-    "@rolldown/binding-linux-x64-gnu": "^1.2.9",
-    "@rolldown/binding-linux-x64-musl": "^1.2.9"
   }
 }
