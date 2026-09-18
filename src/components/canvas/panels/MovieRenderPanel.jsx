@@ -10,6 +10,7 @@ import {
 } from '../../../services/alchemy';
 import { artRatio } from '../../../data/brands';
 import { useReportUnavailable } from '../../../lib/unavailableMedia';
+import { useFilmFallback } from '../../../hooks/useFilmFallback';
 
 const PreviewEmpty = () => (
   <div className="flex flex-1 flex-col items-center justify-center gap-2 py-8 text-center">
@@ -55,7 +56,6 @@ const MovieRenderPanel = ({
   onToggle,
 }) => {
   const [imageFailed, setImageFailed] = useState(false);
-  const [videoFailed, setVideoFailed] = useState(false);
   const reportUnavailable = useReportUnavailable();
 
   // A take preview is `{ takeId }` and holds no NFT, so it must not fall through to the NFT
@@ -64,20 +64,19 @@ const MovieRenderPanel = ({
   const candidate = take ? null : (preview ?? primary);
   const isPreview = Boolean(preview) && !take;
 
-  // Reset failed state when the viewed piece changes, and report it if no media is left.
+  // Reset failed state when the viewed piece changes, and report it if no media is left. The
+  // film's own fallback resets itself when the candidate list changes (useFilmFallback).
   useEffect(() => {
     setImageFailed(false);
-    setVideoFailed(false);
   }, [candidate?.key, candidate?.nft?.tokenId, candidate?.collection?.address]);
 
-  const { image, video } = useMemo(
-    () => (candidate?.nft ? resolveNftMedia(candidate.nft) : { image: null, video: null }),
+  const { image, videos } = useMemo(
+    () => (candidate?.nft ? resolveNftMedia(candidate.nft) : { image: null, video: null, videos: [] }),
     [candidate],
   );
 
-  const film = videoFailed
-    ? null
-    : (video ?? (imageFailed && mayBeVideoUrl(image) ? image : null));
+  const films = videos.length ? videos : imageFailed && mayBeVideoUrl(image) ? [image] : [];
+  const { film, next: nextFilm } = useFilmFallback(films);
 
   // Report a token whose media is genuinely exhausted so it gets filtered out of grids,
   // the marquee and future prev/next navigation.
@@ -136,7 +135,7 @@ const MovieRenderPanel = ({
                 <video
                   src={film}
                   poster={imageFailed ? undefined : (image ?? undefined)}
-                  onError={() => setVideoFailed(true)}
+                  onError={nextFilm}
                   onCanPlay={(event) => event.currentTarget.play().catch(() => {})}
                   controls
                   autoPlay

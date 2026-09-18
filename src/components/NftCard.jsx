@@ -11,6 +11,7 @@ import { DEFAULT_ART_RATIO } from '../data/brands';
 import { PAYMENT_STATUS } from '../config/payment';
 import { useReportUnavailable } from '../lib/unavailableMedia';
 import { cn } from '../lib/cn';
+import { useFilmFallback } from '../hooks/useFilmFallback';
 
 /**
  * One piece of licensable work. The whole card is a button — clicking it opens the
@@ -45,11 +46,10 @@ const NftCard = ({
   selected = false,
 }) => {
   const [failed, setFailed] = useState(false);
-  const [videoFailed, setVideoFailed] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const videoRef = useRef(null);
 
-  const { image, video } = resolveNftMedia(nft);
+  const { image, videos } = resolveNftMedia(nft);
   const bed = resolveNftThumb(nft);
   const name = resolveNftName(nft);
   const status = isMock ? PAYMENT_STATUS.DEMO : PAYMENT_STATUS.PAYABLE;
@@ -57,8 +57,9 @@ const NftCard = ({
   const showStill = Boolean(image) && !failed;
   // If the still failed to load and its URL could be a video, it probably IS one —
   // play it rather than showing a broken frame.
-  const candidate = video ?? (failed && mayBeVideoUrl(image) ? image : null);
-  const film = videoFailed ? null : candidate;
+  const films = videos.length ? videos : failed && mayBeVideoUrl(image) ? [image] : [];
+  // Every candidate is tried before the film is given up on — see src/hooks/useFilmFallback.js.
+  const { film, next: nextFilm } = useFilmFallback(films);
   const autoPlays = Boolean(film) && !showStill;
 
   // A token with nothing left to show is reported here and dropped from every surface, rather
@@ -77,13 +78,22 @@ const NftCard = ({
     if (exhausted) report(nft);
   }, [exhausted, report, nft]);
 
+  // A hover-played film only loads when played (preload="none"), so a candidate that fails
+  // fails mid-hover. Remember the hover so the next candidate starts playing on its own.
+  const wantsPlay = useRef(false);
+  useEffect(() => {
+    if (wantsPlay.current && !autoPlays) videoRef.current?.play().catch(() => {});
+  }, [film, autoPlays]);
+
   const play = () => {
+    wantsPlay.current = true;
     if (!film || autoPlays) return;
     const el = videoRef.current;
     if (el) el.play().catch(() => {});
   };
 
   const pause = () => {
+    wantsPlay.current = false;
     if (!film || autoPlays) return;
     const el = videoRef.current;
     if (!el) return;
@@ -186,7 +196,7 @@ const NftCard = ({
         <video
           ref={videoRef}
           src={film}
-          onError={() => setVideoFailed(true)}
+          onError={nextFilm}
           // The autoPlay attribute alone is unreliable (browsers apply it before the
           // media is ready, and some block it outright), so kick it off once playable.
           onCanPlay={(event) => {

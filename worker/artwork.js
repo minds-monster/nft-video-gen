@@ -99,6 +99,45 @@ export const fetchArtwork = async (urls, { maxBytes = 0 } = {}) => {
   throw new Error(errors.join(' | ') || 'no candidate URLs');
 };
 
+/** A film by its opening bytes: an ISO-BMFF `ftyp` box (mp4, mov) or an EBML header (webm). */
+const looksLikeFilm = (bytes) =>
+  (bytes.length >= 8 && String.fromCharCode(bytes[4], bytes[5], bytes[6], bytes[7]) === 'ftyp') ||
+  (bytes.length >= 4 && bytes[0] === 0x1a && bytes[1] === 0x45 && bytes[2] === 0xdf && bytes[3] === 0xa3);
+
+/**
+ * The first candidate URL that actually serves a FILM, or null — without downloading any of them.
+ *
+ * THE STATUS CODE IS NOT EVIDENCE HERE, measured three ways on 2026-09-18
+ * (scripts/probe-frames.mjs): Alchemy's animation mirror answers HTTP 206 with a ~120-byte JSON
+ * stub for films it never finished copying; a creator host answered 206 with an HTML error page;
+ * and ipfs.io answers with a bot-challenge page. Handed to a video model as a film, each of those
+ * fails in a way that looks like the MODEL failing. So the opening bytes decide.
+ *
+ * Only the first chunk is read and the rest cancelled, because some hosts ignore Range and would
+ * otherwise stream a 40MB film into a check that needs twelve bytes of it.
+ */
+export const findFilm = async (urls) => {
+  for (const url of (urls ?? []).flatMap(withIpfsFallback)) {
+    if (!url) continue;
+    try {
+      // eslint-disable-next-line no-await-in-loop -- one host at a time, as fetchArtwork does.
+      const response = await fetch(url, {
+        headers: { 'User-Agent': BROWSER_UA, Range: 'bytes=0-63' },
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      });
+      if (!response.ok || !response.body) continue;
+      const reader = response.body.getReader();
+      // eslint-disable-next-line no-await-in-loop
+      const { value } = await reader.read();
+      reader.cancel().catch(() => {});
+      if (value && looksLikeFilm(value)) return url;
+    } catch {
+      // A dead or slow host is just the next candidate's turn.
+    }
+  }
+  return null;
+};
+
 /**
  * Bytes as a base64 data URI, for the models that take an image inline.
  *

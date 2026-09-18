@@ -13,10 +13,10 @@
 
 import { chat, jsonFrom, streamChat } from './nvidia.js';
 import { sseResponse } from './sse.js';
-import { fetchArtwork, toDataUri } from './artwork.js';
+import { fetchArtwork, findFilm, toDataUri } from './artwork.js';
 import {
   toHttp,
-  resolveNftVideo,
+  resolveNftVideoCandidates,
   resolveNftDescription,
 } from '../src/lib/nftMedia.js';
 
@@ -716,7 +716,10 @@ export const castPiece = async (httpRequest, env, ctx) => {
     }
 
     // ---- 3. the film ----------------------------------------------------------------
-    const film = resolveNftVideo(nft);
+    // The first candidate whose BYTES are a film — not merely the first URL. NVIDIA fetches the
+    // URL itself, so handing it Alchemy's partial-mirror stub or a challenged ipfs.io link fails
+    // as "could not watch" when a working copy was one candidate further down the list.
+    const film = await findFilm(resolveNftVideoCandidates(nft));
     let watchedFilm = false;
     if (film) {
       await emit('phase', { phase: 'watching' });
@@ -727,9 +730,9 @@ export const castPiece = async (httpRequest, env, ctx) => {
           watchedFilm = true;
         }
       } catch (error) {
-        // Entirely survivable, and common: the model caps MP4s at two minutes, IPFS gateways
-        // die, and resolveNftVideo deny-lists by extension over URLs that often have none —
-        // so plenty of "films" are not films. The dossier above is already complete.
+        // Entirely survivable: the model caps MP4s at two minutes, a host that served our byte
+        // check can still refuse NVIDIA's fetcher (ipfs.io answered it with a 429 on
+        // 2026-09-18), and a codec can be one it does not read. The dossier above is complete.
         console.warn(`Casting Director could not watch the film for ${key}:`, error.message);
       }
     }
@@ -749,6 +752,9 @@ export const castPiece = async (httpRequest, env, ctx) => {
       // source is named — and any later pass that has to look at the same pixels again without
       // re-resolving the token from scratch.
       sourceImageUrls: castingStills(nft),
+      // The film the motion notes were written from, when there was one — the same provenance
+      // the stills get. Null means no candidate served a film, not that the token has none.
+      sourceFilmUrl: film,
       // Non-null only when every candidate refused us and NVIDIA fetched the URL itself. Worth
       // storing: a dossier written from a picture we could not see is still a real dossier, but
       // it is one whose provenance nothing downstream can re-check.

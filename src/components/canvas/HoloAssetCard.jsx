@@ -9,6 +9,7 @@ import {
 } from '../../services/alchemy';
 import { useReportUnavailable } from '../../lib/unavailableMedia';
 import { cn } from '../../lib/cn';
+import { useFilmFallback } from '../../hooks/useFilmFallback';
 
 // A collection with no registered brand falls back to the house purple rather than to
 // some other off-brand violet. Only used as a caption colour; the glows are brand purple
@@ -51,7 +52,6 @@ const HoloAssetCard = ({
   compact = false,
 }) => {
   const [imageFailed, setImageFailed] = useState(false);
-  const [videoFailed, setVideoFailed] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const videoRef = useRef(null);
 
@@ -60,13 +60,13 @@ const HoloAssetCard = ({
   const accent = brand?.accent ?? FALLBACK_ACCENT;
   const bed = resolveNftThumb(nft);
 
-  const { image, video } = resolveNftMedia(nft);
+  const { image, videos } = resolveNftMedia(nft);
   const name = resolveNftName(nft);
 
   const showStill = Boolean(image) && !imageFailed;
   // An extension-less image URL that fails to load is usually an mp4.
-  const candidate = video ?? (imageFailed && mayBeVideoUrl(image) ? image : null);
-  const film = videoFailed ? null : candidate;
+  const films = videos.length ? videos : imageFailed && mayBeVideoUrl(image) ? [image] : [];
+  const { film, next: nextFilm } = useFilmFallback(films);
   const playing = isPrimary && Boolean(film);
 
   // Same report as NftCard: once a piece has no still and no film, it is registered so the
@@ -143,7 +143,7 @@ const HoloAssetCard = ({
           <video
             ref={videoRef}
             src={film}
-            onError={() => setVideoFailed(true)}
+            onError={nextFilm}
             onCanPlay={(event) => event.currentTarget.play().catch(() => {})}
             muted
             loop

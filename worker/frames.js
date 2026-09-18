@@ -46,8 +46,12 @@ export const sampleTimes = (durationSeconds, count = 8) => {
   return Array.from({ length: count }, (_, index) => Math.round((0.3 + index * step) * 100) / 100);
 };
 
+// `format=jpg`, NOT `jpeg`. This shipped as `jpeg` and could never have worked: the zone toggle
+// was off, so every request 404'd before the parameter was read. The day it was switched on
+// (2026-09-18) the edge answered 400 "MEDIA_TRANSFORMATION_ERROR 9401: 'format' option must be one
+// of: 'jpg' or 'png' or 'm4a'" — scripts/probe-frames.mjs caught it, having copied this line.
 const frameUrl = (origin, sourceUrl, atSeconds) =>
-  `${origin}/cdn-cgi/media/mode=frame,time=${atSeconds}s,format=jpeg,width=640/${sourceUrl}`;
+  `${origin}/cdn-cgi/media/mode=frame,time=${atSeconds}s,format=jpg,width=640/${sourceUrl}`;
 
 /**
  * Is frame extraction available on this zone?

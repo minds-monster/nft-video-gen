@@ -63,27 +63,54 @@ const IMAGE_EXT = /\.(png|jpe?g|gif|webp|avif|svg)(\?|#|$)/i;
 // points at a bare IPFS CID (`ipfs://Qm…/`) that serves video/mp4. So we can't require
 // an extension; anything that isn't recognisably non-video is treated as a candidate,
 // and the player falls back to the still if it turns out not to be playable.
-export const resolveNftVideo = (nft) => {
+//
+// ALCHEMY MIRRORS THE FILM TOO, under `animation` — `{ cachedUrl, contentType, size,
+// originalUrl }`, parallel to `image` — and until 2026-09-18 nothing here read it. Measured
+// that day (scripts/probe-frames.mjs): ipfs.io now answers every non-browser fetch, and
+// every subresource load from a page, with a Cloudflare bot challenge, so for 26 of 61 films
+// in the registry the metadata's own URL is dead and Alchemy's mirror is the only source.
+// But the mirror is not always complete: for about 1 film in 5 it is a partial-upload stub
+// (HTTP 206, ~120 bytes of JSON) and the metadata's URL is the one that works. Neither
+// source is sufficient alone, so this returns BOTH, in order, and callers walk the list.
+const alchemyFilm = (nft, declared) => {
+  const animation = nft?.animation;
+  if (!animation) return [];
+  const type = animation.contentType;
+  // A known non-video type — an HTML piece, a GLB, a GIF, a JSON document — is not a film.
+  if (type && !type.startsWith('video/')) return [];
+  // Type unknown: trust the metadata's own URL. If it is recognisably not a video, neither
+  // is Alchemy's copy of it.
+  if (!type && declared && NON_VIDEO_EXT.test(toHttp(declared))) return [];
+  return [animation.cachedUrl, animation.originalUrl];
+};
+
+/** Every URL a token's film might play from, best first. Walk it; any one may fail. */
+export const resolveNftVideoCandidates = (nft) => {
   const metadata = nft?.raw?.metadata ?? nft?.rawMetadata ?? {};
-
-  if (nft?.image?.contentType?.startsWith('video/')) {
-    return toHttp(nft.image.originalUrl || nft.image.cachedUrl);
-  }
-
-  const candidate = [
+  const declared = [
     metadata.animation_url,
     metadata.animation,
     metadata.video_url,
     metadata.video,
     nft?.animationUrl,
   ].find((value) => typeof value === 'string' && value.trim());
+  const [mirror, mirroredOriginal] = alchemyFilm(nft, declared?.trim());
+  const imageFilm = nft?.image?.contentType?.startsWith('video/')
+    ? [nft.image.originalUrl, nft.image.cachedUrl]
+    : [];
 
-  if (!candidate) return null;
-
-  const http = toHttp(candidate.trim());
-  if (NON_VIDEO_EXT.test(http)) return null;
-  return http;
+  // The mirror leads: it is a fast CDN, and the only source for a challenged ipfs.io film.
+  // Where it is a stub, the next entry is the metadata's own URL — the one that worked
+  // before this list existed.
+  return [mirror, ...imageFilm, declared, mirroredOriginal]
+    .filter((value) => typeof value === 'string' && value.trim())
+    .map((value) => toHttp(value.trim()))
+    .filter((url) => !NON_VIDEO_EXT.test(url))
+    .filter((url, index, all) => all.indexOf(url) === index);
 };
+
+/** The first film candidate, for callers that only ask whether a token HAS a film. */
+export const resolveNftVideo = (nft) => resolveNftVideoCandidates(nft)[0] ?? null;
 
 /**
  * True when `url` might be a video even though it's in an image slot — an
@@ -93,11 +120,15 @@ export const resolveNftVideo = (nft) => {
 export const mayBeVideoUrl = (url) =>
   Boolean(url) && !IMAGE_EXT.test(url) && !NON_VIDEO_EXT.test(url);
 
-/** `{ image, video }` — either may be null, but a renderable NFT has at least one. */
-export const resolveNftMedia = (nft) => ({
-  image: resolveNftImage(nft),
-  video: resolveNftVideo(nft),
-});
+/**
+ * `{ image, video, videos }` — image or video may be null, but a renderable NFT has at
+ * least one. `videos` is every film candidate in order; a player should try the next on
+ * error (src/hooks/useFilmFallback.js) rather than giving up on the first.
+ */
+export const resolveNftMedia = (nft) => {
+  const videos = resolveNftVideoCandidates(nft);
+  return { image: resolveNftImage(nft), video: videos[0] ?? null, videos };
+};
 
 // v3 renamed `title` to `name`; BAYC returns null for both, hence the token fallback.
 export const resolveNftName = (nft) => nft?.name || nft?.title || `Token #${nft?.tokenId}`;
