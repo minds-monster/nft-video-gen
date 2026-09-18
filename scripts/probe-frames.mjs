@@ -45,52 +45,86 @@
 //
 // ── RESULTS — 2026-09-18, 129 tokens across 23 collections, --limit 6 ───────────────────────
 //
-// COVERAGE. 56 of 129 tokens carry a film or an animated still. Not a niche case: 43% of the
-// registry moves, and it is concentrated in the luxury half.
+// Read this section in full before trusting any single line of it: the first two runs of this
+// probe reached confident conclusions that the third overturned, and the reasons are the lesson.
 //
-// REACHABILITY, which is where this went somewhere nobody expected:
+// COVERAGE. 61 of 129 tokens carry a film or an animated still — 47% of the registry moves.
 //
-//   res.cloudinary.com (Alchemy)    9   206, honours ranges, 4.2-14.9MB, mp4
-//   gateway.arweave.net             6   200, IGNORES ranges (sends the whole file)
-//   i2c.seadn.io (OpenSea)          5   200, ignores ranges
-//   raw2.seadn.io                   2   206, honours ranges, 1.7-8.4MB
-//   nft.givenchy.com                1   206 — but the body is a 0.01MB HTML error page (see below)
-//   ipfs.io / dweb.link / w3s.link 30   403 CLOUDFLARE BOT CHALLENGE
-//   arianee.com (YSL)               3   fetch failed, times out
+// REACHABILITY, final — a film counts only when its BYTES are a film (see "status lied" below):
 //
-// 🔑 THE 403s ARE A BOT CHALLENGE, NOT AN UNPINNED CID, and this corrects worker/artwork.js's
-// header, which states "ipfs.io now answers a blocked CID with an HTTP 403 carrying an HTML error
-// page". The page is actually Cloudflare's managed challenge — `cf-mitigated: challenge`,
-// `_cf_chl_opt`, `cType: 'managed'`, "Enable JavaScript and cookies to continue". The difference
-// is the whole architecture:
+//   nft2-cdn.alchemy.com       39   206, seekable, NO CORS header   ← Alchemy's animation mirror
+//   res.cloudinary.com          9   206, seekable, CORS *            (UNXD's account, not Alchemy's)
+//   raw2.seadn.io / i2c         3   206, seekable, CORS *            (OpenSea)
+//   ─────────────────────────────
+//   51 of 61 real films reached, 50 seekable. Containers: mp4 45 (11 of them QuickTime), webm 6.
+//   Sizes 1.7-37.3MB, median 14.2MB.
 //
-//   an unpinned CID   → another gateway may have it. The existing fallback is the right fix.
-//   a bot challenge   → NO server-side fetch passes it, ever, at any user-agent, from a Worker or
-//                       from node. A real browser passes it by design. More gateways cannot help.
+//   unreachable: 4 × warner-bros   ipfs.io/dweb.link/w3s.link all 403 bot challenge, no mirror
+//                5 × animoca       every candidate returns a JSON document, not a video
+//                1 × givenchy #0   a .gif URL that times out
 //
-// And more gateways specifically did not: walking all three rescued ZERO of the 30. w3s.link now
-// 301-redirects to dweb.link, so IPFS_GATEWAYS' claim that these are "three independent
-// operators" is no longer true — it is two, both Protocol Labs, both behind the same challenge.
+// 🔑 ALCHEMY MIRRORS FILMS, and nothing in this codebase has ever asked it to. Its v3 response
+// carries `animation: { cachedUrl, contentType, size, originalUrl }`, parallel to `image`, and
+// src/lib/nftMedia.js `resolveNftVideo` reads raw metadata and a v2-era `animationUrl` instead.
+// The first two runs of this probe inherited that blind spot and reported 30 films unreachable;
+// reading `animation` takes it to 4. An earlier draft of this header said "Alchemy mirrors stills
+// and does not mirror films". It was wrong — it was a statement about our resolver, not Alchemy.
 //
-// WHY IMAGES SURVIVE THIS AND FILMS DO NOT — spot-checked on Nike #2, whose film is challenged:
+// THE BOT CHALLENGE IS REAL, it is just not the whole library's problem. ipfs.io and dweb.link
+// answer server fetches with Cloudflare's managed challenge (`cf-mitigated: challenge`,
+// `_cf_chl_opt`), which corrects worker/artwork.js's header ("answers a blocked CID with an HTTP 403
+// carrying an HTML error page") — the CID is not blocked, the client is. Walking IPFS_GATEWAYS
+// rescued none: w3s.link now 301s to dweb.link, so the "three independent operators" are two.
 //
-//   image.pngUrl     200 image/png   res.cloudinary.com/alchemyapi/...   ← Alchemy's mirror
-//   image.cachedUrl  200 image/png   nft2-cdn.alchemy.com/...            ← Alchemy's mirror
-//   the film         403 challenged  ipfs.io/ipfs/Qm.../base.mp4         ← no mirror exists
+// THE STATUS LIED, THREE WAYS. Every one of these arrived as a 2xx:
+//   givenchy #0             HTTP 206, body `<!doctype…` — an HTML error page
+//   Alchemy partial mirror  HTTP 206, body `{"keyName":…,"partialUpload":true,"bytes":41889416}` —
+//                           a 42MB film Alchemy never finished copying. 10 films; the next
+//                           candidate served each one.
+//   animoca                 HTTP 206, a JSON document where the film should be
+// A resolver that trusts the status code would hand every one of these to a decoder as a film.
+// `isFilm` below checks the container bytes, and the product path will need the same check.
 //
-// ALCHEMY MIRRORS STILLS AND DOES NOT MIRROR FILMS. That single asymmetry is why every image in
-// this product resolves and why the video path has never had a chance, and it is not something
-// any amount of Worker-side engineering can change.
+// MEDIA TRANSFORMATIONS — switched on for minds.monster on 2026-09-18, and then refused three
+// times in three different ways, each one a separate fact:
 //
-// MEDIA TRANSFORMATIONS IS STILL OFF. /cdn-cgi/trace 200, /cdn-cgi/media/ 404 with the generic
-// Cloudflare 404 page — worker/frames.js recorded the same on 2026-08-27 and it has not changed.
-// Note that flipping the toggle would NOT rescue the 30 challenged films: Cloudflare's transform
-// fetcher is still a server fetching a third-party URL, and it meets the same interstitial.
+//   9401 "'format' option must be one of: 'jpg' or 'png' or 'm4a'"   OUR BUG. worker/frames.js
+//        sent `format=jpeg` since it was written, never exercised while the zone 404'd. Fixed.
+//   9401 "Transformation origin is not in allowed origins list"      a REMOTE source (Alchemy's
+//        nft2-cdn) is refused by default. A zone setting — allowed origins — not code.
+//   9402 "could not determine the size of the file … supports HEAD or GET range requests"
+//        our OWN hero mp4 passed the origin check and failed here: minds.monster's static assets
+//        answer a Range request with 200 and the whole body. So same-zone sources need range
+//        support first — worker/frames.js's own clips included.
 //
-// A 206 THAT WAS A LIE. givenchy #0 returned HTTP 206 with a 0.01MB body whose first bytes are
-// `3c21` — `<!`, an HTML error page. The status said success and only the container sniff caught
-// it. Exactly the class of failure worker/artwork.js's content-type check exists for, on a path
-// that did not have one.
+// ── AND THEN IT WORKED — 2026-09-18, Sources set to "Specified origins": *.minds.monster and
+// nft2-cdn.alchemy.com, all paths (Stream → Transformations → minds.monster → Sources; NOT under
+// the ⋯ menu, which only offers Disable) ──────────────────────────────────────────────────────
+//
+//   stage 1   /cdn-cgi/media on nft2-cdn → 200 image/jpeg
+//   stage 3   12 of 12 frames (Nike #2, #3, Gucci #0 at 0.3/1/2/4s) legal H3 references
+//
+// Looked at, not just counted: Nike #2's sneaker (small files are its white background, not
+// blank frames), Gucci #10 — a QUICKTIME film, which Cloudflare's docs call untested — in side
+// view, and Idle Hands at 11.75s showing exactly the frame ffmpeg extracts locally at that time.
+// `width` is a ceiling, not a target: 1280 on a 1080 source came back 1080, never upscaled.
+//
+// Cost: one transformation per frame, 5,000 free a month, then $0.50 per 1,000.
+// Still unusable: our OWN static files (9402, no range support), and any film whose only working
+// copy is on a host not in the allowed list (OpenSea, Arweave, UNXD's Cloudinary).
+//
+// ── probe-frames.html, the browser half — Chrome, 2026-09-18 ────────────────────────────────
+//
+//   challenged (Gucci #10, Rimowa #2, Nike #2, via ipfs.io and dweb.link)
+//       both CORS modes fail at LOAD — media error 4. The browser gets no further than the
+//       server did, so "a browser passes the challenge by design" did not hold for a subresource.
+//   controls (Mercedes/arweave, D&G/cloudinary, adidas/seadn)
+//       anonymous: load ✓ seek ✓ draw ✓ read ✓ — frames 1024², 500², 1080², ALL legal H3 references
+//       none:      read ✗ "Tainted canvases may not be exported", exactly as predicted
+//
+// So browser sampling WORKS where the host sends CORS, and only there. Alchemy's mirror — 39 of
+// the 51 reachable films — sends no CORS header, so a browser cannot read it directly; it would
+// have to be proxied same-origin first, which is the cast-art.js pattern for stills.
 //
 // ── A PREDICTION THAT WAS WRONG, AND THE ANOMALY IT TURNED UP — production KV, 2026-09-18 ───
 //
@@ -138,6 +172,10 @@
 // load, so "NVIDIA can never reach ipfs.io" is stronger than four failures prove. What they do
 // prove is the thing that matters — a server-side fetch of these films is not a DEPENDABLE path,
 // and a feature cannot be built on a gateway that works when it is not busy.
+//
+// ⚠️ "THESE FILMS" MEANS THEIR ipfs.io URLs, NOT THE FILMS. Both are served fine by Alchemy's
+// animation mirror (Gucci #10: nft2-cdn, 206, 23.5MB QuickTime) — see RESULTS. What was proved
+// unreachable is a URL, and the same film has another one.
 //
 // And a lesson for anything that reads dossiers as evidence of the present: `watchedFilm: true`
 // means the film was reachable ON THE DAY IT WAS CAST, not today. A dossier is a historical record.
@@ -208,7 +246,7 @@ const frameUrl = (sourceUrl, atSeconds) =>
   // The exact shape worker/frames.js:50 builds. Copied rather than imported because that one is
   // not exported, and because a probe that quietly diverges from production is a probe that
   // certifies something nobody ships.
-  `${ORIGIN}/cdn-cgi/media/mode=frame,time=${atSeconds}s,format=jpeg,width=640/${sourceUrl}`;
+  `${ORIGIN}/cdn-cgi/media/mode=frame,time=${atSeconds}s,format=jpg,width=640/${sourceUrl}`;
 
 /**
  * Three separate facts, reported separately, because collapsing them loses the finding:

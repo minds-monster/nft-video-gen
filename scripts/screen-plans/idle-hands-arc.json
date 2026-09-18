@@ -1,0 +1,27 @@
+{
+  "token": "eth-mainnet:0x4f18cba70fc9976398e3481a101c83e1e98fdf7c:5",
+  "why": "Idle Hands #4 is not a subject seen from angles but one subject passing through STATES: a hand standing like a small figure (frames 1-4), breaking free into multiplied, fused, stretched fingers (5-11), returning to a curled rest (12-15). The still shows only the first state. Does H3 perform the transformation from words alone (A), from one frame per act (B), or does it need the whole arc (C)? Bindings say MOMENTS IN ORDER, never angles.",
+  "duration": 10,
+  "ratio": "1:1",
+  "beats": "<Subject 1> performs alone on a seamless pale-grey studio floor in soft, even, diffused light, with a soft shadow beneath it. Static camera, square frame, <Subject 1> always fully in view. At first <Subject 1> stands upright on two fingertips like a small confident figure, index finger raised, swaying and stepping in place as if dancing. Then it breaks free: its fingers multiply, stretch and fan out, the hand swelling into a many-fingered bloom and then reaching out on long, elongated fingers, moving fluidly and strangely. Finally it gathers itself back in, the extra fingers folding away, and settles into a small curled hand resting quietly on the floor. Photoreal, matte skin, no text.",
+  "arms": [
+    {
+      "id": "A",
+      "title": "Today — the still (calm pose only)",
+      "refs": ["still"],
+      "binding": "<Subject 1> is the hand in <Picture 1>."
+    },
+    {
+      "id": "B",
+      "title": "3 frames — one per act (#2, #6, #14)",
+      "refs": [2, 6, 14],
+      "binding": "<Subject 1> is the hand shown in <Picture 1>, <Picture 2> and <Picture 3>. These are three moments from ONE continuous performance, in order — not three different hands: <Picture 1> is how it begins, <Picture 2> is the middle of its transformation, <Picture 3> is how it ends."
+    },
+    {
+      "id": "C",
+      "title": "9 frames — the full arc (#2, 4, 5, 6, 8, 10, 11, 12, 14)",
+      "refs": [2, 4, 5, 6, 8, 10, 11, 12, 14],
+      "binding": "<Subject 1> is the hand shown in <Picture 1> through <Picture 9>. These are nine moments from ONE continuous performance, in order — not different hands: <Picture 1> is how it begins, <Picture 2> to <Picture 8> are the stages of its transformation, and <Picture 9> is how it ends."
+    }
+  ]
+}

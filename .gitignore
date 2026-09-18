@@ -34,6 +34,9 @@ dist-ssr
 assets/refs/
 assets/renders/
 assets/audio/candidates/
+# Frame screen tests (scripts/screen-frames.mjs): a downloaded NFT film, extracted frames and
+# three paid renders per run. Tens of MB each and reproducible from the run's manifest.json.
+assets/screen-tests/
 # Generated 3D assets, wherever they land. Meshes are large (3-15MB each), reproducible from
 # scripts/probe-mesh.mjs and the recorded task ids, and in production they live in R2 rather than
 # in the repo at all. Ignored by EXTENSION rather than by directory on purpose: the round-9 rule
