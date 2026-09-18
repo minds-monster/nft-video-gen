@@ -906,6 +906,7 @@ const PromptCanvas = ({ composer, onLaunch, screenwriter, storyboarder, director
                         live={screenwriter?.live ?? []}
                         trimBeat={screenwriter?.trimBeat}
                         requestTrim={screenwriter?.requestTrim}
+                        rewrite={screenwriter?.rewrite}
                         collapsed={collapsed.screenplay}
                         onToggle={() => togglePanel('screenplay')}
                         status={status.screenplay}

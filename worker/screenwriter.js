@@ -10,6 +10,7 @@ import { chat, jsonFrom, streamChat } from './nvidia.js';
 import { sseResponse } from './sse.js';
 import { SCREENWRITER_BRIEF, SHOT_SPEC_SCHEMA, subjectSlots } from './rulebook.js';
 import { readFilmFrames } from './film-frames.js';
+import { brandHits, proseOf } from './director-risks.js';
 import {
   FREE_MAX_BEATS,
   FREE_MAX_REFERENCES,
@@ -143,6 +144,30 @@ export const validate = (spec, cast, { maxBeats, maxReferences }) => {
   }
   if (spec.referencePlan.length > maxReferences) {
     throw new Error(`Shot spec plans ${spec.referencePlan.length} reference slots; tier allows ${maxReferences}.`);
+  }
+
+  // A cast piece's OWN NAME in anything MiniMax reads. Measured 2026-09-18 on staging: a script
+  // naming "Godzilla" three times was accepted by MiniMax, failed two minutes later as "input text
+  // sensitive", and was charged — the Director had seen the name and let it through on the
+  // assumption that a rejection is free. Refused here instead, where the fix is free: the repair
+  // pass DESCRIBES the piece by form, colour and material and the reference image carries who it
+  // is. Not a scrub — the Hollywood-sign lesson (worker/director-risks.js) was a subject deleted
+  // from its own film; this keeps the subject and changes only the word for it.
+  //
+  // Single words printed on the artwork are NOT refused: they are too often ordinary words, and
+  // the Director already reports them. brandHits skips a name that is an ordinary word the dossier
+  // itself uses (a piece called "Hands" in a film about hands).
+  const named = brandHits(
+    cast.map((entry) => ({ ...entry, collection: entry.collection ?? (entry.collectionName ? { name: entry.collectionName } : undefined) })),
+    proseOf(spec),
+  ).filter((hit) => hit.strength !== 'printed-word');
+  if (named.length) {
+    throw new Error(
+      `The script names ${named.map((hit) => `"${hit.text}"`).join(', ')} — ${named.map((hit) => hit.from).join('; ')}. ` +
+        'MiniMax\'s content filter rejects a franchise, brand or character name, and it may bill for the ' +
+        'rejection. Describe the piece by form, colour and material instead — the dossier\'s Subject line ' +
+        'is the words to use — in every prose field and beat. The reference image carries who it is.',
+    );
   }
 
   // Every piece's first slot before any repeated one — the rule that keeps <Subject N> equal to

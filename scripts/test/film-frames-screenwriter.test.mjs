@@ -80,3 +80,40 @@ test('the Screenwriter is shown frames only when there are some, with the kind a
   assert.equal(filmFramesLine({ status: 'none-kept', frames: [] }), null);
   assert.equal(filmFramesLine({ status: 'edge-refused' }), null);
 });
+
+// ── A piece's own name in the script ──────────────────────────────────────────────────────────
+//
+// Measured on staging, 2026-09-18: a script naming "Godzilla" was accepted by MiniMax, failed two
+// minutes later as "input text sensitive", and was charged. Refused in the Screenwriter instead,
+// where the repair pass describes the piece rather than scrubbing it.
+
+const GODZILLA = 'eth-mainnet:0x34993e2191c0a3ad5cf24b7dd27d781ada525db7:1833868';
+const gz = [{
+  key: GODZILLA,
+  name: 'Godzilla',
+  collectionName: 'Godzilla vs Kong Legacy Collection',
+  dossier: { subject: 'a massive bipedal reptilian creature with dark textured scaly skin and glowing cyan dorsal fin spines', identityMarkers: ['glowing cyan dorsal spines'], palette: ['charcoal', 'cyan'] },
+}];
+const gzSpec = (beat, extra = {}) => ({ ...spec([slot(GODZILLA)]), staging: '<Subject 1> is the creature in <Picture 1>.', beats: [beat], ...extra });
+
+test("a piece's own name in a beat is refused, with the words to use instead", () => {
+  assert.throws(
+    () => validate(gzSpec('Thousands of Godzilla figures turn and roar in sync'), gz, caps),
+    /names "Godzilla".*Describe the piece by form, colour and material/s,
+  );
+});
+
+test('described instead, the same beat passes', () => {
+  assert.doesNotThrow(() => validate(gzSpec('Thousands of the colossal grey reptilian creature turn and roar in sync'), gz, caps));
+});
+
+test('the name may appear where MiniMax never reads it — the title and logline', () => {
+  assert.doesNotThrow(() =>
+    validate(gzSpec('The colossal creature roars', { title: 'Godzilla Rising', logline: 'Godzilla, multiplied.' }), gz, caps),
+  );
+});
+
+test('a piece named with an ordinary word its own dossier uses is not refused for using it', () => {
+  const hands = [{ key: GODZILLA, name: 'Hands', dossier: { subject: 'a sculpted pair of hands', identityMarkers: ['matte skin'], palette: ['beige'] } }];
+  assert.doesNotThrow(() => validate(gzSpec('The hands open slowly'), hands, caps));
+});

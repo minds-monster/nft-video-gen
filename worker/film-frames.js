@@ -465,24 +465,52 @@ export async function computeFilmFrames(env, { key, stills, films }) {
   if (!origin) throw Object.assign(new Error('SITE_ORIGIN is not set; frames are extracted on the zone.'), { fatal: true });
   const base = { v: 1, key, model: env.CASTING_MODEL, at: Date.now() };
 
-  const film = await findFilm(films);
-  if (!film) return saveRecord(env, { ...base, status: 'no-film', films });
-
-  const duration = await filmDuration(film);
-  if (!duration) return saveRecord(env, { ...base, status: 'no-duration', film });
-
+  // Each real film in turn, until one the edge will actually extract from. NOT simply the first
+  // real film: a token's first candidate can be a host outside the zone's allowed origins while
+  // the next is Alchemy's copy on one inside them — measured on staging's first real cast
+  // (Godzilla, 2026-09-18): an S3 original first, nft2-cdn second. Stopping at the first would
+  // have recorded "edge-refused" for a film the edge serves perfectly well one candidate later.
+  const times = (length) => candidateTimes(length);
+  const tried = [];
+  let film = null;
+  let duration = null;
   const candidates = [];
-  for (const atSeconds of candidateTimes(duration)) {
-    // eslint-disable-next-line no-await-in-loop -- serial, as worker/frames.js does, for the same reason.
-    const response = await fetch(frameUrl(origin, film, atSeconds, PICK_WIDTH));
-    if (!response.ok) {
-      // eslint-disable-next-line no-await-in-loop
-      const detail = (await response.text().catch(() => '')).slice(0, 200);
-      // A refusal on the FIRST frame is configuration, not the film — an origin missing from the
-      // zone's allowed list, most often. Recorded, and retried after a day.
-      if (!candidates.length) return saveRecord(env, { ...base, status: 'edge-refused', film, detail: `HTTP ${response.status}: ${detail}` });
+  for (const url of films ?? []) {
+    // eslint-disable-next-line no-await-in-loop -- one host at a time.
+    const real = await findFilm([url]);
+    if (!real) continue;
+    const host = new URL(real).host;
+    // eslint-disable-next-line no-await-in-loop
+    const length = await filmDuration(real);
+    if (!length) {
+      tried.push(`${host}: no readable length`);
       continue;
     }
+    const firstAt = times(length)[0];
+    // eslint-disable-next-line no-await-in-loop
+    const response = await fetch(frameUrl(origin, real, firstAt, PICK_WIDTH));
+    if (!response.ok) {
+      // eslint-disable-next-line no-await-in-loop
+      const detail = (await response.text().catch(() => '')).slice(0, 160);
+      tried.push(`${host}: HTTP ${response.status} ${detail}`.trim());
+      continue;
+    }
+    // eslint-disable-next-line no-await-in-loop
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    candidates.push({ n: 1, atSeconds: firstAt, dataUri: toDataUri({ bytes, contentType: 'image/jpeg' }) });
+    film = real;
+    duration = length;
+    break;
+  }
+  if (!film) {
+    const status = !tried.length ? 'no-film' : tried.every((line) => line.endsWith('no readable length')) ? 'no-duration' : 'edge-refused';
+    return saveRecord(env, { ...base, status, films, detail: tried.join(' | ') || null });
+  }
+
+  for (const atSeconds of times(duration).slice(1)) {
+    // eslint-disable-next-line no-await-in-loop -- serial, as worker/frames.js does, for the same reason.
+    const response = await fetch(frameUrl(origin, film, atSeconds, PICK_WIDTH));
+    if (!response.ok) continue;
     // eslint-disable-next-line no-await-in-loop
     const bytes = new Uint8Array(await response.arrayBuffer());
     candidates.push({ n: candidates.length + 1, atSeconds, dataUri: toDataUri({ bytes, contentType: 'image/jpeg' }) });

@@ -48,7 +48,7 @@ const estUsd = (params) => priceUsd(params) ?? 0;
  * model decides to draw it. */
 const PROSE_FIELDS = ['world', 'grade', 'guard', 'staging', 'continuity', 'camera', 'sound', 'music'];
 
-const proseOf = (spec) =>
+export const proseOf = (spec) =>
   [...PROSE_FIELDS.map((field) => spec?.[field] ?? ''), ...(spec?.beats ?? [])].join('\n');
 
 /** Words that identify a chain or a wallet rather than a thing that can be filmed. A cast key or
@@ -161,7 +161,7 @@ const printedMarks = (cast = []) => {
  * a hit only when no dossier's own brand-free vocabulary contains it; a multi-word name has to
  * appear intact.
  */
-const brandHits = (cast, prose) => {
+export const brandHits = (cast, prose) => {
   const { bigrams, singles } = printedMarks(cast);
 
   // The words the dossiers use for form, colour and material. Anything PRINTED on the artwork is
@@ -331,13 +331,17 @@ export const assessRisks = ({ spec, cast = [], preflight = null, mustHold = [], 
       what:
         `The script says ${soft.map((hit) => `"${hit.text}" (${hit.from})`).join(' and ')}. ` +
         'The Casting Director recognised no brand here, so it is left as written — a landmark, a ' +
-        'title or a place is not a trademark. If MiniMax disagrees, the request is rejected for ' +
-        'free and nothing is billed.',
+        'title or a place is not a trademark. If MiniMax disagrees it may not be free: a script ' +
+        'naming "Godzilla" was ACCEPTED, then failed two minutes later as "input text sensitive" ' +
+        'and was charged (2026-09-18).',
       evidence: soft,
       measured:
         'A piece called "Hollywood sign", printed HOLLYWOOD, had its name rewritten out of its own ' +
-        'film (2026-08-28) because it matched this scan. A rejected request costs nothing (error ' +
-        '1026, unbilled); a scrubbed subject costs the film. Reported, never rewritten.',
+        'film (2026-08-28) because it matched this scan — a scrubbed subject costs the film. But ' +
+        '"rejected for free" held only for an instant 1026: on 2026-09-18 a script naming the cast ' +
+        'piece "Godzilla" was accepted, failed after queueing, and was charged $0.48. So a piece\'s ' +
+        'own name is now refused earlier, in the Screenwriter (worker/screenwriter.js), where it is ' +
+        'DESCRIBED rather than scrubbed; this note remains the backstop for specs written before that.',
       fix: 'review',
       // Never handed to the Director as something to rewrite. The whole point.
       autofix: false,

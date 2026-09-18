@@ -248,6 +248,25 @@ test('a film that exists but the edge refuses is recorded, and retried after a d
   assert.equal(env.DOSSIERS.options.get(filmFramesKey(KEY)).expirationTtl, 86_400);
 });
 
+test('a film the edge refuses gives way to the next real film, instead of recording a refusal', async () => {
+  // Godzilla on staging, 2026-09-18: an S3 original first (outside the allowed origins), then
+  // Alchemy's copy on nft2-cdn (inside them).
+  const S3 = 'https://tv-inventory.s3.eu-west-2.amazonaws.com/gz.mp4';
+  const env = envWith();
+  const calls = serve({
+    edge: (href) =>
+      href.endsWith(`/${S3}`)
+        ? new Response('MEDIA_TRANSFORMATION_ERROR 9401: Transformation origin is not in allowed origins list', { status: 403 })
+        : new Response(jpeg(1280, 1280), { status: 200, headers: { 'content-type': 'image/jpeg' } }),
+  });
+  const film = globalThis.fetch;
+  globalThis.fetch = async (url, init) => (String(url) === S3 ? new Response(mp4Head(), { status: 206 }) : film(url, init));
+  const record = await computeFilmFrames(env, { key: KEY, stills: [STILL], films: [S3, FILM] });
+  assert.equal(record.status, 'ready');
+  assert.equal(record.film, FILM);
+  assert.ok(calls.some((url) => url.endsWith(`/${S3}`)), 'the S3 original was tried first');
+});
+
 test('no candidate that is actually a film is recorded, and re-checked after a week — not forever', async () => {
   const env = envWith();
   serve();

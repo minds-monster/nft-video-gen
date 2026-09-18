@@ -321,6 +321,14 @@ camera, light, beats and sound. It is never to substitute a more impressive idea
 - Expand outward from what they wrote, never sideways into a different film.
 - The cast is theirs too. Every piece they selected must appear and must be recognisable.
 
+NEVER A PIECE'S OWN NAME. Each cast member arrives with a Piece line giving its title and
+collection — "Godzilla (from Godzilla vs Kong Legacy Collection)". That is for you to know what
+it is, never words for the script: a franchise, character or brand name makes MiniMax reject
+the render, and on 2026-09-18 it billed for the rejection. Describe it by form, colour and
+material — its dossier's Subject line — even when the user's own line uses the name. Their word
+becomes your description: "Godzilla" becomes "the colossal grey reptilian creature with glowing
+blue dorsal spines". The reference image carries who it is.
+
 NAMING SUBJECTS. Cast members arrive with keys like
 "eth-mainnet:0x28472a58...:1". Those are database identifiers. They belong in referencePlan
 and nowhere else — never in staging, beats, world or any other prose. In prose, define each

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, ChevronRight, Copy, PenLine, Scissors, Terminal, Trash2 } from 'lucide-react';
+import { Check, ChevronRight, Copy, PenLine, RotateCcw, Scissors, Terminal, Trash2 } from 'lucide-react';
 import CanvasPanel from './CanvasPanel';
 import HudCard from '../HudCard';
 import { RevealOnce } from '../RevealText';
@@ -68,6 +68,54 @@ const H3Request = ({ spec }) => {
 };
 
 /**
+ * Direct a rewrite: the Screenwriter runs again with this note, on the same cast and dossiers.
+ *
+ * The hook has always had `rewrite(note)` — "Trim to fit" is built on it — but nothing let a
+ * visitor write the note. Found on staging (2026-09-18): a treatment that named its cast piece,
+ * which MiniMax refuses, could only be fixed by starting the whole film again.
+ */
+const RewriteBox = ({ rewrite, rewriting }) => {
+  const [note, setNote] = useState('');
+  if (!rewrite) return null;
+  const text = note.trim();
+
+  const submit = async (event) => {
+    event?.preventDefault();
+    if (!text || rewriting) return;
+    await rewrite(text);
+    setNote('');
+  };
+
+  return (
+    <form onSubmit={submit} className="mt-3 border-t border-white/10 pt-3">
+      <label htmlFor="screenplay-rewrite-note" className={LABEL}>
+        Direct a rewrite
+      </label>
+      <textarea
+        id="screenplay-rewrite-note"
+        value={note}
+        onChange={(event) => setNote(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) submit(event);
+        }}
+        rows={2}
+        disabled={rewriting}
+        placeholder="What should change? e.g. slower, more menacing — or: never use its name, describe it"
+        className="mt-2 w-full resize-y rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm leading-relaxed text-slate-200 placeholder:text-slate-600 focus:border-purple-400/40 focus:outline-none disabled:opacity-50"
+      />
+      <button
+        type="submit"
+        disabled={rewriting || !text}
+        className="mt-2 flex items-center gap-1.5 rounded-lg bg-purple-500/10 px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-purple-200 transition-colors hover:bg-purple-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <RotateCcw className="h-3 w-3" />
+        {rewriting ? 'Rewriting…' : 'Rewrite'}
+      </button>
+    </form>
+  );
+};
+
+/**
  * The settled screenplay: title, logline, beats, and technical fields.
  */
 const FREE_MAX_BEATS = 3;
@@ -83,6 +131,7 @@ const ScreenplayPanel = ({
   live,
   trimBeat,
   requestTrim,
+  rewrite,
   collapsed,
   onToggle,
   status,
@@ -141,6 +190,7 @@ const ScreenplayPanel = ({
               then directed: &ldquo;{spec.note}&rdquo;
             </p>
           )}
+          <RewriteBox rewrite={rewrite} rewriting={rewriting} />
         </HudCard>
 
         {/* Headline */}

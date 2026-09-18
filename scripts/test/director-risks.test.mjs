@@ -110,7 +110,9 @@ test('a cast piece called what it is — the Hollywood sign — is a note, never
   assert.equal(note.severity, 'note');
   assert.equal(note.autofix, false, 'and the Director is never handed it as something to rewrite');
   assert.match(note.what, /Hollywood sign/);
-  assert.match(note.what, /rejected for free/);
+  // It used to promise "rejected for free". Measured false on 2026-09-18 — a named script was
+  // accepted, then failed and charged — so the note now says what a rejection can cost.
+  assert.match(note.what, /may not be free/);
 });
 
 test('a name the register only reports, the Director cannot be told to fix', () => {
