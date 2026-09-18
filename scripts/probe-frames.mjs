@@ -266,6 +266,12 @@ const sniffContainer = (bytes) => {
   if (ascii(0, 4) === 'RIFF' && ascii(8, 12) === 'WEBP') return 'webp';
   if (bytes[0] === 0x89 && ascii(1, 4) === 'PNG') return 'png';
   if (bytes[0] === 0xff && bytes[1] === 0xd8) return 'jpeg';
+  // Two impostors that arrive with a 2xx and must never be counted as films: an HTML error page
+  // (givenchy #0, HTTP 206), and Alchemy's partial-mirror stub — HTTP 206, body
+  // `{"keyName":…,"partialUpload":true,"contentType":"video/mp4","bytes":41889416}` — which is
+  // what nft2-cdn serves for a large film it never finished copying.
+  if (bytes[0] === 0x7b) return 'json-stub';
+  if (bytes[0] === 0x3c) return 'html';
   return `unknown/${[...bytes.subarray(0, 4)].map((b) => b.toString(16).padStart(2, '0')).join('')}`;
 };
 
@@ -281,7 +287,8 @@ const probeOne = async (url) => {
   const record = { url, status: null, contentType: null, bytes: null, ranges: null, container: null };
   try {
     const response = await fetch(url, {
-      headers: { 'User-Agent': BROWSER_UA, Range: 'bytes=0-1023' },
+      // Origin, because many CDNs only send Access-Control-Allow-Origin when asked for it.
+      headers: { 'User-Agent': BROWSER_UA, Range: 'bytes=0-1023', Origin: DEFAULT_ORIGIN },
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
     record.status = response.status;
@@ -348,6 +355,14 @@ const filmCandidates = (nft, fallback) =>
     .flatMap(withIpfsFallback)
     .filter((value, index, all) => all.indexOf(value) === index);
 
+/** A response is a film when its BYTES are one. The status code has lied twice in this probe. */
+const isFilm = (record) =>
+  (record.status === 200 || record.status === 206) && /^(mp4|webm|gif)/.test(record.container ?? '');
+
+/** `host:206/json-stub` — the status AND what it turned out to be, since those disagree. */
+const describeAttempt = (a) =>
+  `${new URL(a.url).host}:${a.status}${a.container && !/^(mp4|webm|gif)/.test(a.container) ? `/${a.container}` : ''}`;
+
 /** The first candidate that answers with a film. Records every attempt, and which one won. */
 const probeFilm = async (candidates) => {
   const attempts = [];
@@ -355,12 +370,12 @@ const probeFilm = async (candidates) => {
     // eslint-disable-next-line no-await-in-loop -- one gateway at a time, as worker/artwork.js does.
     const record = await probeOne(candidate);
     attempts.push(record);
-    if (record.status === 200 || record.status === 206) {
-      return { ...record, gateways: attempts.length, tried: attempts.map((a) => `${new URL(a.url).host}:${a.status}`) };
+    if (isFilm(record)) {
+      return { ...record, gateways: attempts.length, tried: attempts.map(describeAttempt) };
     }
   }
   const last = attempts[attempts.length - 1];
-  return { ...last, gateways: attempts.length, tried: attempts.map((a) => `${new URL(a.url).host}:${a.status}`) };
+  return { ...last, gateways: attempts.length, tried: attempts.map(describeAttempt) };
 };
 
 // ────────────────────────────────────────────── stage 3: are the frames legal references?
@@ -573,8 +588,8 @@ const main = async () => {
     );
   }
 
-  const reachable = films.filter((film) => film.status === 206 || film.status === 200);
-  const seekable = films.filter((film) => film.ranges === '206');
+  const reachable = films.filter(isFilm);
+  const seekable = reachable.filter((film) => film.ranges === '206');
   const gifs = films.filter((film) => film.container?.startsWith('gif'));
   const challenged = films.filter((film) => film.challenge);
 
