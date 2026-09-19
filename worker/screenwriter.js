@@ -8,6 +8,8 @@
 
 import { chat, jsonFrom, streamChat } from './nvidia.js';
 import { sseResponse } from './sse.js';
+import { requireSession } from './session.js';
+import { recordAssetInputs, visitorIdFrom } from './records.js';
 import { SCREENWRITER_BRIEF, SHOT_SPEC_SCHEMA, subjectSlots } from './rulebook.js';
 import { readFilmFrames } from './film-frames.js';
 import { brandHits, proseOf } from './director-risks.js';
@@ -291,7 +293,7 @@ const request = (env, payload, draft) => ({
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || min));
 
-export const screenwrite = async (httpRequest, env) => {
+export const screenwrite = async (httpRequest, env, ctx) => {
   const payload = await httpRequest.json();
   const { prompt, cast, note } = payload;
 
@@ -318,6 +320,23 @@ export const screenwrite = async (httpRequest, env) => {
     1,
     PAID_MAX_REFERENCES,
   );
+
+  // The owner's record of which assets went into a film, and whose. Every film on every
+  // environment passes through here, unlike casting, which prod does off-site.
+  const recording = Promise.all([visitorIdFrom(httpRequest, env), requireSession(httpRequest, env)])
+    .then(([visitorId, session]) =>
+      recordAssetInputs(env, {
+        stage: note ? 'rewrite' : 'screenplay',
+        cast,
+        primaryKey: payload.primaryKey ?? null,
+        submissionId: crypto.randomUUID(),
+        visitorId,
+        mindId: session?.mindId ?? null,
+      }),
+    )
+    .catch((err) => console.warn('records: screenplay cast not recorded:', err?.message ?? err));
+  if (ctx?.waitUntil) ctx.waitUntil(recording);
+  else await recording;
 
   await attachFilmFrames(env, cast);
 

@@ -4,19 +4,13 @@
 // anything, so what leaves this file is the only place it exists raw. The hash is stable, so a
 // returning visitor is recognisable across days (worker/analytics.js explains why).
 
-const ENDPOINT = '/api/analytics/event';
+import { getGuestId } from './guest.js';
 
-const guestId = () => {
-  try {
-    return localStorage.getItem('guestId') ?? '';
-  } catch {
-    return '';
-  }
-};
+const ENDPOINT = '/api/analytics/event';
 
 export const track = (name, props = {}) => {
   try {
-    const payload = JSON.stringify({ name, page: window.location.hash || '/', guestId: guestId(), ...props });
+    const payload = JSON.stringify({ name, page: window.location.hash || '/', guestId: getGuestId(), ...props });
     const blob = new Blob([payload], { type: 'application/json' });
     if (navigator.sendBeacon?.(ENDPOINT, blob)) return;
     fetch(ENDPOINT, { method: 'POST', headers: { 'content-type': 'application/json' }, body: payload, keepalive: true }).catch(() => {});

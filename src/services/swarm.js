@@ -5,6 +5,8 @@
 // configure and no key on this side of the wire — which is the point, since Vite would
 // inline one straight into the bundle.
 
+import { identityHeaders, reportCast } from './visitor.js';
+
 /**
  * POST a JSON body and read a server-sent event stream back.
  *
@@ -342,15 +344,39 @@ const CASTING_SERVER = (() => {
  * `nft` may be raw Alchemy or already wire-shaped — forCastingWire is idempotent, and the
  * Previs retry in useScreenwriter passes the raw object.
  */
-export const castPiece = ({ key, nft, refresh, previsNote }, options) => {
+export const castPiece = ({ key, nft, refresh, previsNote }, options = {}) => {
+  // THE x402 PAYMENTS ARE HEARD HERE, not in the UI. The casting server announces what it paid
+  // as a `paid` phase whose message is the transaction hashes, and only this browser receives
+  // it. Listening in the caller's onEvent missed every pre-cast (src/lib/precast.js passes
+  // none), which since 2026-09-18 is most casts. Collected across retries; the owner's record
+  // (worker/records.js) checks each hash on Base before it counts.
+  const paid = [];
+  const onEvent = (type, data) => {
+    if (type === 'phase' && data?.phase === 'paid' && data.message) paid.push(...String(data.message).split(','));
+    options.onEvent?.(type, data);
+  };
+
+  let run;
   if (!CASTING_SERVER) {
-    return stream('/api/casting', { ...forCastingWire({ key, nft }), refresh, previsNote }, options);
+    run = stream('/api/casting', { ...forCastingWire({ key, nft }), refresh, previsNote }, { ...options, onEvent });
+  } else {
+    const [chain, address, tokenId] = key.split(':');
+    const url = new URL(`${CASTING_SERVER}/casting-director/${chain}/${address}/${tokenId}`);
+    if (refresh) url.searchParams.set('refresh', 'true');
+    if (previsNote) url.searchParams.set('previsNote', previsNote);
+    run = stream(url.toString(), null, { ...options, onEvent, method: 'GET' });
   }
-  const [chain, address, tokenId] = key.split(':');
-  const url = new URL(`${CASTING_SERVER}/casting-director/${chain}/${address}/${tokenId}`);
-  if (refresh) url.searchParams.set('refresh', 'true');
-  if (previsNote) url.searchParams.set('previsNote', previsNote);
-  return stream(url.toString(), null, { ...options, method: 'GET' });
+  // Every settled cast is a use of the asset. A failed one is reported only if money moved.
+  return run.then(
+    (result) => {
+      reportCast({ key, nft, txHashes: paid });
+      return result;
+    },
+    (error) => {
+      if (paid.length) reportCast({ key, nft, txHashes: paid });
+      throw error;
+    },
+  );
 };
 
 /**
@@ -375,8 +401,13 @@ export const checkHealth = async () => {
  * `maxBeats` and `maxReferences` come from the resolved tier; when omitted the Worker falls
  * back to the Zero Budget baseline.
  */
-export const screenwrite = ({ prompt, cast, primaryKey, note, maxBeats, maxReferences }, options) =>
-  stream('/api/screenwriter', { prompt, cast, primaryKey, note, maxBeats, maxReferences }, options);
+// Identity rides along so the Worker can record which assets this visitor (and Mind) wrote a
+// film with — worker/records.js.
+export const screenwrite = ({ prompt, cast, primaryKey, note, maxBeats, maxReferences }, options = {}) =>
+  stream('/api/screenwriter', { prompt, cast, primaryKey, note, maxBeats, maxReferences }, {
+    ...options,
+    headers: { ...identityHeaders(), ...options.headers },
+  });
 
 /** Cast wire shape for the Previs Supervisor — dossier plus the same stripped `nft` shape
  * forCastingWire already produces (not the full raw object): the review never looks at

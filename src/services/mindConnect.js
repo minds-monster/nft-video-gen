@@ -2,7 +2,15 @@
 // worker/connect.js and worker/mind-chat.js. Replaces the Test 2 stand-in
 // (services/mindTest.js) and the original static-key mind.js.
 
+import { getGuestId } from './guest.js';
+
 const SESSION_KEY = 'mindSession';
+// The visitor, sent where the Worker links it to a Mind (worker/records.js): on the poll that
+// sees the approval, and on every init of a connected session.
+const guestHeader = () => {
+  const id = getGuestId();
+  return id ? { 'x-guest-id': id } : {};
+};
 
 export const getStoredSession = () => {
   try {
@@ -45,7 +53,7 @@ export const connectInit = async (mindId) => {
 };
 
 export const connectStatus = async (connectionId) => {
-  const res = await fetch(`/api/connect/status?connectionId=${encodeURIComponent(connectionId)}`);
+  const res = await fetch(`/api/connect/status?connectionId=${encodeURIComponent(connectionId)}`, { headers: guestHeader() });
   if (!res.ok) throw new Error(`connect/status failed: ${res.status}`);
   return res.json();
 };
@@ -57,7 +65,7 @@ export const connectStatus = async (connectionId) => {
 export const mindChatInit = async (token, state) => {
   const res = await fetch('/api/mind/init', {
     method: 'POST',
-    headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+    headers: { 'content-type': 'application/json', authorization: `Bearer ${token}`, ...guestHeader() },
     body: JSON.stringify({ state }),
   });
   if (!res.ok) return { error: `init failed: ${res.status}` };

@@ -65,6 +65,7 @@ import {
   refreshMindSnapshot,
 } from './owner.js';
 import { handleAnalyticsEvent, healRollups, isAnalyticsReadable } from './analytics.js';
+import { handleCastRecord, handleOwnerRecords, verifyPending } from './records.js';
 import { isMailerConfigured } from './email.js';
 
 const json = (data, status = 200) =>
@@ -145,6 +146,7 @@ const ROUTES = {
   'GET /api/support/ticket': handleSupportTicket,
   // Analytics — a closed allowlist of browser events; everything else is recorded server-side.
   'POST /api/analytics/event': handleAnalyticsEvent,
+  'POST /api/records/cast': handleCastRecord,
   // The owner area. Every route below the login asserts an owner-kind token (worker/owner-auth.js).
   'POST /api/owner/login': handleOwnerLogin,
   'GET /api/owner/support': handleOwnerSupportList,
@@ -152,6 +154,7 @@ const ROUTES = {
   'GET /api/owner/support-stats': handleOwnerSupportStats,
   'GET /api/owner/overview': handleOwnerOverview,
   'POST /api/owner/analytics/heal': handleOwnerAnalyticsHeal,
+  'GET /api/owner/records': handleOwnerRecords,
   'GET /api/owner/mind': handleOwnerMind,
 };
 
@@ -180,6 +183,9 @@ export default {
     if (cron === CRON_SYNC) {
       const summary = await syncOpenTickets(env);
       console.log('support sync:', JSON.stringify(summary));
+      // x402 payments reported before their transaction was visible on Base (worker/records.js).
+      const payments = await verifyPending(env).catch((error) => ({ error: error?.message ?? String(error) }));
+      if (payments.checked || payments.error) console.log('x402 payment checks:', JSON.stringify(payments));
       return;
     }
     if (cron === CRON_NIGHTLY) {
@@ -209,6 +215,7 @@ export default {
         hasSessionSecret: Boolean(env.SESSION_SIGNING_SECRET),
         hasDossierStore: Boolean(env.DOSSIERS),
         hasConnectionsStore: Boolean(env.MIND_CONNECTIONS),
+        hasRecordsStore: Boolean(env.RECORDS),
         hasOpenAiKey: Boolean(env.OPENAI_API_KEY),
         hasStoryboardStore: Boolean(env.STORYBOARD_IMAGES),
         hasStoryboardQueue: Boolean(env.STORYBOARD_JOBS),
