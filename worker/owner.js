@@ -12,7 +12,7 @@ import { deriveLivenessState } from './mind-chat.js';
 import { classifyRow, timeToFirstActionMs } from '../src/lib/support-markers.js';
 import { KEYS, SLA, loadTicket, loadDerived, logEmail } from './support.js';
 import { syncTicket } from './support-sync.js';
-import { overview } from './analytics.js';
+import { overview, healRollups, isAnalyticsReadable } from './analytics.js';
 import { isMailerConfigured } from './email.js';
 
 const json = (data, status = 200) =>
@@ -219,6 +219,13 @@ export async function handleOwnerSupportNote(request, env, ticketId) {
 export async function handleOwnerOverview(request, env) {
   if (!(await requireOwner(request, env))) return json({ error: 'unauthorized' }, 401);
   return json(await overview(env));
+}
+
+/** POST /api/owner/analytics/heal — the nightly repair, on demand (one batch of days per call). */
+export async function handleOwnerAnalyticsHeal(request, env) {
+  if (!(await requireOwner(request, env))) return json({ error: 'unauthorized' }, 401);
+  if (!isAnalyticsReadable(env)) return json({ error: 'analytics_not_readable' }, 409);
+  return json(await healRollups(env));
 }
 
 /**

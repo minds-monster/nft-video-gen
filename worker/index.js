@@ -60,10 +60,11 @@ import {
   handleOwnerSupportGet,
   handleOwnerSupportNote,
   handleOwnerOverview,
+  handleOwnerAnalyticsHeal,
   handleOwnerMind,
   refreshMindSnapshot,
 } from './owner.js';
-import { handleAnalyticsEvent, rollupDay, dayOf, isAnalyticsReadable } from './analytics.js';
+import { handleAnalyticsEvent, healRollups, isAnalyticsReadable } from './analytics.js';
 import { isMailerConfigured } from './email.js';
 
 const json = (data, status = 200) =>
@@ -150,6 +151,7 @@ const ROUTES = {
   // Flat rather than /api/owner/support/stats, so the id branch below can never mistake it for a ticket.
   'GET /api/owner/support-stats': handleOwnerSupportStats,
   'GET /api/owner/overview': handleOwnerOverview,
+  'POST /api/owner/analytics/heal': handleOwnerAnalyticsHeal,
   'GET /api/owner/mind': handleOwnerMind,
 };
 
@@ -181,11 +183,12 @@ export default {
       return;
     }
     if (cron === CRON_NIGHTLY) {
-      const yesterday = dayOf(new Date(Date.now() - 86_400_000));
+      // Yesterday, plus any earlier day in the window that is missing or on an old rollup
+      // version — so a night the cron did not run is repaired the next night, not lost.
       const rollup = isAnalyticsReadable(env)
-        ? await rollupDay(env, yesterday).catch((error) => ({ error: error?.message ?? String(error) }))
+        ? await healRollups(env).catch((error) => ({ error: error?.message ?? String(error) }))
         : { skipped: 'analytics_not_readable' };
-      console.log('analytics rollup:', yesterday, JSON.stringify(rollup));
+      console.log('analytics rollup:', JSON.stringify(rollup));
       ctx?.waitUntil?.(refreshMindSnapshot(env).catch((error) => console.warn('mind snapshot failed:', error?.message ?? error)));
       return;
     }

@@ -35,7 +35,7 @@
 	// [auto-replied] marker to email the visitor. Two schedules, matched by string in
 	// worker/index.js `scheduled` — rename one here and the other side stops running:
 	//   */5  worker/support-sync.js — re-derive open tickets, relay unrelayed replies
-	//   03:00 worker/analytics.js rollupDay for yesterday + the owner Mind snapshot
+	//   03:00 worker/analytics.js healRollups (yesterday + any missing day) + the owner Mind snapshot
 	"triggers": {
 		"crons": [
 			"*/5 * * * *",
@@ -389,10 +389,12 @@
 					"/cdn-cgi/*"
 				]
 			},
+			// Its own dataset. It used to share prod's `minds_monster_events`, so every v2 page view
+			// was counted as production traffic on the owner overview.
 			"analytics_engine_datasets": [
 				{
 					"binding": "ANALYTICS",
-					"dataset": "minds_monster_events"
+					"dataset": "minds_monster_events_preview"
 				}
 			],
 			"kv_namespaces": [
@@ -448,7 +450,7 @@
 				"SUPPORT_FROM": "minds.monster Support <support@minds.monster>",
 				"OWNER_NOTIFY_EMAIL": "adam@munerate.com",
 				"SITE_ORIGIN": "https://v2.minds.monster",
-				"ANALYTICS_DATASET": "minds_monster_events"
+				"ANALYTICS_DATASET": "minds_monster_events_preview"
 			}
 		}
 	}

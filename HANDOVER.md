@@ -287,7 +287,10 @@ plus ~1 write/s per key means every colo keeps reading a stale N and writing N+1
 Workers Analytics Engine (`env.ANALYTICS.writeDataPoint`, no subrequest, no contention); the
 03:00 cron rolls each day into ONE KV key (`metrics:rollup:<day>`, 400-day TTL) for retention.
 Uniques are an HMAC of guestId under the secret AND the day — countable within a day, unlinkable
-across days.
+across days. **Superseded 2026-09-19:** by the owner's choice the HMAC is now stable (no day), so a
+returning visitor is the same index on every day and 7/30-day uniques are distinct counts. The
+same change split counts from amounts (the old rollup summed `double1`, so "Top-ups" showed
+dollars) and made the 03:00 job `healRollups`, which rebuilds any missing or old-version day.
 
 **4. WORKERS HAVE NO BACKGROUND TIMER, and the site must NOTICE `[auto-replied]`.** Two Cron
 Triggers in `wrangler.jsonc`: `*/5` runs `worker/support-sync.js` (re-derive open tickets, relay

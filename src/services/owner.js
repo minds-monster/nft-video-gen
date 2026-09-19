@@ -57,4 +57,5 @@ export const ownerSupportTicket = (token, ticketId) => request(token, `/api/owne
 export const ownerSupportNote = (token, ticketId, note) =>
   request(token, `/api/owner/support/${encodeURIComponent(ticketId)}/note`, { method: 'POST', body: JSON.stringify({ note }) });
 export const ownerOverview = (token) => request(token, '/api/owner/overview');
+export const ownerAnalyticsHeal = (token) => request(token, '/api/owner/analytics/heal', { method: 'POST' });
 export const ownerMind = (token, { refresh = false } = {}) => request(token, `/api/owner/mind${refresh ? '?refresh=1' : ''}`);

@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 import { requireSession } from './session.js';
 // Aliased: the webhook builds a local `record` (the budget row) that would shadow a bare import.
-import { record as trackEvent } from './analytics.js';
+import { record as trackEvent, guestHashFor } from './analytics.js';
 
 const json = (data, status = 200) =>
     new Response(JSON.stringify(data), {
@@ -65,6 +65,12 @@ export async function handleStripeCheckout(request, env) {
             cancel_url: `${origin}/?checkout=cancel`,
         }, requestOptions);
 
+        // Started, not paid: the webhook's `budget_topup` is the money that actually arrived.
+        trackEvent(env, 'checkout_started', {
+            mindId: session?.mindId ?? null,
+            guestHash: await guestHashFor(env, String(body.guestId ?? '').slice(0, 64)),
+            value: amount,
+        });
         return json({ url: checkoutSession.url });
     } catch (error) {
         console.error('Failed to create Stripe Checkout session:', error);

@@ -1,7 +1,8 @@
 // The browser half of worker/analytics.js: a handful of named events, sent with
 // `sendBeacon` so they never delay navigation and never need a response. The guestId is the
-// same localStorage UUID useMindConnect.js already keeps; the Worker HMACs it with a daily
-// salt before storing anything, so what leaves this file is the only place it exists raw.
+// same localStorage UUID useMindConnect.js already keeps; the Worker HMACs it before storing
+// anything, so what leaves this file is the only place it exists raw. The hash is stable, so a
+// returning visitor is recognisable across days (worker/analytics.js explains why).
 
 const ENDPOINT = '/api/analytics/event';
 

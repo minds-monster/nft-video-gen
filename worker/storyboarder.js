@@ -41,6 +41,7 @@ import { editImage, estimateCostUsd, respond, jsonFromResponse } from './openai.
 import { filmCall, streamFilmCall, FREE_MAX_BEATS } from './openrouter.js';
 import { resolveTier, LATENCY_SECONDS, TIER_LABEL, checkStoryboardInput } from './tier.js';
 import { filmIdFor } from './film-id.js';
+import { record as trackEvent } from './analytics.js';
 import {
   SCENE_SCHEMA,
   COORDINATE_CONTRACT_V2,
@@ -1214,6 +1215,8 @@ export async function handleStoryboard(request, env) {
   // 30-second ceiling, so it runs in a Queue consumer with up to 15 minutes of wall time and
   // survives client disconnects. See handleStoryboardQueue below and wrangler.jsonc.
   await env.STORYBOARD_JOBS.send({ mindId, spec, cast, plan, jobId, filmId }, { contentType: 'json' });
+  // Counted once the job is queued — the point past which a storyboard is really under way.
+  trackEvent(env, 'storyboard_started', { mindId });
 
   return json({ jobId, plan, filmId });
 }
