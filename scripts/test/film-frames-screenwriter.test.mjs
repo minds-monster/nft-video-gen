@@ -61,7 +61,14 @@ test('a piece\'s first slot after a frame slot is refused — it would renumber 
 
 test('a frame slot must name a frame that exists', () => {
   assert.throws(() => validate(spec([slot(HAND), slot(APE), slot(HAND, 7)]), cast, caps), /frames 1-3/);
-  assert.throws(() => validate(spec([slot(HAND), slot(APE, 1)]), cast, caps), /it has none/);
+});
+
+test('a frame on a piece with no frames is dropped, not refused — the artwork is the only reading', () => {
+  const checked = validate(spec([slot(HAND), slot(APE, 1)]), cast, caps);
+  assert.deepEqual(checked.referencePlan.map((s) => [s.key, s.frame]), [[HAND, undefined], [APE, undefined]]);
+  // A repeated slot keeps its place, so every <Picture N> the staging already wrote still lines up.
+  const repeated = validate(spec([slot(HAND), slot(APE), slot(APE, 2)]), cast, caps);
+  assert.deepEqual(repeated.referencePlan.map((s) => [s.key, s.frame]), [[HAND, undefined], [APE, undefined], [APE, undefined]]);
 });
 
 test('frame slots count against the tier\'s reference cap like any other slot', () => {

@@ -184,13 +184,22 @@ export const validate = (spec, cast, { maxBeats, maxReferences }) => {
   }
 
   // A frame slot must name a frame that exists — it decides which stored image a render is sent.
+  // A piece with NO frames loses the field instead of failing the run: the only possible fix is
+  // the artwork, which is what refKeysForPlan would send anyway. Measured 2026-09-19: a model
+  // wrote "frame": 1 on a frameless piece in both the first pass and the repair, and the whole
+  // screenplay died over a slot whose meaning was never in doubt. A wrong number on a piece
+  // that HAS frames is still refused — there the model meant a moment, and the repair can find it.
   for (const slot of spec.referencePlan) {
     if (slot.frame === undefined || slot.frame === null) continue;
     const frames = cast.find((entry) => entry.key === slot.key)?.filmFrames?.frames ?? [];
+    if (!frames.length) {
+      delete slot.frame;
+      continue;
+    }
     if (!frames.some((frame) => frame.n === slot.frame)) {
       throw new Error(
-        `A referencePlan slot names film frame ${slot.frame}, which is not in that cast member's Film frames list` +
-          (frames.length ? ` (frames 1-${frames.length}).` : ' — it has none. Omit "frame" to use the artwork itself.'),
+        `A referencePlan slot names film frame ${slot.frame}, which is not in that cast member's Film frames list ` +
+          `(frames 1-${frames.length}).`,
       );
     }
   }
