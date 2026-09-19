@@ -56,6 +56,19 @@
 			"dataset": "minds_monster_events"
 		}
 	],
+	// The owner's records (worker/records.js): which assets were used, which x402 payments went
+	// through, and which visitor and Mind did it. D1 rather than Analytics Engine or KV because
+	// these are rows the owner queries ("every payment for this asset"), kept indefinitely.
+	// Schema lives in migrations/; apply with `wrangler d1 migrations apply <name> --remote`.
+	// The preview env has no binding on purpose, so its traffic is never recorded as prod's.
+	"d1_databases": [
+		{
+			"binding": "RECORDS",
+			"database_name": "minds-monster-records",
+			"database_id": "645db78b-b47a-4dc3-94f3-818bcee5b4d8",
+			"migrations_dir": "migrations"
+		}
+	],
 	// The Casting Director's dossier cache. A dossier describes artwork that can never change, so
 	// entries are written without a TTL — this is a permanent store keyed by
 	// assetKey(chain, address, tokenId), not an expiring cache.
@@ -269,6 +282,12 @@
 		"OWNER_NOTIFY_EMAIL": "adam@munerate.com",
 		"SITE_ORIGIN": "https://minds.monster",
 		"ANALYTICS_DATASET": "minds_monster_events",
+		// x402 payment checks (worker/records.js): the token on Base mainnet. Receipts are read from
+		// the `BASE_RPC_URL` SECRET (the Alchemy Base URL — `wrangler secret put BASE_RPC_URL`),
+		// then these public fallbacks. Public alone is not enough: mainnet.base.org answered 429 to
+		// every call from a Worker on 2026-09-19.
+		"X402_TOKEN_ADDRESS": "0x675ae1Ca87b2Cfe5F50457d4D01da4C60347e30A",
+		"BASE_RPC_URLS": "https://mainnet.base.org,https://base.drpc.org,https://1rpc.io/base",
 		"VITE_ALCHEMY_NETWORK": "eth-mainnet",
 		"VITE_MIND_ID": "240b453e-f36b-1410-8466-00039ce7df11",
 		"VITE_PROD_SERVER": "https://nft-assets-server.still-snowflake-5e6a.workers.dev"
@@ -295,6 +314,14 @@
 				{
 					"binding": "ANALYTICS",
 					"dataset": "minds_monster_events_staging"
+				}
+			],
+			"d1_databases": [
+				{
+					"binding": "RECORDS",
+					"database_name": "minds-monster-records-staging",
+					"database_id": "eef4eb62-ae88-4e0b-95fa-4786ff2c1f9b",
+					"migrations_dir": "migrations"
 				}
 			],
 			"kv_namespaces": [
@@ -369,7 +396,9 @@
 				"SUPPORT_FROM": "minds.monster Support <support@minds.monster>",
 				"OWNER_NOTIFY_EMAIL": "adam@munerate.com",
 				"SITE_ORIGIN": "https://staging.minds.monster",
-				"ANALYTICS_DATASET": "minds_monster_events_staging"
+				"ANALYTICS_DATASET": "minds_monster_events_staging",
+				"X402_TOKEN_ADDRESS": "0x675ae1Ca87b2Cfe5F50457d4D01da4C60347e30A",
+				"BASE_RPC_URLS": "https://mainnet.base.org,https://base.drpc.org,https://1rpc.io/base"
 			}
 		},
 		"preview": {
@@ -450,7 +479,9 @@
 				"SUPPORT_FROM": "minds.monster Support <support@minds.monster>",
 				"OWNER_NOTIFY_EMAIL": "adam@munerate.com",
 				"SITE_ORIGIN": "https://v2.minds.monster",
-				"ANALYTICS_DATASET": "minds_monster_events_preview"
+				"ANALYTICS_DATASET": "minds_monster_events_preview",
+				"X402_TOKEN_ADDRESS": "0x675ae1Ca87b2Cfe5F50457d4D01da4C60347e30A",
+				"BASE_RPC_URLS": "https://mainnet.base.org,https://base.drpc.org,https://1rpc.io/base"
 			}
 		}
 	}

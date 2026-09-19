@@ -21,15 +21,46 @@ test.afterEach(() => { globalThis.fetch = originalFetch; });
 
 const entry = (key, extra = {}) => ({ key, nft: { tokenId: '1', contract: { address: '0xabc' } }, ...extra });
 
+// Casting calls, and the owner's records of them (POST /api/records/cast), counted apart.
+const recordingFetch = (respond) => {
+  const seen = { casts: 0, reports: [] };
+  globalThis.fetch = async (url, init) => {
+    if (String(url).includes('/api/records/cast')) {
+      seen.reports.push(JSON.parse(init.body));
+      return new Response(null, { status: 204 });
+    }
+    seen.casts += 1;
+    return respond();
+  };
+  return seen;
+};
+
 test('a piece is cast once, and the launch gets the same promise instead of casting again', async () => {
-  let calls = 0;
-  globalThis.fetch = async () => { calls += 1; return sse({ subject: 'a colossal reptilian creature' }); };
+  const seen = recordingFetch(() => sse({ subject: 'a colossal reptilian creature' }));
   const first = precast(entry('eth-mainnet:0xabc:1'));
   const second = precast(entry('eth-mainnet:0xabc:1'));
   assert.equal(first, second);
   assert.equal(takePrecast('eth-mainnet:0xabc:1'), first);
   assert.equal((await first).subject, 'a colossal reptilian creature');
-  assert.equal(calls, 1);
+  assert.equal(seen.casts, 1);
+  assert.equal(seen.reports.length, 1, 'one cast, one record of it');
+  assert.equal(seen.reports[0].asset.key, 'eth-mainnet:0xabc:1');
+});
+
+// The pre-cast passes no onEvent, so before castPiece listened for itself, the `paid` phase —
+// the only place the x402 transaction hashes are ever announced — went nowhere.
+test('x402 payments announced during a pre-cast reach the owner’s records', async () => {
+  const hashA = `0x${'a'.repeat(64)}`;
+  const hashB = `0x${'b'.repeat(64)}`;
+  const seen = recordingFetch(
+    () =>
+      new Response(
+        `event: phase\ndata: {"phase":"paid","message":"${hashA},https://basescan.org/tx/${hashB}"}\n\nevent: result\ndata: {"subject":"x"}\n\n`,
+        { status: 200, headers: { 'content-type': 'text/event-stream' } },
+      ),
+  );
+  await precast(entry('eth-mainnet:0xabc:5'));
+  assert.deepEqual(seen.reports[0].txHashes, [hashA, `https://basescan.org/tx/${hashB}`]);
 });
 
 test('placeholder pieces and pieces without an NFT are never pre-cast', () => {

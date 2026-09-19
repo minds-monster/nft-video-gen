@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { BarChart3, Brain, LifeBuoy, LogOut } from 'lucide-react';
+import { BarChart3, Brain, LifeBuoy, LogOut, Table2 } from 'lucide-react';
 import OwnerLogin from './OwnerLogin.jsx';
 import OverviewPanel from './OverviewPanel.jsx';
+import RecordsPanel from './RecordsPanel.jsx';
 import SupportPanel from './SupportPanel.jsx';
 import TicketView from './TicketView.jsx';
 import MindPanel from './MindPanel.jsx';
@@ -9,12 +10,13 @@ import { clearOwnerSession, getStoredOwnerSession } from '../services/owner';
 import { cn } from '../lib/cn';
 
 // The website owner's private area, at `#/owner`. Lazy-loaded from App.jsx so none of this
-// reaches the visitor bundle. Three panels: Overview (analytics), Support (the inbox), Mind
-// (the support Mind's health). Route segments after /owner pick the panel and, for
-// support, the open ticket: `#/owner/support/<ticketId>`.
+// reaches the visitor bundle. Four panels: Overview (analytics), Records (assets used, x402
+// payments, and who), Support (the inbox), Mind (the support Mind's health). Route segments
+// after /owner pick the panel and, for support, the open ticket: `#/owner/support/<ticketId>`.
 
 const NAV = [
   { key: 'overview', label: 'Overview', icon: BarChart3 },
+  { key: 'records', label: 'Records', icon: Table2 },
   { key: 'support', label: 'Support', icon: LifeBuoy },
   { key: 'mind', label: 'Mind', icon: Brain },
 ];
@@ -61,6 +63,7 @@ const OwnerArea = ({ route }) => {
 
       <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-8">
         {panel === 'overview' && <OverviewPanel token={session.token} />}
+        {panel === 'records' && <RecordsPanel token={session.token} />}
         {panel === 'support' && !ticketId && <SupportPanel token={session.token} onOpenTicket={(id) => route.navigate(`/owner/support/${id}`)} />}
         {panel === 'support' && ticketId && <TicketView token={session.token} ticketId={ticketId} onBack={() => route.navigate('/owner/support')} />}
         {panel === 'mind' && <MindPanel token={session.token} />}

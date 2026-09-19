@@ -14,6 +14,7 @@ import { mindsClient, connectionAlias, parseApprovalDecision } from './minds.js'
 import { signSession } from './session.js';
 import { ensureProducerReady } from './mind-chat.js';
 import { record as trackEvent } from './analytics.js';
+import { recordMindConnection, visitorIdFrom } from './records.js';
 
 const json = (data, status = 200) =>
   new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json; charset=utf-8' } });
@@ -169,6 +170,12 @@ export async function handleConnectStatus(request, env, ctx) {
     // the Worker is the only party that KNOWS the Mind said yes. Repeated polls after approval
     // return early above via the client, which stops polling once it has a token.
     trackEvent(env, 'connect_approved', { mindId: result.mindId });
+    // The owner's record of it, tied to the visitor who asked (the browser sends its guestId).
+    const recording = visitorIdFrom(request, env)
+      .then((visitorId) => recordMindConnection(env, { connectionId, mindId: result.mindId, name: result.mindName ?? null, visitorId }))
+      .catch((err) => console.warn('records: connection not recorded:', err?.message ?? err));
+    if (ctx?.waitUntil) ctx.waitUntil(recording);
+    else await recording;
     return json({ status: 'approved', sessionToken: token, mindId: result.mindId, mindName: result.mindName, expiresAt });
   }
   return json({ status: result.status });

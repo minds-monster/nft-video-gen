@@ -8,6 +8,8 @@
 
 import { chat, jsonFrom, streamChat } from './nvidia.js';
 import { sseResponse } from './sse.js';
+import { requireSession } from './session.js';
+import { recordAssetInputs, visitorIdFrom } from './records.js';
 import { SCREENWRITER_BRIEF, SHOT_SPEC_SCHEMA, subjectSlots } from './rulebook.js';
 import { readFilmFrames } from './film-frames.js';
 import { brandHits, proseOf } from './director-risks.js';
@@ -184,13 +186,22 @@ export const validate = (spec, cast, { maxBeats, maxReferences }) => {
   }
 
   // A frame slot must name a frame that exists — it decides which stored image a render is sent.
+  // A piece with NO frames loses the field instead of failing the run: the only possible fix is
+  // the artwork, which is what refKeysForPlan would send anyway. Measured 2026-09-19: a model
+  // wrote "frame": 1 on a frameless piece in both the first pass and the repair, and the whole
+  // screenplay died over a slot whose meaning was never in doubt. A wrong number on a piece
+  // that HAS frames is still refused — there the model meant a moment, and the repair can find it.
   for (const slot of spec.referencePlan) {
     if (slot.frame === undefined || slot.frame === null) continue;
     const frames = cast.find((entry) => entry.key === slot.key)?.filmFrames?.frames ?? [];
+    if (!frames.length) {
+      delete slot.frame;
+      continue;
+    }
     if (!frames.some((frame) => frame.n === slot.frame)) {
       throw new Error(
-        `A referencePlan slot names film frame ${slot.frame}, which is not in that cast member's Film frames list` +
-          (frames.length ? ` (frames 1-${frames.length}).` : ' — it has none. Omit "frame" to use the artwork itself.'),
+        `A referencePlan slot names film frame ${slot.frame}, which is not in that cast member's Film frames list ` +
+          `(frames 1-${frames.length}).`,
       );
     }
   }
@@ -282,7 +293,7 @@ const request = (env, payload, draft) => ({
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, Number(value) || min));
 
-export const screenwrite = async (httpRequest, env) => {
+export const screenwrite = async (httpRequest, env, ctx) => {
   const payload = await httpRequest.json();
   const { prompt, cast, note } = payload;
 
@@ -309,6 +320,23 @@ export const screenwrite = async (httpRequest, env) => {
     1,
     PAID_MAX_REFERENCES,
   );
+
+  // The owner's record of which assets went into a film, and whose. Every film on every
+  // environment passes through here, unlike casting, which prod does off-site.
+  const recording = Promise.all([visitorIdFrom(httpRequest, env), requireSession(httpRequest, env)])
+    .then(([visitorId, session]) =>
+      recordAssetInputs(env, {
+        stage: note ? 'rewrite' : 'screenplay',
+        cast,
+        primaryKey: payload.primaryKey ?? null,
+        submissionId: crypto.randomUUID(),
+        visitorId,
+        mindId: session?.mindId ?? null,
+      }),
+    )
+    .catch((err) => console.warn('records: screenplay cast not recorded:', err?.message ?? err));
+  if (ctx?.waitUntil) ctx.waitUntil(recording);
+  else await recording;
 
   await attachFilmFrames(env, cast);
 

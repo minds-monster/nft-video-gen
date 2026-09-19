@@ -6,6 +6,7 @@ import { mindsClient, chatAlias } from './minds.js';
 import { requireSession } from './session.js';
 import { buildProducerBriefing, BRIEFING_HISTORY_MARKER } from './producer-briefing.js';
 import { collectProductionState, putSnapshot, recordConnect } from './producer-state.js';
+import { linkVisitor, visitorIdFrom } from './records.js';
 import { chat } from './nvidia.js';
 import { messageToText } from '../src/lib/text.js';
 import { parseMail, formatMail, SEEN_ACK_PREFIX, SUBJECT_MAX } from '../src/lib/mail.js';
@@ -288,9 +289,17 @@ export function deriveLivenessState(history) {
   return 'inactive';
 }
 
-export async function mindChatInit(request, env) {
+export async function mindChatInit(request, env, ctx) {
   const session = await requireSession(request, env);
   if (!session) return json({ error: 'unauthorized' }, 401);
+
+  // Every load of a connected visitor re-affirms which Mind this browser is — which also covers
+  // sessions approved before the records existed, and hands the visitor's guest rows to the Mind.
+  const linking = visitorIdFrom(request, env)
+    .then((visitorId) => linkVisitor(env, { visitorId, mindId: session.mindId }))
+    .catch((err) => console.warn('records: visitor not linked:', err?.message ?? err));
+  if (ctx?.waitUntil) ctx.waitUntil(linking);
+  else await linking;
 
   // The client's production snapshot rides in on init, BEFORE the briefing is composed
   // below — the ordering is the whole point. The prompt, cast and screenplay live only in
