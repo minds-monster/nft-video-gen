@@ -344,7 +344,7 @@ const CASTING_SERVER = (() => {
  * `nft` may be raw Alchemy or already wire-shaped — forCastingWire is idempotent, and the
  * Previs retry in useScreenwriter passes the raw object.
  */
-export const castPiece = ({ key, nft, refresh, previsNote }, options = {}) => {
+export const castPiece = ({ key, nft, refresh, previsNote, collectionName }, options = {}) => {
   // THE x402 PAYMENTS ARE HEARD HERE, not in the UI. The casting server announces what it paid
   // as a `paid` phase whose message is the transaction hashes, and only this browser receives
   // it. Listening in the caller's onEvent missed every pre-cast (src/lib/precast.js passes
@@ -369,11 +369,11 @@ export const castPiece = ({ key, nft, refresh, previsNote }, options = {}) => {
   // Every settled cast is a use of the asset. A failed one is reported only if money moved.
   return run.then(
     (result) => {
-      reportCast({ key, nft, txHashes: paid });
+      reportCast({ key, nft, collectionName, txHashes: paid });
       return result;
     },
     (error) => {
-      if (paid.length) reportCast({ key, nft, txHashes: paid });
+      if (paid.length) reportCast({ key, nft, collectionName, txHashes: paid });
       throw error;
     },
   );

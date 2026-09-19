@@ -85,9 +85,6 @@ const AppShell = () => {
   }, [route.path]);
 
   const composer = useCanvasComposer();
-  // Cast pieces as they settle on the canvas, so a moving piece's film frames are chosen before
-  // the screenplay is written rather than after it (src/lib/precast.js).
-  usePrecast(composer.cast);
   // The other half of the canvas. useCanvasComposer owns the prompt and the cast and says
   // outright that it owns no submit behaviour; this is what that seam was left for.
   const screenwriter = useScreenwriter();
@@ -106,6 +103,12 @@ const AppShell = () => {
   // src/lib/draftStore.js for why it exists and src/hooks/useDraftPersistence.js for the order
   // it restores things in.
   const draft = useDraftPersistence({ composer, screenwriter, session });
+
+  // Cast pieces as they settle on the canvas, so a moving piece's film frames are chosen before
+  // the screenplay is written rather than after it (src/lib/precast.js). Only pieces the visitor
+  // put there this visit, and never on the owner's pages: every cast is paid, and a restored
+  // draft used to re-cast on each load — see precastable.
+  usePrecast(composer.cast, { enabled: route.segments[0] !== 'owner', skip: draft.restoredKeys });
 
   // Restore THIS film's storyboard once there is both a session to fetch it with and a spec
   // saying which film we are looking at.

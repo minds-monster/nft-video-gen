@@ -15,11 +15,14 @@ import { castPiece } from '../services/swarm.js';
 
 const inflight = new Map();
 
+/** The same name useScreenwriter sends the Screenwriter, for the owner's records. */
+export const collectionNameOf = (entry) => entry?.collection?.name ?? entry?.collection?.brand?.name ?? null;
+
 /** Start casting this piece, once. Returns the (shared) promise of its dossier, or null. */
 export const precast = (entry) => {
   if (!entry?.key || !entry?.nft || entry.isMock) return null;
   if (inflight.has(entry.key)) return inflight.get(entry.key);
-  const promise = castPiece({ key: entry.key, nft: entry.nft }, { retries: 1 }).catch((error) => {
+  const promise = castPiece({ key: entry.key, nft: entry.nft, collectionName: collectionNameOf(entry) }, { retries: 1 }).catch((error) => {
     // A failed pre-cast must not stick: the launch will cast it again, with the visitor watching.
     inflight.delete(entry.key);
     throw error;
@@ -28,6 +31,18 @@ export const precast = (entry) => {
   inflight.set(entry.key, promise);
   return promise;
 };
+
+/**
+ * Which pieces on the canvas may be pre-cast: every one except those in `skip`.
+ *
+ * `skip` is the pieces a saved draft put back (useDraftPersistence's `restoredKeys`). Every cast
+ * is paid — the casting server settles x402 on each one, cached or not — so pre-casting a restored
+ * draft charged the pieces' creators and owners again on EVERY page load, the owner's own pages
+ * included: auth.test's draft paid for Fragile Memories three times in six minutes of opening the
+ * Records tab (2026-09-19). A restored piece was cast in the session that put it there, so its
+ * film frames already exist; the launch casts it if it is actually used.
+ */
+export const precastable = (cast, skip) => (cast ?? []).filter((entry) => entry?.key && !skip?.has(entry.key));
 
 /** The pre-cast for this piece, if one was started — the launch awaits it instead of casting. */
 export const takePrecast = (key) => inflight.get(key) ?? null;

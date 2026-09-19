@@ -8,7 +8,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { precast, takePrecast } from '../../src/lib/precast.js';
+import { precast, precastable, takePrecast } from '../../src/lib/precast.js';
 
 const sse = (dossier) =>
   new Response(`event: phase\ndata: {"phase":"looking"}\n\nevent: result\ndata: ${JSON.stringify(dossier)}\n\n`, {
@@ -75,4 +75,22 @@ test('a failed pre-cast does not stick — the launch casts it again', async () 
   const failed = precast(entry('eth-mainnet:0xabc:4'));
   await assert.rejects(failed);
   assert.equal(takePrecast('eth-mainnet:0xabc:4'), null);
+});
+
+// Every cast is paid. A restored draft's pieces were pre-cast on each page load — the owner's
+// own pages included — and charged their creators and owners again every time (2026-09-19).
+test('pieces a draft restored are left for the launch; pieces added this visit are pre-cast', () => {
+  const restored = entry('eth-mainnet:0x4f18:25');
+  const added = entry('eth-mainnet:0xbeb1:938');
+  const skip = new Set([restored.key]);
+  assert.deepEqual(precastable([restored, added], skip).map((e) => e.key), [added.key]);
+  assert.deepEqual(precastable([restored], skip), [], 'a reload of a saved draft casts nothing');
+  assert.deepEqual(precastable([restored, added]).map((e) => e.key), [restored.key, added.key], 'no draft, nothing skipped');
+  assert.deepEqual(precastable(null, skip), []);
+});
+
+test('the cast report names the piece’s collection from the canvas entry', async () => {
+  const seen = recordingFetch(() => sse({ subject: 'x' }));
+  await precast(entry('eth-mainnet:0xabc:6', { collection: { name: 'HUXLEY Robots' } }));
+  assert.equal(seen.reports[0].asset.collectionName, 'HUXLEY Robots');
 });

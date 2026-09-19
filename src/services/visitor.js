@@ -18,13 +18,15 @@ export const identityHeaders = () => {
  * Tell the Worker a piece was cast, with any x402 transaction hashes the casting stream paid.
  * Fire-and-forget: a lost record must never be something the visitor sees.
  */
-export const reportCast = ({ key, nft, txHashes = [] }) => {
+export const reportCast = ({ key, nft, collectionName = null, txHashes = [] }) => {
   try {
     const body = JSON.stringify({
       asset: {
         key,
         name: nft?.name ?? nft?.title ?? null,
-        collectionName: nft?.collection?.name ?? nft?.contract?.name ?? nft?.contract?.openSeaMetadata?.collectionName ?? null,
+        // The cast entry's own collection first: the launch passes the trimmed casting wire as
+        // `nft`, which carries no collection at all.
+        collectionName: collectionName || nft?.collection?.name || nft?.contract?.name || nft?.contract?.openSeaMetadata?.collectionName || null,
       },
       txHashes,
     });

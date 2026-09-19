@@ -7,7 +7,7 @@ import {
   screenwrite,
 } from '../services/swarm';
 import { resolveNftName } from '../lib/nftMedia';
-import { takePrecast } from '../lib/precast';
+import { collectionNameOf, takePrecast } from '../lib/precast';
 import { useMindChatContext } from '../context/mindChat';
 
 // Where the canvas is in the pipeline. Kept as one value rather than a set of booleans so
@@ -318,7 +318,7 @@ export const useScreenwriter = () => {
             const dossier =
               (early ? await early.catch(() => null) : null) ??
               (await castPiece(
-                forCastingWire({ key: entry.key, nft: entry.nft }),
+                { ...forCastingWire({ key: entry.key, nft: entry.nft }), collectionName: collectionNameOf(entry) },
                 { signal, onEvent: feed(entry.key), retries: 1 },
               ));
             if (signal.aborted) return;
@@ -383,7 +383,7 @@ export const useScreenwriter = () => {
                 // so the reasoning appears on the card it belongs to.
                 patch(entry.key, { status: 'casting' });
                 const revisedDossier = await castPiece(
-                  { key: entry.key, nft: entry.nft, refresh: true, previsNote: issue.detail },
+                  { key: entry.key, nft: entry.nft, refresh: true, previsNote: issue.detail, collectionName: collectionNameOf(entry) },
                   { signal, onEvent: feed(entry.key), retries: 1 },
                 );
                 entry.dossier = revisedDossier;

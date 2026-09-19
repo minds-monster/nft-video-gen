@@ -55,6 +55,10 @@ export const useDraftPersistence = ({ composer, screenwriter, session }) => {
 
   const [local] = useState(() => readLocalDraft());
   const [restored, setRestored] = useState(false);
+  // The pieces the last restore put on the canvas. App.jsx hands these to usePrecast as `skip`:
+  // the visitor did not add them this visit, and pre-casting them would pay for them again on
+  // every page load (src/lib/precast.js precastable).
+  const [restoredKeys, setRestoredKeys] = useState(() => new Set());
   const [pending, setPending] = useState(() => !isEmptyDraft(local) || Boolean(token));
   // What was last put back, so an edit can be told apart from the restore's own re-render.
   const restoredSigRef = useRef(null);
@@ -70,6 +74,7 @@ export const useDraftPersistence = ({ composer, screenwriter, session }) => {
       setDraft(draft);
       restoreComposer(state.composer);
       restoreScreenwriter(state.screenwriter);
+      setRestoredKeys(new Set((draft.cast ?? []).map((entry) => entry?.key).filter(Boolean)));
       setRestored(true);
     },
     [restoreComposer, restoreScreenwriter],
@@ -179,5 +184,5 @@ export const useDraftPersistence = ({ composer, screenwriter, session }) => {
     if (token) deleteDraft(token).catch(() => {});
   }, [resetScreenwriter, clearComposition, token]);
 
-  return { pending, restored, startFresh };
+  return { pending, restored, restoredKeys, startFresh };
 };
