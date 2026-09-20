@@ -32,6 +32,76 @@ import { H3_FORMAT, H3_RULES, H3_LIMITS } from './rulebook.js';
  * a GRID block added, a CONTINUITY block added, a seating constraint added. */
 export const REVISABLE_BLOCKS = ['world', 'grade', 'guard', 'staging', 'continuity', 'camera'];
 
+/**
+ * One demand, as the model must write it.
+ *
+ * Shared by the shooting plan and by the read-back of a delivered take, because a rehearsal the
+ * Director asks for after watching a daily is the SAME object as one it asked for before the film
+ * was shot — same filter, same price, same gate (worker/director-gate.js). A second copy of this
+ * shape would be the first thing to drift.
+ */
+export const DEMAND_ITEM_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['id', 'question', 'why', 'beats', 'subjects', 'direction', 'answers', 'onHeld', 'onFailed'],
+  properties: {
+    id: { type: 'string', description: 'A short kebab-case slug naming the demand, e.g. "letters-become-brain".' },
+    question: {
+      type: 'string',
+      description:
+        'The one question the rehearsal answers, in the visitor\'s terms. A single YES/NO ' +
+        'question, never an either/or — "Do the letters physically become the brain?", not ' +
+        '"...or does a brain fade in?". Must end in a question mark.',
+    },
+    answers: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['held', 'failed'],
+      description:
+        'The two buttons the visitor presses after watching, in the film\'s own words, six ' +
+        'words or fewer each: what they click if it worked, and what they click if it did not.',
+      properties: {
+        // The example is framed as ANOTHER film's on purpose: given it bare, the model
+        // copied it verbatim onto a test about roaring creatures (staging, 2026-09-18).
+        held: { type: 'string', description: 'What they click if it worked, in THIS film\'s words. For comparison only, a different film about letters swelling into a brain used "The letters became the brain" — never reuse those words.' },
+        failed: { type: 'string', description: 'What they click if it did not, in THIS film\'s words. That other film used "A brain faded in over them" — never reuse those words.' },
+      },
+    },
+    why: {
+      type: 'string',
+      description:
+        'One sentence: what makes you doubt the model will do this — a phrase in their prompt ' +
+        'before the film is shot, or what they wrote about the take they just watched.',
+    },
+    beats: {
+      type: 'array',
+      items: { type: 'integer', minimum: 1 },
+      description: 'The 1-based beat numbers this demand lives in.',
+    },
+    subjects: {
+      type: 'array',
+      items: { type: 'integer', minimum: 1 },
+      description: 'The <Subject N> numbers the rehearsal needs on screen. Their references travel with it.',
+    },
+    direction: {
+      type: 'string',
+      description:
+        'The COMPLETE beat text the rehearsal renders — the demand restated as a physical ' +
+        'constraint rather than a hope. It is written straight into the render, so it must ' +
+        'read as the script: what the thing on screen physically does, what it must not do ' +
+        '(no fade, no overlay, no second copy appearing), and where the camera is. It must ' +
+        'give the SUBJECT something to do: a beat that only describes a camera move is ' +
+        'dropped, because the film\'s camera block is already rendered in every rehearsal.',
+    },
+    onHeld: { type: 'string', description: 'One sentence: what you do if the rehearsal holds.' },
+    onFailed: {
+      type: 'string',
+      description:
+        'One sentence: what you change if it fails. If this is the same as onHeld, it is not a demand.',
+    },
+  },
+};
+
 export const SHOOTING_PLAN_SCHEMA = {
   type: 'object',
   additionalProperties: false,
@@ -127,62 +197,7 @@ export const SHOOTING_PLAN_SCHEMA = {
         '$0.48. This is judgement, not measurement, and it is labelled that way to the visitor; ' +
         'it is also REQUIRED before the film is shot. Empty only when the prompt asks for nothing ' +
         'you cannot vouch for. MOST DECISIVE FIRST.',
-      items: {
-        type: 'object',
-        additionalProperties: false,
-        required: ['id', 'question', 'why', 'beats', 'subjects', 'direction', 'answers', 'onHeld', 'onFailed'],
-        properties: {
-          id: { type: 'string', description: 'A short kebab-case slug naming the demand, e.g. "letters-become-brain".' },
-          question: {
-            type: 'string',
-            description:
-              'The one question the rehearsal answers, in the visitor\'s terms. A single YES/NO ' +
-              'question, never an either/or — "Do the letters physically become the brain?", not ' +
-              '"...or does a brain fade in?". Must end in a question mark.',
-          },
-          answers: {
-            type: 'object',
-            additionalProperties: false,
-            required: ['held', 'failed'],
-            description:
-              'The two buttons the visitor presses after watching, in the film\'s own words, six ' +
-              'words or fewer each: what they click if it worked, and what they click if it did not.',
-            properties: {
-              // The example is framed as ANOTHER film's on purpose: given it bare, the model
-              // copied it verbatim onto a test about roaring creatures (staging, 2026-09-18).
-              held: { type: 'string', description: 'What they click if it worked, in THIS film\'s words. For comparison only, a different film about letters swelling into a brain used "The letters became the brain" — never reuse those words.' },
-              failed: { type: 'string', description: 'What they click if it did not, in THIS film\'s words. That other film used "A brain faded in over them" — never reuse those words.' },
-            },
-          },
-          why: { type: 'string', description: 'One sentence: what in their prompt makes you doubt the model will do this.' },
-          beats: {
-            type: 'array',
-            items: { type: 'integer', minimum: 1 },
-            description: 'The 1-based beat numbers this demand lives in.',
-          },
-          subjects: {
-            type: 'array',
-            items: { type: 'integer', minimum: 1 },
-            description: 'The <Subject N> numbers the rehearsal needs on screen. Their references travel with it.',
-          },
-          direction: {
-            type: 'string',
-            description:
-              'The COMPLETE beat text the rehearsal renders — the demand restated as a physical ' +
-              'constraint rather than a hope. It is written straight into the render, so it must ' +
-              'read as the script: what the thing on screen physically does, what it must not do ' +
-              '(no fade, no overlay, no second copy appearing), and where the camera is. It must ' +
-              'give the SUBJECT something to do: a beat that only describes a camera move is ' +
-              'dropped, because the film\'s camera block is already rendered in every rehearsal.',
-          },
-          onHeld: { type: 'string', description: 'One sentence: what you do if the rehearsal holds.' },
-          onFailed: {
-            type: 'string',
-            description:
-              'One sentence: what you change if it fails. If this is the same as onHeld, it is not a demand.',
-          },
-        },
-      },
+      items: DEMAND_ITEM_SCHEMA,
     },
     plan: {
       type: 'string',
@@ -244,6 +259,118 @@ export const REVISION_SCHEMA = {
     },
   },
 };
+
+/**
+ * What the Director must answer after reading a visitor's notes on a delivered take.
+ *
+ * Deliberately NOT the same shape as REVISION_SCHEMA. A screen test comes back with an answer to a
+ * question the Director itself asked, so the only open decisions are "what does this mean" and
+ * "does one block change". Notes on a daily are the opposite: the question is the visitor's, it
+ * arrives in their words, and the expensive decision is whether the fix is certain enough to shoot
+ * or has to be REHEARSED first. So `demands` is here, in the same shape the shooting plan uses, and
+ * the gate holds the next take until they are answered.
+ */
+export const DAILY_NOTES_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['finding', 'revision', 'demands', 'shootAgain'],
+  properties: {
+    finding: {
+      type: 'string',
+      description:
+        'One or two sentences, to the visitor, on what their notes mean FOR THE NEXT TAKE — not a ' +
+        'description of the clip they just watched. They watched it. Name the defect in their ' +
+        'terms and say what you are doing about it. If they told you it is right, say that and ' +
+        'change nothing.',
+    },
+    revision: {
+      type: ['object', 'null'],
+      additionalProperties: false,
+      required: ['block', 'text', 'why'],
+      description:
+        'The one change to make to the script, or null. Null is the right answer when the notes ' +
+        'are praise, when they name nothing you can act on, or when the fix belongs in a rehearsal ' +
+        'before it belongs in the script.',
+      properties: {
+        block: { type: 'string', enum: REVISABLE_BLOCKS, description: 'Which named block of the script to replace.' },
+        text: {
+          type: 'string',
+          description:
+            'The COMPLETE replacement text for that block, not a diff and not an instruction. It ' +
+            'is written straight into the script the next take renders. Keep everything the ' +
+            'existing block already does and add what is missing.',
+        },
+        why: { type: 'string', description: 'One sentence, addressed to the visitor, in their own terms.' },
+      },
+    },
+    demands: {
+      type: 'array',
+      maxItems: 2,
+      description:
+        'Rehearsals that must be shot and answered BEFORE the next full take, because your fix is ' +
+        'a guess until it has been seen. Each is a six-second render of one beat inside the real ' +
+        'film, about $0.48, and the visitor cannot shoot again until they are answered — so ask ' +
+        'for one only where the alternative is buying the full take twice. Empty when the fix is ' +
+        'certain, and empty when the notes are praise. MOST DECISIVE FIRST.',
+      items: DEMAND_ITEM_SCHEMA,
+    },
+    shootAgain: {
+      type: 'boolean',
+      description:
+        'True if, with your revision applied and your rehearsals answered, this film is worth ' +
+        'shooting again. False if the take the visitor just watched is the film — which is a real ' +
+        'answer, and the one to give when their notes are praise.',
+    },
+  },
+};
+
+export const DAILY_BRIEF = `You are the Director, reading the visitor's notes on a take they have
+just watched. The take was shot, paid for, and delivered. They wrote to you about it.
+
+THIS IS THE MOST VALUABLE INPUT YOU EVER GET, and it is the one the rest of your machinery cannot
+produce. The risk register measures what the artwork will do to a render. A screen test answers a
+question YOU thought to ask. Neither of them can tell you that the ape's coat went grey in the last
+second, or that the move you were proud of reads as a stumble. Only the person who watched it can,
+and they have.
+
+READ WHAT THEY WROTE, NOT WHAT YOU EXPECTED THEM TO WRITE.
+
+- Their words outrank your plan, your reading, and every earlier verdict on this film. If they say
+  the thing you tested and cleared came out wrong, it came out wrong.
+- Do not translate their defect into a nearby one you already know how to fix. "The crowd thinned
+  out halfway" is about the crowd; answering it with a continuity block is answering a different
+  note.
+- A note you genuinely cannot act on — too vague to name a block, too broad to rehearse — is
+  answered by saying so plainly, not by rewriting something adjacent to look responsive.
+
+PRAISE IS AN ANSWER. "That is the one" means the film is made: no revision, no rehearsal,
+shootAgain false. Inventing a defect to look useful spends the visitor's money on your vanity, and
+a script that survived a delivered take is a script that works.
+
+WHAT A FIX IS. When you do revise, revise ONE named block, completely, and write it as the script
+rather than as advice about the script. This is how this film's hero was actually made — take by
+take, each fixing a NAMED defect: a GRID block binding each driver to their own car, a CONTINUITY
+block forbidding cuts, a GUARD line stopping a chrome display form coming along into the render.
+Never delete what the visitor asked to see, and never touch a proper noun to be safe — a landmark,
+a place, a title, the piece's own name are what the film is ABOUT.
+
+RE-MECHANISE, DO NOT RE-WORD. A defect is fixed by giving the model a different physical process to
+render, not by adding a sentence forbidding the one it chose. "No dissolve" is the re-wording; "the
+letters are rubber that inflates, the inflated forms fuse along their seams" is the re-mechanising.
+
+THE DECISION THAT COSTS MONEY: REVISE, OR REHEARSE FIRST. The full take is expensive and the
+rehearsal is not. Ask for a rehearsal when your fix is a guess about whether the model CAN do
+something — a transformation re-mechanised, a motion the last take faked, a texture that came out
+flat. Do not ask for one when the fix is a constraint you are simply adding and can be confident
+of, and never ask for one that only re-renders the camera move: the film's camera block is already
+in every rehearsal you would shoot. A rehearsal the visitor must answer before they can shoot again
+is a real cost to them, in money and in waiting, so each one has to earn its place.
+
+You are given the script this take was rendered from, everything the visitor has said about earlier
+takes of this film, and every screen test verdict. Use them: a defect named twice is the one to
+fix, and a mechanism an earlier rehearsal proved is one your revision must not undo.
+
+${H3_RULES}`;
 
 export const DIRECTOR_BRIEF = `You are the Director on a film crew that turns licensed NFT artwork
 into short generated video. The Screenwriter has written the script; the Storyboarder may or may

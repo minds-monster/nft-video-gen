@@ -42,7 +42,7 @@ import { buildScreenTest, demandAsRisk, isDemandId, VERDICTS } from './screen-te
 import { relayScreenTestDigest } from './filmography.js';
 import { testGate } from './director-gate.js';
 import { parseBrief } from '../src/lib/directorBrief.js';
-import { recordVerdict } from './director-job.js';
+import { recordTakeNotes, recordVerdict, startNotesReview } from './director-job.js';
 import { parseRefKey, refKeysForPlan, screenTestRefKeys } from './film-frames.js';
 import { h3Params, h3ScriptFrom, h3Script } from '../src/lib/h3Script.js';
 import { record as trackEvent } from './analytics.js';
@@ -1009,6 +1009,90 @@ export async function handleDirectorVerdict(request, env) {
   }
 
   return json({ production, reviewing });
+}
+
+/**
+ * POST /api/director/notes — what the visitor made of a take they watched.
+ *
+ * THE LOOP THE METHOD WAS MISSING. A screen test is bought before the film to answer a question
+ * the Director thought to ask; this is the visitor answering a question nobody asked, after
+ * watching the thing they paid for. It is how the hero was actually made — six takes of the final
+ * shot, each one fixing a defect named after watching the last — and until now the only way to
+ * tell the Director anything was through a rehearsal's three buttons, which can only ever discuss
+ * what the Director already suspected.
+ *
+ * Spends nothing, so there is no money gate and no approval. What it may do is make the NEXT take
+ * cost more: a fix the Director cannot vouch for becomes a rehearsal on the shooting plan, and the
+ * gate holds the Shoot button until it is answered.
+ */
+export async function handleDirectorNotes(request, env) {
+  const session = await requireSession(request, env);
+  if (!session) return json({ error: 'unauthorized' }, 401);
+
+  const { filmId, takeId, notes } = await request.json().catch(() => ({}));
+  if (!filmId || !takeId) return json({ error: 'film_and_take_required' }, 400);
+
+  const written = String(notes ?? '').trim();
+  if (!written) {
+    return json(
+      { error: 'nothing_said', detail: 'There is nothing to read back. Write what you saw and the Director will act on it.' },
+      400,
+    );
+  }
+  // Long enough for a defect described properly, short enough that it is notes rather than a
+  // second screenplay — which is what the Screenplay panel is for.
+  if (written.length > 2000) {
+    return json({ error: 'too_long', detail: 'Notes are capped at 2000 characters.' }, 400);
+  }
+
+  const production = await loadProduction(env, session.mindId, filmId).catch(() => null);
+  const take = (production?.takes ?? []).find((entry) => entry.takeId === takeId) ?? null;
+  if (!take) return json({ error: 'unknown_take', detail: 'That take is not on this film.' }, 404);
+  if (take.kind === 'screen-test') {
+    // A rehearsal has a question, three buttons and its own read-back. Sending notes here instead
+    // would record them where nothing reads them, which is worse than refusing.
+    return json(
+      { error: 'not_a_daily', detail: 'That is a screen test. Answer its question instead — the note goes with your answer.' },
+      400,
+    );
+  }
+  if (take.status !== 'ready') {
+    return json({ error: 'not_watched', detail: 'That take produced no film, so there is nothing to have seen.' }, 400);
+  }
+
+  const updated = await recordTakeNotes(env, session.mindId, filmId, takeId, written);
+
+  // The spec lives in the visitor's browser and in their saved draft, nowhere else — the same
+  // recovery `startReview` does. A draft that has moved on to another film cannot be used to
+  // amend this one, so the notes stand on the record and the read-back is skipped.
+  const draft = await loadDraft(env, session.mindId).catch(() => null);
+  const spec = draft?.filmId === filmId ? draft.spec : null;
+  const [brief, prompt] = await Promise.all([
+    loadBrief(env, session.mindId, filmId).catch(() => null),
+    promptFor(env, session.mindId, filmId).catch(() => null),
+  ]);
+  const record = await startNotesReview(env, session.mindId, {
+    filmId,
+    take: { ...take, notes: { text: written, by: 'visitor', at: Date.now() } },
+    // Read back against the script as the Director has amended it so far, not against the one the
+    // take was shot from: the next take renders the revised film, and that is what a note is
+    // about changing.
+    spec: spec ? applyRevisions(spec, production?.revisions ?? []) : null,
+    prompt,
+    brief,
+    origin: new URL(request.url).origin,
+  });
+
+  return json({
+    production: updated,
+    jobId: record?.jobId ?? null,
+    reading: Boolean(record),
+    // Said out loud rather than inferred from a missing jobId: the visitor's words were kept, and
+    // the reason nothing is thinking about them is not a failure they should have to guess at.
+    detail: record
+      ? null
+      : 'Your notes are on the take. The Director could not read them back because this film’s screenplay is no longer open in this session.',
+  });
 }
 
 /**

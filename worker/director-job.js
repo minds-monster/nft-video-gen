@@ -34,7 +34,7 @@ import { authoriseSpend, getEnvelope } from './render-budget.js';
 import { LATENCY_SECONDS, MinimaxError, createH3Task, h3Content, pollVideo, priceUsd } from './minimax.js';
 import { extractFrames } from './frames.js';
 import { judgeFrames } from './director-judge.js';
-import { planShoot, reviewTest } from './director-agent.js';
+import { planShoot, reviewDaily, reviewTest } from './director-agent.js';
 import { signedMediaUrl } from './signed-media.js';
 import { relayFilmographyDigest, relayScreenTestDigest } from './filmography.js';
 
@@ -167,12 +167,71 @@ export const loadProduction = async (env, mindId, filmId) =>
  * Append a settled take. Idempotent on takeId, because the step that calls this can be retried
  * and a duplicated take would misreport what the visitor spent.
  */
-/** The Director's own reading of the film, and what it proposes to spend on. */
+/**
+ * The Director's own reading of the film, and what it proposes to spend on.
+ *
+ * A fresh reading REPLACES the last one — the same discipline as `replaceFreeRevisions`, and for
+ * the same reason: a demand from a reading that no longer applies must not keep the gate shut
+ * forever. The exception is a demand the Director asked for after reading a visitor's NOTES on a
+ * delivered take (`fromTakeId`). That one did not come from re-reading the script, so re-reading
+ * the script cannot retire it; it came from someone watching the film and saying what was wrong,
+ * and it retires the only way any test does — by being shot and answered (worker/director-gate.js).
+ */
 export async function saveShootingPlan(env, mindId, filmId, shootingPlan) {
   const record = await loadProduction(env, mindId, filmId);
-  const next = { ...record, filmId, shootingPlan, updatedAt: Date.now() };
+  const proposed = shootingPlan?.demands ?? [];
+  const byId = new Set(proposed.map((demand) => demand?.id));
+  const fromNotes = (record.shootingPlan?.demands ?? []).filter(
+    (demand) => demand?.fromTakeId && !byId.has(demand.id),
+  );
+  const next = {
+    ...record,
+    filmId,
+    shootingPlan: fromNotes.length ? { ...shootingPlan, demands: [...proposed, ...fromNotes] } : shootingPlan,
+    updatedAt: Date.now(),
+  };
   await env.MIND_CONNECTIONS.put(productionKey(mindId, filmId), JSON.stringify(next));
   return next;
+}
+
+/**
+ * Rehearsals the Director asked for after reading the visitor's notes on a delivered take.
+ *
+ * Added to the SHOOTING PLAN rather than to a list of their own, so they reach the gate, the
+ * Screen Tests panel and the test endpoint through machinery that already exists and is already
+ * paid for — a demand is a demand whether the Director thought of it before the film was shot or
+ * after watching it come back wrong. Idempotent by id: a visitor who writes twice about the same
+ * defect gets one rehearsal, not two charges.
+ *
+ * A film shot with `override: true` has no shooting plan at all, so one is opened here. It states
+ * only what this read-back found: the gate then holds the next take on these rehearsals rather
+ * than on `unread`, which is the truer description of where the film now stands.
+ */
+export async function addNotedDemands(env, mindId, filmId, demands, { reading = null, fromTakeId = null } = {}) {
+  if (!demands?.length) return null;
+  const record = await loadProduction(env, mindId, filmId);
+  const plan = record.shootingPlan ?? { reading: reading ?? '', plan: '', fixes: [], tests: [], skip: [], demands: [] };
+  const existing = new Set((plan.demands ?? []).map((demand) => demand?.id));
+  const added = demands
+    .filter((demand) => !existing.has(demand.id))
+    .map((demand) => ({ ...demand, fromTakeId, at: Date.now() }));
+  if (!added.length) return null;
+  const nextDemands = [...(plan.demands ?? []), ...added];
+  const registerUsd = (plan.tests ?? []).reduce((sum, test) => sum + (test.estUsd ?? 0), 0);
+  const demandUsd = nextDemands.reduce((sum, demand) => sum + (demand.estUsd ?? 0), 0);
+  const next = {
+    ...record,
+    filmId,
+    shootingPlan: {
+      ...plan,
+      demands: nextDemands,
+      totalTestUsd: Math.round((registerUsd + demandUsd) * 100) / 100,
+      at: plan.at ?? Date.now(),
+    },
+    updatedAt: Date.now(),
+  };
+  await env.MIND_CONNECTIONS.put(productionKey(mindId, filmId), JSON.stringify(next));
+  return added;
 }
 
 /**
@@ -265,6 +324,22 @@ export async function recordTakeRetest(env, mindId, filmId, takeId, retest) {
 export async function recordTakeReview(env, mindId, filmId, takeId, review) {
   const record = await loadProduction(env, mindId, filmId);
   const takes = record.takes.map((take) => (take.takeId === takeId ? { ...take, review } : take));
+  const next = { ...record, filmId, takes, updatedAt: Date.now() };
+  await env.MIND_CONNECTIONS.put(productionKey(mindId, filmId), JSON.stringify(next));
+  return next;
+}
+
+/**
+ * What the visitor said about a take they watched.
+ *
+ * On the take, beside its verdict and its review, because notes detached from the clip they are
+ * about are an opinion about nothing. Idempotent by takeId, like the verdict: someone who writes
+ * again after watching a second time has CHANGED what they think, not said two things.
+ */
+export async function recordTakeNotes(env, mindId, filmId, takeId, text) {
+  const record = await loadProduction(env, mindId, filmId);
+  const notes = { text, by: 'visitor', at: Date.now() };
+  const takes = record.takes.map((take) => (take.takeId === takeId ? { ...take, notes } : take));
   const next = { ...record, filmId, takes, updatedAt: Date.now() };
   await env.MIND_CONNECTIONS.put(productionKey(mindId, filmId), JSON.stringify(next));
   return next;
@@ -522,6 +597,111 @@ async function review(env, record, logger) {
   });
 
   logger.log('result', { finding: result.finding, revised: Boolean(result.revision), retest: result.retest });
+  await logger.setStatus('complete');
+}
+
+/**
+ * Read the visitor's notes on a delivered take and act on them.
+ *
+ * Costs nothing, so it never touches the money gate — but it is the step that decides what the
+ * NEXT take costs, which is why it is allowed to add rehearsals to the shooting plan. The gate
+ * (worker/director-gate.js) then holds the Shoot button until they are answered, exactly as it
+ * does for rehearsals the Director asked for before the film was first shot. That is the method
+ * this project keeps re-learning: cheap probes first, a named finding from each, then the take.
+ */
+async function notes(env, record, logger) {
+  const take = record.take;
+  const written = String(take?.notes?.text ?? '').trim();
+  if (!written) {
+    logger.log('phase', { phase: 'nothing-said', detail: 'No notes on this take to read.' });
+    await logger.setStatus('complete');
+    return;
+  }
+  if (!record.spec?.beats?.length) {
+    // Nothing to revise against and no beats to rehearse. The notes are still on the take, where
+    // the visitor wrote them and where the next reading of this film will find them.
+    logger.log('phase', { phase: 'no-script', detail: 'The screenplay for this film is no longer in hand, so there is nothing to amend.' });
+    await logger.setStatus('complete');
+    return;
+  }
+
+  logger.log('phase', { phase: 'reading-notes', detail: 'Reading what you saw against the film.' });
+
+  const production = await loadProduction(env, record.mindId, record.filmId).catch(() => null);
+  const finals = (production?.takes ?? []).filter((entry) => entry.kind !== 'screen-test');
+  const priorNotes = finals
+    .map((entry, index) => ({ index: index + 1, takeId: entry.takeId, notes: String(entry.notes?.text ?? '').trim() }))
+    .filter((entry) => entry.notes && entry.takeId !== take.takeId);
+  const priorVerdicts = (production?.takes ?? [])
+    .filter((entry) => entry.kind === 'screen-test' && entry.verdict?.answer)
+    .map((entry) => ({ question: entry.question, answer: entry.verdict.answer, note: entry.verdict.note ?? null }));
+
+  const result = await reviewDaily(env, {
+    spec: record.spec,
+    notes: written,
+    take: { params: record.params, costUsd: take.costUsd, script: record.script },
+    prompt: record.prompt ?? null,
+    brief: record.brief ?? null,
+    priorNotes,
+    priorVerdicts,
+    onReasoning: (text) => {
+      if (text) logger.log('reasoning', { delta: text });
+    },
+  });
+
+  if (result.droppedDemands.length) {
+    console.warn(
+      `Director demands dropped reading notes on ${take.takeId}: ` +
+        result.droppedDemands.map((demand) => `${demand.id} (${demand.reason})`).join(', '),
+    );
+  }
+  if (result.suppressedRevision) {
+    // A revision naming a block that is not revisable is the model reaching past what it is
+    // allowed to touch. Logged rather than silently dropped, like every other filtered proposal.
+    console.warn(`Director revision on ${take.takeId} named an unrevisable block; dropped.`);
+  }
+
+  logger.log('finding', { finding: result.finding, shootAgain: result.shootAgain, demands: result.demands.length });
+
+  if (result.revision) {
+    await appendRevision(env, record.mindId, record.filmId, {
+      ...result.revision,
+      fromTakeId: take.takeId,
+      fromNotes: written.slice(0, 200),
+    });
+    logger.log('revision', result.revision);
+  }
+
+  // The rehearsals, priced and filtered by `reviewDaily`, onto the shooting plan the gate reads.
+  const added = await addNotedDemands(env, record.mindId, record.filmId, result.demands, {
+    reading: result.finding,
+    fromTakeId: take.takeId,
+  });
+  for (const demand of added ?? []) {
+    logger.log('demand', {
+      riskId: `demand:${demand.id}`,
+      question: demand.question,
+      why: demand.why,
+      estUsd: demand.estUsd,
+    });
+  }
+
+  // On the durable take, where the panel reads it back — the same field a screen test's read-back
+  // lands in, so one component renders both.
+  await recordTakeReview(env, record.mindId, record.filmId, take.takeId, {
+    finding: result.finding,
+    shootAgain: result.shootAgain,
+    revised: result.revision ? { block: result.revision.block, why: result.revision.why } : null,
+    demands: (added ?? []).map((demand) => ({ riskId: `demand:${demand.id}`, question: demand.question, estUsd: demand.estUsd })),
+    at: Date.now(),
+  });
+
+  logger.log('result', {
+    finding: result.finding,
+    revised: Boolean(result.revision),
+    demands: (added ?? []).length,
+    shootAgain: result.shootAgain,
+  });
   await logger.setStatus('complete');
 }
 
@@ -980,6 +1160,7 @@ export async function handleDirectorQueue(batch, env) {
       else if (step === 'poll') await poll(env, record, logger);
       else if (step === 'assess') await assess(env, record, logger);
       else if (step === 'review') await review(env, record, logger);
+      else if (step === 'notes') await notes(env, record, logger);
       else if (step === 'pin') await pin(env, record, logger);
       else console.warn(`Director job ${jobId}: unknown step "${step}"`);
 
@@ -1140,6 +1321,44 @@ export async function startReview(env, mindId, { filmId, take, spec = null, prom
   record.take = { ...record.take, ...take, kind: 'screen-test' };
   await saveJob(env, mindId, record);
   await enqueue(env, { mindId, jobId: record.jobId, step: 'review' }, 1);
+  return record;
+}
+
+/**
+ * Read a delivered take's notes back. Spends nothing.
+ *
+ * A FRESH JOB, never the one that shot the take. A verdict on a screen test reopens its own job
+ * (handleDirectorVerdict) because that job is the only place the question and the rehearsal text
+ * live. A daily has neither: everything this read-back needs is on the durable take and in the
+ * saved draft, and reopening a finished shoot's log — days later, after the visitor got round to
+ * watching it — would rewrite the record of the shoot itself with something that is not about the
+ * shoot at all.
+ *
+ * Returns null when the screenplay is no longer in hand. The notes are already durable on the
+ * take by then, so nothing the visitor wrote is lost; there is simply nothing to amend against.
+ */
+export async function startNotesReview(env, mindId, { filmId, take, spec = null, prompt = null, brief = null, origin = null }) {
+  if (!String(take?.notes?.text ?? '').trim() || !spec?.beats?.length) return null;
+  const record = await createJob(env, mindId, {
+    filmId,
+    script: take.script ?? null,
+    params: take.params ?? { model: 'MiniMax-H3', resolution: '768P', duration: 6, ratio: '16:9' },
+    refKeys: take.refKeys ?? [],
+    proposalId: null,
+    costUsd: 0,
+    kind: 'notes',
+    origin,
+    spec,
+    prompt,
+    brief,
+    status: 'queued',
+    step: 'notes',
+  });
+  // The job reads THIS take — the delivered one, with the notes on it — not the placeholder
+  // `createJob` opens for a shot that is about to happen.
+  record.take = { ...record.take, ...take, kind: take.kind ?? 'take' };
+  await saveJob(env, mindId, record);
+  await enqueue(env, { mindId, jobId: record.jobId, step: 'notes' }, 1);
   return record;
 }
 

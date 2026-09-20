@@ -681,6 +681,21 @@ export const recordScreenTestVerdict = async ({ filmId, takeId, answer, note, jo
   return payload;
 };
 
+/**
+ * What the visitor made of a delivered take. Free — it spends nothing and needs no approval — but
+ * it may add rehearsals the Shoot button then waits on, which is the point.
+ */
+export const sendDailyNotes = async ({ filmId, takeId, notes }, token) => {
+  const response = await fetch('/api/director/notes', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filmId, takeId, notes }),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.detail ?? payload.error ?? 'Could not send those notes');
+  return payload;
+};
+
 /** Accept a scope the assistant proposed. The assistant itself cannot call this — the visitor
  * pressing a button is the only path, which is the whole boundary of its authority. */
 export const saveDirectorBrief = async ({ filmId, brief }, token) => {

@@ -47,6 +47,8 @@ const MovieRenderPanel = ({
   take,
   takeIndex,
   onJudge,
+  onNote,
+  noting,
   onRemember,
   onAdd,
   onNext,
@@ -117,7 +119,20 @@ const MovieRenderPanel = ({
       }
     >
       {take ? (
-        <TakeView take={take} index={takeIndex} onJudge={onJudge} onRemember={onRemember} onClear={onClear} />
+        <TakeView
+          // Keyed by the take, so the boxes inside it — a verdict's note, a daily's notes — start
+          // empty when the Viewer moves to a different clip. Without it the component is reused
+          // and the last take's unsent words travel to the next one, ready to be sent about a
+          // film they are not about.
+          key={take.takeId}
+          take={take}
+          index={takeIndex}
+          onJudge={onJudge}
+          onNote={onNote}
+          noting={noting}
+          onRemember={onRemember}
+          onClear={onClear}
+        />
       ) : !candidate ? (
         <PreviewEmpty />
       ) : (

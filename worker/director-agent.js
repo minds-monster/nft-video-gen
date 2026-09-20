@@ -1,6 +1,6 @@
 // The Director's judgement: which hazards are worth money, and what an answer means.
 //
-// TWO CALLS, AND NEITHER OF THEM TOUCHES THE SCRIPT'S FORMAT.
+// THREE CALLS, AND NONE OF THEM TOUCHES THE SCRIPT'S FORMAT.
 //
 // That separation is the whole design and it is worth being explicit about, because the obvious
 // thing to do — hand the model the script and ask it to improve it — is the thing that would
@@ -12,6 +12,8 @@
 //
 //   planShoot   — reads the film and the measured register, picks which hazards to buy answers to
 //   reviewTest  — reads a verdict, says what it means, and may replace ONE named block of prose
+//   reviewDaily — reads the visitor's notes on a DELIVERED take, and may replace one block or ask
+//                 for a rehearsal before the next take is bought
 //
 // A revision is a block of TEXT for a named field the Screenwriter already emits, which the same
 // compiler then assembles exactly as before. The model never sees, and never writes, the wire
@@ -28,7 +30,15 @@ import { subjectSlots } from './rulebook.js';
 import { chat, jsonFrom } from './nvidia.js';
 import { priceUsd } from './minimax.js';
 import { MOTION_TEST } from './director-risks.js';
-import { DIRECTOR_BRIEF, REVIEW_BRIEF, REVISABLE_BLOCKS, REVISION_SCHEMA, SHOOTING_PLAN_SCHEMA } from './director-brief.js';
+import {
+  DAILY_BRIEF,
+  DAILY_NOTES_SCHEMA,
+  DIRECTOR_BRIEF,
+  REVIEW_BRIEF,
+  REVISABLE_BLOCKS,
+  REVISION_SCHEMA,
+  SHOOTING_PLAN_SCHEMA,
+} from './director-brief.js';
 
 /** The film, as the Director reads it. Deliberately compact — this call decides, it does not draw.
  *
@@ -106,7 +116,7 @@ const cameraOnly = (direction) => {
   return sentences.every((part) => /^(the\s+)?camera\b/i.test(part));
 };
 
-const demandsOf = (data, spec, risks) => {
+const demandsOf = (data, spec, risks, { dropCameraOnly = true } = {}) => {
   const beatCount = spec?.beats?.length ?? 0;
   // Subjects, not slots — a piece with film-frame slots is one subject (rulebook.js subjectSlots).
   const referencePlan = subjectSlots(spec?.referencePlan);
@@ -139,7 +149,7 @@ const demandsOf = (data, spec, risks) => {
             ? 'the register already rehearses that beat'
             : seen.has(id)
               ? 'duplicate'
-              : cameraOnly(direction) && otherTestsAsked
+              : dropCameraOnly && cameraOnly(direction) && otherTestsAsked
                 ? 'only re-renders the camera move every other rehearsal already carries'
                 : null;
     if (reason) {
@@ -370,6 +380,88 @@ export async function reviewTest(
     // defect the visitor named.
     retest: !locked && Boolean(data?.retest),
     suppressedRevision: locked && Boolean(data?.revision),
+    usage,
+  };
+}
+
+/**
+ * Read the visitor's notes on a delivered take and decide what the next one does differently.
+ *
+ * THE THIRD CALL, AND THE ONLY ONE WHOSE QUESTION THE DIRECTOR DID NOT ASK. `planShoot` reads the
+ * register and the prompt; `reviewTest` reads back an answer to a question it chose. Both of them
+ * are the Director talking to itself about a film nobody has seen yet. This one starts from the
+ * one thing neither can produce — a person who watched the finished take and wrote down what was
+ * wrong with it — and it is the loop the hero was actually made in: 22 clips, six takes of the
+ * final shot, each one fixing a defect named after watching the last.
+ *
+ * It may ask for rehearsals, which `reviewTest` may not. That is the whole difference in kind: a
+ * screen test's re-test asks the SAME question again, while a note is a new defect, and whether
+ * the model can render the fix is exactly the thing worth $0.48 to find out before $1.95 is spent
+ * finding out the expensive way.
+ */
+export async function reviewDaily(
+  env,
+  { spec, notes, take, prompt = null, brief = null, priorNotes = [], priorVerdicts = [], signal, onReasoning },
+) {
+  const user = [
+    filmSummary(spec, brief, prompt),
+    '',
+    'THE TAKE THEY WATCHED:',
+    `  ${take?.params?.duration ?? '?'}s at ${take?.params?.resolution ?? '?'}, costing $${Number(take?.costUsd ?? 0).toFixed(2)}.`,
+    // The compiled script, not the spec's blocks: it is what H3 was actually sent, and a defect
+    // the visitor names may be in the assembly rather than in any one block.
+    take?.script?.text ? '' : null,
+    take?.script?.text ? 'THE SCRIPT IT WAS RENDERED FROM, VERBATIM:' : null,
+    take?.script?.text ? String(take.script.text).slice(0, 4000) : null,
+    '',
+    'WHAT THE VISITOR SAID, VERBATIM, HAVING WATCHED IT:',
+    `  "${String(notes).trim()}"`,
+    priorNotes.length ? '' : null,
+    priorNotes.length ? 'WHAT THEY SAID ABOUT EARLIER TAKES OF THIS FILM:' : null,
+    ...priorNotes.map((prior) => `  - Take ${prior.index}: "${prior.notes}"`),
+    priorVerdicts.length ? '' : null,
+    priorVerdicts.length ? 'THE SCREEN TESTS THIS FILM ALREADY ANSWERED:' : null,
+    ...priorVerdicts.map(
+      (prior) => `  - "${prior.question}" → ${prior.answer}${prior.note ? ` (${prior.note})` : ''}`,
+    ),
+    '',
+    'Say what their notes mean for the next take, change at most one named block of the script,',
+    'and ask for a rehearsal only where your fix is a guess about what the model can do.',
+  ]
+    .filter((line) => line !== null)
+    .join('\n');
+
+  const { data, usage } = await call(env, {
+    system: DAILY_BRIEF,
+    user,
+    schema: DAILY_NOTES_SCHEMA,
+    name: 'daily_notes',
+    signal,
+    onReasoning,
+  });
+
+  // The same filter the shooting plan's demands go through — a beat the film does not have is a
+  // hallucination whichever call invented it, and the price is computed here, never quoted by the
+  // model. `risks` is empty because the register is not what prompted these: they answer the
+  // visitor's own words, and a note that says the camera stumbled EARNS a camera rehearsal, which
+  // is why the camera-only rule is off here. There is no other rehearsal to read that answer off.
+  const { demands, droppedDemands } = demandsOf(data, spec, [], { dropCameraOnly: false });
+
+  const revision =
+    data?.revision && REVISABLE_BLOCKS.includes(data.revision.block) && String(data.revision.text ?? '').trim()
+      ? data.revision
+      : null;
+
+  return {
+    finding: data?.finding ?? '',
+    revision,
+    demands,
+    droppedDemands,
+    // A revision or a rehearsal means the film is not finished, whatever the model ticked: a
+    // Director that rewrites a block and then says the take is the film has contradicted itself,
+    // and the visitor would be left with an amended script and no reason to shoot it.
+    shootAgain: Boolean(data?.shootAgain) || Boolean(revision) || demands.length > 0,
+    suppressedRevision: Boolean(data?.revision) && !revision,
     usage,
   };
 }

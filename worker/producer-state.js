@@ -198,6 +198,11 @@ export async function collectProductionState(env, mindId) {
       settledAt: take.settledAt ?? null,
       cid: take.ipfs?.cid ?? null,
       screenplayCid: take.ipfs?.screenplayCid ?? null,
+      // What the visitor made of it, and what the Director did about that. A Mind that can say
+      // "you told me the coat went grey and the Director rewrote the guard block" is holding the
+      // thread of the production; one that can only name the CID is holding a receipt.
+      notes: str(take.notes?.text, 240),
+      finding: str(take.review?.finding, 240),
     }));
 
   return {

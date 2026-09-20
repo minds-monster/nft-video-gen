@@ -11,6 +11,7 @@ import {
   assessFilm,
   runScreenTest,
   recordScreenTestVerdict,
+  sendDailyNotes,
   rememberDirectorTake,
   saveDirectorBrief,
   startDirectorTake,
@@ -109,6 +110,9 @@ export function useDirector() {
   // landed in `error`, which renders under the whole risk register, and all the visitor saw
   // was the button come back — three times.
   const [batchHalt, setBatchHalt] = useState(null);
+  // The take whose notes are in flight, so the box that sent them can say so rather than sitting
+  // there looking like the button missed.
+  const [noting, setNoting] = useState(null);
 
   const abortRef = useRef(null);
   const timerRef = useRef(null);
@@ -468,6 +472,43 @@ export function useDirector() {
   );
 
   /**
+   * Tell the Director what you made of a take it delivered.
+   *
+   * Refreshes the PLAN as well as the production, because this is the one piece of free feedback
+   * that can change what the next take costs: the Director may answer a note by asking for a
+   * rehearsal, and until the Shoot button reflects that the visitor is looking at a stale gate.
+   * The read-back runs on the queue and takes a few seconds, so the same staggered re-reads the
+   * verdict path uses are used here — a finding that lands after the visitor has moved on is a
+   * finding they never see.
+   */
+  const noteOnTake = useCallback(
+    async ({ takeId, notes }) => {
+      const { token, filmId, spec, cast } = contextRef.current;
+      if (!token || !filmId || !String(notes ?? '').trim()) return null;
+      setNoting(takeId);
+      try {
+        const result = await sendDailyNotes({ filmId, takeId, notes }, token);
+        setProduction((current) => ({ ...current, takes: result.production.takes }));
+        if (spec?.beats?.length) await loadPlan({ spec, cast: cast ?? [], token });
+        for (const delay of [8000, 20000, 45000]) {
+          setTimeout(() => {
+            loadProduction({ token, filmId });
+            if (spec?.beats?.length) loadPlan({ spec, cast: cast ?? [], token });
+          }, delay);
+        }
+        return result;
+      } catch (failure) {
+        console.error('[director] notes not recorded', failure);
+        setError(failure.message);
+        return null;
+      } finally {
+        setNoting(null);
+      }
+    },
+    [loadPlan, loadProduction],
+  );
+
+  /**
    * Accept a scope the assistant proposed.
    *
    * Re-plans immediately, because that is the point: `mustHold` reorders the risk register so the
@@ -628,6 +669,8 @@ export function useDirector() {
     brief: plan?.brief ?? null,
     runTest,
     judge,
+    noteOnTake,
+    noting,
     remember,
     decide,
     settle,
