@@ -148,6 +148,8 @@ const ShootingPlan = ({ plan }) => {
 const TEST_STATE = {
   unshot: { label: 'Not yet run', cls: 'border-white/10 text-slate-400' },
   'render-failed': { label: 'Render failed', cls: 'border-rose-400/30 text-rose-300' },
+  // Not "failed" — refused, on the words, for as long as they stay these words.
+  blocked: { label: 'Refused — needs rewording', cls: 'border-rose-400/30 text-rose-300' },
   unjudged: { label: 'Came back — answer it', cls: 'border-amber-400/30 text-amber-300' },
   failed: { label: 'Failed — run again', cls: 'border-rose-400/30 text-rose-300' },
   retest: { label: 'Re-test asked for', cls: 'border-amber-400/30 text-amber-300' },
@@ -303,6 +305,16 @@ const AskedTests = ({
               {test.failedReason && (
                 <p className="mt-1 rounded-lg border border-rose-400/20 bg-rose-500/5 p-1.5 text-[10px] leading-snug text-rose-200/80">
                   {test.failedReason}
+                  {/* The one failure that re-running cannot fix, and that charges to prove it.
+                      Said here rather than left to the pill, because the click this replaces —
+                      "run the tests again" — is the one that cost $0.48 twice (2026-09-19). */}
+                  {test.state === 'blocked' && (
+                    <span className="mt-1 block text-rose-200/60">
+                      MiniMax refused the wording, and billed for the refusal. It is not in the run
+                      below: the same words would buy the same refusal. The Director reworks the beat
+                      — or you edit the block it came from — and the question is offered again.
+                    </span>
+                  )}
                 </p>
               )}
               {test.finding && (

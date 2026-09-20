@@ -77,6 +77,35 @@ const slugOf = (demand) =>
  * a hallucination; a beat the register already rehearses is a duplicate charge. And the price is
  * never the model's — it is computed from the parameters, like every other charge in this file.
  */
+/**
+ * Whether a rehearsal would only re-render the camera move the film already specifies.
+ *
+ * EVERY REHEARSAL CARRIES THE FILM'S OWN CAMERA BLOCK VERBATIM (worker/screen-test.js, focus
+ * 'rehearsal'), so a demand whose beat text says nothing but what the camera does is a second
+ * copy of a shot the visitor is already buying — its answer is visible in any other rehearsal of
+ * this film, for free. Measured on production 2026-09-19: a robot film got three rehearsals, two
+ * about the subject and one asking "does the camera push in with small amplitude at slow speed
+ * without jumps or cuts?" — whose beat restated the camera line already printed above it in all
+ * three prompts. The two useful ones rendered and answered it in passing; the third was rejected
+ * by the content filter, twice, for $0.96.
+ *
+ * Read off the sentence subject rather than by comparing wording, because the restatement is
+ * never a quotation — the model rewrites the move in its own words, which is exactly what makes
+ * it look like a new question. Prohibitions ("no cuts", "nothing fades") are skipped: they are
+ * the invariants every rehearsal states, not the thing under test. A demand that asks the
+ * SUBJECT to do something keeps its camera sentence and is not touched.
+ */
+const cameraOnly = (direction) => {
+  const sentences = String(direction ?? '')
+    .replace(/^beat\s*\d+\s*:\s*/i, '')
+    .split(/[.;]+/)
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .filter((part) => !/^(no|nothing|never|without|there (are|is) no)\b/i.test(part));
+  if (!sentences.length) return false;
+  return sentences.every((part) => /^(the\s+)?camera\b/i.test(part));
+};
+
 const demandsOf = (data, spec, risks) => {
   const beatCount = spec?.beats?.length ?? 0;
   // Subjects, not slots — a piece with film-frame slots is one subject (rulebook.js subjectSlots).
@@ -84,6 +113,11 @@ const demandsOf = (data, spec, risks) => {
   const rehearsedByRegister = new Set(
     risks.flatMap((risk) => (risk.test?.focus === 'rehearsal' ? risk.test.beats ?? [] : [])),
   );
+  // A camera-only demand is dropped because ANOTHER rehearsal answers it in passing. Where there
+  // is no other — no testable hazard in the register, no second demand — there is nothing to read
+  // it off, and the question is the visitor's only look at the move before the full take. Kept.
+  const otherTestsAsked =
+    risks.some((risk) => risk.test) || (data?.demands ?? []).length > 1;
   const kept = [];
   const dropped = [];
   const seen = new Set();
@@ -105,7 +139,9 @@ const demandsOf = (data, spec, risks) => {
             ? 'the register already rehearses that beat'
             : seen.has(id)
               ? 'duplicate'
-              : null;
+              : cameraOnly(direction) && otherTestsAsked
+                ? 'only re-renders the camera move every other rehearsal already carries'
+                : null;
     if (reason) {
       dropped.push({ id: id || '(unnamed)', reason });
       continue;

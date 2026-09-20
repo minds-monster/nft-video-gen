@@ -171,7 +171,9 @@ export const SHOOTING_PLAN_SCHEMA = {
               'The COMPLETE beat text the rehearsal renders — the demand restated as a physical ' +
               'constraint rather than a hope. It is written straight into the render, so it must ' +
               'read as the script: what the thing on screen physically does, what it must not do ' +
-              '(no fade, no overlay, no second copy appearing), and where the camera is.',
+              '(no fade, no overlay, no second copy appearing), and where the camera is. It must ' +
+              'give the SUBJECT something to do: a beat that only describes a camera move is ' +
+              'dropped, because the film\'s camera block is already rendered in every rehearsal.',
           },
           onHeld: { type: 'string', description: 'One sentence: what you do if the rehearsal holds.' },
           onFailed: {
@@ -288,6 +290,16 @@ whether the letters actually become a brain" and then act on the answer.
 THE TEST THAT DECIDES WHETHER A TEST IS WORTH RUNNING, for register hazards and demands alike: name
 what you would do differently on each possible answer. If "it held" and "it failed" lead to the
 same next action, the test buys nothing and you should skip it and say so.
+
+AND THE SECOND THING THAT MAKES A TEST WORTHLESS: its answer is already on screen in another
+rehearsal you asked for. Every rehearsal renders this film's own camera block, its world, its
+guard and its staging — only the beat differs. So the camera move, the lighting, the space and the
+"one unbroken shot" line are shot again in every single test, and asking "does the camera push in
+smoothly?" as its own $0.48 demand buys a copy of something two other clips will show you anyway.
+This happened on 2026-09-19: three rehearsals, two about what the subject does and one about the
+camera move already printed in all three. Demand what the SUBJECT does — what must physically
+happen to the thing on screen. The camera is in every prompt already; ask about it only when you
+have asked for nothing else.
 
 FIX WHAT YOU CAN FOR FREE, FIRST. Most hazards in the register are settled by changing the script,
 not by rendering: a reference that needs a head crop, flat art that needs describing as a physical

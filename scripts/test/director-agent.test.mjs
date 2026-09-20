@@ -231,6 +231,44 @@ test('a demand on a beat the register already rehearses is a duplicate charge, a
   assert.match(result.droppedDemands[0].reason, /register already rehearses/);
 });
 
+// The camera move is rendered in EVERY rehearsal of the film — only the beat differs — so a
+// demand about the camera alone buys a copy of a clip the visitor is already paying for. On
+// 2026-09-19 that third rehearsal was the one the content filter rejected, twice, for $0.96.
+
+test('a demand that only re-renders the camera move is dropped when another test will show it', async () => {
+  const cameraDemand = demand({
+    id: 'camera-pushes-in-smoothly',
+    question: 'Does the camera push in with small amplitude at slow speed without jumps or cuts?',
+    direction:
+      'The camera pushes in with small amplitude at slow speed along the push-in axis, keeping the ' +
+      'robot centered, without jumps or cuts.',
+  });
+  stub({ reading: 'x', tests: [], skip: [], fixes: [], demands: [demand(), cameraDemand], plan: 'p' });
+  const result = await planShoot(env, { spec: brainSpec(), risks: [], finalUsd: 0.72, remainingUsd: 6 });
+  assert.deepEqual(result.demands.map((d) => d.id), ['letters-become-brain']);
+  assert.match(result.droppedDemands[0].reason, /camera move every other rehearsal/);
+});
+
+test('but it is kept when it is the only look at the move before the full take', async () => {
+  const cameraDemand = demand({
+    id: 'camera-pushes-in-smoothly',
+    direction: 'The camera pushes in slowly, without jumps or cuts.',
+  });
+  stub({ reading: 'x', tests: [], skip: [], fixes: [], demands: [cameraDemand], plan: 'p' });
+  const result = await planShoot(env, { spec: brainSpec(), risks: [], finalUsd: 0.72, remainingUsd: 6 });
+  assert.deepEqual(result.demands.map((d) => d.id), ['camera-pushes-in-smoothly']);
+});
+
+test('a demand that gives the subject something to do keeps its camera sentence', async () => {
+  const withCamera = demand({
+    id: 'letters-inflate',
+    direction: 'The letters inflate into one mass and fold into ridges. The camera pushes in slowly.',
+  });
+  stub({ reading: 'x', tests: [], skip: [], fixes: [], demands: [demand(), withCamera], plan: 'p' });
+  const result = await planShoot(env, { spec: brainSpec(), risks: [], finalUsd: 0.72, remainingUsd: 6 });
+  assert.deepEqual(result.demands.map((d) => d.id), ['letters-become-brain', 'letters-inflate']);
+});
+
 test('demands are capped at four and a repeated id counts once', async () => {
   const many = ['a', 'b', 'c', 'd', 'e', 'a'].map((id) => demand({ id, beats: [1] }));
   stub({ reading: 'x', tests: [], skip: [], fixes: [], demands: many, plan: 'p' });

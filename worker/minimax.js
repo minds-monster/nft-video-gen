@@ -319,6 +319,26 @@ const queryPath = (api, taskId) =>
   api === 'v2' ? `/v2/query/video_generation/${taskId}` : `/v1/query/video_generation?task_id=${taskId}`;
 
 /**
+ * Whether a failure reason is the CONTENT FILTER — a verdict on the words, not a fault that
+ * might come out differently next time.
+ *
+ * The distinction is what makes a retry sane or insane. A 5xx, a timeout, an unsettled task: the
+ * same request may well succeed. This one cannot. Measured on production (2026-09-19): a
+ * rehearsal whose beat read "The camera pushes in with small amplitude at slow speed along the
+ * push-in axis, keeping the robot centered, without jumps or cuts" was ACCEPTED, queued, billed,
+ * and failed minutes later as "input new_sensitive, input text sensitive" — then run again from
+ * the same plan, word for word, and failed identically. $0.96 for two rejections of the same
+ * sentence. Two other rehearsals of the same robot, same reference image, same prompt but for
+ * their own beat line, rendered fine either side of it, so the verdict is on the text.
+ *
+ * Matched on the word rather than a code because the reason arrives as prose from three
+ * different fields (`pollVideo` below) and the whole family reads "input … sensitive": text,
+ * image, and `new_sensitive`, whatever that one is. Error 1026 is the same filter answering
+ * instantly at submission, where it throws a MinimaxError instead of settling a task.
+ */
+export const isContentFilterReason = (reason) => /\bsensitive\b/i.test(String(reason ?? ''));
+
+/**
  * ONE poll. No loop, no sleep, no timeout of its own.
  *
  * This is the primitive worker/director.js is built on, and the single-shot shape is the whole

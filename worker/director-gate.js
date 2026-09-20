@@ -33,6 +33,8 @@ export const askedTests = (shootingPlan) => {
   return [...fromRegister, ...fromDemands];
 };
 
+import { isContentFilterReason } from './minimax.js';
+
 /** Every settled screen test against one question, in the order they settled. */
 const readyTestsFor = (takes, riskId) =>
   (takes ?? []).filter((take) => take?.kind === 'screen-test' && take.riskId === riskId && take.status === 'ready');
@@ -46,6 +48,29 @@ const latestFailureFor = (takes, riskId) => {
     else if (take.status === 'ready') failure = null;
   }
   return failure;
+};
+
+/**
+ * Whether the only thing standing between this question and an answer is MiniMax's content
+ * filter — which no amount of money will get past.
+ *
+ * A render that failed is normally worth running again: the model is not deterministic and the
+ * reason is usually transient. The content filter is the exception, and it is the one that
+ * charges for the privilege. On 2026-09-19 the same rehearsal was bought twice, $0.48 each, and
+ * rejected both times over one sentence (worker/minimax.js isContentFilterReason).
+ *
+ * THE BLOCK LIFTS WHEN THE WORDS CHANGE, which is why `nextScript` is compared rather than the
+ * reason being taken as final: once the Director rewrites the beat — or the visitor edits the
+ * block it came from — the rehearsal is a different request and is owed its chance. `nextScript`
+ * is what would be rendered NOW (worker/director.js builds it from the current script); absent —
+ * the Producer's briefing has no spec to build one from — the reason alone stands, because a
+ * question that was last rejected is still not a question to spend on.
+ */
+const blockedByFilter = (failure, nextScript) => {
+  if (!failure || !isContentFilterReason(failure.reason)) return false;
+  const rejected = failure.script?.text ?? null;
+  if (!rejected || nextScript == null) return true;
+  return nextScript === rejected;
 };
 
 /**
@@ -66,7 +91,7 @@ const latestFailureFor = (takes, riskId) => {
  * has a clip nobody has answered needs ANSWERING, not running: it is in `unanswered`, never in
  * `toRun`, and it costs nothing.
  */
-export const testGate = (shootingPlan, takes = [], { knownRiskIds = null } = {}) => {
+export const testGate = (shootingPlan, takes = [], { knownRiskIds = null, scriptFor = null } = {}) => {
   const unread = !shootingPlan;
   const asked = askedTests(shootingPlan).filter(
     (test) => !knownRiskIds || knownRiskIds.includes(test.riskId),
@@ -80,7 +105,10 @@ export const testGate = (shootingPlan, takes = [], { knownRiskIds = null } = {})
       const unjudged = ready.filter((take) => !take.verdict?.answer);
       const answer = latest?.verdict?.answer ?? null;
       const failure = ready.length ? null : latestFailureFor(takes, test.riskId);
-      const state = failure
+      const blocked = blockedByFilter(failure, scriptFor?.(test.riskId) ?? null);
+      const state = blocked
+        ? 'blocked'
+        : failure
         ? 'render-failed'
         : !ready.length
         ? 'unshot'
@@ -108,9 +136,16 @@ export const testGate = (shootingPlan, takes = [], { knownRiskIds = null } = {})
     });
 
   const open = outstanding.filter((test) => test.state !== 'cleared');
+  // A question MiniMax's filter will not render is not owed money and cannot be owed an answer.
+  // It leaves the runnable set entirely — out of the "run all" button, and out of what holds the
+  // Shoot button shut, because keeping it there would leave the film with one move: override.
+  // That is the gate-that-never-opens failure this file's header names, arriving by a new route.
+  // It stays in `asked`, in its own state, so the panel says what happened to it.
+  const blocked = open.filter((test) => test.state === 'blocked');
+  const runnable = open.filter((test) => test.state !== 'blocked');
   // Whatever its last answer, a question with a clip nobody has watched is answered, not bought.
-  const unanswered = open.filter((test) => test.unansweredCount > 0);
-  const toRun = open.filter((test) => test.unansweredCount === 0);
+  const unanswered = runnable.filter((test) => test.unansweredCount > 0);
+  const toRun = runnable.filter((test) => test.unansweredCount === 0);
   return {
     unread,
     asked: outstanding,
@@ -118,7 +153,9 @@ export const testGate = (shootingPlan, takes = [], { knownRiskIds = null } = {})
     // Split by what the visitor has to DO: watch and answer (free), or spend to run.
     unanswered,
     toRun,
+    // Nothing to do at all: rejected by the content filter until the words change.
+    blocked,
     outstandingUsd: Math.round(toRun.reduce((sum, test) => sum + (test.estUsd ?? 0), 0) * 100) / 100,
-    cleared: !unread && open.length === 0,
+    cleared: !unread && runnable.length === 0,
   };
 };

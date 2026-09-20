@@ -30,7 +30,7 @@ import { filmIdFor } from './film-id.js';
 import { listFilms, loadStoryboard } from './storyboarder.js';
 import { assessRisks } from './director-risks.js';
 import { preflightReferences } from './reference-preflight.js';
-import { LATENCY_SECONDS, checkH3Params, priceUsd } from './minimax.js';
+import { LATENCY_SECONDS, checkH3Params, isContentFilterReason, priceUsd } from './minimax.js';
 import { DEFAULT_MODE, MODES, closeEnvelope, getEnvelope, listEnvelopes, openEnvelope, recordDecision, spentOnFilm } from './render-budget.js';
 import { getSpend } from './budget.js';
 import { castRefsFrom, dropRevision, loadJob, loadProduction, rememberTake, resumeAfterApproval, saveJob, startTake, startAssessment, startReview, enqueue } from './director-job.js';
@@ -72,6 +72,20 @@ const withDemands = (risks, production) => [
   ...risks,
   ...(production?.shootingPlan?.demands ?? []).map(demandAsRisk).filter(Boolean),
 ];
+
+/**
+ * The exact rehearsal text each question would be rendered with right now, for the gate to
+ * compare against one the content filter has already rejected (worker/director-gate.js).
+ *
+ * Built the same way the test endpoint builds it — same function, same revised script — so
+ * "identical" means identical, and a single word changed anywhere upstream is enough to let the
+ * rehearsal be bought again.
+ */
+const scriptFor = (risks, spec, cast) => (riskId) => {
+  const risk = risks.find((entry) => entry.id === riskId);
+  if (!risk) return null;
+  return buildScreenTest(risk, spec, cast)?.script ?? null;
+};
 
 /**
  * Turn a spec — and a storyboard, when there is one — into the exact script H3 receives.
@@ -290,6 +304,7 @@ export async function handleDirectorPlan(request, env) {
   // `ready` below, which only says whether MiniMax would accept the request.
   const gate = testGate(production?.shootingPlan ?? null, production?.takes ?? [], {
     knownRiskIds: risks.map((risk) => risk.id),
+    scriptFor: scriptFor(risks, revised, cast),
   });
 
   return json({
@@ -453,6 +468,7 @@ export async function handleDirectorStart(request, env) {
   const risks = withDemands(assessment.risks, production);
   const gate = testGate(production?.shootingPlan ?? null, production?.takes ?? [], {
     knownRiskIds: risks.map((risk) => risk.id),
+    scriptFor: scriptFor(risks, revised, cast),
   });
   if (gate.unread && !override) {
     return json(
@@ -468,9 +484,17 @@ export async function handleDirectorStart(request, env) {
     return json(
       {
         error: 'untested',
-        detail:
-          `The Director asked for ${gate.outstanding.length} screen test${gate.outstanding.length === 1 ? '' : 's'} ` +
-          'that have not been answered. Run them, or shoot anyway and own the result.',
+        // Counted off what can actually be done about it. A question the content filter refused
+        // is still in `outstanding` — the panel names it — but it is not something the visitor
+        // is being asked to go and answer, and putting it in this number would make the Shoot
+        // refusal owe more than the panel offers to run.
+        detail: (() => {
+          const owed = gate.unanswered.length + gate.toRun.length;
+          return (
+            `The Director asked for ${owed} screen test${owed === 1 ? '' : 's'} ` +
+            'that have not been answered. Run them, or shoot anyway and own the result.'
+          );
+        })(),
         outstanding: gate.outstanding,
         gate,
       },
@@ -830,6 +854,39 @@ export async function handleDirectorTest(request, env) {
   // refused HERE, for free, by name.
   const refused = await refuseIllegalReferences(spec, cast, refKeys);
   if (refused) return refused;
+
+  // THE SAME WORDS, REJECTED ONCE, ARE NOT WORTH PAYING FOR TWICE. MiniMax's content filter
+  // accepts the task, bills for it, and fails it minutes later, so nothing upstream of here can
+  // tell the difference between a rejection and a render until the money is gone — on
+  // 2026-09-19 the identical rehearsal was bought twice for $0.48 each and rejected both times
+  // (worker/minimax.js isContentFilterReason). Byte-for-byte on the script, because that is what
+  // the filter judged: a Director revision, or the visitor editing the block it came from,
+  // changes the text and the rehearsal is offered again.
+  const rejected = (production?.takes ?? []).find(
+    (take) =>
+      take?.kind === 'screen-test' &&
+      take.riskId === risk.id &&
+      take.status === 'failed' &&
+      isContentFilterReason(take.reason) &&
+      take.script?.text === test.script,
+  );
+  if (rejected) {
+    return json(
+      {
+        error: 'content_filter',
+        detail:
+          `MiniMax's content filter rejected this rehearsal word for word on ${new Date(rejected.settledAt ?? Date.now())
+            .toISOString()
+            .slice(0, 10)} — "${rejected.reason}" — and it charged for the rejection. Nothing about ` +
+          'the request has changed since, so running it again would buy the same refusal. The beat ' +
+          'has to be reworded before this question can be asked.',
+        failedReason: rejected.reason,
+        takeId: rejected.takeId,
+        costUsd: rejected.costUsd ?? null,
+      },
+      400,
+    );
+  }
 
   const castRefs = castRefsFrom(cast);
   try {

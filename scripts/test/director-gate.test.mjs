@@ -172,3 +172,53 @@ test('a failure followed by a successful render is forgotten', () => {
   ]);
   assert.equal(gate.cleared, true);
 });
+
+// ------------------------------------------------------------- the refusal money cannot fix
+//
+// MiniMax's content filter accepts the task, bills for it, and fails it minutes later. Measured
+// on production 2026-09-19: the same rehearsal was bought twice, $0.48 each, and rejected word
+// for word both times, because a rejected render read exactly like a transient one — the case
+// directly above — and the only control on offer was "run it again".
+
+const filtered = { status: 'failed', reason: 'input new_sensitive, input text sensitive' };
+
+test('a rehearsal the content filter rejected is not offered for sale again', () => {
+  const gate = testGate(plan({ demands: [] }), [
+    shot('transformation-faked:2', { ...filtered, script: { text: 'The letters become a brain.' } }),
+  ], { scriptFor: () => 'The letters become a brain.' });
+
+  assert.equal(gate.asked[0].state, 'blocked');
+  assert.match(gate.asked[0].failedReason, /sensitive/);
+  assert.deepEqual(gate.toRun, [], 'nothing to buy: the same words buy the same refusal');
+  assert.equal(gate.blocked.length, 1);
+  assert.equal(gate.outstandingUsd, 0);
+});
+
+test('and it does not hold the film shut, because no amount of money would open it', () => {
+  const gate = testGate(plan({ demands: [] }), [
+    shot('transformation-faked:2', { ...filtered, script: { text: 'x' } }),
+  ], { scriptFor: () => 'x' });
+  assert.equal(gate.cleared, true, 'otherwise the only way out is Shoot anyway');
+});
+
+test('the block lifts the moment the words change', () => {
+  const takes = [shot('transformation-faked:2', { ...filtered, script: { text: 'The old wording.' } })];
+  const reworded = testGate(plan({ demands: [] }), takes, { scriptFor: () => 'The Director rewrote it.' });
+
+  assert.equal(reworded.asked[0].state, 'render-failed');
+  assert.equal(reworded.toRun.length, 1, 'a different request is owed its chance');
+  assert.equal(reworded.cleared, false);
+});
+
+test('with no script to compare — the Producer reads the gate without one — the reason stands', () => {
+  const gate = testGate(plan({ demands: [] }), [shot('transformation-faked:2', filtered)]);
+  assert.equal(gate.asked[0].state, 'blocked');
+});
+
+test('an ordinary failure is still not a content-filter block', () => {
+  const gate = testGate(plan({ demands: [] }), [
+    shot('transformation-faked:2', { status: 'failed', reason: 'image size 140x250', script: { text: 'x' } }),
+  ], { scriptFor: () => 'x' });
+  assert.equal(gate.asked[0].state, 'render-failed');
+  assert.equal(gate.toRun.length, 1);
+});
